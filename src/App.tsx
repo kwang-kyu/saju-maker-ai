@@ -1,39 +1,11 @@
 import { useState } from "react";
 import { Lunar, Solar } from "lunar-javascript";
+import { jsPDF } from "jspdf";
 
-async function generateSajuAiAnswer(prompt: string): Promise<string> {
-  try {
-    const response = await fetch("/api/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("AI 서버 오류:", data);
-      return data.error || "AI 상담 답변을 불러오지 못했습니다.";
-    }
-
-    return (
-      data.text ||
-      data.answer ||
-      data.result ||
-      data.message ||
-      "AI 상담 답변을 불러오지 못했습니다."
-    );
-  } catch (error) {
-    console.error("AI 상담 오류:", error);
-    return "AI 상담 중 오류가 발생했습니다.";
-  }
-}
 function App() {
   const [name, setName] = useState("");
   const [activeTab, setActiveTab] = useState("basic");
-  const [question, setQuestion] = useState("");
+  
   const [birthYear, setBirthYear] = useState("");
   const [birthMonth, setBirthMonth] = useState("4");
   const [birthDay, setBirthDay] = useState("23");
@@ -44,7 +16,7 @@ function App() {
   const [jobResult, setJobResult] = useState("");
   const [loveResult, setLoveResult] = useState("");
   const [healthResult, setHealthResult] = useState("");
-  const [aiResult, setAiResult] = useState("");
+  
   const [yearResult, setYearResult] = useState("");
   const [daeunResult, setDaeunResult] = useState("");
   const [moneyResult, setMoneyResult] = useState("");
@@ -103,10 +75,66 @@ function App() {
       return fallback;
     }
   };
-
+  const handleDownloadPdf = () => {
+    const doc = new jsPDF();
+  
+    const pdfText = `
+  사주메이커 AI 리포트
+  
+  ====================
+  
+  [기본사주]
+  
+  ${result}
+  
+  ====================
+  
+  [재물운]
+  
+  ${moneyResult}
+  
+  ====================
+  
+  [직업운]
+  
+  ${jobResult}
+  
+  ====================
+  
+  [연애운]
+  
+  ${loveResult}
+  
+  ====================
+  
+  [건강운]
+  
+  ${healthResult}
+  
+  ====================
+  
+  [올해운세]
+  
+  ${yearResult}
+  
+  ====================
+  
+  [대운]
+  
+  ${daeunResult}
+  
+  ====================
+  `;
+  
+  
+    const lines = doc.splitTextToSize(pdfText, 180);
+    doc.text(lines, 10, 10);
+    doc.save(`${name || "사주"}_사주리포트.pdf`);
+  };
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
-  
+    setResult("");
+    await new Promise((resolve) => setTimeout(resolve, 300));
     if (!name.trim()) {
       alert("이름을 입력해주세요.");
       setIsAnalyzing(false);
@@ -118,7 +146,7 @@ function App() {
       setIsAnalyzing(false);
       return;
     }
-
+    try {
     const year = Number(birthYear);
     let solarDate = "";
     let lunarDate = "";
@@ -333,6 +361,67 @@ const dayMasterText = (() => {
 })();
 const baseScore = year % 10;
 
+const todaySolar = Solar.fromDate(new Date());
+const todayLunar: any = todaySolar.getLunar();
+const todayGanZhi = safeCall(todayLunar, "getDayInGanZhi");
+const getElementFromGanZhi = (ganZhi: string) => {
+  const text = String(ganZhi);
+
+  if (["甲", "乙", "寅", "卯", "갑", "을", "인", "묘"].some((v) => text.includes(v))) return "목(木)";
+  if (["丙", "丁", "巳", "午", "병", "정", "사", "오"].some((v) => text.includes(v))) return "화(火)";
+  if (["戊", "己", "辰", "戌", "丑", "未", "무", "기", "진", "술", "축", "미"].some((v) => text.includes(v))) return "토(土)";
+  if (["庚", "辛", "申", "酉", "경", "신", "유"].some((v) => text.includes(v))) return "금(金)";
+  return "수(水)";
+};
+
+const todayElement = getElementFromGanZhi(todayGanZhi);
+const getElementGuide = (elementName: string) => {
+  if (elementName.includes("목")) {
+    return {
+      color: "초록색, 연두색",
+      direction: "동쪽",
+      action: "새 계획 세우기, 공부 시작, 기획 정리, 성장형 업무",
+      caution: "성급하게 시작만 하고 마무리를 놓치지 않도록 주의하세요.",
+    };
+  }
+
+  if (elementName.includes("화")) {
+    return {
+      color: "빨간색, 보라색",
+      direction: "남쪽",
+      action: "홍보, 발표, 만남, 영업, 콘텐츠 노출",
+      caution: "감정 표현이 강해질 수 있으니 말투와 속도를 조절하세요.",
+    };
+  }
+
+  if (elementName.includes("토")) {
+    return {
+      color: "노란색, 갈색, 베이지색",
+      direction: "중앙, 남서쪽, 북동쪽",
+      action: "정리정돈, 부동산 검토, 재정 점검, 생활 루틴 안정",
+      caution: "고집이 강해질 수 있으니 유연한 판단이 필요합니다.",
+    };
+  }
+
+  if (elementName.includes("금")) {
+    return {
+      color: "흰색, 금색, 은색",
+      direction: "서쪽",
+      action: "계약 검토, 돈관리, 문서 정리, 중요한 판단",
+      caution: "너무 단정적으로 판단하거나 차갑게 말하지 않도록 주의하세요.",
+    };
+  }
+
+  return {
+    color: "검정색, 파란색, 남색",
+    direction: "북쪽",
+    action: "휴식, 상담, 정보수집, 생각 정리, 조용한 계획",
+    caution: "생각이 많아져 결정이 늦어질 수 있으니 우선순위를 정하세요.",
+  };
+};
+
+const todayGuide = getElementGuide(todayElement);
+
 const monthlyLuckText = Array.from({ length: 12 }, (_, i) => {
   const month = i + 1;
   const monthScore = 70 + ((year + month + baseScore) % 18);
@@ -435,69 +524,7 @@ ${daeunYearlyText}
 
     const luckyColors = ["보라색", "금색", "파란색", "초록색", "분홍색", "흰색"];
     const luckyColor = luckyColors[year % luckyColors.length];
-    const sajuSystemGuide = `
-    당신은 전통 사주명리 해석을 현대적으로 풀어주는 전문 AI 사주 상담사입니다.
     
-    답변 작성 원칙:
-    1. 답변은 짧게 요약하지 말고, 최소 1,500자 이상으로 충분히 길고 자세하게 작성합니다.
-    2. 사용자의 사주팔자, 일주, 오행 분포, 강한 오행, 부족한 오행, 성별, 질문을 모두 반영합니다.
-    3. 단정적인 예언이나 공포감을 주는 표현은 피하고, 성향·흐름·가능성·주의점·실천 조언 중심으로 설명합니다.
-    4. 각 답변은 반드시 다음 구조를 따릅니다.
-    
-    [1] 전체 흐름 요약
-    - 현재 사주의 핵심 기운을 쉽게 설명합니다.
-    - 강한 오행과 부족한 오행이 삶에 어떤 영향을 주는지 설명합니다.
-    
-    [2] 타고난 성향
-    - 일주와 오행을 바탕으로 성격, 사고방식, 장점, 약점을 구체적으로 설명합니다.
-    - 인간관계에서 드러나는 모습도 함께 설명합니다.
-    
-    [3] 분야별 해석
-    - 질문 주제가 재물운이면 돈이 들어오는 방식, 지출 습관, 자산관리, 수익 방향을 설명합니다.
-    - 질문 주제가 직업운이면 잘 맞는 일, 업무 스타일, 피해야 할 환경, 발전 방향을 설명합니다.
-    - 질문 주제가 연애운이면 관계 방식, 잘 맞는 사람, 주의할 소통 방식, 인연 흐름을 설명합니다.
-    - 질문 주제가 건강운이면 의학적 진단이 아닌 생활습관, 컨디션 관리, 휴식, 식습관 중심으로 설명합니다.
-    
-    [4] 올해 운세 흐름
-    - 올해 주의할 점과 기회가 되는 부분을 현실적으로 설명합니다.
-    - 월별 흐름까지 너무 단순하게 말하지 말고, 행동 조언을 함께 제시합니다.
-    
-    [5] 현실 조언
-    - 사용자가 오늘부터 바로 실천할 수 있는 조언을 5가지 이상 제시합니다.
-    - 조언은 추상적이지 않게 구체적으로 작성합니다.
-    
-    [6] 마무리 상담
-    - 불안감을 주지 않고, 따뜻하지만 현실적인 말투로 마무리합니다.
-    
-    표현 방식:
-    - 상담하듯 자연스럽게 설명합니다.
-    - 어려운 명리 용어는 쉽게 풀어서 설명합니다.
-    - “무조건 된다”, “반드시 실패한다”, “대박 난다” 같은 표현은 사용하지 않습니다.
-    - 투자, 건강, 결혼, 이직 등 중요한 결정은 참고용 조언으로만 안내합니다.
-    - 답변은 한국어로 작성합니다.
-    `;
-    const sajuInfo = `
-이름: ${name}
-성별: ${gender === "male" ? "남성" : "여성"}
-
-년주: ${yearGanZhi}
-월주: ${monthGanZhi}
-일주: ${dayGanZhi}
-일주 해석: ${dayMasterText}
-시주: ${timeGanZhi}
-
-강한 오행: ${strongest.name}
-부족한 오행: ${weakest.name}
-
-목: ${wood}
-화: ${fire}
-토: ${earth}
-금: ${metal}
-수: ${water}
-`;
-
-  const aiAnswer = await generateSajuAiAnswer(sajuSystemGuide + "\n\n" + sajuInfo + "\n\n질문:\n" + (question || "아직 입력한 질문이 없습니다."));
-  setAiResult(aiAnswer);
   setMoneyResult(`💰 재물운 상세 분석
 
     ${strongest.name} 기운이 강하게 작용하는 사주입니다.
@@ -559,6 +586,24 @@ setYearResult(`${yearLuckText}
   직업운: ${jobScore}점
   
   🍀 행운 정보
+행운의 숫자: ${luckyNumber}
+행운의 색상: ${todayGuide.color}
+
+🌞 오늘의 일진과 오행
+오늘의 일진: ${todayGanZhi}
+오늘의 오행: ${todayElement}
+
+🎨 오늘 나에게 맞는 색상
+${todayGuide.color}
+
+🧭 오늘 좋은 방향
+${todayGuide.direction}
+
+✅ 오늘 추천 행동
+${todayGuide.action}
+
+⚠️ 오늘 주의할 점
+${todayGuide.caution}
   행운의 숫자: ${luckyNumber}
   행운의 색상: ${luckyColor}`);
   
@@ -599,13 +644,14 @@ ${dayMasterText}
 
 🌟 성격운
 ${personalityText}
-
-
-
-
-※ 현재 결과는 테스트용 샘플 리포트입니다.
-다음 단계에서 오행 분석과 AI 해석을 연결할 수 있습니다.`);
-  };
+`);
+} catch (error) {
+  console.error("사주 분석 오류:", error);
+  setResult("사주 분석 중 오류가 발생했습니다. 다시 시도해 주세요.");
+} finally {
+  setIsAnalyzing(false);
+}
+};
 
   return (
     <div style={pageStyle}>
@@ -627,21 +673,8 @@ ${personalityText}
           onChange={(e) => setName(e.target.value)}
           placeholder="예: 김광규"
         />
-      <textarea
-  value={question}
-  onChange={(e) => setQuestion(e.target.value)}
-  placeholder="궁금한 점을 입력하세요 (재물운, 연애운, 직업운 등)"
-  style={{
-    width: "100%",
-    minHeight: "80px",
-    marginTop: "12px",
-    padding: "12px",
-    borderRadius: "10px",
-    background: "#0b1220",
-    color: "#fff",
-    border: "1px solid #334155",
-  }}
-/>
+  
+  
         <label style={labelStyle}>달력 선택</label>
         <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
           <button
@@ -730,14 +763,43 @@ ${personalityText}
         </div>
 
         <button onClick={handleAnalyze} style={mainButtonStyle} disabled={isAnalyzing}>
-  {isAnalyzing ? "🔮 분석 중..." : "사주 분석하기"}
+        {isAnalyzing ? "✨ AI 사주 분석 중..." : "사주 분석하기"}
 </button>
-
+{result && (
+  <button
+    onClick={handleDownloadPdf}
+    style={{
+      width: "100%",
+      marginTop: "12px",
+      border: "none",
+      borderRadius: "14px",
+      padding: "16px",
+      fontSize: "18px",
+      fontWeight: "bold",
+      color: "#fff",
+      background: "linear-gradient(135deg,#2563eb,#06b6d4)",
+      cursor: "pointer",
+    }}
+  >
+    📄 PDF 다운로드
+  </button>
+)}
 {isAnalyzing && (
   <div className="analyzing-box">
     <div className="spinner"></div>
-    <p>🔮 사주 분석 중입니다...</p>
-    <span>오행, 대운, 올해 운세 흐름을 해석하고 있습니다.</span>
+
+    <h3>✨ AI 사주 분석 중...</h3>
+
+    <p>🔮 사주팔자 계산 중</p>
+    <p>🌳 오행 분석 중</p>
+    <p>📅 올해 운세 생성 중</p>
+    <p>💬 AI 상담 작성 중</p>
+
+    <span>
+      잠시만 기다려주세요.
+      <br />
+      나만의 사주 리포트를 생성하고 있습니다.
+    </span>
   </div>
 )}
 
@@ -745,13 +807,13 @@ ${personalityText}
   <>
     <div style={tabWrapStyle}>
       <button style={activeTab === "basic" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("basic")}>기본사주</button>
-      <button style={activeTab === "money" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("money")}>재물운</button>
-      <button style={activeTab === "job" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("job")}>직업운</button>
-      <button style={activeTab === "love" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("love")}>연애운</button>
-      <button style={activeTab === "health" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("health")}>건강운</button>
+      <button style={activeTab === "money" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("money")}>오늘의 재물운</button>
+      <button style={activeTab === "job" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("job")}>오늘의 직업운</button>
+      <button style={activeTab === "love" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("love")}>오늘의 연애운</button>
+      <button style={activeTab === "health" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("health")}>오늘의 건강운</button>
       <button style={activeTab === "year" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("year")}>올해운세</button>
       <button style={activeTab === "daeun" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("daeun")}>대운</button>
-      <button style={activeTab === "ai" ? activeTabStyle : tabButtonStyle} onClick={() => setActiveTab("ai")}>질문답변</button>
+      
     </div>
 
     <div style={resultStyle}>
@@ -762,7 +824,7 @@ ${personalityText}
   {activeTab === "health" && healthResult}
   {activeTab === "year" && yearResult}
   {activeTab === "daeun" && daeunResult}
-  {activeTab === "ai" && aiResult}
+  
 </div>
     <FiveElementGraph counts={fiveCounts} />
   </>
@@ -966,7 +1028,7 @@ const FiveElementGraph = ({ counts }: { counts: Record<string, number> }) => {
             >
               <div
                 style={{
-                  width: `${percent}%`,
+                  width: percent + "%",
                   height: "18px",
                   background: "#8b5cf6",
                   borderRadius: "999px",
