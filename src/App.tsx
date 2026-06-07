@@ -321,6 +321,7 @@ const healthText = (() => {
 const dayMasterText = (() => {
   const dayStem = String(dayGanZhi).charAt(0);
 
+
   if (["甲", "갑"].includes(dayStem)) {
     return "갑목(甲木) 일주는 큰 나무처럼 성장 욕구가 강하고, 원칙과 방향성을 중요하게 여기는 타입입니다.";
   }
@@ -421,7 +422,77 @@ const getElementGuide = (elementName: string) => {
 };
 
 const todayGuide = getElementGuide(todayElement);
+const getTenGodSummary = (stem: string) => {
+  if (["甲", "갑"].includes(stem)) {
+    return {
+      main: "비견",
+      text: "독립심과 추진력이 강하고 스스로 길을 개척하려는 성향이 강합니다.",
+    };
+  }
 
+  if (["乙", "을"].includes(stem)) {
+    return {
+      main: "겁재",
+      text: "경쟁심과 협력성이 함께 있으며 사람과의 관계 속에서 성장하는 타입입니다.",
+    };
+  }
+
+  if (["丙", "병"].includes(stem)) {
+    return {
+      main: "식신",
+      text: "표현력과 생산성이 좋고 자신의 능력을 밖으로 드러내는 힘이 강합니다.",
+    };
+  }
+
+  if (["丁", "정"].includes(stem)) {
+    return {
+      main: "상관",
+      text: "창의력과 개성이 강하며 틀에 얽매이지 않는 사고를 하는 타입입니다.",
+    };
+  }
+
+  if (["戊", "무"].includes(stem)) {
+    return {
+      main: "편재",
+      text: "사업 감각과 기회 포착 능력이 좋고 활동 범위가 넓은 타입입니다.",
+    };
+  }
+
+  if (["己", "기"].includes(stem)) {
+    return {
+      main: "정재",
+      text: "안정적인 재물 관리와 꾸준한 성장이 강점입니다.",
+    };
+  }
+
+  if (["庚", "경"].includes(stem)) {
+    return {
+      main: "편관",
+      text: "책임감과 추진력이 강하며 목표를 향해 돌파하는 힘이 있습니다.",
+    };
+  }
+
+  if (["辛", "신"].includes(stem)) {
+    return {
+      main: "정관",
+      text: "원칙과 질서를 중요하게 여기며 신뢰를 얻는 타입입니다.",
+    };
+  }
+
+  if (["壬", "임"].includes(stem)) {
+    return {
+      main: "편인",
+      text: "직관과 통찰력이 좋고 새로운 지식을 흡수하는 능력이 뛰어납니다.",
+    };
+  }
+
+  return {
+    main: "정인",
+    text: "배움과 연구에 강하며 안정적인 정신력을 가진 타입입니다.",
+  };
+};
+
+const tenGodInfo = getTenGodSummary(String(dayGanZhi).charAt(0));
 const monthlyLuckText = Array.from({ length: 12 }, (_, i) => {
   const month = i + 1;
   const monthScore = 70 + ((year + month + baseScore) % 18);
@@ -644,6 +715,14 @@ ${dayMasterText}
 
 🌟 성격운
 ${personalityText}
+
+━━━━━━━━━━━━━━
+
+⭐ 십성 분석
+
+대표 십성: ${tenGodInfo.main}
+
+${tenGodInfo.text}
 `);
 } catch (error) {
   console.error("사주 분석 오류:", error);
