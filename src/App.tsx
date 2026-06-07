@@ -48,6 +48,8 @@ function App() {
   const [yearResult, setYearResult] = useState("");
   const [daeunResult, setDaeunResult] = useState("");
   const [moneyResult, setMoneyResult] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
   const [fiveCounts, setFiveCounts] = useState({
   wood: 0,
   fire: 0,
@@ -103,13 +105,17 @@ function App() {
   };
 
   const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+  
     if (!name.trim()) {
       alert("이름을 입력해주세요.");
+      setIsAnalyzing(false);
       return;
     }
 
     if (!birthYear) {
       alert("출생연도를 선택해주세요.");
+      setIsAnalyzing(false);
       return;
     }
 
@@ -368,23 +374,55 @@ ${healthText}
 ${monthlyLuckText}
 `;
 const currentYear = new Date().getFullYear();
-const daeunStartYear = currentYear - (currentYear % 10);
+const daeunStartYear = currentYear;
+
+const daeunYearlyText = Array.from({ length: 10 }, (_, i) => {
+  const targetYear = daeunStartYear + i;
+  const yearScore = 70 + ((targetYear + baseScore + i) % 20);
+
+  if (i === 0) {
+    return `${targetYear}년
+현재 흐름을 정리하고 방향을 다시 잡는 해입니다. 무리하게 확장하기보다는 지금까지 해온 일, 인간관계, 재물 흐름을 점검하는 것이 좋습니다. 운세 점수 ${yearScore}점`;
+  }
+
+  if (i === 1 || i === 2) {
+    return `${targetYear}년
+새로운 기회가 조금씩 들어오는 시기입니다. 직업 변화, 부업, 새로운 공부, 사람과의 연결에서 가능성이 생길 수 있습니다. 다만 준비 없이 바로 움직이기보다는 작은 테스트부터 시작하는 것이 좋습니다. 운세 점수 ${yearScore}점`;
+  }
+
+  if (i === 3 || i === 4) {
+    return `${targetYear}년
+성과를 만들기 좋은 시기입니다. 지금까지 준비한 일이 있다면 결과로 이어질 가능성이 커집니다. 재물운은 수입 증가보다 관리 능력이 중요하며, 지출 구조를 정리하면 안정감이 좋아집니다. 운세 점수 ${yearScore}점`;
+  }
+
+  if (i === 5 || i === 6) {
+    return `${targetYear}년
+인간관계와 협업의 영향이 커지는 해입니다. 혼자 모든 것을 해결하려 하기보다 도움을 주고받는 구조가 중요합니다. 계약, 약속, 금전 거래는 문서와 기록을 남기는 것이 좋습니다. 운세 점수 ${yearScore}점`;
+  }
+
+  if (i === 7 || i === 8) {
+    return `${targetYear}년
+건강, 생활리듬, 가족관계, 장기 계획을 점검해야 하는 시기입니다. 지나친 욕심보다 안정적인 관리가 필요합니다. 꾸준히 쌓아온 일은 이 시기에 신뢰와 평판으로 돌아올 수 있습니다. 운세 점수 ${yearScore}점`;
+  }
+
+  return `${targetYear}년
+지난 10년의 흐름을 정리하고 다음 방향을 준비하는 해입니다. 새로운 시작을 위해 불필요한 관계, 지출, 일의 방식을 정리하면 좋습니다. 다음 대운으로 넘어가기 전 기반을 다지는 시기입니다. 운세 점수 ${yearScore}점`;
+}).join("\n\n");
 
 const daeunText = `
-🔮 대운(10년 운세)
+🔮 대운 10년 연도별 상세 해석
 
-${daeunStartYear} ~ ${daeunStartYear + 9}
-현재 시점의 대운 흐름입니다.
-지금은 현재 삶의 방향, 직업, 재물, 인간관계의 균형을 점검하는 시기입니다.
+${daeunStartYear}년부터 ${daeunStartYear + 9}년까지의 흐름입니다.
+현재 대운은 앞으로 10년 동안 삶의 방향, 재물관리, 직업 변화, 인간관계, 건강관리의 균형을 점검하는 흐름으로 볼 수 있습니다.
 
-${daeunStartYear + 10} ~ ${daeunStartYear + 19}
-다음 10년은 새로운 변화와 확장의 가능성이 커지는 흐름입니다.
+━━━━━━━━━━━━━━
 
-${daeunStartYear + 20} ~ ${daeunStartYear + 29}
-장기적인 안정과 자산관리, 건강관리의 중요성이 커지는 시기입니다.
+${daeunYearlyText}
+
+━━━━━━━━━━━━━━
 
 ※ 현재 대운은 테스트용 간단 계산입니다.
-정확한 대운 계산은 다음 단계에서 출생월·성별·순행/역행 기준으로 보정할 수 있습니다.
+정확한 대운 계산은 추후 출생월, 성별, 순행·역행 기준을 반영해 보정할 수 있습니다.
 `;
 
     const moneyScore = 70 + baseScore;
@@ -398,20 +436,46 @@ ${daeunStartYear + 20} ~ ${daeunStartYear + 29}
     const luckyColors = ["보라색", "금색", "파란색", "초록색", "분홍색", "흰색"];
     const luckyColor = luckyColors[year % luckyColors.length];
     const sajuSystemGuide = `
-    당신은 전통 사주명리 해석을 현대적으로 풀어주는 AI 사주 상담사입니다.
+    당신은 전통 사주명리 해석을 현대적으로 풀어주는 전문 AI 사주 상담사입니다.
     
-    해석 기준:
-    1. 사주는 단정적 예언이 아니라 성향, 흐름, 가능성, 주의점, 실천 조언 중심으로 해석합니다.
-    2. 사용자의 사주팔자, 일주, 오행, 강한 오행, 부족한 오행, 질문을 함께 반영합니다.
-    3. 오행은 강한 기운만 강조하지 말고, 부족한 기운을 어떻게 보완할지 현실적으로 안내합니다.
-    4. 재물운은 투자 확정, 수익 보장, 대박 같은 표현을 피하고 수입, 지출, 자산관리, 기회 흐름 중심으로 설명합니다.
-    5. 직업운은 일주, 강한 오행, 부족한 오행을 연결해 어울리는 일의 방식과 방향을 제안합니다.
-    6. 연애운과 인간관계는 상대방을 단정하지 말고 소통 방식, 관계 균형, 감정 관리 중심으로 해석합니다.
-    7. 건강운은 의학적 진단이나 치료 조언이 아니라 생활습관, 컨디션 관리, 휴식, 식습관 같은 일반 조언으로만 설명합니다.
-    8. 불안감이나 공포를 주는 표현은 피하고, 사용자가 바로 실천할 수 있는 대안을 제시합니다.
-    9. 질문이 있을 경우 질문에 대한 답을 가장 먼저 반영합니다.
-    10. 답변은 따뜻하지만 현실적인 상담 말투로 작성합니다.
-    `;    
+    답변 작성 원칙:
+    1. 답변은 짧게 요약하지 말고, 최소 1,500자 이상으로 충분히 길고 자세하게 작성합니다.
+    2. 사용자의 사주팔자, 일주, 오행 분포, 강한 오행, 부족한 오행, 성별, 질문을 모두 반영합니다.
+    3. 단정적인 예언이나 공포감을 주는 표현은 피하고, 성향·흐름·가능성·주의점·실천 조언 중심으로 설명합니다.
+    4. 각 답변은 반드시 다음 구조를 따릅니다.
+    
+    [1] 전체 흐름 요약
+    - 현재 사주의 핵심 기운을 쉽게 설명합니다.
+    - 강한 오행과 부족한 오행이 삶에 어떤 영향을 주는지 설명합니다.
+    
+    [2] 타고난 성향
+    - 일주와 오행을 바탕으로 성격, 사고방식, 장점, 약점을 구체적으로 설명합니다.
+    - 인간관계에서 드러나는 모습도 함께 설명합니다.
+    
+    [3] 분야별 해석
+    - 질문 주제가 재물운이면 돈이 들어오는 방식, 지출 습관, 자산관리, 수익 방향을 설명합니다.
+    - 질문 주제가 직업운이면 잘 맞는 일, 업무 스타일, 피해야 할 환경, 발전 방향을 설명합니다.
+    - 질문 주제가 연애운이면 관계 방식, 잘 맞는 사람, 주의할 소통 방식, 인연 흐름을 설명합니다.
+    - 질문 주제가 건강운이면 의학적 진단이 아닌 생활습관, 컨디션 관리, 휴식, 식습관 중심으로 설명합니다.
+    
+    [4] 올해 운세 흐름
+    - 올해 주의할 점과 기회가 되는 부분을 현실적으로 설명합니다.
+    - 월별 흐름까지 너무 단순하게 말하지 말고, 행동 조언을 함께 제시합니다.
+    
+    [5] 현실 조언
+    - 사용자가 오늘부터 바로 실천할 수 있는 조언을 5가지 이상 제시합니다.
+    - 조언은 추상적이지 않게 구체적으로 작성합니다.
+    
+    [6] 마무리 상담
+    - 불안감을 주지 않고, 따뜻하지만 현실적인 말투로 마무리합니다.
+    
+    표현 방식:
+    - 상담하듯 자연스럽게 설명합니다.
+    - 어려운 명리 용어는 쉽게 풀어서 설명합니다.
+    - “무조건 된다”, “반드시 실패한다”, “대박 난다” 같은 표현은 사용하지 않습니다.
+    - 투자, 건강, 결혼, 이직 등 중요한 결정은 참고용 조언으로만 안내합니다.
+    - 답변은 한국어로 작성합니다.
+    `;
     const sajuInfo = `
 이름: ${name}
 성별: ${gender === "male" ? "남성" : "여성"}
@@ -434,43 +498,58 @@ ${daeunStartYear + 20} ~ ${daeunStartYear + 29}
 
   const aiAnswer = await generateSajuAiAnswer(sajuSystemGuide + "\n\n" + sajuInfo + "\n\n질문:\n" + (question || "아직 입력한 질문이 없습니다."));
   setAiResult(aiAnswer);
-  const moneyAnswer = await generateSajuAiAnswer(
+  setMoneyResult(`💰 재물운 상세 분석
+
+    ${strongest.name} 기운이 강하게 작용하는 사주입니다.
+    재물운은 큰돈이 갑자기 들어오는지보다, 들어온 돈을 안정적으로 관리하는 힘이 중요합니다.
+    현재 사주는 ${weakest.name} 기운이 부족하므로 무리한 확장보다 지출 관리와 반복 수익 구조가 중요합니다.
     
-  sajuSystemGuide +
-    "\n\n" +
-    sajuInfo +
-    "\n\n질문:\n이번 답변은 반드시 재물운만 분석해줘. 직업운, 연애운, 건강운 설명은 제외해줘. 위 사주팔자와 오행을 기준으로 돈이 모이는 방식, 주의할 소비 습관, 잘 맞는 수익 방향, 자산관리 방식, 올해 재물 흐름만 구체적으로 설명해줘."
-);
-setMoneyResult(`💰 재물운 상세 분석
-
-  ${moneyAnswer}`);
-  const jobAnswer = await generateSajuAiAnswer(
-  sajuSystemGuide +
-    "\n\n" +
-    sajuInfo +
-    "\n\n질문:\n이번 답변은 반드시 직업운만 분석해줘. 재물운, 연애운, 건강운 설명은 제외해줘. 위 사주팔자와 오행을 기준으로 잘 맞는 직업 방향, 일하는 방식, 강점이 드러나는 분야, 피하면 좋은 업무 스타일, 올해 직업 변화 가능성만 구체적으로 설명해줘."
-);
-setJobResult(`💼 직업운 상세 분석
-
-  ${jobAnswer}`);    
-const loveAnswer = await generateSajuAiAnswer(
-  sajuSystemGuide +
-    "\n\n" +
-    sajuInfo +
-    "\n\n질문:\n이번 답변은 반드시 연애운과 인간관계운만 분석해줘. 재물운, 직업운, 건강운 설명은 제외해줘. 위 사주팔자와 오행을 기준으로 잘 맞는 사람의 성향, 관계에서 주의할 점, 소통 방식, 결혼운 흐름, 올해 인연운만 구체적으로 설명해줘."
-);
-setLoveResult(`❤️ 연애운·인간관계 상세 분석
-
-  ${loveAnswer}`);
-const healthAnswer = await generateSajuAiAnswer(
-  sajuSystemGuide +
-    "\n\n" +
-    sajuInfo +
-    "\n\n질문:\n위 사주팔자와 오행을 기준으로 건강운을 분석해줘. 부족한 오행과 관련된 생활습관, 컨디션 관리법, 주의할 점을 설명하고 실천 가능한 건강관리 조언을 알려줘."
-); 
-setHealthResult(`🏥 건강운 상세 분석
-
-  ${healthAnswer}`);
+    현실 조언:
+    1. 매월 고정 지출을 먼저 정리하세요.
+    2. 단기 수익보다 반복 수익 구조를 만드세요.
+    3. 계약이나 금전 거래는 반드시 기록을 남기세요.
+    4. 잘 아는 분야에서 수익 기회를 찾으세요.
+    5. 부족한 ${weakest.name} 기운을 보완하는 생활습관도 함께 관리하세요.`);
+    
+    setJobResult(`💼 직업운 상세 분석
+    
+    직업운은 ${strongest.name} 기운의 영향을 강하게 받습니다.
+    현재 사주는 본인의 강점을 살릴 수 있는 분야에서 성과를 만들 가능성이 있습니다.
+    다만 ${weakest.name} 기운이 부족하므로 일의 지속성, 균형, 협업 구조를 의식적으로 보완하는 것이 좋습니다.
+    
+    현실 조언:
+    1. 혼자 모든 일을 떠안기보다 협업 구조를 만드세요.
+    2. 본인의 전문성을 문서나 콘텐츠로 정리하세요.
+    3. 장기적으로 쌓이는 일을 선택하세요.
+    4. 급한 변화보다 안정적인 확장을 우선하세요.
+    5. 부족한 ${weakest.name} 기운을 보완할 수 있는 사람과 함께하면 좋습니다.`);
+    
+    setLoveResult(`❤️ 연애운·인간관계 상세 분석
+    
+    연애운과 인간관계에서는 본인의 표현 방식과 감정 조절이 중요합니다.
+    ${strongest.name} 기운이 강하면 장점이 뚜렷하게 드러나는 대신, 상대에게는 다소 강하게 느껴질 수 있습니다.
+    관계는 속도보다 신뢰를 쌓는 방식이 더 안정적입니다.
+    
+    현실 조언:
+    1. 감정이 올라올 때 바로 말하지 말고 한 번 정리하세요.
+    2. 상대방의 반응보다 관계의 흐름을 보세요.
+    3. 오래 갈 관계는 속도보다 신뢰가 중요합니다.
+    4. 반복되는 갈등 패턴을 기록해보세요.
+    5. 부족한 ${weakest.name} 기운을 보완하는 관계 습관을 만들어보세요.`);
+    
+    setHealthResult(`🏥 건강운 상세 분석
+    
+    건강운은 의학적 진단이 아니라 사주 오행의 균형을 참고한 생활관리 조언입니다.
+    현재 사주에서 부족한 기운은 ${weakest.name}입니다.
+    
+    ${healthText}
+    
+    현실 조언:
+    1. 수면 시간을 일정하게 유지하세요.
+    2. 식사 시간을 규칙적으로 잡으세요.
+    3. 가벼운 걷기나 스트레칭을 꾸준히 하세요.
+    4. 스트레스를 쌓아두지 말고 해소 루틴을 만드세요.
+    5. 건강 이상이 느껴지면 반드시 전문가 상담을 받으세요.`);
 setYearResult(`${yearLuckText}
 
   📊 오늘의 운세 점수
@@ -650,9 +729,17 @@ ${personalityText}
           </button>
         </div>
 
-        <button onClick={handleAnalyze} style={mainButtonStyle}>
-          사주 분석하기
-        </button>
+        <button onClick={handleAnalyze} style={mainButtonStyle} disabled={isAnalyzing}>
+  {isAnalyzing ? "🔮 분석 중..." : "사주 분석하기"}
+</button>
+
+{isAnalyzing && (
+  <div className="analyzing-box">
+    <div className="spinner"></div>
+    <p>🔮 사주 분석 중입니다...</p>
+    <span>오행, 대운, 올해 운세 흐름을 해석하고 있습니다.</span>
+  </div>
+)}
 
         {result && (
   <>
