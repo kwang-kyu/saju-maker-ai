@@ -1,4 +1,32 @@
 import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
+
+function getOpenAiKey() {
+  if (process.env.OPENAI_API_KEY) {
+    return process.env.OPENAI_API_KEY;
+  }
+
+  const envPaths = [
+    path.join(process.cwd(), ".env.local"),
+    path.join(process.cwd(), ".vercel", ".env.development.local"),
+  ];
+
+  for (const envPath of envPaths) {
+    if (fs.existsSync(envPath)) {
+      const envText = fs.readFileSync(envPath, "utf-8");
+      const line = envText
+        .split("\n")
+        .find((item) => item.startsWith("OPENAI_API_KEY="));
+
+      if (line) {
+        return line.replace("OPENAI_API_KEY=", "").trim();
+      }
+    }
+  }
+
+  return "";
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -12,15 +40,13 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "질문 내용이 없습니다." });
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = getOpenAiKey();
 
-if (!apiKey) {
-  return res.status(500).json({ error: "OPENAI_API_KEY is not set" });
-}
+    if (!apiKey) {
+      return res.status(500).json({ error: "OPENAI_API_KEY is not set" });
+    }
 
-    const openai = new OpenAI({
-      apiKey,
-    });
+    const openai = new OpenAI({ apiKey });
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
