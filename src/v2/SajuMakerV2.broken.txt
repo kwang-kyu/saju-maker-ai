@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿@'
+import { useState } from "react";
 import { MainMenu, type MenuKey } from "./components/MainMenu";
 import InputForm from "./components/InputForm";
 import ResultView from "./components/ResultView";
-import { checkVoucherCode, useVoucherCode } from "./services/supabase/voucherService";
+import { checkVoucherCode } from "./services/supabase/voucherService";
 
 type SajuFormData = {
   name: string;
@@ -37,21 +38,6 @@ export function SajuMakerV2() {
       setRemainingCount(result.remainingCount ?? null);
       setTotalCount(result.totalCount ?? null);
     }
-  }
-
-  async function handleFormSubmit(data: SajuFormData) {
-    const result = await useVoucherCode(voucherCode);
-
-    setVoucherMessage(result.message);
-
-    if (!result.ok) {
-      setIsVoucherVerified(false);
-      return;
-    }
-
-    setRemainingCount(result.remainingCount ?? remainingCount);
-    setTotalCount(result.totalCount ?? totalCount);
-    setFormData(data);
   }
 
   return (
@@ -180,7 +166,7 @@ export function SajuMakerV2() {
                 이름과 생년월일을 입력하면 상담이 시작됩니다.
               </p>
 
-              <InputForm onSubmit={handleFormSubmit} />
+              <InputForm onSubmit={setFormData} />
             </section>
           ) : (
             <>
@@ -228,8 +214,4 @@ export function SajuMakerV2() {
     </div>
   );
 }
-
-
-
-
-
+'@ | Set-Content .\src\v2\SajuMakerV2.tsx -Encoding UTF8

@@ -1,0 +1,36 @@
+﻿function buildPersonalProfile(params: {
+  name: string;
+  birthDate: string;
+  birthTime: string;
+  gender: string;
+  calendarType: string;
+  solarDate: string;
+  lunarDate: string;
+  yearGanZhi: string;
+  monthGanZhi: string;
+  dayGanZhi: string;
+  timeGanZhi: string;
+}) {
+  const { name, birthDate, birthTime, gender, calendarType, solarDate, lunarDate, yearGanZhi, monthGanZhi, dayGanZhi, timeGanZhi } = params;
+  const age = getCurrentAge(birthDate);
+  const genderText = gender === "male" ? "남성" : "여성";
+  const calendarText = calendarType === "lunar" ? "음력" : "양력";
+
+  return `${name}님의 상담은 아래 입력 정보를 기준으로 작성되었습니다.
+
+이름: ${name}
+입력 기준: ${calendarText}
+입력 생년월일: ${birthDate}
+양력 환산: ${solarDate}
+음력 생일: ${lunarDate}
+출생시간: ${birthTime}
+성별: ${genderText}
+현재 나이: ${age ? `${age}세` : "확인 필요"}
+사주팔자
+연주: ${yearGanZhi}
+월주: ${monthGanZhi}
+일주: ${dayGanZhi}
+시주: ${timeGanZhi}
+
+이번 리포트는 입력된 생년월일과 현재 나이 흐름을 기준으로 인생의 방향, 돈, 일, 관계, 건강, 결혼, 사업, 부동산 흐름을 종합 상담하는 방식으로 구성됩니다.`;
+}

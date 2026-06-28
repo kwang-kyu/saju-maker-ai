@@ -1,4 +1,4 @@
-import { Lunar, Solar } from "lunar-javascript";
+﻿import { Lunar, Solar } from "lunar-javascript";
 
 type SajuDateParams = {
   birthYear: string;
@@ -14,21 +14,17 @@ export function convertToSajuSolarDate({
   calendarType,
 }: SajuDateParams) {
   const year = Number(birthYear);
+  const month = Number(birthMonth);
+  const day = Number(birthDay);
 
   let solarDate = "";
   let lunarDate = "";
   let finalSolarYear = year;
-  let finalSolarMonth = Number(birthMonth);
-  let finalSolarDay = Number(birthDay);
-
-  if (year === 1962 && Number(birthMonth) === 4 && Number(birthDay) === 23) {
-    finalSolarYear = 1962;
-    finalSolarMonth = 6;
-    finalSolarDay = 7;
-  }
+  let finalSolarMonth = month;
+  let finalSolarDay = day;
 
   if (calendarType === "solar") {
-    const solar = Solar.fromYmd(year, Number(birthMonth), Number(birthDay));
+    const solar = Solar.fromYmd(year, month, day);
     const lunar = solar.getLunar();
 
     finalSolarYear = solar.getYear();
@@ -38,29 +34,15 @@ export function convertToSajuSolarDate({
     solarDate = `${finalSolarYear}년 ${finalSolarMonth}월 ${finalSolarDay}일`;
     lunarDate = `${lunar.getYear()}년 ${Math.abs(lunar.getMonth())}월 ${lunar.getDay()}일`;
   } else {
-    const lunar = Lunar.fromYmdHms(
-      year,
-      Number(birthMonth),
-      Number(birthDay),
-      0,
-      0,
-      0
-    );
-
+    const lunar = Lunar.fromYmdHms(year, month, day, 0, 0, 0);
     const solar = lunar.getSolar();
 
     finalSolarYear = solar.getYear();
     finalSolarMonth = solar.getMonth();
     finalSolarDay = solar.getDay();
 
-    if (year === 1962 && Number(birthMonth) === 4 && Number(birthDay) === 23) {
-      finalSolarYear = 1962;
-      finalSolarMonth = 6;
-      finalSolarDay = 7;
-    }
-
     solarDate = `${finalSolarYear}년 ${finalSolarMonth}월 ${finalSolarDay}일`;
-    lunarDate = `${year}년 ${birthMonth}월 ${birthDay}일`;
+    lunarDate = `${year}년 ${month}월 ${day}일`;
   }
 
   return {

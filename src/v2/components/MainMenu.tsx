@@ -22,14 +22,14 @@ type MainMenuProps = {
 };
 
 const mainMenus: { key: MenuKey; label: string }[] = [
-  { key: "basic", label: "기본사주" },
-  { key: "total", label: "전체운세" },
-  { key: "year", label: "올해운세" },
-  { key: "today", label: "오늘운세" },
-  { key: "moneyToday", label: "오늘재물" },
-  { key: "loveToday", label: "오늘연애" },
-  { key: "healthToday", label: "오늘건강" },
-  { key: "lucky", label: "오늘행운" },
+  { key: "basic", label: "기본 사주" },
+  { key: "total", label: "전체 운세" },
+  { key: "year", label: "올해 운세" },
+  { key: "today", label: "오늘의 운세" },
+  { key: "moneyToday", label: "오늘의 재물운" },
+  { key: "loveToday", label: "오늘의 연애운" },
+  { key: "healthToday", label: "오늘의 건강운" },
+  { key: "lucky", label: "오늘의 행운" },
   { key: "ai", label: "AI 종합상담" },
 ];
 
@@ -112,3 +112,4 @@ export function MainMenu({ activeMenu, onChangeMenu }: MainMenuProps) {
     </section>
   );
 }
+

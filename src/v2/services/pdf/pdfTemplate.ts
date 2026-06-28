@@ -14,6 +14,40 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#039;");
 }
 
+function cleanPdfText(value: string) {
+  return value
+    .replaceAll("🌿", "[핵심]")
+    .replaceAll("🌱", "[흐름]")
+    .replaceAll("💰", "[재물]")
+    .replaceAll("💼", "[직업]")
+    .replaceAll("❤️", "[연애]")
+    .replaceAll("❤", "[연애]")
+    .replaceAll("🩺", "[건강]")
+    .replaceAll("⚠️", "[주의]")
+    .replaceAll("⚠", "[주의]")
+    .replaceAll("✅", "[실천]")
+    .replaceAll("📌", "[핵심]")
+    .replaceAll("📍", "[포인트]")
+    .replaceAll("📅", "[시기]")
+    .replaceAll("🔁", "[반복]")
+    .replaceAll("🧭", "[방향]")
+    .replaceAll("🌙", "[총평]")
+    .replaceAll("🔮", "[조언]")
+    .replaceAll("👍", "[장점]")
+    .replaceAll("👎", "[주의]")
+    .replaceAll("❗", "[주의]")
+    .replaceAll("⭐", "[중요]")
+    .replaceAll("✨", "[중요]")
+    .replaceAll("📈", "[상승]")
+    .replaceAll("📉", "[하락]")
+    .replaceAll("🏠", "[부동산]")
+    .replaceAll("🏢", "[사업]")
+    .replaceAll("🤝", "[관계]")
+    .replaceAll("🧾", "[정리]")
+    .replaceAll("🎯", "[목표]")
+    .replaceAll("🔎", "[확인]");
+}
+
 function removeDuplicateLines(text: string) {
   const seen = new Set<string>();
 
@@ -42,8 +76,8 @@ export function buildV2PdfHtml(params: {
   const safeSections = sections
     .filter((section) => section.title.trim() && section.content.trim())
     .map((section) => ({
-      title: escapeHtml(section.title),
-      content: escapeHtml(removeDuplicateLines(section.content)),
+      title: escapeHtml(cleanPdfText(section.title)),
+      content: escapeHtml(cleanPdfText(removeDuplicateLines(section.content))),
     }));
 
   const tocHtml = safeSections
@@ -76,7 +110,7 @@ export function buildV2PdfHtml(params: {
     <html lang="ko">
       <head>
         <meta charset="UTF-8" />
-        <title>${escapeHtml(title)}</title>
+        <title>${escapeHtml(cleanPdfText(title))}</title>
         <style>${getV2PdfStyle()}</style>
       </head>
       <body>
@@ -87,10 +121,10 @@ export function buildV2PdfHtml(params: {
 
         <div class="pdf-page">
           <div class="pdf-cover">
-            <div class="pdf-title">${escapeHtml(title)}</div>
+            <div class="pdf-title">${escapeHtml(cleanPdfText(title))}</div>
             <div class="pdf-subtitle">
-              ${escapeHtml(name)}님을 위한 ${reportType === "summary" ? "요약 리포트" : "상세 리포트"}<br />
-              ${escapeHtml(subtitle)}
+              ${escapeHtml(cleanPdfText(name))}님을 위한 ${reportType === "summary" ? "요약 리포트" : "상세 리포트"}<br />
+              ${escapeHtml(cleanPdfText(subtitle))}
             </div>
           </div>
           <div class="pdf-footer">SAJU-MAKER-AI v2  천운문  Page 1</div>

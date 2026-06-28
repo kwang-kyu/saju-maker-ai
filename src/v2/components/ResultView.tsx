@@ -67,9 +67,9 @@ function buildPersonalProfile(params: {
   return `${name}님의 상담은 아래 입력 정보를 기준으로 작성되었습니다.
 
 이름: ${name}
-입력 기준: ${calendarText}
+출생 기준: ${calendarText}
 입력 생년월일: ${birthDate}
-양력 환산: ${solarDate}
+출생 당시 양력 환산일: ${solarDate}
 음력 생일: ${lunarDate}
 출생시간: ${birthTime}
 성별: ${genderText}
@@ -117,13 +117,7 @@ export default function ResultView({
   const sajuPillars = `${sajuInfo.yearGanZhi} / ${sajuInfo.monthGanZhi} / ${sajuInfo.dayGanZhi} / ${sajuInfo.timeGanZhi}`;
 
   const getPdfSections = () => {
-    const inputData = {
-      name,
-      birthDate,
-      birthTime,
-      gender,
-    };
-
+    const inputData = { name, birthDate, birthTime, gender };
     const mappedBasic = basicMapper(inputData);
 
     const sajuPersonalNote = `${name}님은 일간 기준으로 ${mappedBasic.summary}
@@ -144,117 +138,129 @@ export default function ResultView({
           sajuPillars,
         }),
       },
-      {
-        title: "기본 사주",
-        content: basicConsulting(mappedBasic),
-      },
-      {
-        title: "전체 운세",
-        content: totalConsulting(inputData),
-      },
-      {
-        title: "올해 운세",
-        content: yearConsulting(name),
-      },
-      {
-        title: "오늘의 운세",
-        content: todayConsulting(name),
-      },
+      { title: "기본 사주", content: basicConsulting(mappedBasic) },
+      { title: "전체 운세", content: totalConsulting(inputData) },
+      { title: "올해 운세", content: yearConsulting(name) },
+      { title: "오늘의 운세", content: todayConsulting(name) },
       {
         title: "재물 상담",
-        content: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }) + "\n\n" + sajuPersonalNote + "\n\n" + moneyConsulting(mappedBasic),
+        content:
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }) +
+          "\n\n" +
+          sajuPersonalNote +
+          "\n\n" +
+          moneyConsulting(mappedBasic),
       },
       {
         title: "직업 상담",
-        content: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }) + "\n\n" + sajuPersonalNote + "\n\n" + jobConsulting(mappedBasic),
+        content:
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }) +
+          "\n\n" +
+          sajuPersonalNote +
+          "\n\n" +
+          jobConsulting(mappedBasic),
       },
       {
         title: "연애 상담",
-        content: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "연애 상담" }) + "\n\n" + sajuPersonalNote + "\n\n" + loveConsulting(mappedBasic),
+        content:
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "연애 상담" }) +
+          "\n\n" +
+          sajuPersonalNote +
+          "\n\n" +
+          loveConsulting(mappedBasic),
       },
       {
         title: "건강 상담",
-        content: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "건강 상담" }) + "\n\n" + sajuPersonalNote + "\n\n" + getHealthConsulting(mappedBasic),
+        content:
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "건강 상담" }) +
+          "\n\n" +
+          sajuPersonalNote +
+          "\n\n" +
+          getHealthConsulting(mappedBasic),
       },
       {
         title: "결혼 상담",
-        content: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "결혼 상담" }) + "\n\n" + sajuPersonalNote + "\n\n" + getMarriageConsulting(mappedBasic),
+        content:
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "결혼 상담" }) +
+          "\n\n" +
+          sajuPersonalNote +
+          "\n\n" +
+          getMarriageConsulting(mappedBasic),
       },
       {
         title: "사업 상담",
-        content: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "사업 상담" }) + "\n\n" + sajuPersonalNote + "\n\n" + getBusinessConsulting(mappedBasic),
+        content:
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "사업 상담" }) +
+          "\n\n" +
+          sajuPersonalNote +
+          "\n\n" +
+          getBusinessConsulting(mappedBasic),
       },
       {
         title: "부동산 상담",
-        content: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "부동산 상담" }) + "\n\n" + sajuPersonalNote + "\n\n" + getRealEstateConsulting(mappedBasic),
+        content:
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "부동산 상담" }) +
+          "\n\n" +
+          sajuPersonalNote +
+          "\n\n" +
+          getRealEstateConsulting(mappedBasic),
       },
       {
         title: "사안별 상담",
         content: "사안별 상담은 질문 선택 방식으로 제공됩니다. 구체적인 고민이 입력되면 해당 사안에 맞춰 상담을 진행합니다.",
       },
-      {
-        title: "AI 종합상담",
-        content: getAiConsulting(mappedBasic),
-      },
+      { title: "AI 종합상담", content: getAiConsulting(mappedBasic) },
     ];
   };
 
-  const getSummaryPdfSections = () => {
-    return [
-      {
-        title: "개인 상담 기준",
-        content: buildPersonalProfile({
-          name,
-          birthDate,
-          birthTime,
-          gender,
-          calendarType,
-          solarDate: sajuInfo.solarDate,
-          lunarDate: sajuInfo.lunarDate,
-          sajuPillars,
-        }),
-      },
-      {
-        title: "기본 사주 요약",
-        content: `${name}님의 기본 사주는 스스로 기준을 세우고 차분히 쌓아갈 때 강점이 살아나는 흐름입니다.
+  const getSummaryPdfSections = () => [
+    {
+      title: "개인 상담 기준",
+      content: buildPersonalProfile({
+        name,
+        birthDate,
+        birthTime,
+        gender,
+        calendarType,
+        solarDate: sajuInfo.solarDate,
+        lunarDate: sajuInfo.lunarDate,
+        sajuPillars,
+      }),
+    },
+    {
+      title: "기본 사주 요약",
+      content: `${name}님의 기본 사주는 스스로 기준을 세우고 차분히 쌓아갈 때 강점이 살아나는 흐름입니다.
 
 겉으로는 조용하거나 신중해 보여도, 속으로는 생각이 깊고 판단 기준이 분명한 편입니다.
 
 무리하게 빠르게 움직이기보다 본인이 납득할 수 있는 방향을 정한 뒤 꾸준히 가는 것이 좋습니다.`,
-      },
-      {
-        title: "전체 운세 요약",
-        content: `${name}님은 앞으로 무리한 확장보다 안정, 정리, 건강, 관계의 균형이 더 중요한 시기입니다.
+    },
+    {
+      title: "전체 운세 요약",
+      content: `${name}님은 앞으로 무리한 확장보다 안정, 정리, 건강, 관계의 균형이 더 중요한 시기입니다.
 
 일과 돈은 크게 벌리는 것보다 새는 부분을 막고, 오래 가져갈 기준을 세울 때 흐름이 안정됩니다.`,
-      },
-      {
-        title: "올해 운세 요약",
-        content: `${name}님에게 올해는 속도보다 방향이 중요한 해입니다.
+    },
+    {
+      title: "올해 운세 요약",
+      content: `${name}님에게 올해는 속도보다 방향이 중요한 해입니다.
 
 새로운 일을 무리하게 늘리기보다 지금 하는 일의 완성도와 안정성을 높이는 것이 좋습니다.`,
-      },
-      {
-        title: "오늘의 운세 요약",
-        content: `${name}님은 오늘 많은 일을 한꺼번에 처리하기보다 중요한 일 하나를 먼저 끝내는 것이 좋습니다.
+    },
+    {
+      title: "오늘의 운세 요약",
+      content: `${name}님은 오늘 많은 일을 한꺼번에 처리하기보다 중요한 일 하나를 먼저 끝내는 것이 좋습니다.
 
 돈, 약속, 문서, 건강 리듬을 차분히 점검하면 하루 흐름이 안정됩니다.`,
-      },
-    ];
-  };
+    },
+  ];
 
   const handleSummaryPdf = () => {
-    downloadSummaryPdf({
-      name,
-      sections: getSummaryPdfSections(),
-    });
+    downloadSummaryPdf({ name, sections: getSummaryPdfSections() });
   };
 
   const handleDetailPdf = () => {
-    downloadDetailPdf({
-      name,
-      sections: getPdfSections(),
-    });
+    downloadDetailPdf({ name, sections: getPdfSections() });
   };
 
   const renderResult = () => {
@@ -300,7 +306,7 @@ export default function ResultView({
 
   return (
     <div style={{ marginTop: "24px" }}>
-      <h2>결과 확인</h2>
+      <h2 style={{ marginBottom: "16px" }}>결과 확인</h2>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
         <button
@@ -308,7 +314,7 @@ export default function ResultView({
           onClick={handleSummaryPdf}
           style={{
             flex: 1,
-            padding: "12px",
+            padding: "13px",
             border: "none",
             borderRadius: "12px",
             background: "#f59e0b",
@@ -317,7 +323,7 @@ export default function ResultView({
             cursor: "pointer",
           }}
         >
-          요약 PDF
+          📄 요약 리포트
         </button>
 
         <button
@@ -325,7 +331,7 @@ export default function ResultView({
           onClick={handleDetailPdf}
           style={{
             flex: 1,
-            padding: "12px",
+            padding: "13px",
             border: "none",
             borderRadius: "12px",
             background: "#38bdf8",
@@ -334,36 +340,63 @@ export default function ResultView({
             cursor: "pointer",
           }}
         >
-          상세 PDF
+          📘 상세 리포트
         </button>
       </div>
 
       <div
         style={{
-          padding: "16px",
+          padding: "20px",
           border: "1px solid #334155",
-          borderRadius: "12px",
+          borderRadius: "16px",
           background: "#1e293b",
-          lineHeight: "1.8",
+          lineHeight: "1.9",
+          fontSize: "15px",
         }}
       >
+        <h3 style={{ marginTop: 0, marginBottom: "14px", fontSize: "20px" }}>
+          📋 상담 기준 정보
+        </h3>
         <div>이름: {name}</div>
-        <div>입력 기준: {calendarType === "lunar" ? "음력" : "양력"}</div>
+        <div>출생 기준: {calendarType === "lunar" ? "음력 생일" : "양력 생일"}</div>
         <div>입력 생년월일: {birthDate}</div>
-        <div>양력 환산: {sajuInfo.solarDate}</div>
-        <div>음력 생일: {sajuInfo.lunarDate}</div>
-        <div>출생시간: {birthTime}</div>
+        <div>출생 당시 양력 환산일: {sajuInfo.solarDate}</div>
+        <div>출생 시간: {birthTime}</div>
         <div>성별: {gender === "male" ? "남성" : "여성"}</div>
-        <div>사주팔자: {sajuPillars}</div>
       </div>
 
       <div
         style={{
-          marginTop: "16px",
-          padding: "18px",
+          marginTop: "14px",
+          padding: "20px",
           border: "1px solid #334155",
+          borderRadius: "16px",
+          background: "#0f172a",
+          lineHeight: "1.9",
+          fontSize: "15px",
+        }}
+      >
+        <h3 style={{ marginTop: 0, marginBottom: "14px", fontSize: "20px" }}>
+          📜 만세력 사주팔자
+        </h3>
+        <div>연주: {sajuInfo.yearGanZhi}</div>
+        <div>월주: {sajuInfo.monthGanZhi}</div>
+        <div>일주: {sajuInfo.dayGanZhi}</div>
+        <div>시주: {sajuInfo.timeGanZhi}</div>
+      </div>
+
+      <div
+        style={{
+          marginTop: "18px",
+          padding: "24px",
+          border: "1px solid #334155",
+          borderRadius: "16px",
           background: "#111827",
-          lineHeight: "1.8",
+          lineHeight: "2",
+          fontSize: "16px",
+          letterSpacing: "-0.2px",
+          wordBreak: "keep-all",
+          overflowWrap: "break-word",
         }}
       >
         {renderResult()}
