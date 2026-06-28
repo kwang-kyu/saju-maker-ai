@@ -16,21 +16,21 @@ export function getMoneyFiveSetText({
   businessScore,
 }: MoneyFiveSetInput) {
   return `
-💰 재물운 5종 세트
+💰 재물운 핵심 점검
 
-1️⃣ 돈 버는 능력
+1️⃣ 돈을 만들어내는 힘
 ${earningScore}점 ${getStarRating(earningScore)}
 
-2️⃣ 돈 지키는 능력
+2️⃣ 돈을 지켜내는 힘
 ${savingScore}점 ${getStarRating(savingScore)}
 
-3️⃣ 투자운
+3️⃣ 투자 판단력
 ${investmentScore}점 ${getStarRating(investmentScore)}
 
-4️⃣ 부동산운
+4️⃣ 부동산과 자산운
 ${realEstateScore}점 ${getStarRating(realEstateScore)}
 
-5️⃣ 사업운
+5️⃣ 사업과 확장운
 ${businessScore}점 ${getStarRating(businessScore)}
 `;
 }

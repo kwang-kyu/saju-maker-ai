@@ -30,7 +30,7 @@ export default async function handler(req: any, res: any) {
           model: "gpt-4.1-mini",
           input: prompt,
           temperature: 0.7,
-          max_output_tokens: 1200,
+          max_output_tokens: 3000,
         }),
       });
   

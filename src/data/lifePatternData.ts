@@ -90,7 +90,6 @@ export function createDynamicLifePatternText(
   
     const geokgukText = getGeokgukAdvancedAnalysis(geokguk);
     const moneyComboText = getMoneyComboText(
-      "",
       normalizedDayMaster,
       geokguk,
       strengthType,
@@ -313,22 +312,26 @@ ${jobComboText}
     }): string {
       const { gyeokguk, strengthType, strongestName, weakestName } = params;
     
-      return `
-    <li>현재 ${gyeokguk}의 장점을 활용할 수 있는 분야에 집중하세요.</li>
-    <li>강한 ${strongestName} 기운은 적극 활용하고 부족한 ${weakestName} 기운은 생활 습관으로 보완하세요.</li>
-    <li>${
+      const strengthAdvice =
         strengthType === "신강"
-          ? "과도한 확장보다 리스크 관리를 병행하세요."
-          : "혼자 감당하기보다 협업과 시스템을 적극 활용하세요."
-      }</li>
-    <li>${
+          ? "결정이 빠른 장점은 살리되, 큰 지출이나 확장은 한 번 더 검토한 뒤 실행하는 것이 좋습니다."
+          : "혼자 모든 일을 떠안기보다 믿을 수 있는 사람, 제도, 시스템의 도움을 함께 활용하는 것이 좋습니다.";
+    
+      const gyeokgukAdvice =
         gyeokguk.includes("편재") || gyeokguk.includes("상관")
-          ? "아이디어와 영업력을 수익으로 연결하는 구조를 만드세요."
-          : "꾸준함과 신뢰를 기반으로 장기적 성과를 추구하세요."
-      }</li>
-    <li>${weakestName} 기운 보완이 향후 운의 균형을 높이는 핵심 과제입니다.</li>
+          ? "아이디어, 영업력, 사람을 연결하는 능력을 실제 수익 구조로 바꾸는 연습이 필요합니다."
+          : "짧은 성과보다 신뢰, 반복, 꾸준함을 쌓는 방식이 장기적으로 더 큰 결과를 만듭니다.";
+    
+      return `
+    <ol>
+      <li><b>강점 활용:</b> 현재 ${gyeokguk}의 장점이 잘 드러나는 일과 환경에 집중하세요.</li>
+      <li><b>기운 균형:</b> 강한 ${strongestName} 기운은 장점으로 쓰고, 부족한 ${weakestName} 기운은 생활 습관으로 보완하세요.</li>
+      <li><b>판단 방식:</b> ${strengthAdvice}</li>
+      <li><b>수익 연결:</b> ${gyeokgukAdvice}</li>
+      <li><b>생활 실천:</b> 부족한 ${weakestName} 기운을 보완하는 공간, 색상, 사람, 루틴을 의식적으로 가까이 두세요.</li>
+    </ol>
     `;
-    } 
+    }
 
     export function createLifeStoryText(params: {
       dayMaster: string;

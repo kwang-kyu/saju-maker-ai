@@ -1,0 +1,107 @@
+﻿import BasicResult from "./BasicResult";
+import TotalResult from "./TotalResult";
+import YearResult from "./YearResult";
+import TodayResult from "./TodayResult";
+import MoneyResult from "./MoneyResult";
+import JobResult from "./JobResult";
+import LoveResult from "./LoveResult";
+import HealthResult from "./HealthResult";
+import MarriageResult from "./MarriageResult";
+import BusinessResult from "./BusinessResult";
+import RealEstateResult from "./RealEstateResult";
+import CaseResult from "./CaseResult";
+import PlaceholderResult from "./PlaceholderResult";
+
+type ResultViewProps = {
+  name: string;
+  birthDate: string;
+  birthTime: string;
+  gender: string;
+  selectedMenu: string;
+};
+
+export default function ResultView({
+  name,
+  birthDate,
+  birthTime,
+  gender,
+  selectedMenu,
+}: ResultViewProps) {
+  const commonProps = { name, birthDate, birthTime, gender };
+
+  const renderResult = () => {
+    switch (selectedMenu) {
+      case "basic":
+        return <BasicResult {...commonProps} />;
+      case "total":
+        return <TotalResult {...commonProps} />;
+      case "year":
+        return <YearResult {...commonProps} />;
+      case "today":
+        return <TodayResult {...commonProps} />;
+      case "money":
+        return <MoneyResult {...commonProps} />;
+      case "job":
+        return <JobResult {...commonProps} />;
+      case "love":
+        return <LoveResult {...commonProps} />;
+      case "health":
+        return <HealthResult {...commonProps} />;
+      case "marriage":
+        return <MarriageResult {...commonProps} />;
+      case "business":
+        return <BusinessResult {...commonProps} />;
+      case "realEstate":
+        return <RealEstateResult {...commonProps} />;
+      case "case":
+        return <CaseResult {...commonProps} />;
+      case "lucky":
+        return <PlaceholderResult {...commonProps} title="오늘의 행운운" />;
+      case "loveToday":
+        return <PlaceholderResult {...commonProps} title="오늘의 연애운" />;
+      case "healthToday":
+        return <PlaceholderResult {...commonProps} title="오늘의 건강운" />;
+      case "ai":
+        return <PlaceholderResult {...commonProps} title="AI 종합상담" />;
+      default:
+        return <BasicResult {...commonProps} />;
+    }
+  };
+
+  return (
+    <div style={{ marginTop: "24px" }}>
+      <h2>결과 확인</h2>
+
+      <div
+        style={{
+          padding: "16px",
+          border: "1px solid #334155",
+          borderRadius: "12px",
+          background: "#1e293b",
+          lineHeight: "1.8",
+        }}
+      >
+        <div>이름: {name}</div>
+        <div>생년월일: {birthDate}</div>
+        <div>출생시간: {birthTime}</div>
+        <div>성별: {gender === "male" ? "남성" : "여성"}</div>
+      </div>
+
+      <div
+        style={{
+          marginTop: "16px",
+          padding: "18px",
+          border: "1px solid #334155",
+          borderRadius: "12px",
+          background: "#111827",
+          lineHeight: "1.8",
+        }}
+      >
+        {renderResult()}
+      </div>
+    </div>
+  );
+}
+
+
+
