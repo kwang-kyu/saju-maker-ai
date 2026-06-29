@@ -7,18 +7,23 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
   const personalCasePoint =
     `${data.dayMaster} 일간, ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면 ${name}님은 지금 사안을 판단할 때 감정보다 순서, 기준, 감당 가능한 범위를 먼저 봐야 합니다.`;
 
-  const commonOpening = `[원장님이 먼저 드리는 말씀]
+    const commonOpening = `[AI 원장 사안별 판단 리포트]
 
-${name}님, 사안별 상담에서 가장 중요한 것은 단순히 된다, 안 된다가 아닙니다.
-지금 움직여도 되는 일인지, 조금 더 준비해야 하는 일인지,
-그리고 어떤 위험을 먼저 줄여야 하는지를 차분히 보는 것이 핵심입니다.
-
-제가 실제 상담에서 가장 중요하게 보는 것은
-결과보다 순서입니다.
-좋은 일도 순서가 틀리면 부담이 되고,
-조심스러운 일도 준비가 되어 있으면 기회가 될 수 있습니다.
-
-${personalCasePoint}`;
+    ${name}님의 사안을 단순한 가능성 여부로 판단하지 않습니다.
+    
+    현재 사주 구조와 흐름을 기준으로
+    "지금 움직여도 되는 상황인지"
+    "조금 더 준비가 필요한 상황인지"
+    "위험을 먼저 관리해야 하는 상황인지"
+    를 중심으로 판단합니다.
+    
+    제가 보는 핵심 기준은 결과가 아니라 구조입니다.
+    
+    같은 선택이라도
+    준비된 선택은 기회가 되고,
+    준비되지 않은 선택은 부담이 될 수 있습니다.
+    
+    ${personalCasePoint}`;
 
   const adviceMap: Record<CaseQuestionKey, string> = {
     jobChange: `[상담 질문]
@@ -296,6 +301,26 @@ ${name}님이 지금 이직을 고민한다면
 
   return `${commonOpening}
 
-${adviceMap[questionKey]}`;
+${adviceMap[questionKey]}
+${buildFinalDecisionLine(questionKey, name)}`;
 }
+function buildFinalDecisionLine(questionKey: CaseQuestionKey, name: string) {
+  const map: Record<CaseQuestionKey, string> = {
+    jobChange: "지금은 이직보다 조건 검증이 먼저다.",
+    businessStart: "사업은 시작보다 구조 검증이 우선이다.",
+    realEstateBuy: "부동산은 매수보다 보유 구조가 핵심이다.",
+    investment: "투자는 수익보다 리스크 관리가 먼저다.",
+    marriagePrepare: "결혼은 감정보다 생활 기준이 우선이다.",
+    relationshipCleanUp: "관계는 정리보다 거리 조절이 먼저다.",
+  };
 
+  return `
+
+[AI 원장 최종 판단]
+
+${name}님 기준 최종 결론은 다음과 같습니다.
+
+${map[questionKey]}
+
+`;
+}

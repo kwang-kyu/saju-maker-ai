@@ -11,6 +11,11 @@ import BusinessResult from "./BusinessResult";
 import RealEstateResult from "./RealEstateResult";
 import CaseResult from "./CaseResult";
 import PlaceholderResult from "./PlaceholderResult";
+import { calculateSaju } from "../engine/sajuEngine";
+import { basicMapper } from "../services/basic/basicMapper";
+import { downloadDetailPdf } from "../services/pdf/downloadDetailPdf";
+import { getAiConsulting } from "../services/ai/aiConsulting";
+import { getCaseConsulting } from "../services/case/caseConsulting";
 
 type ResultViewProps = {
   name: string;
@@ -19,6 +24,39 @@ type ResultViewProps = {
   gender: string;
   selectedMenu: string;
 };
+  const sajuResult = calculateSaju({
+    name,
+    birthDate,
+    birthTime,
+    gender,
+    calendarType: "solar",
+  });
+
+  const mappedBasic = basicMapper(sajuResult);
+
+  const handleAiDeepPdf = () => {
+    downloadDetailPdf({
+      name,
+      sections: [
+        {
+          title: "AI 종합상담",
+          content: getAiConsulting(mappedBasic),
+        },
+      ],
+    });
+  };
+
+  const handleCasePdf = () => {
+    downloadDetailPdf({
+      name,
+      sections: [
+        {
+          title: "사안별 상담",
+          content: getCaseConsulting(mappedBasic, "jobChange"),
+        },
+      ],
+    });
+  };
 
 export default function ResultView({
   name,
@@ -28,7 +66,15 @@ export default function ResultView({
   selectedMenu,
 }: ResultViewProps) {
   const commonProps = { name, birthDate, birthTime, gender };
+  const sajuResult = calculateSaju({
+    name,
+    birthDate,
+    birthTime,
+    gender,
+    calendarType: "solar",
+  });
 
+  const mappedBasic = basicMapper(sajuResult);
   const renderResult = () => {
     switch (selectedMenu) {
       case "basic":
