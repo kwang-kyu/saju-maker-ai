@@ -23,14 +23,14 @@ type MainMenuProps = {
 
 const mainMenus: { key: MenuKey; label: string }[] = [
   { key: "basic", label: "기본 사주" },
-  { key: "total", label: "전체 운세" },
+  { key: "total", label: "총운 컨설팅" },
   { key: "year", label: "올해 운세" },
   { key: "today", label: "오늘의 운세" },
   { key: "moneyToday", label: "오늘의 재물운" },
   { key: "loveToday", label: "오늘의 연애운" },
   { key: "healthToday", label: "오늘의 건강운" },
   { key: "lucky", label: "오늘의 행운" },
-  { key: "ai", label: "AI 종합상담" },
+  { key: "ai", label: "AI 종합 컨설팅" },
 ];
 
 function MenuButton({
@@ -89,7 +89,7 @@ export function MainMenu({ activeMenu, onChangeMenu }: MainMenuProps) {
     >
       <h2 style={{ margin: "0 0 8px", fontSize: "23px" }}>상담 메뉴</h2>
       <p style={{ margin: "0 0 16px", color: "#cbd5e1", lineHeight: "1.7" }}>
-        기본 상담을 먼저 보고, 필요하면 AI 종합상담과 심층상담으로 이어가세요.
+        기본 사주를 먼저 확인한 뒤, 총운오늘 운세AI 종합 컨설팅사안별 컨설팅으로 이어가세요.
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "9px" }}>
@@ -112,4 +112,5 @@ export function MainMenu({ activeMenu, onChangeMenu }: MainMenuProps) {
     </section>
   );
 }
+
 
