@@ -268,12 +268,39 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
 
-  const topic =
-    questionKey === "realEstateBuy"
-      ? "매수는 검토할 수 있지만 가격 상승 기대보다 대출 부담, 보유 능력, 장기 거주 가능성을 먼저 봐야 합니다."
-      : questionKey === "realEstateSell"
-      ? "매도는 급하게 결정하기보다 보유 부담, 현금화 필요성, 다음 자산 이동 계획을 함께 봐야 합니다."
-      : "이사는 가능하지만 생활 리듬, 가족 상황, 출퇴근, 비용 부담을 함께 봐야 합니다.";
+  let reality = "";
+  let caution = "";
+  let strategy = "";
+
+  switch (questionKey) {
+    case "realEstateBuy":
+      reality = "부동산 매수는 검토할 수 있습니다. 다만 지금은 가격 상승 기대보다 대출 부담, 보유 기간, 실거주 안정성, 환금성을 먼저 봐야 합니다. 사주상 큰돈이 묶이는 선택은 감정이 아니라 버틸 수 있는 구조가 핵심입니다.";
+      caution = "주변 말만 듣고 급하게 매수하거나, 월 상환액을 낙관적으로 계산하는 것은 위험합니다.";
+      strategy = `1. 월 대출 상환액이 소득을 압박하지 않는지 확인하세요.
+2. 최소 2년 이상 보유할 수 있는 자금 구조를 보세요.
+3. 실거주는 생활 편의와 직장 동선을 우선하세요.
+4. 투자는 임대 수요와 환금성을 먼저 확인하세요.`;
+      break;
+
+    case "realEstateSell":
+      reality = "부동산 매도는 단순히 가격이 올랐는지만 볼 문제가 아닙니다. 보유 부담, 현금화 필요성, 갈아타기 계획, 세금, 다음 투자처까지 함께 봐야 합니다. 지금 매도는 목적이 분명할 때 안정적입니다.";
+      caution = "불안해서 급매로 던지거나, 다음 계획 없이 현금화만 하는 것은 좋지 않습니다.";
+      strategy = `1. 매도 이유가 현금화인지 갈아타기인지 먼저 정하세요.
+2. 세금과 중개비를 뺀 실제 손익을 계산하세요.
+3. 급매보다 적정 매도 기간을 확보하세요.
+4. 매도 후 자금 운용 계획을 미리 세우세요.`;
+      break;
+
+    case "houseMove":
+    default:
+      reality = "이사는 가능합니다. 다만 단순히 방향이나 집의 크기보다 생활 리듬, 출퇴근, 가족 상황, 비용 부담, 새로운 환경 적응력을 함께 봐야 합니다. 사주상 환경 변화는 좋게 쓰면 운을 바꾸지만, 준비 없이 움직이면 피로가 커질 수 있습니다.";
+      caution = "집만 보고 생활 동선, 관리비, 가족 적응 문제를 가볍게 보는 것은 피해야 합니다.";
+      strategy = `1. 출퇴근 시간과 생활 동선을 먼저 확인하세요.
+2. 가족 구성원의 생활 변화까지 함께 보세요.
+3. 이사 비용과 보증금 변동을 계산하세요.
+4. 새 환경에서 최소 1년 이상 안정적으로 살 수 있는지 판단하세요.`;
+      break;
+  }
 
   return `${buildOpening(data, questionKey)}
 
@@ -285,16 +312,13 @@ ${identity.moneyStyle}
 부동산은 ${name}님에게 단순한 투자보다 생활 안정과 자산 보존의 의미가 큽니다. 강한 ${data.strongestElement} 기운은 선택의 장점으로 쓰되, 부족한 ${data.weakestElement} 기운은 대출, 공실, 관리비 같은 현실 부담으로 보완해야 합니다.
 
 [현실 판단]
-${topic}
+${reality}
 
 [지금 가장 조심할 점]
-남들이 좋다고 하는 말만 듣고 들어가는 매수, 무리한 대출, 공실 가능성을 가볍게 보는 판단은 피해야 합니다.
+${caution}
 
 [실천 전략]
-1. 월 상환액을 보수적으로 계산하세요.
-2. 공실이나 수리비가 생겨도 버틸 수 있는지 확인하세요.
-3. 실거주는 생활 편의와 동선을 먼저 보세요.
-4. 투자는 임대 수요와 환금성을 먼저 확인하세요.
+${strategy}
 
 [AI 원장 최종 판단]
 ${name}님에게 부동산은 좋은 물건보다 오래 버틸 수 있는 구조가 먼저입니다.
@@ -419,6 +443,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
 
