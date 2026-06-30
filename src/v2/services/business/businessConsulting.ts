@@ -1,7 +1,9 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
+import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 
 export function getBusinessConsulting(data: BasicSajuResult): string {
   const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
 
   const sajuBusinessPoint =
     `${data.dayMaster} 일간, ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면 ${name}님의 사업운은 아이디어보다 구조, 관리력, 반복 수익에서 더 크게 살아납니다.`;
@@ -11,6 +13,7 @@ export function getBusinessConsulting(data: BasicSajuResult): string {
 
   const weakBusinessPoint =
     `부족한 ${data.weakestElement} 기운은 사업에서 보완해야 할 지점입니다. 이 부분이 약하면 매출은 생겨도 관리, 회복, 확장 판단에서 흔들릴 수 있습니다.`;
+
   return `
 제가 ${name}님의 사업운을 볼 때 먼저 말씀드리고 싶은 것은,
 사업운은 단순히 사업을 하면 돈을 버느냐가 아니라
@@ -23,6 +26,10 @@ ${strongBusinessPoint}
 
 ${weakBusinessPoint}
 
+${identity.lifeStyle}
+
+${identity.decisionStyle}
+
 🏢 원장님 말씀
 
 ${name}님은 무작정 크게 벌리는 사업보다
@@ -34,6 +41,8 @@ ${name}님은 무작정 크게 벌리는 사업보다
 고객과 신뢰를 쌓을 수 있는 구조에서 사업운이 살아납니다.
 
 💼 사업 성향
+
+${identity.workStyle}
 
 ${name}님은 남이 시키는 일만 하기보다
 스스로 판단하고 책임질 수 있는 일에서 힘이 납니다.
@@ -67,6 +76,8 @@ ${name}님에게 맞는 사업은
 
 💰 매출이 만들어지는 방식
 
+${identity.moneyStyle}
+
 ${name}님의 사업운은
 한 번의 큰 매출보다
 작은 매출이 반복되면서 커지는 흐름이 좋습니다.
@@ -82,6 +93,8 @@ ${name}님의 사업운은
 재구매와 소개가 생기는 구조를 만드는 것이 중요합니다.
 
 ⚠️ 사업에서 조심할 점
+
+${identity.riskPoint}
 
 ${name}님은 확신이 생기면 빠르게 밀고 나가려는 흐름이 생길 수 있습니다.
 
@@ -143,6 +156,8 @@ ${name}님의 사업운은 한 번에 크게 승부를 보는 흐름보다
 돈이 들어오는 길,
 돈이 나가는 길,
 고객이 다시 찾아오는 이유가 분명해야 사업이 오래 갑니다.
+
+${identity.successPoint}
 
 ${name}님은 신뢰를 쌓고 경험을 축적할수록 사업운이 좋아지는 타입이므로
 서두르기보다 탄탄하게 만드는 전략이 가장 중요합니다.
