@@ -25,7 +25,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
     
     ${personalCasePoint}`;
 
-  const adviceMap: Record<CaseQuestionKey, string> = {
+  const adviceMap: Partial<Record<CaseQuestionKey, string>> = {
     jobChange: `[상담 질문]
 이직을 해도 괜찮을까요?
 
@@ -301,11 +301,44 @@ ${name}님이 지금 이직을 고민한다면
 
   return `${commonOpening}
 
-${adviceMap[questionKey]}
+${adviceMap[questionKey] ?? buildGeneralCaseAdvice(name)}
 ${buildFinalDecisionLine(questionKey, name)}`;
 }
+
+function buildGeneralCaseAdvice(name: string) {
+  return `[사안별 기본 판단]
+
+${name}님의 이번 질문은 단순히 좋다, 나쁘다로 판단하기보다
+현재 준비 상태, 감당 가능한 범위, 시기 흐름을 함께 봐야 하는 사안입니다.
+
+[현재 흐름]
+
+지금은 마음이 급해질수록 판단이 흔들릴 수 있습니다.
+바로 결론을 내리기보다 조건을 하나씩 확인하면서
+무리하지 않는 방향으로 움직이는 것이 좋습니다.
+
+[주의할 점]
+
+가장 조심해야 할 부분은
+기대감만 보고 결정하거나,
+상대방 말만 믿고 중요한 판단을 넘기는 것입니다.
+
+돈, 계약, 관계, 이동, 진로와 관련된 일이라면
+반드시 문서, 일정, 비용, 책임 범위를 먼저 확인해야 합니다.
+
+[지금 가장 좋은 선택]
+
+지금은 크게 벌리기보다
+작게 확인하고, 한 번 더 검토하고,
+내가 감당할 수 있는 범위 안에서 움직이는 것이 좋습니다.
+
+[핵심 한마디]
+
+${name}님에게 지금 필요한 것은 빠른 결정이 아니라
+후회하지 않을 기준입니다.`;
+}
 function buildFinalDecisionLine(questionKey: CaseQuestionKey, name: string) {
-  const map: Record<CaseQuestionKey, string> = {
+  const map: Partial<Record<CaseQuestionKey, string>> = {
     jobChange: "지금은 이직보다 조건 검증이 먼저다.",
     businessStart: "사업은 시작보다 구조 검증이 우선이다.",
     realEstateBuy: "부동산은 매수보다 보유 구조가 핵심이다.",
@@ -320,7 +353,9 @@ function buildFinalDecisionLine(questionKey: CaseQuestionKey, name: string) {
 
 ${name}님 기준 최종 결론은 다음과 같습니다.
 
-${map[questionKey]}
+${map[questionKey] ?? "지금은 성급한 결정보다 조건을 확인하고 감당 가능한 범위에서 움직이는 것이 먼저다."}
 
 `;
 }
+
+
