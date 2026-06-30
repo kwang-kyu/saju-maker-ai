@@ -197,14 +197,48 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
 
-  const topic =
-    questionKey === "businessStart"
-      ? "창업은 가능하지만 처음부터 크게 시작하기보다 작게 검증하고 키우는 방식이 맞습니다."
-      : questionKey === "businessExpand"
-      ? "사업 확장은 매출이 아니라 순이익, 반복 고객, 고정비 부담이 확인된 뒤가 좋습니다."
-      : questionKey === "partnership"
-      ? "동업은 가능하지만 친분보다 역할, 지분, 책임, 해지 조건을 문서로 정하는 것이 핵심입니다."
-      : "계약은 진행할 수 있지만 좋은 말보다 조건, 특약, 책임 범위를 먼저 확인해야 합니다.";
+  let reality = "";
+  let caution = "";
+  let strategy = "";
+
+  switch (questionKey) {
+    case "businessStart":
+      reality = "사업 시작은 가능하지만 처음부터 크게 벌리는 방식보다 작게 검증하고 키우는 방식이 맞습니다. 사주상 추진력은 살릴 수 있지만, 수익 구조와 고객 반응이 확인되기 전까지는 고정비를 낮게 가져가는 것이 좋습니다.";
+      caution = "확신만 믿고 대출, 임대료, 인건비를 먼저 크게 만드는 것은 위험합니다.";
+      strategy = `1. 처음에는 작게 시작해 시장 반응을 확인하세요.
+2. 월 고정비와 손익분기점을 먼저 계산하세요.
+3. 3개월 안에 첫 고객과 반복 구매 가능성을 확인하세요.
+4. 사업자금과 생활비는 반드시 분리하세요.`;
+      break;
+
+    case "businessExpand":
+      reality = "사업 확장은 검토할 수 있습니다. 다만 매출이 늘었다는 이유만으로 확장하기보다 순이익, 반복 고객, 직원 관리, 고정비 부담을 함께 봐야 합니다. 지금 흐름에서는 외형보다 버틸 수 있는 구조가 중요합니다.";
+      caution = "매출 증가만 보고 지점, 인력, 설비를 늘리면 현금 흐름이 압박될 수 있습니다.";
+      strategy = `1. 최근 6개월 순이익을 먼저 확인하세요.
+2. 반복 고객과 재구매율을 점검하세요.
+3. 확장 후 고정비가 얼마나 늘어나는지 계산하세요.
+4. 한 번에 크게 늘리기보다 단계적으로 확장하세요.`;
+      break;
+
+    case "partnership":
+      reality = "동업은 가능하지만 사람을 믿는 것과 사업 구조를 믿는 것은 다르게 봐야 합니다. 사주상 관계에서 정이나 신뢰가 먼저 앞서면 책임과 권한이 흐려질 수 있으므로 역할, 지분, 의사결정권을 분명히 해야 합니다.";
+      caution = "친분만 믿고 시작하는 동업, 구두 약속, 애매한 지분 구조는 반드시 피해야 합니다.";
+      strategy = `1. 역할과 책임을 문서로 정리하세요.
+2. 지분, 급여, 비용 부담 기준을 명확히 하세요.
+3. 의사결정권과 해지 조건을 미리 정하세요.
+4. 돈 문제는 시작 전에 불편해도 분명히 말하세요.`;
+      break;
+
+    case "contract":
+    default:
+      reality = "계약은 진행할 수 있지만 좋은 말보다 문서 조건을 먼저 봐야 합니다. 사주상 지금은 상대의 말만 믿기보다 계약금, 위약 조건, 책임 범위, 특약을 꼼꼼히 확인할수록 운이 안정됩니다.";
+      caution = "급하게 도장을 찍거나, 상대가 괜찮다고 해서 특약 없이 진행하는 것은 조심해야 합니다.";
+      strategy = `1. 계약금, 잔금, 해지 조건을 확인하세요.
+2. 구두 약속은 반드시 특약으로 넣으세요.
+3. 책임 범위와 손해배상 조건을 확인하세요.
+4. 큰 계약은 전문가 검토 후 진행하세요.`;
+      break;
+  }
 
   return `${buildOpening(data, questionKey)}
 
@@ -216,16 +250,13 @@ ${identity.moneyStyle}
 ${name}님은 사업에서 감각보다 구조가 중요합니다. 강한 ${data.strongestElement} 기운은 추진력과 장점으로 쓰일 수 있지만, 부족한 ${data.weakestElement} 기운은 돈, 사람, 계약 관리에서 보완해야 할 지점입니다.
 
 [현실 판단]
-${topic}
+${reality}
 
 [지금 가장 조심할 점]
-무리한 대출, 지인 동업, 계약서 없는 약속, 검증되지 않은 확장은 가장 조심해야 합니다.
+${caution}
 
 [실천 전략]
-1. 월 고정비와 손익분기점을 먼저 계산하세요.
-2. 3개월은 시장 반응을 보는 기간으로 잡으세요.
-3. 6개월 안에 반복 고객과 실제 순이익을 확인하세요.
-4. 동업이나 계약은 반드시 문서로 남기세요.
+${strategy}
 
 [AI 원장 최종 판단]
 ${name}님에게 사업은 가능성보다 버틸 구조가 먼저입니다.
@@ -388,5 +419,6 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
