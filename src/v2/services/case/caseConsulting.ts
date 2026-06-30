@@ -68,12 +68,39 @@ function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) 
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
 
-  const topic =
-    questionKey === "stockInvestment"
-      ? "주식 투자는 가능하지만 급하게 수익을 노리는 방식보다 ETF, 우량주, 분산 투자처럼 오래 버틸 수 있는 구조가 먼저입니다."
-      : questionKey === "moneyTiming"
-      ? "금전 흐름은 한 번에 크게 열리기보다 새는 돈이 줄고, 반복 수입과 현금 비중이 안정될 때부터 좋아집니다."
-      : "투자는 시작해도 되지만, 지금은 공격보다 기준 설정과 리스크 관리가 먼저입니다.";
+  let reality = "";
+  let caution = "";
+  let strategy = "";
+
+  switch (questionKey) {
+    case "stockInvestment":
+      reality = "주식 투자는 가능하지만 단기 수익보다 오래 버틸 수 있는 구조가 먼저입니다. 사주상 감정에 따라 매수매도를 반복하기보다 ETF, 우량주, 배당주처럼 기준을 세워 관리하는 방식이 더 안정적입니다.";
+      caution = "급등주, 테마주, 레버리지, 몰빵 투자는 손실이 커질 수 있으니 조심해야 합니다.";
+      strategy = `1. 전체 자산 중 주식 비중을 먼저 정하세요.
+2. ETF와 우량주를 기본 축으로 두세요.
+3. 손실 한도와 보유 기간을 미리 정하세요.
+4. 단기 매매보다 월별 적립식 투자가 좋습니다.`;
+      break;
+
+    case "moneyTiming":
+      reality = "금전 흐름은 한 번에 크게 열리기보다 새는 돈이 줄고 반복 수입이 안정될 때부터 좋아집니다. 지금은 큰돈을 벌 기회를 기다리기보다 지출 구조, 고정비, 현금 흐름을 정리하는 것이 먼저입니다.";
+      caution = "돈이 들어오기도 전에 지출 계획부터 늘리거나, 불안해서 무리한 투자를 시작하는 흐름은 피해야 합니다.";
+      strategy = `1. 월 고정비와 변동비를 나누어 정리하세요.
+2. 최소 6개월 생활비를 현금으로 확보하세요.
+3. 수입이 늘어도 지출을 바로 늘리지 마세요.
+4. 부업이나 반복 수입 구조를 함께 만들어보세요.`;
+      break;
+
+    case "investment":
+    default:
+      reality = "투자는 시작할 수 있습니다. 다만 지금 사주는 크게 한 번에 들어가는 투자보다 작은 금액으로 경험을 쌓고, 본인에게 맞는 자산군을 찾는 방식이 좋습니다. 예금, 연금, ETF, 부동산처럼 안정성과 지속성이 있는 구조가 먼저입니다.";
+      caution = "남들이 좋다고 하는 투자나 단기간에 큰 수익을 기대하는 선택은 흔들림을 만들 수 있습니다.";
+      strategy = `1. 투자 전 생활비와 비상금을 먼저 확보하세요.
+2. 처음에는 소액으로 경험을 쌓으세요.
+3. 예금, 연금, ETF처럼 안정적인 축을 먼저 만드세요.
+4. 고위험 투자는 전체 자산의 일부로만 제한하세요.`;
+      break;
+  }
 
   return `${buildOpening(data, questionKey)}
 
@@ -83,18 +110,13 @@ ${identity.moneyStyle}
 강하게 살아나는 ${data.strongestElement} 기운은 돈을 벌고 기회를 잡는 방식에 장점으로 나타납니다. 반대로 부족한 ${data.weakestElement} 기운은 투자 판단이 흔들리거나 손실 관리가 약해질 수 있는 지점입니다.
 
 [현실 판단]
-${topic}
-
-${name}님은 남들이 좋다고 하는 투자보다 본인이 이해하고 관리할 수 있는 투자에서 안정성이 살아납니다. 코인, 급등주, 단기 매매처럼 변동성이 큰 선택은 전체 자산의 작은 비중으로 제한하는 것이 좋습니다.
+${reality}
 
 [지금 가장 조심할 점]
-손실을 만회하려고 더 크게 들어가는 흐름, 주변 추천만 믿는 투자, 현금 없이 투자부터 늘리는 방식은 조심해야 합니다.
+${caution}
 
 [실천 전략]
-1. 최소 6개월 생활비 수준의 현금성 자산을 먼저 확보하세요.
-2. ETF, 연금, 우량주처럼 오래 쌓이는 자산을 기본 축으로 두세요.
-3. 고위험 투자는 전체 자산의 일부로만 제한하세요.
-4. 매수 전 손실 한도와 보유 기간을 먼저 정하세요.
+${strategy}
 
 [AI 원장 최종 판단]
 ${name}님에게 지금 필요한 것은 큰 수익보다 오래 살아남는 재테크 구조입니다.
@@ -366,4 +388,5 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
