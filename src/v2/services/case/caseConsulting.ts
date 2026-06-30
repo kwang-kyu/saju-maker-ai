@@ -9,6 +9,40 @@ function getAge(data: BasicSajuResult) {
   return new Date().getFullYear() - birthYear + 1;
 }
 
+function getLifeStage(age: number) {
+  if (!age) return "현재상황점검기";
+  if (age <= 29) return "기반구축기";
+  if (age <= 39) return "도약기";
+  if (age <= 49) return "확장기";
+  if (age <= 59) return "전환기";
+  return "안정정리기";
+}
+
+function getLifeStageAdvice(age: number) {
+  const stage = getLifeStage(age);
+
+  if (stage === "기반구축기") {
+    return "지금은 큰 결론보다 경험, 공부, 직업 기반, 종잣돈을 만드는 것이 중요한 시기입니다.";
+  }
+
+  if (stage === "도약기") {
+    return "지금은 결혼, 자산, 직업 방향처럼 인생의 큰 기준을 현실적으로 정해야 하는 시기입니다.";
+  }
+
+  if (stage === "확장기") {
+    return "지금은 자산 확대, 책임 증가, 가족과 일의 균형을 함께 봐야 하는 시기입니다.";
+  }
+
+  if (stage === "전환기") {
+    return "지금은 무리한 확장보다 정리, 안정, 제2의 방향을 함께 준비해야 하는 시기입니다.";
+  }
+
+  if (stage === "안정정리기") {
+    return "지금은 자산 보존, 건강, 가족관계, 노후 안정성을 중심으로 판단해야 하는 시기입니다.";
+  }
+
+  return "지금은 사주 구조와 현재 선택의 감당 가능성을 함께 봐야 하는 시기입니다.";
+}
 function getQuestionTitle(questionKey: CaseQuestionKey) {
   const map: Record<CaseQuestionKey, string> = {
     jobChange: "지금 이직을 해도 괜찮을까요?",
@@ -46,7 +80,7 @@ function buildOpening(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const identity = buildSajuIdentityProfile(data);
   const age = getAge(data);
   const ageLine = age
-    ? `${name}님은 현재 ${age}세 흐름이기 때문에 선택의 크기보다 감당 가능한 범위와 다음 3년의 안정성을 함께 봐야 합니다.`
+    ? `${name}님은 현재 ${age}세, ${getLifeStage(age)} 흐름입니다. ${getLifeStageAdvice(age)}`
     : `${name}님은 현재 나이 정보보다 사주 구조와 선택의 감당 가능성을 중심으로 판단하는 것이 좋습니다.`;
 
   return `[AI 원장 사안별 판단 리포트]
@@ -443,6 +477,8 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
+
 
 
 
