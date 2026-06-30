@@ -12,7 +12,7 @@ export default function MoneyResult(props: MoneyResultProps) {
 
   return (
     <div>
-      <h3 style={{ marginTop: 0 }}>{props.name}님의 재물 상담</h3>
+      <h3 style={{ marginTop: 0 }}>{props.name}님의 재테크 상담</h3>
 
       <h4>원장님이 먼저 드리는 말씀</h4>
       <p style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}>
@@ -35,3 +35,4 @@ export default function MoneyResult(props: MoneyResultProps) {
     </div>
   );
 }
+

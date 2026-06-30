@@ -161,9 +161,9 @@ export default function ResultView({
       { title: "올해 운세", content: yearConsulting(name) },
       { title: "오늘의 운세", content: todayConsulting(name) },
       {
-        title: "재물 상담",
+        title: "재테크 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재테크 상담" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -445,6 +445,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
