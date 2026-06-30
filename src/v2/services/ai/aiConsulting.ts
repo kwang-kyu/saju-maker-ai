@@ -1,7 +1,56 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
 
+function getDayMasterDiagnosis(dayMaster: string, name: string) {
+  const value = String(dayMaster);
+
+  if (value.includes("갑") || value.includes("을")) {
+    return `${name}님은 한 번 방향을 잡으면 키우고 넓혀가는 힘이 있는 사람입니다. 다만 방향이 자주 바뀌면 힘이 흩어지기 쉬우므로, 오래 가져갈 기준을 먼저 세워야 운이 살아납니다.`;
+  }
+
+  if (value.includes("병") || value.includes("정")) {
+    return `${name}님은 표현력과 존재감이 살아날 때 운이 열리는 사람입니다. 다만 감정이 앞서면 선택이 급해질 수 있으므로, 마음이 움직일수록 현실 기준을 함께 세워야 합니다.`;
+  }
+
+  if (value.includes("무") || value.includes("기")) {
+    return `${name}님은 쉽게 흔들리기보다 책임지고 버티는 힘이 있는 사람입니다. 다만 혼자 너무 오래 감당하면 피로가 쌓이기 쉬우므로, 역할과 책임의 경계를 분명히 해야 합니다.`;
+  }
+
+  if (value.includes("경") || value.includes("신")) {
+    return `${name}님은 판단력과 정리 능력이 강한 사람입니다. 다만 기준이 엄격해지면 스스로를 몰아붙일 수 있으므로, 완벽함보다 지속 가능한 선택이 중요합니다.`;
+  }
+
+  if (value.includes("임") || value.includes("계")) {
+    return `${name}님은 흐름을 읽고 상황에 맞게 움직이는 감각이 있는 사람입니다. 다만 생각이 많아지면 결정을 미루기 쉬우므로, 고민을 현실 행동으로 바꾸는 기준이 필요합니다.`;
+  }
+
+  return `${name}님은 한 번에 크게 뒤집는 운보다 기준을 세우고 차근차근 쌓아갈 때 운이 살아나는 사람입니다.`;
+}
+
+function getElementStrengthMessage(element: string, name: string) {
+  if (element === "목") return `강한 목 기운은 ${name}님에게 성장, 기획, 확장, 배움의 힘으로 나타납니다. 새로운 일을 키우는 능력은 장점이지만, 방향이 많아지면 집중력이 흩어질 수 있습니다.`;
+  if (element === "화") return `강한 화 기운은 ${name}님에게 표현력, 추진력, 존재감으로 나타납니다. 사람 앞에서 드러나는 힘은 장점이지만, 감정이 앞서면 판단이 급해질 수 있습니다.`;
+  if (element === "토") return `강한 토 기운은 ${name}님에게 책임감, 현실감각, 버티는 힘으로 나타납니다. 안정성은 장점이지만, 혼자 감당하려는 습관은 줄여야 합니다.`;
+  if (element === "금") return `강한 금 기운은 ${name}님에게 판단력, 원칙, 정리 능력으로 나타납니다. 기준이 분명한 것은 장점이지만, 지나치게 엄격해지면 관계와 건강에 부담이 될 수 있습니다.`;
+  if (element === "수") return `강한 수 기운은 ${name}님에게 생각의 깊이, 정보 감각, 흐름을 읽는 힘으로 나타납니다. 다만 고민이 길어지면 실행이 늦어질 수 있습니다.`;
+
+  return `강한 ${element} 기운은 ${name}님이 현실에서 잘 살려야 할 핵심 장점입니다.`;
+}
+
+function getElementWeakMessage(element: string, name: string) {
+  if (element === "목") return `부족한 목 기운은 계획을 길게 이어가는 힘이 약해질 때 드러납니다. ${name}님은 시작보다 지속 관리, 기록, 루틴을 보완해야 합니다.`;
+  if (element === "화") return `부족한 화 기운은 표현과 활력이 약해질 때 드러납니다. ${name}님은 마음속으로만 참지 말고 생각과 감정을 적절히 드러내는 연습이 필요합니다.`;
+  if (element === "토") return `부족한 토 기운은 생활의 중심이 흔들릴 때 드러납니다. ${name}님은 돈, 건강, 일정을 안정적으로 관리하는 기본 구조를 먼저 잡아야 합니다.`;
+  if (element === "금") return `부족한 금 기운은 정리와 결단이 늦어질 때 드러납니다. ${name}님은 사람, 돈, 일에서 끊고 맺는 기준을 분명히 해야 합니다.`;
+  if (element === "수") return `부족한 수 기운은 회복력과 유연함이 약해질 때 드러납니다. ${name}님은 쉬는 시간, 수면, 혼자 정리하는 시간을 반드시 확보해야 합니다.`;
+
+  return `부족한 ${element} 기운은 ${name}님이 생활 속에서 보완해야 할 부분입니다.`;
+}
+
 export function getAiConsulting(data: BasicSajuResult, concern?: string): string {
   const name = data.name;
+  const firstDiagnosis = getDayMasterDiagnosis(data.dayMaster, name);
+  const strengthMessage = getElementStrengthMessage(data.strongestElement, name);
+  const weakMessage = getElementWeakMessage(data.weakestElement, name);
 
   const concernText = concern
     ? `${name}님이 특히 궁금해하신 부분은 "${concern}"입니다. 이 고민은 따로 떨어진 문제가 아니라, ${name}님의 사주 흐름 안에서 함께 보아야 합니다.`
@@ -14,7 +63,7 @@ ${concernText}
 
 1. 원장님의 첫 진단
 
-결론부터 말씀드리면, ${name}님은 한 번에 크게 뒤집는 운보다 기준을 세우고 차근차근 쌓아갈 때 운이 살아나는 사람입니다.
+결론부터 말씀드리면, ${firstDiagnosis}
 
 ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면, ${name}님의 사주는 단순히 좋다 나쁘다로 볼 수 없습니다.
 
@@ -36,13 +85,9 @@ ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZh
 
 3. 사주 근거 분석
 
-${name}님의 사주는 책임감과 현실 감각이 중요한 흐름입니다.
+${strengthMessage}
 
-겉으로는 괜찮아 보여도 속으로는 많은 것을 계산하고, 참고, 감당해온 시간이 있었을 가능성이 큽니다.
-
-강한 ${data.strongestElement} 기운은 ${name}님이 밀고 나갈 수 있는 힘입니다.
-
-반대로 부족한 ${data.weakestElement} 기운은 삶에서 반복적으로 피로가 쌓이거나 판단이 약해질 수 있는 부분입니다.
+${weakMessage}
 
 따라서 좋은 운을 만드는 방법은 부족한 것을 억지로 채우는 것이 아니라, 내 사주가 잘 쓰이는 환경을 선택하는 것입니다.
 
