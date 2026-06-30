@@ -19,8 +19,6 @@ import HealthTodayResult from "./HealthTodayResult";
 import { calculateSaju } from "../engine/sajuEngine";
 import { downloadSummaryPdf } from "../services/pdf/downloadSummaryPdf";
 import { downloadDetailPdf } from "../services/pdf/downloadDetailPdf";
-import { downloadCasePdf } from "../services/pdf/downloadCasePdf";
-import { downloadAiTotalPdf } from "../services/pdf/downloadAiTotalPdf";
 
 import { basicConsulting } from "../services/basic/basicConsulting";
 import { basicMapper } from "../services/basic/basicMapper";
@@ -51,25 +49,6 @@ function getCurrentAge(birthDate: string) {
   return String(new Date().getFullYear() - birthYear + 1);
 }
 
-function formatBirthTime(value: string) {
-  const map: Record<string, string> = {
-    "23:00": "자시 (23:00~01:00)",
-    "01:00": "축시 (01:00~03:00)",
-    "03:00": "인시 (03:00~05:00)",
-    "05:00": "묘시 (05:00~07:00)",
-    "07:00": "진시 (07:00~09:00)",
-    "09:00": "사시 (09:00~11:00)",
-    "11:00": "오시 (11:00~13:00)",
-    "13:00": "미시 (13:00~15:00)",
-    "15:00": "신시 (15:00~17:00)",
-    "17:00": "유시 (17:00~19:00)",
-    "19:00": "술시 (19:00~21:00)",
-    "21:00": "해시 (21:00~23:00)",
-  };
-
-  return map[value] ?? value;
-}
-
 function buildPersonalProfile(params: {
   name: string;
   birthDate: string;
@@ -92,7 +71,7 @@ function buildPersonalProfile(params: {
 입력 생년월일: ${birthDate}
 출생 당시 양력 환산일: ${solarDate}
 음력 생일: ${lunarDate}
-출생시간: ${formatBirthTime(birthTime)}
+출생시간: ${birthTime}
 성별: ${genderText}
 현재 나이: ${age ? `${age}세` : "확인 필요"}
 사주팔자: ${sajuPillars}
@@ -113,7 +92,7 @@ function buildConsultingPersonalNote(params: {
   const genderText = gender === "male" ? "남성" : "여성";
   const calendarText = calendarType === "lunar" ? "음력" : "양력";
 
-  return `${area}은 ${name}님의 ${birthDate} ${calendarText} 출생, ${formatBirthTime(birthTime)} 출생시간, ${genderText} 기준으로 해석합니다.
+  return `${area}은 ${name}님의 ${birthDate} ${calendarText} 출생, ${birthTime} 출생시간, ${genderText} 기준으로 해석합니다.
 현재 나이는 ${age ? `${age}세` : "확인 필요"}로 보며, 지금 시점에서 어떤 선택을 줄이고 어떤 흐름을 키워야 하는지를 중심으로 상담합니다.`;
 }
 
@@ -160,13 +139,13 @@ export default function ResultView({
         }),
       },
       { title: "기본 사주", content: basicConsulting(mappedBasic) },
-      { title: "전체 운세", content: totalConsulting(inputData) },
+      { title: "총운 컨설팅", content: totalConsulting(inputData) },
       { title: "올해 운세", content: yearConsulting(name) },
       { title: "오늘의 운세", content: todayConsulting(name) },
       {
         title: "재물 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물재테크 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -175,7 +154,7 @@ export default function ResultView({
       {
         title: "직업 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업진로 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -184,7 +163,7 @@ export default function ResultView({
       {
         title: "연애 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "연애 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "연애 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -193,7 +172,7 @@ export default function ResultView({
       {
         title: "건강 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "건강 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "건강 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -230,7 +209,7 @@ export default function ResultView({
         title: "사안별 상담",
         content: "사안별 상담은 질문 선택 방식으로 제공됩니다. 구체적인 고민이 입력되면 해당 사안에 맞춰 상담을 진행합니다.",
       },
-      { title: "AI 종합상담", content: getAiConsulting(mappedBasic) },
+      { title: "AI 종합 컨설팅", content: getAiConsulting(mappedBasic) },
     ];
   };
 
@@ -284,21 +263,6 @@ export default function ResultView({
     downloadDetailPdf({ name, sections: getPdfSections() });
   };
 
-  const handleCasePdf = () => {
-    const sections = getPdfSections().filter((section) =>
-      section.title.includes("사안별")
-    );
-
-    downloadCasePdf({ name, sections });
-  };
-
-  const handleAiTotalPdf = () => {
-    const sections = getPdfSections().filter((section) =>
-      section.title.includes("AI 종합")
-    );
-
-    downloadAiTotalPdf({ name, sections });
-  };
   const renderResult = () => {
     switch (selectedMenu) {
       case "basic":
@@ -344,7 +308,7 @@ export default function ResultView({
     <div style={{ marginTop: "24px" }}>
       <h2 style={{ marginBottom: "16px" }}>결과 확인</h2>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
         <button
           type="button"
           onClick={handleSummaryPdf}
@@ -378,41 +342,6 @@ export default function ResultView({
         >
           📘 상세 리포트
         </button>
-        <button
-          type="button"
-          onClick={handleCasePdf}
-          style={{
-            flex: 1,
-            minWidth: "180px",
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#a78bfa",
-            color: "#111827",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          🧭 사안별 상담
-        </button>
-
-        <button
-          type="button"
-          onClick={handleAiTotalPdf}
-          style={{
-            flex: 1,
-            minWidth: "180px",
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#f97316",
-            color: "#111827",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          🤖 AI 종합상담
-        </button>
       </div>
 
       <div
@@ -432,7 +361,7 @@ export default function ResultView({
         <div>출생 기준: {calendarType === "lunar" ? "음력 생일" : "양력 생일"}</div>
         <div>입력 생년월일: {birthDate}</div>
         <div>출생 당시 양력 환산일: {sajuInfo.solarDate}</div>
-        <div>출생 시간: {formatBirthTime(birthTime)}</div>
+        <div>출생 시간: {birthTime}</div>
         <div>성별: {gender === "male" ? "남성" : "여성"}</div>
       </div>
 
@@ -475,12 +404,5 @@ export default function ResultView({
     </div>
   );
 }
-
-
-
-
-
-
-
 
 
