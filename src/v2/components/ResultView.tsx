@@ -139,13 +139,13 @@ export default function ResultView({
         }),
       },
       { title: "기본 사주", content: basicConsulting(mappedBasic) },
-      { title: "전체 운세", content: totalConsulting(inputData) },
+      { title: "총운 컨설팅", content: totalConsulting(inputData) },
       { title: "올해 운세", content: yearConsulting(name) },
       { title: "오늘의 운세", content: todayConsulting(name) },
       {
         title: "재물 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물재테크 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -154,7 +154,7 @@ export default function ResultView({
       {
         title: "직업 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업진로 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -163,7 +163,7 @@ export default function ResultView({
       {
         title: "연애 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "연애 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "연애 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -172,7 +172,7 @@ export default function ResultView({
       {
         title: "건강 상담",
         content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "건강 상담" }) +
+          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "건강 컨설팅" }) +
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
@@ -209,7 +209,7 @@ export default function ResultView({
         title: "사안별 상담",
         content: "사안별 상담은 질문 선택 방식으로 제공됩니다. 구체적인 고민이 입력되면 해당 사안에 맞춰 상담을 진행합니다.",
       },
-      { title: "AI 종합상담", content: getAiConsulting(mappedBasic) },
+      { title: "AI 종합 컨설팅", content: getAiConsulting(mappedBasic) },
     ];
   };
 
@@ -404,4 +404,5 @@ export default function ResultView({
     </div>
   );
 }
+
 
