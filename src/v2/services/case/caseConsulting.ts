@@ -1,492 +1,369 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
+import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 import type { CaseQuestionKey } from "./caseQuestions";
 
-export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+function getAge(data: BasicSajuResult) {
+  const birthDate = String((data as unknown as { birthDate?: string }).birthDate || "");
+  const birthYear = Number(birthDate.slice(0, 4));
+  if (!birthYear) return 0;
+  return new Date().getFullYear() - birthYear + 1;
+}
+
+function getQuestionTitle(questionKey: CaseQuestionKey) {
+  const map: Record<CaseQuestionKey, string> = {
+    jobChange: "지금 이직을 해도 괜찮을까요?",
+    businessStart: "지금 사업을 시작해도 될까요?",
+    realEstateBuy: "지금 부동산을 매수해도 될까요?",
+    investment: "지금 제 사주에서는 투자를 시작해도 될까요?",
+    marriagePrepare: "지금 결혼을 준비해도 될까요?",
+    relationshipCleanUp: "인간관계를 정리해야 할까요?",
+    moneyTiming: "금전 흐름은 언제부터 안정될까요?",
+    stockInvestment: "지금 제 사주에서는 주식 투자가 맞을까요?",
+    businessExpand: "지금 사업을 확장해도 될까요?",
+    partnership: "제 사주에는 동업이 맞을까요?",
+    careerDirection: "앞으로 어떤 일을 하면 좋을까요?",
+    promotion: "승진이나 인정운이 들어오는 흐름인가요?",
+    contract: "계약을 진행해도 괜찮을까요?",
+    houseMove: "이사를 해도 좋은 흐름인가요?",
+    realEstateSell: "지금 부동산을 매도해도 될까요?",
+    exam: "시험이나 자격증 준비는 제게 맞을까요?",
+    newRelationship: "새로운 인연이 들어올까요?",
+    marriageTiming: "결혼 시기는 언제가 좋을까요?",
+    remarriage: "재혼운은 어떻게 봐야 할까요?",
+    children: "자녀운은 어떨까요?",
+    familyConflict: "가족 갈등은 어떻게 풀어야 할까요?",
+    healthCare: "건강에서 특히 조심할 점은 무엇인가요?",
+    legalIssue: "소송이나 분쟁은 어떻게 봐야 할까요?",
+    overseas: "해외 이동이나 장거리 이동은 괜찮을까요?",
+    importantChoice: "올해 가장 중요한 선택은 무엇일까요?",
+  };
+
+  return map[questionKey];
+}
+
+function buildOpening(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
+  const age = getAge(data);
+  const ageLine = age
+    ? `${name}님은 현재 ${age}세 흐름이기 때문에 선택의 크기보다 감당 가능한 범위와 다음 3년의 안정성을 함께 봐야 합니다.`
+    : `${name}님은 현재 나이 정보보다 사주 구조와 선택의 감당 가능성을 중심으로 판단하는 것이 좋습니다.`;
 
-  const personalCasePoint =
-    `${data.dayMaster} 일간, ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면 ${name}님은 지금 사안을 판단할 때 감정보다 순서, 기준, 감당 가능한 범위를 먼저 봐야 합니다.`;
+  return `[AI 원장 사안별 판단 리포트]
 
-    const commonOpening = `[AI 원장 사안별 판단 리포트]
+[상담 질문]
+${getQuestionTitle(questionKey)}
 
-    ${name}님의 사안을 단순한 가능성 여부로 판단하지 않습니다.
-    
-    현재 사주 구조와 흐름을 기준으로
-    "지금 움직여도 되는 상황인지"
-    "조금 더 준비가 필요한 상황인지"
-    "위험을 먼저 관리해야 하는 상황인지"
-    를 중심으로 판단합니다.
-    
-    제가 보는 핵심 기준은 결과가 아니라 구조입니다.
-    
-    같은 선택이라도
-    준비된 선택은 기회가 되고,
-    준비되지 않은 선택은 부담이 될 수 있습니다.
-    
-    ${personalCasePoint}`;
+[원장님의 첫 진단]
+${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면, ${name}님의 이번 사안은 단순히 된다 안 된다로 볼 문제가 아닙니다.
 
-  const adviceMap: Partial<Record<CaseQuestionKey, string>> = {
-    jobChange: `[상담 질문]
-이직을 해도 괜찮을까요?
+${ageLine}
 
-[현재 흐름]
-지금은 새로운 환경을 생각하기 쉬운 흐름입니다.
-다만 단순히 답답해서 벗어나고 싶은 마음인지,
-정말 더 나은 자리로 옮기려는 준비가 된 것인지를 구분해야 합니다.
+${identity.decisionStyle}
 
-${name}님이 지금 이직을 고민한다면
-그 이유가 감정적인 불만인지,
-아니면 성장 가능성, 보상, 역할 문제처럼 분명한 이유인지 먼저 확인해야 합니다.
+${identity.riskPoint}`;
+}
 
-[현실에서는 이렇게 나타납니다]
-현재 직장에서 인정, 보상, 성장 가능성 중 하나가 부족하게 느껴질 수 있습니다.
-하지만 이직은 회사 이름이나 연봉만 보고 결정하면 안 됩니다.
+function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+  const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
 
-실제 업무 강도,
-조직 분위기,
-상사의 성향,
-출퇴근 부담,
-앞으로 배울 수 있는 일이 있는지까지 함께 봐야 합니다.
+  const topic =
+    questionKey === "stockInvestment"
+      ? "주식 투자는 가능하지만 급하게 수익을 노리는 방식보다 ETF, 우량주, 분산 투자처럼 오래 버틸 수 있는 구조가 먼저입니다."
+      : questionKey === "moneyTiming"
+      ? "금전 흐름은 한 번에 크게 열리기보다 새는 돈이 줄고, 반복 수입과 현금 비중이 안정될 때부터 좋아집니다."
+      : "투자는 시작해도 되지만, 지금은 공격보다 기준 설정과 리스크 관리가 먼저입니다.";
 
-실제로 상담을 해보면 회사를 옮겼는데도
-비슷한 문제를 반복하는 경우가 있습니다.
-그 이유는 직장이 문제였던 것이 아니라
-본인이 힘들어하는 구조를 정확히 보지 못했기 때문입니다.
+  return `${buildOpening(data, questionKey)}
 
-[조심할 점]
-지금 회사를 벗어나는 것만 목표가 되면
-다음 직장에서도 비슷한 문제가 반복될 수 있습니다.
+[사주 근거 분석]
+${identity.moneyStyle}
 
-특히 감정이 올라온 상태에서 급하게 결정하는 것은 피하는 것이 좋습니다.
-퇴사부터 정하고 움직이기보다
-다음 자리가 어떤 구조인지 먼저 확인해야 합니다.
+강하게 살아나는 ${data.strongestElement} 기운은 돈을 벌고 기회를 잡는 방식에 장점으로 나타납니다. 반대로 부족한 ${data.weakestElement} 기운은 투자 판단이 흔들리거나 손실 관리가 약해질 수 있는 지점입니다.
 
-[지금 가장 좋은 선택]
-먼저 이직하려는 이유를 종이에 적어보세요.
-그리고 최소 2~3곳은 비교한 뒤 움직이는 것이 좋습니다.
+[현실 판단]
+${topic}
 
-연봉만 보지 말고,
-역할,
-근무 환경,
-성장 가능성,
-생활 리듬까지 함께 비교해야 합니다.
+${name}님은 남들이 좋다고 하는 투자보다 본인이 이해하고 관리할 수 있는 투자에서 안정성이 살아납니다. 코인, 급등주, 단기 매매처럼 변동성이 큰 선택은 전체 자산의 작은 비중으로 제한하는 것이 좋습니다.
 
-[핵심 한마디]
-불만 때문에 나가는 이직보다
-더 나은 구조로 옮기는 이직이 좋습니다.`,
+[지금 가장 조심할 점]
+손실을 만회하려고 더 크게 들어가는 흐름, 주변 추천만 믿는 투자, 현금 없이 투자부터 늘리는 방식은 조심해야 합니다.
 
-    businessStart: `[상담 질문]
-사업을 시작해도 될까요?
-
-[현재 운의 흐름]
-${name}님에게 사업은 단순히 시작할 수 있느냐보다
-얼마나 오래 버틸 수 있는 구조를 만들 수 있느냐가 핵심입니다.
-
-지금은 사업 아이디어나 의욕이 살아날 수 있는 흐름입니다.
-다만 크게 시작하기보다 작게 검증하고,
-실제로 돈이 되는지 확인하는 과정이 먼저 필요합니다.
-
-[사주에서 이렇게 보이는 이유]
-${name}님은 감정이나 분위기만으로 큰 결정을 하면 부담이 커질 수 있습니다.
-사업은 열정만으로 되는 일이 아니라
-돈, 사람, 시간, 반복 매출, 책임을 함께 감당해야 하는 일입니다.
-
-지금 흐름에서는 시작 자체보다
-수익 구조와 유지 능력을 보는 것이 더 중요합니다.
-
-[현실에서는 이렇게 나타납니다]
-처음에는 아이템이 좋아 보이고,
-주변에서도 가능성이 있다고 말할 수 있습니다.
-
-하지만 실제 사업에서는 고객 확보,
-재구매,
-광고비,
-임대료,
-인건비,
-거래처 관리,
-세금 문제가 함께 따라옵니다.
-
-매출은 있는데 남는 돈이 없거나,
-일은 많은데 수익이 적거나,
-사람을 쓰면서 오히려 스트레스가 커질 수 있습니다.
-
-[지금 가장 조심해야 하는 것]
-가장 조심해야 할 것은 준비 없는 확장입니다.
-처음부터 사무실, 가게, 인력, 장비에 큰돈을 쓰는 것은 신중해야 합니다.
-
-특히 지인 동업,
-무리한 대출,
-계약서 없는 약속,
-검증되지 않은 아이템은 위험합니다.
-
-사업은 잘될 때보다 안 될 때의 버틸 힘을 먼저 봐야 합니다.
-
-[지금 가장 좋은 선택]
-먼저 작게 테스트하세요.
-처음부터 크게 열기보다
-소규모 판매,
-예약 반응,
-상담 문의,
-반복 구매 가능성,
-월 고정비를 확인해야 합니다.
-
-예상 매출보다 먼저
-최소 생존 매출,
-월 고정비,
-손익분기점,
-3개월 버틸 자금을 계산하세요.
-
-[3개월~1년 전망]
-앞으로 3개월은 시장 반응을 보는 기간으로 잡는 것이 좋습니다.
-바로 크게 투자하기보다 실제 고객이 있는지 확인해야 합니다.
-
-6개월 안에는 사업성이 있는지 없는지 윤곽이 나올 수 있습니다.
-반응이 있다면 조금씩 키우고,
-반응이 약하다면 방향을 조정해야 합니다.
-
-1년 기준으로는 무리하지 않고 작게 검증한 사업은 살아남을 수 있지만,
-처음부터 크게 벌린 사업은 비용 부담이 커질 수 있습니다.
+[실천 전략]
+1. 최소 6개월 생활비 수준의 현금성 자산을 먼저 확보하세요.
+2. ETF, 연금, 우량주처럼 오래 쌓이는 자산을 기본 축으로 두세요.
+3. 고위험 투자는 전체 자산의 일부로만 제한하세요.
+4. 매수 전 손실 한도와 보유 기간을 먼저 정하세요.
 
 [AI 원장 최종 판단]
-${name}님은 사업을 완전히 피해야 하는 흐름은 아닙니다.
-다만 지금은 크게 시작할 때가 아니라
-작게 확인하고 안정적으로 키워야 하는 시기입니다.
+${name}님에게 지금 필요한 것은 큰 수익보다 오래 살아남는 재테크 구조입니다.
 
-최종 판단은 이렇습니다.
-사업은 시작보다 구조 검증이 먼저입니다.`,
-    realEstateBuy: `[상담 질문]
-부동산을 사도 될까요?
-
-[현재 흐름]
-부동산은 급하게 움직이기보다
-오래 버틸 수 있는 조건을 먼저 봐야 합니다.
-
-좋은 물건처럼 보여도 내 자금 구조와 맞지 않으면 부담이 될 수 있습니다.
-부동산은 사는 순간보다 보유하는 시간이 더 중요합니다.
-
-[현실에서는 이렇게 나타납니다]
-가격 상승 기대보다 입지, 수요, 대출 부담, 관리 가능성이 더 중요합니다.
-
-실거주라면 생활 편의와 출퇴근 동선을 봐야 하고,
-투자라면 공실 위험과 임대 수요를 먼저 확인해야 합니다.
-
-실제로 부동산에서 힘들어지는 경우는
-물건이 나빠서만이 아닙니다.
-대출 부담을 크게 잡았거나,
-공실 가능성을 가볍게 봤거나,
-수리비와 관리비를 계산하지 못해서 어려워지는 경우가 많습니다.
-
-[조심할 점]
-남들이 좋다고 하는 말만 듣고 급하게 따라가면 자금 압박이 생길 수 있습니다.
-
-특히 대출 비율이 높거나,
-수익이 불확실하거나,
-주변 시세보다 비싸게 들어가는 물건은 더 신중해야 합니다.
-
-[지금 가장 좋은 선택]
-현장 방문,
-주변 시세 비교,
-대출 상환 계획을 먼저 점검하세요.
-
-월 부담액을 감당할 수 있는지,
-공실이 생겨도 버틸 수 있는지,
-장기 보유가 가능한지 확인한 뒤 움직이는 것이 좋습니다.
-
-[핵심 한마디]
-좋은 물건보다
-오래 버틸 수 있는 구조가 먼저입니다.`,
-
-    investment: `[상담 질문]
-지금 투자해도 될까요?
-
-[현재 흐름]
-투자 관심은 커질 수 있지만,
-한 번에 큰 수익을 노리는 방식은 조심해야 합니다.
-
-지금은 수익보다 손실을 막는 기준이 더 중요합니다.
-투자는 돈을 버는 기술이기 전에
-내 돈을 지키는 기준이 먼저 있어야 합니다.
-
-[현실에서는 이렇게 나타납니다]
-정보가 많을수록 오히려 판단이 흔들릴 수 있습니다.
-누가 벌었다는 이야기보다
-내가 이해할 수 있는 투자 방식인지가 더 중요합니다.
-
-실제로 상담을 해보면 손실은 몰라서만 생기는 것이 아닙니다.
-기준 없이 따라 들어가고,
-손실이 나면 만회하려고 더 크게 넣고,
-수익이 나면 더 욕심을 내다가 흐름이 무너지는 경우가 많습니다.
-
-[조심할 점]
-손실을 만회하려고 무리하게 추가 투자하는 흐름은 피해야 합니다.
-
-특히 잘 모르는 상품,
-급등한 종목,
-주변 추천만 믿는 투자,
-원금 손실 가능성을 제대로 모르는 투자는 조심해야 합니다.
-
-[지금 가장 좋은 선택]
-소액,
-분산,
-기간 설정을 먼저 정하고 투자하세요.
-
-언제 들어갈지보다
-언제 멈출지 기준을 정하는 것이 중요합니다.
-
-투자를 시작한다면 잃어도 생활이 흔들리지 않는 금액 안에서만 움직이는 것이 좋습니다.
-
-[핵심 한마디]
-모르는 투자보다
-지킬 수 있는 투자가 먼저입니다.`,
-
-    moneyTiming: `[상담 질문]
-금전운은 언제부터 풀릴까요?
-
-[현재 흐름]
-금전운은 한 번에 크게 열리기보다 새는 돈이 줄고, 들어오는 돈의 흐름이 일정해질 때부터 풀리기 시작합니다.
-
-지금은 큰 수익을 기대하기보다 지출 구조를 정리하고, 반복 수입을 안정시키는 것이 먼저입니다.
-
-[현실에서는 이렇게 나타납니다]
-갑자기 큰돈이 들어오기보다 작은 수입 기회, 부업, 기존 일의 보상, 미뤄졌던 정산처럼 현실적인 흐름으로 나타날 수 있습니다.
-
-[조심할 점]
-돈이 풀릴 것 같다는 기대감만으로 지출을 먼저 늘리면 다시 막힐 수 있습니다.
-
-[지금 가장 좋은 선택]
-고정비, 대출, 카드 지출, 불필요한 구독비부터 정리하세요.
-
-[핵심 한마디]
-금전운은 큰돈보다 새는 돈이 멈출 때부터 풀립니다.`,
-
-    stockInvestment: `[상담 질문]
-주식 투자를 시작해도 될까요?
-
-[현재 흐름]
-주식 투자는 관심을 가져도 되지만, 지금은 공격적인 매수보다 기준을 세우는 단계가 먼저입니다.
-
-[현실에서는 이렇게 나타납니다]
-주변 수익 이야기나 급등 종목에 마음이 흔들릴 수 있습니다.
-하지만 ${name}님에게 중요한 것은 남의 수익이 아니라 본인이 감당할 수 있는 손실 범위입니다.
-
-[조심할 점]
-몰빵, 급등주 추격, 손실 만회 매수는 피해야 합니다.
-
-[지금 가장 좋은 선택]
-소액으로 시작하고, 손절 기준과 보유 기간을 먼저 정하세요.
-
-[핵심 한마디]
-주식은 빨리 버는 사람이 아니라 오래 살아남는 사람이 이깁니다.`,
-
-    businessExpand: `[상담 질문]
-지금 사업을 확장해도 될까요?
-
-[현재 흐름]
-사업 확장은 가능성을 볼 수 있지만, 지금은 규모보다 안정성이 먼저입니다.
-
-[현실에서는 이렇게 나타납니다]
-매출이 늘어나는 것처럼 보여도 고정비, 인건비, 재고, 광고비가 함께 늘면 실제 남는 돈은 줄 수 있습니다.
-
-[조심할 점]
-잘될 것 같다는 느낌만으로 사람을 늘리거나 공간을 넓히는 것은 신중해야 합니다.
-
-[지금 가장 좋은 선택]
-확장 전에 현재 사업의 순이익, 반복 고객, 고정비 부담을 먼저 점검하세요.
-
-[핵심 한마디]
-확장은 매출이 아니라 버틸 힘이 확인된 뒤가 좋습니다.`,
-
-    partnership: `[상담 질문]
-동업을 해도 괜찮을까요?
-
-[현재 흐름]
-동업은 가능하지만 친분보다 역할, 책임, 돈의 기준이 훨씬 중요합니다.
-
-[현실에서는 이렇게 나타납니다]
-처음에는 마음이 맞아 시작하지만 시간이 지나면 수익 배분, 업무량, 책임 범위에서 갈등이 생길 수 있습니다.
-
-[조심할 점]
-말로만 정한 약속, 계약서 없는 동업, 지인이라서 괜찮다는 판단은 위험합니다.
-
-[지금 가장 좋은 선택]
-투자금, 지분, 업무 역할, 의사결정권, 해지 조건을 문서로 정리하세요.
-
-[핵심 한마디]
-동업은 믿음보다 기준이 있어야 오래 갑니다.`,
-
-    contract: `[상담 질문]
-계약을 진행해도 괜찮을까요?
-
-[현재 흐름]
-계약은 진행할 수 있지만, 지금은 서두르기보다 조건 확인이 먼저입니다.
-
-[현실에서는 이렇게 나타납니다]
-좋은 조건처럼 보여도 세부 조항, 위약금, 책임 범위, 지급 일정에서 부담이 생길 수 있습니다.
-
-[조심할 점]
-상대방 말만 믿고 서명하거나, 급하다는 이유로 검토 없이 진행하는 것은 피해야 합니다.
-
-[지금 가장 좋은 선택]
-계약서, 특약, 금액, 일정, 해지 조건을 반드시 확인하세요.
-
-[핵심 한마디]
-계약은 기회보다 조건 확인이 먼저입니다.`,
-    marriagePrepare: `[상담 질문]
-결혼을 준비해도 될까요?
-
-[현재 흐름]
-결혼은 감정만으로 결정하기보다
-생활의 합이 맞는지를 보는 것이 중요합니다.
-
-좋아하는 마음이 있어도 함께 살아가는 방식이 맞아야 안정됩니다.
-결혼은 사랑의 문제가 아니라 생활을 함께 운영하는 문제이기도 합니다.
-
-[현실에서는 이렇게 나타납니다]
-경제관념,
-가족관계,
-대화 방식,
-생활 리듬에서 현실적인 차이가 드러날 수 있습니다.
-
-연애 때는 넘길 수 있던 부분도
-결혼 준비 과정에서는 크게 느껴질 수 있습니다.
-
-실제로 상담을 해보면 결혼이 흔들리는 이유는
-사랑이 부족해서만은 아닙니다.
-돈 문제를 피하거나,
-가족 문제를 말하지 못하거나,
-생활 방식 차이를 계속 참다가 불만이 쌓이는 경우가 많습니다.
-
-[조심할 점]
-좋은 감정이 있다고 해서 중요한 문제를 미루면 나중에 부담이 커질 수 있습니다.
-
-돈,
-집,
-가족 문제,
-역할 분담,
-생활비 기준은 피하지 말고 미리 이야기해야 합니다.
-
-불편한 이야기를 할 수 있는 관계가
-결혼 후에도 안정적으로 갈 가능성이 높습니다.
-
-[지금 가장 좋은 선택]
-거주지,
-생활비,
-가족 행사,
-역할 분담을 차분히 이야기해 보세요.
-
-서로 불편한 주제를 얼마나 성숙하게 풀어가는지가 결혼운의 핵심입니다.
-
-[핵심 한마디]
-결혼은 사랑만으로 가는 일이 아니라
-생활을 함께 맞추는 일입니다.`,
-
-    relationshipCleanUp: `[상담 질문]
-인간관계를 정리해야 할까요?
-
-[현재 흐름]
-지금은 모든 사람을 붙잡기보다
-나를 지치게 하는 관계를 구분할 필요가 있습니다.
-
-좋은 관계와 오래된 관계는 다를 수 있습니다.
-오래 알았다고 해서 반드시 좋은 관계는 아닙니다.
-
-[현실에서는 이렇게 나타납니다]
-만나고 나면 기운이 빠지는 사람,
-계속 요구만 하는 사람,
-내 상황을 존중하지 않는 사람과는 거리가 필요할 수 있습니다.
-
-실제로 상담을 해보면 인간관계에서 힘든 분들은
-상대가 나빠서만 힘든 것이 아닙니다.
-거절을 못 하고,
-선을 정하지 못하고,
-괜찮은 척하다가 마음이 지치는 경우가 많습니다.
-
-[조심할 점]
-감정적으로 끊어내면 오히려 뒷말이나 갈등이 커질 수 있습니다.
-관계를 정리할 때는 단절보다 거리 조절이 먼저입니다.
-
-갑자기 차갑게 끊기보다
-연락 빈도,
-만나는 횟수,
-대화의 깊이를 조금씩 조절하는 것이 좋습니다.
-
-[지금 가장 좋은 선택]
-바로 끊어내기보다 연락 빈도와 만나는 횟수를 줄여보세요.
-
-내 마음이 편해지는지,
-상대가 선을 존중하는지 확인하는 것이 좋습니다.
-
-관계는 많이 유지하는 것보다
-나를 소모시키지 않는 관계를 남기는 것이 중요합니다.
-
-[핵심 한마디]
-좋은 관계는
-나를 계속 소모시키지 않습니다.`,
-  };
-
-  return `${commonOpening}
-
-${adviceMap[questionKey] ?? buildGeneralCaseAdvice(name)}
-${buildFinalDecisionLine(questionKey, name)}`;
+${identity.successPoint}`;
 }
 
-function buildGeneralCaseAdvice(name: string) {
-  return `[사안별 기본 판단]
+function buildJobAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+  const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
 
-${name}님의 이번 질문은 단순히 좋다, 나쁘다로 판단하기보다
-현재 준비 상태, 감당 가능한 범위, 시기 흐름을 함께 봐야 하는 사안입니다.
+  let reality = "";
+  let caution = "";
+  let strategy = "";
 
-[현재 흐름]
+  switch (questionKey) {
+    case "jobChange":
+      reality = "이직운은 열려 있습니다. 다만 지금 흐름은 단순히 회사를 벗어나는 이직보다, 역할과 성장 구조가 더 맞는 자리로 옮길 때 좋아집니다. 연봉만 보고 움직이기보다 조직 분위기, 상사 스타일, 업무 권한, 장기 성장성을 함께 봐야 합니다.";
+      caution = "감정적으로 퇴사하거나, 현재 불만을 피하기 위해 급하게 옮기면 비슷한 문제가 반복될 수 있습니다.";
+      strategy = `1. 퇴사 전 다음 선택지를 먼저 확보하세요.
+2. 연봉보다 역할, 성장성, 조직문화를 비교하세요.
+3. 최소 2곳 이상을 비교한 뒤 결정하세요.
+4. 면접에서는 실제 업무 범위와 의사결정 권한을 꼭 확인하세요.`;
+      break;
 
-지금은 마음이 급해질수록 판단이 흔들릴 수 있습니다.
-바로 결론을 내리기보다 조건을 하나씩 확인하면서
-무리하지 않는 방향으로 움직이는 것이 좋습니다.
+    case "promotion":
+      reality = "승진과 인정운은 있습니다. 다만 단순히 오래 버틴다고 올라가는 흐름보다, 맡은 역할의 성과가 분명해지고 주변 신뢰가 쌓일 때 강하게 살아납니다. 지금은 조용히 일만 하기보다 성과를 보이게 정리하는 것이 중요합니다.";
+      caution = "상사와 감정적으로 부딪히거나 조직 내 정치 싸움에 깊게 들어가는 것은 피해야 합니다.";
+      strategy = `1. 최근 성과를 숫자와 결과 중심으로 정리하세요.
+2. 상사에게 진행 상황을 자주 공유하세요.
+3. 책임 있는 일을 피하지 말고 작은 리더 역할을 맡아보세요.
+4. 동료와의 협업 태도가 승진운을 함께 올립니다.`;
+      break;
 
-[주의할 점]
+    case "exam":
+      reality = "시험이나 자격증운은 활용할 수 있습니다. 다만 벼락치기보다 반복 루틴을 만들 때 결과가 좋아지는 사주입니다. 단기간 몰아붙이는 방식보다 매일 같은 시간에 쌓아가는 공부가 훨씬 유리합니다.";
+      caution = "기분에 따라 공부량이 흔들리거나, 시험 직전에만 몰아서 준비하는 방식은 맞지 않습니다.";
+      strategy = `1. 매일 같은 시간에 공부하는 루틴을 만드세요.
+2. 3개월 단위로 진도와 복습 계획을 나누세요.
+3. 기출문제와 모의시험을 반복하세요.
+4. 암기보다 틀린 문제를 다시 보는 방식이 중요합니다.`;
+      break;
 
-가장 조심해야 할 부분은
-기대감만 보고 결정하거나,
-상대방 말만 믿고 중요한 판단을 넘기는 것입니다.
+    case "careerDirection":
+    default:
+      reality = "앞으로의 일은 직업 이름보다 어떤 환경에서 능력이 살아나는지를 기준으로 봐야 합니다. 사주상 스스로 판단하고 책임질 수 있는 구조, 기준이 분명한 일, 경험이 쌓일수록 전문성이 커지는 일이 잘 맞습니다.";
+      caution = "남들이 좋다고 하는 직업만 따라가거나, 당장의 안정감만 보고 선택하면 장점이 충분히 살아나지 않을 수 있습니다.";
+      strategy = `1. 반복 업무보다 판단과 책임이 있는 일을 고르세요.
+2. 전문성이 쌓이는 분야를 우선으로 보세요.
+3. 혼자 잘하는 일과 사람을 상대하는 일의 비중을 비교하세요.
+4. 앞으로 3년 동안 쌓을 기술과 경력을 먼저 정하세요.`;
+      break;
+  }
 
-돈, 계약, 관계, 이동, 진로와 관련된 일이라면
-반드시 문서, 일정, 비용, 책임 범위를 먼저 확인해야 합니다.
+  return `${buildOpening(data, questionKey)}
 
-[지금 가장 좋은 선택]
+[사주 근거 분석]
+${identity.workStyle}
 
-지금은 크게 벌리기보다
-작게 확인하고, 한 번 더 검토하고,
-내가 감당할 수 있는 범위 안에서 움직이는 것이 좋습니다.
+${name}님은 ${data.dayMaster} 일간의 특성상 일에서 기준과 역할이 분명할수록 집중력이 살아납니다. 강한 ${data.strongestElement} 기운은 장점으로 쓰고, 부족한 ${data.weakestElement} 기운은 조직 적응이나 판단의 흔들림으로 나타나지 않게 관리해야 합니다.
 
-[핵심 한마디]
+[현실 판단]
+${reality}
 
-${name}님에게 지금 필요한 것은 빠른 결정이 아니라
-후회하지 않을 기준입니다.`;
-}
-function buildFinalDecisionLine(questionKey: CaseQuestionKey, name: string) {
-  const map: Partial<Record<CaseQuestionKey, string>> = {
-    jobChange: "지금은 이직보다 조건 검증이 먼저다.",
-    businessStart: "사업은 시작보다 구조 검증이 우선이다.",
-    realEstateBuy: "부동산은 매수보다 보유 구조가 핵심이다.",
-    investment: "투자는 수익보다 리스크 관리가 먼저다.",
-    marriagePrepare: "결혼은 감정보다 생활 기준이 우선이다.",
-    relationshipCleanUp: "관계는 정리보다 거리 조절이 먼저다.",
-  };
+[지금 가장 조심할 점]
+${caution}
 
-  return `
+[실천 전략]
+${strategy}
 
 [AI 원장 최종 판단]
+${name}님은 일을 바꾸는 것보다 내 능력이 살아나는 구조를 찾는 것이 먼저입니다.
 
-${name}님 기준 최종 결론은 다음과 같습니다.
-
-${map[questionKey] ?? "지금은 성급한 결정보다 조건을 확인하고 감당 가능한 범위에서 움직이는 것이 먼저다."}
-
-`;
+${identity.successPoint}`;
 }
 
+function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+  const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
 
+  const topic =
+    questionKey === "businessStart"
+      ? "창업은 가능하지만 처음부터 크게 시작하기보다 작게 검증하고 키우는 방식이 맞습니다."
+      : questionKey === "businessExpand"
+      ? "사업 확장은 매출이 아니라 순이익, 반복 고객, 고정비 부담이 확인된 뒤가 좋습니다."
+      : questionKey === "partnership"
+      ? "동업은 가능하지만 친분보다 역할, 지분, 책임, 해지 조건을 문서로 정하는 것이 핵심입니다."
+      : "계약은 진행할 수 있지만 좋은 말보다 조건, 특약, 책임 범위를 먼저 확인해야 합니다.";
 
+  return `${buildOpening(data, questionKey)}
 
+[사주 근거 분석]
+${identity.workStyle}
 
+${identity.moneyStyle}
 
+${name}님은 사업에서 감각보다 구조가 중요합니다. 강한 ${data.strongestElement} 기운은 추진력과 장점으로 쓰일 수 있지만, 부족한 ${data.weakestElement} 기운은 돈, 사람, 계약 관리에서 보완해야 할 지점입니다.
 
+[현실 판단]
+${topic}
+
+[지금 가장 조심할 점]
+무리한 대출, 지인 동업, 계약서 없는 약속, 검증되지 않은 확장은 가장 조심해야 합니다.
+
+[실천 전략]
+1. 월 고정비와 손익분기점을 먼저 계산하세요.
+2. 3개월은 시장 반응을 보는 기간으로 잡으세요.
+3. 6개월 안에 반복 고객과 실제 순이익을 확인하세요.
+4. 동업이나 계약은 반드시 문서로 남기세요.
+
+[AI 원장 최종 판단]
+${name}님에게 사업은 가능성보다 버틸 구조가 먼저입니다.
+
+${identity.successPoint}`;
+}
+
+function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+  const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
+
+  const topic =
+    questionKey === "realEstateBuy"
+      ? "매수는 검토할 수 있지만 가격 상승 기대보다 대출 부담, 보유 능력, 장기 거주 가능성을 먼저 봐야 합니다."
+      : questionKey === "realEstateSell"
+      ? "매도는 급하게 결정하기보다 보유 부담, 현금화 필요성, 다음 자산 이동 계획을 함께 봐야 합니다."
+      : "이사는 가능하지만 생활 리듬, 가족 상황, 출퇴근, 비용 부담을 함께 봐야 합니다.";
+
+  return `${buildOpening(data, questionKey)}
+
+[사주 근거 분석]
+${identity.lifeStyle}
+
+${identity.moneyStyle}
+
+부동산은 ${name}님에게 단순한 투자보다 생활 안정과 자산 보존의 의미가 큽니다. 강한 ${data.strongestElement} 기운은 선택의 장점으로 쓰되, 부족한 ${data.weakestElement} 기운은 대출, 공실, 관리비 같은 현실 부담으로 보완해야 합니다.
+
+[현실 판단]
+${topic}
+
+[지금 가장 조심할 점]
+남들이 좋다고 하는 말만 듣고 들어가는 매수, 무리한 대출, 공실 가능성을 가볍게 보는 판단은 피해야 합니다.
+
+[실천 전략]
+1. 월 상환액을 보수적으로 계산하세요.
+2. 공실이나 수리비가 생겨도 버틸 수 있는지 확인하세요.
+3. 실거주는 생활 편의와 동선을 먼저 보세요.
+4. 투자는 임대 수요와 환금성을 먼저 확인하세요.
+
+[AI 원장 최종 판단]
+${name}님에게 부동산은 좋은 물건보다 오래 버틸 수 있는 구조가 먼저입니다.
+
+${identity.successPoint}`;
+}
+
+function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+  const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
+
+  const topic =
+    questionKey === "marriagePrepare"
+      ? "결혼은 감정만으로 결정하기보다 돈, 가족, 생활 리듬, 역할 분담이 맞는지를 봐야 합니다."
+      : questionKey === "newRelationship"
+      ? "새로운 인연은 들어올 수 있지만 급하게 마음을 주기보다 상대의 생활 태도와 책임감을 봐야 합니다."
+      : questionKey === "marriageTiming"
+      ? "결혼 시기는 마음보다 생활 준비와 현실 조건이 맞을 때 안정됩니다."
+      : questionKey === "remarriage"
+      ? "재혼은 과거의 반복을 피하는 기준이 가장 중요합니다."
+      : questionKey === "children"
+      ? "자녀운은 책임과 생활 안정이 함께 갖춰질 때 편안하게 흐릅니다."
+      : questionKey === "familyConflict"
+      ? "가족 갈등은 누가 맞느냐보다 선을 정하고 대화 방식을 바꾸는 것이 먼저입니다."
+      : "인간관계는 모두 붙잡기보다 나를 소모시키는 관계를 구분하는 것이 중요합니다.";
+
+  return `${buildOpening(data, questionKey)}
+
+[사주 근거 분석]
+${identity.relationshipStyle}
+
+${name}님은 관계에서 정을 쉽게 끊기보다 참고 맞추려는 흐름이 생길 수 있습니다. 다만 부족한 ${data.weakestElement} 기운이 관계의 피로, 거절의 어려움, 감정 소모로 나타나지 않게 해야 합니다.
+
+[현실 판단]
+${topic}
+
+[지금 가장 조심할 점]
+좋은 감정만 보고 현실 문제를 미루거나, 불편한 관계를 계속 참기만 하는 것은 좋지 않습니다.
+
+[실천 전략]
+1. 돈, 가족, 역할, 생활 기준을 말로만 넘기지 마세요.
+2. 불편한 이야기를 피하지 말고 차분히 확인하세요.
+3. 관계 정리는 단절보다 거리 조절부터 시작하세요.
+4. 나를 계속 소모시키는 관계는 기준을 세워야 합니다.
+
+[AI 원장 최종 판단]
+${name}님에게 좋은 관계는 감정이 아니라 생활과 기준이 함께 맞는 관계입니다.
+
+${identity.successPoint}`;
+}
+
+function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+  const name = data.name;
+  const identity = buildSajuIdentityProfile(data);
+
+  const topic =
+    questionKey === "healthCare"
+      ? "건강은 큰 병을 단정하기보다 생활 리듬, 스트레스, 수면, 과로를 먼저 관리해야 하는 흐름입니다."
+      : questionKey === "legalIssue"
+      ? "분쟁은 감정 대응보다 증거, 문서, 일정, 책임 범위를 정리하는 것이 먼저입니다."
+      : questionKey === "overseas"
+      ? "해외 이동이나 장거리 이동은 가능하지만 준비 없는 이동보다 목적과 비용, 체류 계획이 분명해야 합니다."
+      : "올해 중요한 선택은 빨리 결론 내리는 것보다 우선순위를 정하고 후회 없는 기준을 세우는 것입니다.";
+
+  return `${buildOpening(data, questionKey)}
+
+[사주 근거 분석]
+${identity.lifeStyle}
+
+${identity.decisionStyle}
+
+${name}님은 현재 사안에서 마음이 급해질수록 판단이 흔들릴 수 있습니다. 강한 ${data.strongestElement} 기운은 추진력으로 쓰고, 부족한 ${data.weakestElement} 기운은 준비와 점검으로 보완해야 합니다.
+
+[현실 판단]
+${topic}
+
+[지금 가장 조심할 점]
+급하게 결정하거나, 상대 말만 믿거나, 몸과 마음의 경고를 무시하는 것이 가장 위험합니다.
+
+[실천 전략]
+1. 문서, 비용, 일정, 건강 상태를 먼저 확인하세요.
+2. 중요한 선택은 하루 만에 결정하지 마세요.
+3. 전문가 확인이 필요한 일은 반드시 확인을 거치세요.
+4. 올해는 크게 벌리기보다 기준을 세우는 것이 우선입니다.
+
+[AI 원장 최종 판단]
+${name}님에게 지금 필요한 것은 빠른 결론이 아니라 후회하지 않을 기준입니다.
+
+${identity.successPoint}`;
+}
+
+export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+  if (["investment", "moneyTiming", "stockInvestment"].includes(questionKey)) {
+    return buildWealthAdvice(data, questionKey);
+  }
+
+  if (["jobChange", "careerDirection", "promotion", "exam"].includes(questionKey)) {
+    return buildJobAdvice(data, questionKey);
+  }
+
+  if (["businessStart", "businessExpand", "partnership", "contract"].includes(questionKey)) {
+    return buildBusinessAdvice(data, questionKey);
+  }
+
+  if (["realEstateBuy", "realEstateSell", "houseMove"].includes(questionKey)) {
+    return buildRealEstateAdvice(data, questionKey);
+  }
+
+  if (
+    [
+      "marriagePrepare",
+      "newRelationship",
+      "marriageTiming",
+      "remarriage",
+      "children",
+      "relationshipCleanUp",
+      "familyConflict",
+    ].includes(questionKey)
+  ) {
+    return buildRelationshipAdvice(data, questionKey);
+  }
+
+  return buildHealthLifeAdvice(data, questionKey);
+}
 
