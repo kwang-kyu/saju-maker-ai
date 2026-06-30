@@ -2,36 +2,119 @@
 import { buildConsultingFramework } from "../framework/consultingFramework";
 import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 
+function getAge(data: BasicSajuResult) {
+  const birthDate = String((data as unknown as { birthDate?: string }).birthDate || "");
+  const birthYear = Number(birthDate.slice(0, 4));
+  if (!birthYear) return 0;
+  return new Date().getFullYear() - birthYear + 1;
+}
+
+function getAgeStrategy(age: number) {
+  if (!age) {
+    return "현재는 나이보다 현금 흐름, 고정 지출, 투자 경험 수준을 기준으로 자산 전략을 세우는 것이 좋습니다.";
+  }
+
+  if (age <= 29) {
+    return "20대 흐름에서는 큰 수익보다 투자 습관을 만드는 것이 먼저입니다. 현금 비중을 충분히 두고, ETF적금소액 투자처럼 손실을 감당할 수 있는 범위에서 경험을 쌓는 전략이 좋습니다.";
+  }
+
+  if (age <= 39) {
+    return "30대 흐름에서는 소득 증가와 자산 형성을 함께 봐야 합니다. 주식ETF연금현금흐름을 나누고, 무리한 코인이나 단기 매매보다 장기적으로 쌓이는 구조를 만드는 것이 중요합니다.";
+  }
+
+  if (age <= 49) {
+    return "40대 흐름에서는 공격보다 균형이 중요합니다. 부동산, 연금, 현금, 주식형 자산을 나누고 가족 지출과 대출 부담까지 함께 계산해야 재테크 운이 안정됩니다.";
+  }
+
+  if (age <= 59) {
+    return "50대 흐름에서는 자산을 불리는 것보다 지키는 전략이 더 중요해집니다. 퇴직연금, 현금 비중, 안정형 ETF, 임대수익, 부업형 현금흐름처럼 무리하지 않고 오래 가는 구조가 좋습니다.";
+  }
+
+  return "60대 이후 흐름에서는 큰 투자보다 현금흐름과 자산 보존이 우선입니다. 원금 손실 가능성이 큰 투자는 줄이고, 생활비의료비비상자금연금 흐름을 먼저 안정시키는 전략이 필요합니다.";
+}
+
+function getInvestmentStyle(data: BasicSajuResult) {
+  const strong = data.strongestElement;
+  const weak = data.weakestElement;
+
+  if (strong.includes("화")) {
+    return "기회 포착과 실행력은 빠르지만 분위기에 휩쓸린 단기 투자는 조심해야 합니다. 코인테마주처럼 변동성이 큰 자산은 비중을 작게 제한하는 것이 좋습니다.";
+  }
+
+  if (strong.includes("금")) {
+    return "분석과 판단 기준이 비교적 강한 편입니다. 주식, ETF, 채권, 달러 자산처럼 숫자와 구조를 보고 접근하는 투자가 잘 맞습니다.";
+  }
+
+  if (strong.includes("토")) {
+    return "안정성과 현실 감각이 강한 편입니다. 부동산, 연금, 현금흐름형 자산처럼 눈에 보이고 오래 유지되는 자산과 잘 맞습니다.";
+  }
+
+  if (strong.includes("수")) {
+    return "흐름을 읽고 정보를 모으는 감각이 있습니다. 다만 생각이 많아 매수매도 타이밍이 흔들릴 수 있으니 투자 원칙을 문서로 정해두는 것이 좋습니다.";
+  }
+
+  if (strong.includes("목")) {
+    return "성장형 자산과 장기 투자에 어울리는 흐름입니다. ETF, 우량주, 자기계발형 부업처럼 시간을 두고 커지는 방식이 잘 맞습니다.";
+  }
+
+  return `강한 ${strong} 기운은 투자 판단의 장점으로 쓰고, 부족한 ${weak} 기운은 리스크 관리 기준으로 보완하는 것이 좋습니다.`;
+}
+
 export function moneyConsulting(data: BasicSajuResult): string {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
+  const age = getAge(data);
+  const ageStrategy = getAgeStrategy(age);
+  const investmentStyle = getInvestmentStyle(data);
 
   return buildConsultingFramework({
     name,
-    title: "재물 상담",
-    firstImpression: `${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면 ${name}님의 재물운은 단순히 돈이 들어오느냐보다 들어온 돈을 어떻게 남기고 지키느냐에서 더 크게 살아납니다.
+    title: "재테크 상담",
+    firstImpression: `${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면 ${name}님의 재테크는 단순히 돈복이 있느냐 없느냐로 볼 문제가 아닙니다.
+
+중요한 것은 지금 나이와 사주 흐름에 맞게 현금, 투자, 부동산, 연금, 부업, 사업 가능성을 어떻게 나누느냐입니다.
 
 ${identity.moneyStyle}
 
 ${identity.decisionStyle}`,
-    personInsight: `${name}님은 한 번에 크게 잡는 돈보다 작게 시작해서 꾸준히 쌓아가는 돈의 흐름이 더 안정적인 편입니다. 강하게 살아나는 ${data.strongestElement} 기운은 돈을 벌고 기회를 잡을 때 장점으로 나타나고, 부족한 ${data.weakestElement} 기운은 돈이 새거나 판단이 흔들릴 수 있는 지점으로 보완이 필요합니다.`,
-    repeatedPattern: `${name}님은 필요하다고 생각하는 곳에는 돈을 쓰지만, 아깝다고 느끼는 곳에는 쉽게 열지 않는 편입니다. 다만 돈을 쓸 때 기준이 감정에 따라 달라질 수 있으므로 수입보다 먼저 돈을 쓰고 남기는 기준을 세우는 것이 중요합니다.
+
+    personInsight: `${name}님은 돈을 무작정 따라가기보다 스스로 납득되는 기준이 있어야 안정적으로 움직이는 편입니다. 강하게 살아나는 ${data.strongestElement} 기운은 돈을 벌고 기회를 잡을 때 장점으로 나타나지만, 부족한 ${data.weakestElement} 기운은 투자 판단이 흔들리거나 리스크 관리가 약해질 수 있는 지점입니다.
+
+${investmentStyle}
+
+${ageStrategy}`,
+
+    repeatedPattern: `${name}님은 수익 가능성이 보이면 관심이 생기지만, 막상 결정할 때는 확신과 불안이 함께 올라올 수 있습니다. 그래서 재테크는 감으로 들어가는 방식보다 자산을 나누고 비중을 정해두는 방식이 훨씬 잘 맞습니다.
+
+현금, ETF, 주식, 부동산, 연금, 코인, 사업자금은 한 바구니에 담으면 안 됩니다. 특히 ${name}님은 투자 전에 얼마를 벌 수 있나보다 얼마까지 잃어도 생활이 흔들리지 않나를 먼저 봐야 합니다.
 
 ${identity.riskPoint}`,
-    realCase: `실제 상담에서 이런 흐름을 가진 분들은 돈이 한 번에 크게 들어와도 지출 구조가 정리되지 않으면 오래 남지 않는 경우가 많습니다. 특히 기분 때문에 쓰는 돈, 체면 때문에 나가는 돈, 준비되지 않은 투자, 매달 반복되는 고정 지출이 재물운을 무겁게 만들 수 있습니다.`,
-    futureFlow: `앞으로 3년 재물 흐름은 정리, 안정, 확장의 순서로 보는 것이 좋습니다.
 
-1년 차에는 수입을 늘리기보다 지출 구조를 다시 보고 돈이 어디로 새는지 확인하는 것이 먼저입니다.
-2년 차에는 작게라도 꾸준히 남는 돈을 만들고 6개월, 1년 단위로 돈의 흐름을 보는 습관을 만들어야 합니다.
-3년 차에는 검증된 구조 안에서 수입원을 넓히는 방향이 좋습니다.
+    realCase: `실제 상담에서 이런 흐름을 가진 분들은 돈을 못 버는 것이 문제가 아니라 돈을 어떻게 배치할지 정하지 못해 기회를 놓치거나 손실을 키우는 경우가 많습니다.
 
-무리한 투자나 한 번에 큰돈을 잡으려는 방식보다 반복적으로 들어오는 돈, 신뢰를 바탕으로 생기는 돈, 경험이 쌓이면서 커지는 돈이 더 잘 맞습니다.`,
-    actionGuide: `첫째, 매달 빠져나가는 고정 지출부터 정리해야 합니다.
-둘째, 투자는 감정이 아니라 숫자와 현금 흐름을 보고 결정해야 합니다.
-셋째, 돈이 들어오면 바로 쓰기보다 남기는 비율을 먼저 정해야 합니다.
-넷째, 큰 수익보다 오래 유지되는 수입 구조를 우선으로 보셔야 합니다.`,
-    finalMessage: `${name}님의 재물운은 돈복이 없다는 흐름이 아닙니다. 돈이 들어왔을 때 오래 머물 수 있는 구조를 만들어야 재물운이 살아나는 흐름입니다. 앞으로는 얼마나 버느냐보다 얼마나 남기고, 얼마나 오래 지키느냐를 기준으로 보시면 좋습니다.
+예를 들어 주식이 좋아 보이면 주식에 몰리고, 부동산 이야기가 들리면 부동산으로 마음이 흔들리고, 코인이 오르면 뒤늦게 들어가고 싶은 마음이 생길 수 있습니다. 하지만 ${name}님에게 필요한 것은 유행을 따라가는 재테크가 아니라 본인 사주와 생활 구조에 맞는 자산관리 기준입니다.`,
 
-${identity.successPoint}`,
+    futureFlow: `앞으로 3년 재테크 흐름은 정리, 분산, 확장의 순서로 보는 것이 좋습니다.
+
+1년 차에는 고정 지출, 대출, 보험, 카드 사용, 현금 비중을 먼저 정리해야 합니다. 이 시기에는 수익률보다 돈이 새는 구멍을 막는 것이 먼저입니다.
+
+2년 차에는 ETF, 연금, 현금성 자산, 주식형 자산을 나누어 본인에게 맞는 투자 비중을 만들어야 합니다. 공격형 투자는 전체 자산의 일부로 제한하고, 장기적으로 쌓이는 구조를 우선해야 합니다.
+
+3년 차에는 부업, 사업, 부동산, 임대수익, 전문성 기반 수입처럼 현금흐름을 넓히는 방향을 검토할 수 있습니다. 다만 준비 없는 확장보다 검증된 방식 안에서 넓히는 것이 좋습니다.`,
+
+    actionGuide: `첫째, 최소 6개월 생활비에 해당하는 현금성 자산을 먼저 확보하는 것이 좋습니다.
+둘째, 코인이나 단기 매매는 가능하더라도 전체 자산의 작은 비중으로 제한해야 합니다.
+셋째, ETF와 연금처럼 오래 쌓이는 자산을 기본 축으로 두는 것이 안정적입니다.
+넷째, 부동산은 무리한 대출보다 현금흐름과 보유 능력을 먼저 계산해야 합니다.
+다섯째, 사업이나 부업은 한 번에 크게 시작하기보다 작게 검증한 뒤 키우는 방식이 좋습니다.
+여섯째, 매달 투자 금액, 현금 비중, 손실 한도를 숫자로 정해두어야 합니다.`,
+
+    finalMessage: `${name}님의 재테크 운은 돈복이 있다, 없다로 끝낼 흐름이 아닙니다. 핵심은 돈이 들어오는 운을 현실적인 자산관리 구조로 바꾸는 것입니다.
+
+지금부터는 주식이 맞는지, 코인이 맞는지, 부동산이 맞는지만 따로 볼 것이 아니라 현금 비중, 투자 비중, 연금, 부업, 사업 가능성을 함께 봐야 합니다.
+
+${identity.successPoint}
+
+최종적으로 ${name}님에게 가장 중요한 재테크 기준은 큰돈을 한 번에 잡는 것이 아니라 오래 버티고, 꾸준히 쌓고, 준비된 순간에 확장하는 것입니다.`,
   });
 }
