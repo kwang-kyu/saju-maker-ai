@@ -31,9 +31,6 @@ import { moneyConsulting } from "../services/money/moneyConsulting";
 import { jobConsulting } from "../services/job/jobConsulting";
 import { loveConsulting } from "../services/love/loveConsulting";
 import { getHealthConsulting } from "../services/health/healthConsulting";
-import { getMarriageConsulting } from "../services/marriage/marriageConsulting";
-import { getBusinessConsulting } from "../services/business/businessConsulting";
-import { getRealEstateConsulting } from "../services/realEstate/realEstateConsulting";
 import { getAiConsulting } from "../services/ai/aiConsulting";
 
 type ResultViewProps = {
@@ -198,33 +195,6 @@ export default function ResultView({
           sajuPersonalNote +
           "\n\n" +
           getHealthConsulting(mappedBasic),
-      },
-      {
-        title: "결혼 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "결혼 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          getMarriageConsulting(mappedBasic),
-      },
-      {
-        title: "사업 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "사업 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          getBusinessConsulting(mappedBasic),
-      },
-      {
-        title: "부동산 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "부동산 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          getRealEstateConsulting(mappedBasic),
       },
       {
         title: "사안별 상담",
@@ -475,6 +445,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
