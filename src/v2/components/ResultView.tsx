@@ -363,7 +363,7 @@ export default function ResultView({
             cursor: "pointer",
           }}
         >
-          🧭 사안별 상담
+          🧭 사안별 상담 PDF
         </button>
 
         <button
@@ -381,7 +381,7 @@ export default function ResultView({
             cursor: "pointer",
           }}
         >
-          🤖 AI 종합상담
+          🤖 AI 종합상담 PDF
         </button>
       </div>
 
@@ -445,6 +445,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
