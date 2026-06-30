@@ -1,4 +1,5 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
+import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 
 function getDayMasterDiagnosis(dayMaster: string, name: string) {
   const value = String(dayMaster);
@@ -51,6 +52,7 @@ export function getAiConsulting(data: BasicSajuResult, concern?: string): string
   const firstDiagnosis = getDayMasterDiagnosis(data.dayMaster, name);
   const strengthMessage = getElementStrengthMessage(data.strongestElement, name);
   const weakMessage = getElementWeakMessage(data.weakestElement, name);
+  const identity = buildSajuIdentityProfile(data);
 
   const concernText = concern
     ? `${name}님이 특히 궁금해하신 부분은 "${concern}"입니다. 이 고민은 따로 떨어진 문제가 아니라, ${name}님의 사주 흐름 안에서 함께 보아야 합니다.`
@@ -70,6 +72,10 @@ ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZh
 핵심은 강하게 드러나는 ${data.strongestElement} 기운을 현실에서 어떻게 쓰고, 부족한 ${data.weakestElement} 기운을 생활 속에서 어떻게 보완하느냐입니다.
 
 이 사주는 조급하게 움직이면 힘이 흩어지고, 기준을 잡으면 실속이 살아나는 구조입니다.
+
+${identity.lifeStyle}
+
+${identity.decisionStyle}
 
 
 2. 현재 가장 중요한 문제
@@ -91,8 +97,14 @@ ${weakMessage}
 
 따라서 좋은 운을 만드는 방법은 부족한 것을 억지로 채우는 것이 아니라, 내 사주가 잘 쓰이는 환경을 선택하는 것입니다.
 
+${identity.workStyle}
+
+${identity.successPoint}
+
 
 4. 돈직업인간관계건강 핵심 상담
+
+${identity.moneyStyle}
 
 돈은 한 번에 크게 벌려는 방식보다 안정적으로 쌓는 흐름이 좋습니다.
 
@@ -100,11 +112,15 @@ ${name}님은 충동적인 선택보다 검토하고 확인한 뒤 움직일 때
 
 직업과 일에서는 단순 반복보다 경험, 책임, 판단력이 남는 일이 좋습니다.
 
+${identity.relationshipStyle}
+
 사람 관계에서는 나를 소모시키는 사람과 나를 안정시키는 사람을 구분해야 합니다.
 
 건강은 무리해서 버티는 방식이 가장 위험합니다.
 
 몸의 리듬이 무너지면 판단도 흐려지고, 판단이 흐려지면 일과 돈의 흐름까지 같이 흔들릴 수 있습니다.
+
+${identity.riskPoint}
 
 
 5. 향후 3년 전략
