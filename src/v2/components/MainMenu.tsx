@@ -7,7 +7,8 @@
   | "loveToday"
   | "healthToday"
   | "lucky"
-  | "ai"
+    | "case"
+| "ai"
   | "money"
   | "job"
   | "business"
@@ -30,7 +31,8 @@ const mainMenus: { key: MenuKey; label: string }[] = [
   { key: "loveToday", label: "오늘의 연애운" },
   { key: "healthToday", label: "오늘의 건강운" },
   { key: "lucky", label: "오늘의 행운" },
-  { key: "ai", label: "AI 종합상담" },
+    { key: "case", label: "사안별 상담" },
+{ key: "ai", label: "AI 종합상담" },
 ];
 
 function MenuButton({
@@ -112,6 +114,7 @@ export function MainMenu({ activeMenu, onChangeMenu }: MainMenuProps) {
     </section>
   );
 }
+
 
 
 
