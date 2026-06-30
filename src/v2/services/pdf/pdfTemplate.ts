@@ -65,7 +65,7 @@ function removeDuplicateLines(text: string) {
 }
 
 export function buildV2PdfHtml(params: {
-  reportType: "summary" | "detail";
+  reportType: "summary" | "detail" | "case" | "ai-total";
   name: string;
   title: string;
   subtitle: string;
