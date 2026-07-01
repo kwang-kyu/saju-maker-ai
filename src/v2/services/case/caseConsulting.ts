@@ -1,6 +1,8 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
 import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 import type { CaseQuestionKey } from "./caseQuestions";
+import { buildConsultingDecision } from "./consultingDecision";
+import { buildConsultingReport } from "./consultingFramework";
 
 function getAge(data: BasicSajuResult) {
   const birthDate = String((data as unknown as { birthDate?: string }).birthDate || "");
@@ -136,6 +138,7 @@ function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) 
       break;
   }
 
+  
   return `${buildOpening(data, questionKey)}
 
 [사주 근거 분석]
@@ -205,26 +208,33 @@ function buildJobAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
       break;
   }
 
-  return `${buildOpening(data, questionKey)}
-
-[사주 근거 분석]
-${identity.workStyle}
-
-${name}님은 ${data.dayMaster} 일간의 특성상 일에서 기준과 역할이 분명할수록 집중력이 살아납니다. 강한 ${data.strongestElement} 기운은 장점으로 쓰고, 부족한 ${data.weakestElement} 기운은 조직 적응이나 판단의 흔들림으로 나타나지 않게 관리해야 합니다.
-
-[현실 판단]
-${reality}
-
-[지금 가장 조심할 점]
-${caution}
-
-[실천 전략]
-${strategy}
-
-[AI 원장 최종 판단]
-${name}님은 일을 바꾸는 것보다 내 능력이 살아나는 구조를 찾는 것이 먼저입니다.
-
-${identity.successPoint}`;
+  const decision = buildConsultingDecision(
+    data,
+    getQuestionTitle(questionKey)
+  );
+  
+  return buildConsultingReport({
+    title: "직업 상담",
+    question: getQuestionTitle(questionKey),
+    decision,
+  
+    opening: buildOpening(data, questionKey),
+  
+    sajuAnalysis: `${identity.workStyle}
+  
+  ${name}님은 ${data.dayMaster} 일간의 특성상 일에서 기준과 역할이 분명할수록 집중력이 살아납니다.
+  
+  강한 ${data.strongestElement} 기운은 장점으로 활용하고,
+  부족한 ${data.weakestElement} 기운은 의사결정의 흔들림으로 나타나지 않도록 관리해야 합니다.`,
+  
+    reality,
+    caution,
+    strategy,
+  
+    future: identity.successPoint,
+  
+    closing: `${name}님은 직업을 자주 바꾸는 것보다 자신의 장점이 살아나는 구조를 찾을 때 운이 크게 살아납니다.`,
+  });
 }
 
 function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
