@@ -474,26 +474,33 @@ function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestio
       break;
   }
 
-  return `${buildOpening(data, questionKey)}
-
-[사주 근거 분석]
-${identity.relationshipStyle}
-
-${name}님은 관계에서 정을 쉽게 끊기보다 참고 맞추려는 흐름이 생길 수 있습니다. 다만 부족한 ${data.weakestElement} 기운이 관계의 피로, 거절의 어려움, 감정 소모로 나타나지 않게 해야 합니다.
-
-[현실 판단]
-${reality}
-
-[지금 가장 조심할 점]
-${caution}
-
-[실천 전략]
-${strategy}
-
-[AI 원장 최종 판단]
-${name}님에게 좋은 관계는 감정이 아니라 생활과 기준이 함께 맞는 관계입니다.
-
-${identity.successPoint}`;
+  const decision = buildConsultingDecision(
+    data,
+    getQuestionTitle(questionKey)
+  );
+  
+  return buildConsultingReport({
+    title: "연애·결혼 상담",
+    question: getQuestionTitle(questionKey),
+    decision,
+  
+    opening: buildOpening(data, questionKey),
+  
+    sajuAnalysis: `${identity.lifeStyle}
+  
+  ${name}님은 ${data.dayMaster} 일간의 특성상 관계에서도 감정보다 생활 리듬, 책임감, 경제 기준, 대화 방식이 맞을 때 안정됩니다.
+  
+  강한 ${data.strongestElement} 기운은 매력과 주도성으로 활용하고,
+  부족한 ${data.weakestElement} 기운은 서운함, 거리감, 현실 조건의 차이로 나타나지 않도록 조율해야 합니다.`,
+  
+    reality,
+    caution,
+    strategy,
+  
+    future: identity.successPoint,
+  
+    closing: `${name}님에게 연애와 결혼은 감정의 크기보다 함께 살아갈 수 있는 현실 기준이 맞을 때 안정적으로 이어집니다.`,
+  });
 }
 
 function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
