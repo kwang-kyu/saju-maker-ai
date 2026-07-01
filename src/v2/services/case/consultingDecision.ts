@@ -7,7 +7,9 @@ export type ConsultingDecisionLevel =
 export type ConsultingDecision = {
   score: number;
   level: ConsultingDecisionLevel;
+  grade: string;
   judgment: string;
+  verdict: string;
   headline: string;
   reasons: string[];
 };
@@ -35,6 +37,12 @@ function getLevel(score: number): ConsultingDecisionLevel {
   return "hold";
 }
 function getJudgment(level: ConsultingDecisionLevel) {
+  if (level === "veryGood") return "적극 추진";
+  if (level === "good") return "준비 후 추진";
+  if (level === "caution") return "속도 조절";
+  return "보류 및 준비";
+}
+function getVerdict(level: ConsultingDecisionLevel) {
   if (level === "veryGood") return "적극적으로 추진해도 좋은 흐름입니다.";
   if (level === "good") return "준비를 갖춘 뒤 추진하면 좋은 흐름입니다.";
   if (level === "caution") return "가능성은 있으나 속도 조절이 필요한 흐름입니다.";
@@ -51,12 +59,15 @@ export function buildConsultingDecision(
   const dayGanZhi = String(data.dayGanZhi ?? "");
   const score = getBaseScore(data);
   const level = getLevel(score);
-  const judgment = getJudgment(level);
+  const grade = getJudgment(level);
+  const verdict = getVerdict(level);
   return {
     score,
     level,
-    judgment,
-    headline: `${name}님의 ${topic} 상담 판단은 "${judgment}"`,
+    grade,
+    judgment: grade,
+    verdict,
+    headline: `${name}님의 ${topic} 상담은 ${verdict}`,
     reasons: [
       `${name}님은 ${dayMaster} 일간의 기질을 바탕으로 판단해야 합니다.`,
       `${yearGanZhi}${monthGanZhi}${dayGanZhi} 흐름을 보면 단순한 선택보다 시기와 감당 범위가 중요합니다.`,
