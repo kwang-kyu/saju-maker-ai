@@ -693,11 +693,9 @@ function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
     sajuAnalysis: `${identity.lifeStyle}
   
   ${identity.decisionStyle}
-  
-  ${name}님은 ${data.dayMaster} 일간의 특성상 건강과 인생은 단기간의 변화보다 생활 습관과 꾸준한 관리에서 운이 달라지는 구조입니다.
-  
-  강한 ${data.strongestElement} 기운은 회복력과 추진력으로 활용하고,
-  부족한 ${data.weakestElement} 기운은 무리한 일정과 생활 리듬의 불균형으로 이어지지 않도록 관리해야 합니다.`,
+  ${name}님은 ${data.dayMaster} 일간의 특성상 건강과 인생을 한 번에 바꾸기보다 생활 리듬을 꾸준히 관리할 때 안정되는 구조입니다.
+
+  특히 지금은 무리하게 버티는 습관보다 수면, 식사, 휴식, 검진처럼 기본 관리가 운의 안정에 더 중요합니다.`,
   
     reality,
     caution,
@@ -742,6 +740,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
 
