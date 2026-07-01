@@ -30,6 +30,27 @@ function getBaseScore(data: BasicSajuResult) {
   }
   return clampScore(score);
 }
+function getLifeStageBonus(stage: string) {
+  switch (stage) {
+    case "기반구축기":
+      return 3;
+
+    case "도약기":
+      return 8;
+
+    case "확장기":
+      return 6;
+
+    case "전환기":
+      return -2;
+
+    case "안정정리기":
+      return -5;
+
+    default:
+      return 0;
+  }
+}
 function getLevel(score: number): ConsultingDecisionLevel {
   if (score >= 80) return "veryGood";
   if (score >= 65) return "good";
@@ -57,7 +78,27 @@ export function buildConsultingDecision(
   const yearGanZhi = String(data.yearGanZhi ?? "");
   const monthGanZhi = String(data.monthGanZhi ?? "");
   const dayGanZhi = String(data.dayGanZhi ?? "");
-  const score = getBaseScore(data);
+  const birthYear = Number(
+    String((data as unknown as { birthDate?: string }).birthDate ?? "").slice(0, 4)
+  );
+  
+  const currentAge =
+    birthYear > 1900 ? new Date().getFullYear() - birthYear + 1 : 0;
+  
+  const stage =
+    currentAge <= 29
+      ? "기반구축기"
+      : currentAge <= 39
+      ? "도약기"
+      : currentAge <= 49
+      ? "확장기"
+      : currentAge <= 59
+      ? "전환기"
+      : "안정정리기";
+  
+  const score = clampScore(
+    getBaseScore(data) + getLifeStageBonus(stage)
+  );
   const level = getLevel(score);
   const grade = getJudgment(level);
   const verdict = getVerdict(level);
