@@ -327,7 +327,7 @@ export default function ResultView({
             transition: "all .2s ease",
           }}
         >
-          ?? 요약 보고서
+          요약 보고서
         </button>
 
         <button
@@ -348,7 +348,7 @@ export default function ResultView({
             transition: "all .2s ease",
           }}
         >
-          ?? 종합 보고서
+          종합 보고서
         </button>
         <button
           type="button"
@@ -368,7 +368,7 @@ export default function ResultView({
             transition: "all .2s ease",
           }}
         >
-          ?? 사안별 상담
+          사안별 상담
         </button>
 
         <button
@@ -389,7 +389,7 @@ export default function ResultView({
             transition: "all .2s ease",
           }}
         >
-          ?? AI 인생컨설팅
+          AI 인생컨설팅
         </button>
       </div>
 
@@ -404,7 +404,7 @@ export default function ResultView({
         }}
       >
         <h3 style={{ marginTop: 0, marginBottom: "14px", fontSize: "20px" }}>
-          ?? 상담 기준 정보
+          상담 기준 정보
         </h3>
         <div>이름: {name}</div>
         <div>출생 기준: {calendarType === "lunar" ? "음력 생일" : "양력 생일"}</div>
@@ -426,7 +426,7 @@ export default function ResultView({
         }}
       >
         <h3 style={{ marginTop: 0, marginBottom: "14px", fontSize: "20px" }}>
-          ?? 만세력 사주팔자
+          만세력 사주팔자
         </h3>
         <div>연주: {sajuInfo.yearGanZhi}</div>
         <div>월주: {sajuInfo.monthGanZhi}</div>
@@ -453,6 +453,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
