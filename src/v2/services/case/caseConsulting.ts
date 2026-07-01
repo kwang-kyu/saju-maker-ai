@@ -202,7 +202,7 @@ function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) 
       break;
 
     case "moneyTiming":
-      reality = "금전 흐름은 한 번에 크게 열리기보다 새는 돈이 줄고 반복 수입이 안정될 때부터 좋아집니다. 지금은 큰돈을 벌 기회를 기다리기보다 지출 구조, 고정비, 현금 흐름을 정리하는 것이 먼저입니다.";
+      reality = "금전 흐름은 수입보다 지출 구조가 안정될 때부터 좋아집니다. 지금은 큰 기회를 기다리기보다 고정비, 현금 흐름, 저축 비율을 먼저 정리하는 것이 현실적입니다.";
       caution = "돈이 들어오기도 전에 지출 계획부터 늘리거나, 불안해서 무리한 투자를 시작하는 흐름은 피해야 합니다.";
       strategy = `1. 월 고정비와 변동비를 나누어 정리하세요.
 2. 최소 6개월 생활비를 현금으로 확보하세요.
@@ -212,7 +212,7 @@ function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) 
 
     case "investment":
     default:
-      reality = "투자는 시작할 수 있습니다. 다만 지금 사주는 크게 한 번에 들어가는 투자보다 작은 금액으로 경험을 쌓고, 본인에게 맞는 자산군을 찾는 방식이 좋습니다. 예금, 연금, ETF, 부동산처럼 안정성과 지속성이 있는 구조가 먼저입니다.";
+      reality = "투자는 시작할 수 있습니다. 다만 지금은 투자금의 크기보다 원칙을 세우고 본인에게 맞는 자산군을 찾는 과정이 중요합니다. 예금, 연금, ETF, 부동산처럼 안정성과 지속성이 있는 구조가 먼저입니다.";
       caution = "남들이 좋다고 하는 투자나 단기간에 큰 수익을 기대하는 선택은 흔들림을 만들 수 있습니다.";
       strategy = `1. 투자 전 생활비와 비상금을 먼저 확보하세요.
 2. 처음에는 소액으로 경험을 쌓으세요.
@@ -740,6 +740,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
 
