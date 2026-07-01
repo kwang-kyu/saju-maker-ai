@@ -693,9 +693,9 @@ function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
     sajuAnalysis: `${identity.lifeStyle}
   
   ${identity.decisionStyle}
-  ${name}님은 ${data.dayMaster} 일간의 특성상 건강과 인생을 한 번에 바꾸기보다 생활 리듬을 꾸준히 관리할 때 안정되는 구조입니다.
+  ${name}님은 ${data.dayMaster} 일간의 특성상 큰 결심보다 매일의 컨디션을 관리할 때 건강운이 안정되는 구조입니다.
 
-  특히 지금은 무리하게 버티는 습관보다 수면, 식사, 휴식, 검진처럼 기본 관리가 운의 안정에 더 중요합니다.`,
+  특히 지금은 체력 신호를 가볍게 넘기지 말고 회복 시간, 식사 패턴, 정기 점검을 현실적으로 챙기는 것이 중요합니다.`,
   
     reality,
     caution,
@@ -703,7 +703,7 @@ function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
   
     future: buildCaseFutureStrategy(decision, name),
   
-    closing: `${name}님은 건강과 인생의 흐름을 한 번에 바꾸려 하기보다 꾸준한 생활 관리가 가장 큰 운을 만들어 갑니다.`,
+    closing: `${name}님은 몸의 리듬을 안정시키는 선택이 결국 일, 관계, 재물 흐름까지 편안하게 만들어 갑니다.`,
   });
 }
 
@@ -740,6 +740,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
 
