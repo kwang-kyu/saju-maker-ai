@@ -51,6 +51,26 @@ function getLifeStageBonus(stage: string) {
       return 0;
   }
 }
+function getTopicBonus(topic: string) {
+  const value = topic.toLowerCase();
+
+  if (value.includes("이직")) return 5;
+  if (value.includes("직업")) return 4;
+
+  if (value.includes("사업")) return 2;
+
+  if (value.includes("부동산")) return -2;
+
+  if (value.includes("결혼")) return 3;
+  if (value.includes("연애")) return 3;
+
+  if (value.includes("건강")) return -3;
+
+  if (value.includes("투자")) return -1;
+  if (value.includes("재테크")) return -1;
+
+  return 0;
+}
 function getLevel(score: number): ConsultingDecisionLevel {
   if (score >= 80) return "veryGood";
   if (score >= 65) return "good";
@@ -96,9 +116,11 @@ export function buildConsultingDecision(
       ? "전환기"
       : "안정정리기";
   
-  const score = clampScore(
-    getBaseScore(data) + getLifeStageBonus(stage)
-  );
+      const score = clampScore(
+        getBaseScore(data) +
+          getLifeStageBonus(stage) +
+          getTopicBonus(topic)
+      );
   const level = getLevel(score);
   const grade = getJudgment(level);
   const verdict = getVerdict(level);
