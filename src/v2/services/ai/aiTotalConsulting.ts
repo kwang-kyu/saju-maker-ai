@@ -90,7 +90,8 @@ ${name}님은 이미 감당 가능한 범위가 보인다면 지나치게 미루
   return `1년 차에는 정리, 2년 차에는 수익 구조 만들기, 3년 차에는 검증된 방향 확장이 좋습니다.
 처음부터 크게 벌리는 것보다 작게 검증하고 크게 키우는 흐름이 유리합니다.
 앞으로 3년은 욕심보다 구조, 속도보다 지속성이 더 중요합니다.`;
-}export function getAiTotalConsulting(data: BasicSajuResult): string {
+}
+export function getAiTotalConsulting(data: BasicSajuResult): string {
   const name = data.name;
   const age = getAge(data);
   const ageLine = getAgeLine(age);
@@ -108,8 +109,13 @@ ${name}님은 이미 감당 가능한 범위가 보인다면 지나치게 미루
   const threeYearStrategy = getThreeYearStrategy(decision, name);
   return `
 AI 원장 종합상담
-${name}님 사주는 단순히 운이 좋다, 나쁘다로 판단할 구조가 아닙니다.
-한마디로 말하면, ${decision.verdict}
+
+한마디로 말하면, ${name}님은 지금 운이 좋고 나쁨보다 선택의 기준을 분명히 세워야 하는 흐름입니다.
+
+${decision.verdict}
+
+사주는 결과를 단정하는 도구가 아니라,
+현재 나에게 맞는 방향과 감당 가능한 선택을 찾는 기준입니다.
 추천도: ${decision.score}점
 판정: ${decision.grade}
 위험도: ${decision.riskLabel}
@@ -169,5 +175,6 @@ ${name}님의 운은 가만히 기다릴 때보다
 기준이 분명해질수록 힘이 깊어지는 사람입니다.
 `.trim();
 }
+
 
 
