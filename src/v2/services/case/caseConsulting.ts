@@ -341,7 +341,7 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
   지속 가능한 사업 구조를 중심으로 말씀드리겠습니다.`;
   switch (questionKey) {
     case "businessStart":
-      reality = "사업 시작은 가능하지만 처음부터 크게 벌리는 방식보다 작게 검증하고 키우는 방식이 맞습니다. 사주상 추진력은 살릴 수 있지만, 수익 구조와 고객 반응이 확인되기 전까지는 고정비를 낮게 가져가는 것이 좋습니다.";
+      reality = "사업 시작은 가능하지만 초반에는 시장 반응을 확인하면서 규모를 조절하는 방식이 맞습니다. 사주상 추진력은 살릴 수 있지만, 수익 구조와 고객 반응이 확인되기 전까지는 고정비를 낮게 유지하는 것이 좋습니다.";
       caution = "확신만 믿고 대출, 임대료, 인건비를 먼저 크게 만드는 것은 위험합니다.";
       strategy = `1. 처음에는 작게 시작해 시장 반응을 확인하세요.
 2. 월 고정비와 손익분기점을 먼저 계산하세요.
@@ -355,7 +355,7 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
       strategy = `1. 최근 6개월 순이익을 먼저 확인하세요.
 2. 반복 고객과 재구매율을 점검하세요.
 3. 확장 후 고정비가 얼마나 늘어나는지 계산하세요.
-4. 한 번에 크게 늘리기보다 단계적으로 확장하세요.`;
+4. 매출과 고객 반응이 확인된 뒤 단계적으로 확장하세요.`;
       break;
 
     case "partnership":
@@ -405,7 +405,7 @@ ${identity.moneyStyle}
   
     future: buildCaseFutureStrategy(decision, name),
   
-    closing: `${name}님은 사업을 크게 벌리는 것보다 작게 검증하고 안정적으로 키울 때 사업운이 살아납니다.`,
+    closing: `${name}님은 사업을 감정으로 밀어붙이기보다 시장 반응과 수익 구조를 확인하며 키울 때 사업운이 살아납니다.`,
   });
 }
 
@@ -740,6 +740,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
 
