@@ -62,7 +62,35 @@ function getAssetLine(strongestElement: string, weakestElement: string) {
   }
   return "재테크 방향은 한 가지 자산에 몰기보다 현금, 안정형 자산, 성장형 자산을 나누는 방식이 좋습니다.";
 }
-export function getAiTotalConsulting(data: BasicSajuResult): string {
+function getThreeYearStrategy(decision: ReturnType<typeof buildConsultingDecision>, name: string) {
+  if (decision.riskLevel === "danger") {
+    return `1년 차에는 실행보다 정리와 회복이 우선입니다.
+${name}님은 손실 가능성, 건강 부담, 자금 압박을 먼저 줄여야 합니다.
+2년 차에는 작은 테스트를 통해 가능성을 확인하는 시기입니다.
+큰 결정보다 작게 시작하고, 실패해도 회복 가능한 범위 안에서 움직이는 것이 좋습니다.
+3년 차에는 검증된 방향만 확장해야 합니다.
+아직 불안한 영역은 억지로 키우지 말고, 안정적으로 남는 구조만 선택해야 합니다.`;
+  }
+  if (decision.riskLevel === "watch") {
+    return `1년 차에는 준비와 검증이 핵심입니다.
+${name}님은 바로 크게 움직이기보다 자금, 사람, 일정, 건강 조건을 먼저 맞춰야 합니다.
+2년 차에는 조건이 맞는 영역부터 실행하는 시기입니다.
+한 번에 전체를 바꾸기보다 수익이 보이는 부분, 부담이 적은 부분부터 시작하는 것이 좋습니다.
+3년 차에는 결과가 확인된 방향을 넓히는 시기입니다.
+무리한 확장보다 검증된 구조를 반복해서 키우는 방식이 안정적입니다.`;
+  }
+  if (decision.score >= 80) {
+    return `1년 차에는 방향을 정하고 빠르게 실행해도 좋은 흐름입니다.
+${name}님은 이미 감당 가능한 범위가 보인다면 지나치게 미루지 않는 것이 좋습니다.
+2년 차에는 성과가 나는 영역에 집중해야 합니다.
+돈, 일, 사람 관계 중 결과가 분명한 부분에 힘을 모으면 흐름이 커질 수 있습니다.
+3년 차에는 확장과 브랜드화가 중요합니다.
+경험, 신뢰, 반복 수익이 쌓이는 구조로 키우면 장기적인 안정성이 생깁니다.`;
+  }
+  return `1년 차에는 정리, 2년 차에는 수익 구조 만들기, 3년 차에는 검증된 방향 확장이 좋습니다.
+처음부터 크게 벌리는 것보다 작게 검증하고 크게 키우는 흐름이 유리합니다.
+앞으로 3년은 욕심보다 구조, 속도보다 지속성이 더 중요합니다.`;
+}export function getAiTotalConsulting(data: BasicSajuResult): string {
   const name = data.name;
   const age = getAge(data);
   const ageLine = getAgeLine(age);
@@ -77,6 +105,7 @@ export function getAiTotalConsulting(data: BasicSajuResult): string {
   const strengthLine = getStrengthLine(strengthType);
   const elementLine = getElementLine(strongestElement, weakestElement);
   const assetLine = getAssetLine(strongestElement, weakestElement);
+  const threeYearStrategy = getThreeYearStrategy(decision, name);
   return `
 AI 원장 종합상담
 ${name}님 사주는 단순히 운이 좋다, 나쁘다로 판단할 구조가 아닙니다.
@@ -130,9 +159,7 @@ ${elementLine}
 수면, 식사, 휴식, 걷기, 일정 조절처럼 기본 리듬을 지키는 것이
 운을 안정시키는 가장 현실적인 방법입니다.
 앞으로 3년 방향
-1년 차에는 정리, 2년 차에는 수익 구조 만들기, 3년 차에는 검증된 방향 확장이 좋습니다.
-처음부터 크게 벌리는 것보다 작게 검증하고 크게 키우는 흐름이 유리합니다.
-앞으로 3년은 욕심보다 구조, 속도보다 지속성이 더 중요합니다.
+${threeYearStrategy}
 AI 원장 최종 총평
 ${name}님의 운은 가만히 기다릴 때보다
 스스로 기준을 세우고 움직일 때 열립니다.
@@ -142,3 +169,5 @@ ${name}님의 운은 가만히 기다릴 때보다
 기준이 분명해질수록 힘이 깊어지는 사람입니다.
 `.trim();
 }
+
+
