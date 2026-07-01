@@ -14,10 +14,13 @@
 
     .pdf-page {
       width: 794px;
+      min-height: 1123px;
       margin: 0 auto;
       padding: 54px 54px 54px 54px;
       background: #ffffff;
       position: relative;
+      page-break-after: always;
+      break-after: page;
     }
 
     .pdf-page + .pdf-page {
@@ -37,20 +40,20 @@
     }
 
     .pdf-title {
-      font-size: 38px;
+      font-size: 46px;
       font-weight: 900;
-      margin-bottom: 22px;
+      line-height: 1.25;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
       color: #111827;
-      letter-spacing: -0.7px;
     }
 
     .pdf-subtitle {
-      font-size: 18px;
-      line-height: 1.75;
+      font-size: 20px;
+      line-height: 1.9;
       color: #374151;
     }
-
-    .pdf-section-title {
+.pdf-section-title {
       font-size: 23px;
       font-weight: 900;
       margin: 0 0 18px 0;
@@ -59,6 +62,10 @@
       color: #ffffff;
       border-radius: 14px;
       letter-spacing: -0.4px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: avoid;
+      break-after: avoid;
     }
 
     .pdf-section-title::before {
@@ -73,10 +80,37 @@
     .pdf-card {
       border: 1px solid #e5e7eb;
       border-radius: 18px;
-      padding: 28px 30px;
-      margin-bottom: 18px;
+      padding: 24px 28px;
+      margin-bottom: 22px;
       background: #ffffff;
       box-shadow: 0 6px 16px rgba(17, 24, 39, 0.06);
+      page-break-before: auto;
+      break-before: auto;
+      page-break-inside: auto;
+      break-inside: auto;
+    }
+
+    .pdf-body-page {
+      min-height: auto;
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    .pdf-flow-content {
+      display: block;
+    }
+
+    .pdf-report-body {
+      width: 794px;
+      margin: 0 auto;
+      padding: 54px 54px 54px 54px;
+      background: #ffffff;
+    }
+
+    .pdf-section-block {
+      margin-bottom: 30px;
+      page-break-inside: auto;
+      break-inside: auto;
     }
 
     .pdf-card::before {
@@ -168,9 +202,28 @@
 
       .pdf-page {
         width: 794px;
+        min-height: 1123px;
         margin: 0 auto;
-        page-break-after: auto;
+        page-break-after: always;
+        break-after: page;
       }
+.pdf-section-title {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .pdf-card,
+      .pdf-section-block {
+      margin-bottom: 30px;
+      page-break-inside: auto;
+      break-inside: auto;
+    }
     }
   `;
 }
+
+
+
+
+
+

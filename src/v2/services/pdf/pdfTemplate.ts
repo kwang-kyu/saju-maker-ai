@@ -48,6 +48,14 @@ function cleanPdfText(value: string) {
     .replaceAll("🔎", "[확인]");
 }
 
+function normalizeLineForDuplicateCheck(line: string) {
+  return line
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/[0-9.,ㆍ:：\-–—()[\]{}]/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
 function removeDuplicateLines(text: string) {
   const seen = new Set<string>();
 
@@ -56,12 +64,24 @@ function removeDuplicateLines(text: string) {
     .map((line) => line.trim())
     .filter((line) => {
       if (!line) return false;
-      const key = line.replace(/\s+/g, "");
-      if (seen.has(key)) return false;
+
+      const key = normalizeLineForDuplicateCheck(line);
+
+      if (key.length >= 18 && seen.has(key)) return false;
+
       seen.add(key);
       return true;
     })
     .join("\n");
+}
+
+function renderPdfLines(content: string) {
+  return content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<div class="pdf-line">${line}</div>`)
+    .join("");
 }
 
 export function buildV2PdfHtml(params: {
@@ -85,7 +105,6 @@ export function buildV2PdfHtml(params: {
       (section, index) => `
         <div class="pdf-toc-row">
           <span>${index + 1}. ${section.title}</span>
-          <strong>${index + 3}</strong>
         </div>
       `
     )
@@ -93,13 +112,12 @@ export function buildV2PdfHtml(params: {
 
   const sectionHtml = safeSections
     .map(
-      (section, index) => `
-        <div class="pdf-page">
+      (section) => `
+        <div class="pdf-section-block">
           <h2 class="pdf-section-title">${section.title}</h2>
           <div class="pdf-card">
-            <pre class="pdf-text">${section.content}</pre>
+            <div class="pdf-text">${renderPdfLines(section.content)}</div>
           </div>
-          <div class="pdf-footer">SAJU-MAKER-AI v2  천운문  Page ${index + 3}</div>
         </div>
       `
     )
@@ -140,8 +158,12 @@ export function buildV2PdfHtml(params: {
           <div class="pdf-footer">SAJU-MAKER-AI v2  천운문  Page 2</div>
         </div>
 
-        ${sectionHtml}
+        <div class="pdf-report-body">
+          ${sectionHtml}
+        </div>
       </body>
     </html>
   `;
 }
+
+

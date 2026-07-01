@@ -1,11 +1,12 @@
 ﻿import html2pdf from "html2pdf.js";
 import { buildV2PdfHtml, type V2PdfSection } from "./pdfTemplate";
-import { getV2PdfStyle } from "./pdfStyle";
 
 export async function downloadDetailPdf(params: {
   name: string;
   sections: V2PdfSection[];
 }) {
+  console.log("상세 PDF 생성 시작", params.sections.length);
+
   const html = buildV2PdfHtml({
     reportType: "detail",
     name: params.name,
@@ -18,45 +19,50 @@ export async function downloadDetailPdf(params: {
   parsed.querySelector(".preview-toolbar")?.remove();
 
   const container = document.createElement("div");
-  container.innerHTML = `<style>${getV2PdfStyle()}</style>${parsed.body.innerHTML}`;
-  container.style.background = "#ffffff";
   container.style.width = "794px";
   container.style.margin = "0 auto";
-  container.style.position = "absolute";
-  container.style.left = "0";
-  container.style.top = "0";
-  container.style.zIndex = "-1";
+  container.style.background = "#ffffff";
+
+  const styleHtml = parsed.head.querySelector("style")?.outerHTML ?? "";
+
+  container.innerHTML = `
+    ${styleHtml}
+    ${parsed.body.innerHTML}
+  `;
 
   document.body.appendChild(container);
 
-  await new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(resolve);
-    });
-  });
-
-  await html2pdf()
-    .set({
+  try {
+    const options = {
       margin: 0,
-      filename: `${params.name}_천운문_상세리포트.pdf`,
+      filename: `${params.name}_천운문_상세리포트_템플릿테스트.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
         scale: 2,
-        useCORS: true,
         backgroundColor: "#ffffff",
+        useCORS: true,
         scrollX: 0,
         scrollY: 0,
         windowWidth: 794,
+      },
+      pagebreak: {
+        mode: ["css", "legacy"],
+        avoid: [".pdf-section-title", ".pdf-toc-row", ".pdf-line"],
       },
       jsPDF: {
         unit: "px",
         format: [794, 1123],
         orientation: "portrait",
       },
-      
-    })
-    .from(container)
-    .save();
+    } as any;
 
-  document.body.removeChild(container);
+    await html2pdf()
+      .set(options)
+      .from(container)
+      .save();
+  } finally {
+    document.body.removeChild(container);
+  }
 }
+
+
