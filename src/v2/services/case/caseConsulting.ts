@@ -353,28 +353,35 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
       break;
   }
 
-  return `${buildOpening(data, questionKey)}
-
-[사주 근거 분석]
-${identity.lifeStyle}
-
-${identity.moneyStyle}
-
-부동산은 ${name}님에게 단순한 투자보다 생활 안정과 자산 보존의 의미가 큽니다. 강한 ${data.strongestElement} 기운은 선택의 장점으로 쓰되, 부족한 ${data.weakestElement} 기운은 대출, 공실, 관리비 같은 현실 부담으로 보완해야 합니다.
-
-[현실 판단]
-${reality}
-
-[지금 가장 조심할 점]
-${caution}
-
-[실천 전략]
-${strategy}
-
-[AI 원장 최종 판단]
-${name}님에게 부동산은 좋은 물건보다 오래 버틸 수 있는 구조가 먼저입니다.
-
-${identity.successPoint}`;
+  const decision = buildConsultingDecision(
+    data,
+    getQuestionTitle(questionKey)
+  );
+  
+  return buildConsultingReport({
+    title: "부동산 상담",
+    question: getQuestionTitle(questionKey),
+    decision,
+  
+    opening: buildOpening(data, questionKey),
+  
+    sajuAnalysis: `${identity.lifeStyle}
+  
+  ${identity.moneyStyle}
+  
+  ${name}님은 ${data.dayMaster} 일간의 특성상 부동산을 볼 때 감정보다 기준, 위치, 자금 계획, 보유 기간을 함께 봐야 합니다.
+  
+  강한 ${data.strongestElement} 기운은 판단력과 실행력으로 활용하고,
+  부족한 ${data.weakestElement} 기운은 성급한 계약이나 자금 압박으로 나타나지 않도록 관리해야 합니다.`,
+  
+    reality,
+    caution,
+    strategy,
+  
+    future: identity.successPoint,
+  
+    closing: `${name}님에게 부동산은 한 번의 큰 수익보다 오래 버틸 수 있는 구조를 만들 때 운이 안정적으로 살아납니다.`,
+  });
 }
 
 function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
