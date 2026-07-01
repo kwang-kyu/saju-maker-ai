@@ -89,6 +89,21 @@ function getVerdict(level: ConsultingDecisionLevel) {
   if (level === "caution") return "가능성은 있으나 속도 조절이 필요한 흐름입니다.";
   return "지금은 무리하게 밀어붙이기보다 준비가 우선인 흐름입니다.";
 }
+function getTiming(score: number) {
+  if (score >= 85) {
+    return "지금 적극적으로 추진해도 좋은 시기입니다.";
+  }
+
+  if (score >= 70) {
+    return "충분히 준비한 뒤 실행하면 좋은 결과를 기대할 수 있습니다.";
+  }
+
+  if (score >= 55) {
+    return "서두르기보다 3~6개월 정도 준비하며 기회를 살피는 것이 좋습니다.";
+  }
+
+  return "지금은 실행보다 준비와 점검에 집중하는 것이 유리합니다.";
+}
 export function buildConsultingDecision(
   data: BasicSajuResult,
   topic: string
@@ -124,13 +139,16 @@ export function buildConsultingDecision(
   const level = getLevel(score);
   const grade = getJudgment(level);
   const verdict = getVerdict(level);
+  const timing = getTiming(score);
   return {
     score,
     level,
     grade,
     judgment: grade,
     verdict,
-    headline: `${name}님의 ${topic} 상담은 ${verdict}`,
+    headline: `${name}님의 ${topic} 상담은 ${verdict}
+
+실행 시기 : ${timing}`,
     reasons: [
       `${name}님은 ${dayMaster} 일간의 기질을 바탕으로 판단해야 합니다.`,
       `${yearGanZhi}${monthGanZhi}${dayGanZhi} 흐름을 보면 단순한 선택보다 시기와 감당 범위가 중요합니다.`,
