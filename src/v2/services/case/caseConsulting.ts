@@ -577,28 +577,35 @@ function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
       break;
   }
 
-  return `${buildOpening(data, questionKey)}
-
-[사주 근거 분석]
-${identity.lifeStyle}
-
-${identity.decisionStyle}
-
-${name}님은 현재 사안에서 마음이 급해질수록 판단이 흔들릴 수 있습니다. 강한 ${data.strongestElement} 기운은 추진력으로 쓰고, 부족한 ${data.weakestElement} 기운은 준비와 점검으로 보완해야 합니다.
-
-[현실 판단]
-${reality}
-
-[지금 가장 조심할 점]
-${caution}
-
-[실천 전략]
-${strategy}
-
-[AI 원장 최종 판단]
-${name}님에게 지금 필요한 것은 빠른 결론이 아니라 후회하지 않을 기준입니다.
-
-${identity.successPoint}`;
+  const decision = buildConsultingDecision(
+    data,
+    getQuestionTitle(questionKey)
+  );
+  
+  return buildConsultingReport({
+    title: "건강·인생 상담",
+    question: getQuestionTitle(questionKey),
+    decision,
+  
+    opening: buildOpening(data, questionKey),
+  
+    sajuAnalysis: `${identity.lifeStyle}
+  
+  ${identity.decisionStyle}
+  
+  ${name}님은 ${data.dayMaster} 일간의 특성상 건강과 인생은 단기간의 변화보다 생활 습관과 꾸준한 관리에서 운이 달라지는 구조입니다.
+  
+  강한 ${data.strongestElement} 기운은 회복력과 추진력으로 활용하고,
+  부족한 ${data.weakestElement} 기운은 무리한 일정과 생활 리듬의 불균형으로 이어지지 않도록 관리해야 합니다.`,
+  
+    reality,
+    caution,
+    strategy,
+  
+    future: identity.successPoint,
+  
+    closing: `${name}님은 건강과 인생의 흐름을 한 번에 바꾸려 하기보다 꾸준한 생활 관리가 가장 큰 운을 만들어 갑니다.`,
+  });
 }
 
 export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuestionKey) {
