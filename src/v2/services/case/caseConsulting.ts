@@ -84,7 +84,32 @@ function buildOpening(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const ageLine = age
     ? `${name}님은 현재 ${age}세, ${getLifeStage(age)} 흐름입니다. ${getLifeStageAdvice(age)}`
     : `${name}님은 현재 나이 정보보다 사주 구조와 선택의 감당 가능성을 중심으로 판단하는 것이 좋습니다.`;
-
+    if (
+      [
+        "marriagePrepare",
+        "newRelationship",
+        "marriageTiming",
+        "remarriage",
+      ].includes(questionKey)
+    ) {
+      return `[AI 원장 연애·결혼 상담 리포트]
+  
+  [상담 질문]
+  ${getQuestionTitle(questionKey)}
+  
+  [원장님의 첫 진단]
+  연애와 결혼은 인연이 들어오는지만 보는 상담이 아닙니다.
+  
+  사주에서는 사람을 만나는 운보다 그 관계를 오래 이어갈 수 있는 준비와 시기를 더 중요하게 봅니다.
+  
+  ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면, ${name}님의 관계운은 감정의 크기보다 생활 리듬, 책임감, 경제 기준, 대화 방식이 맞을 때 안정됩니다.
+  
+  ${ageLine}
+  
+  ${identity.decisionStyle}
+  
+  ${identity.riskPoint}`;
+    }
   return `[AI 원장 사안별 판단 리포트]
 
 [상담 질문]
