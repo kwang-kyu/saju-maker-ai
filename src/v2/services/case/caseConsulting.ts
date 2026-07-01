@@ -200,7 +200,12 @@ function buildJobAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   let reality = "";
   let caution = "";
   let strategy = "";
+  const opening = `직업은 단순히 회사를 선택하는 문제가 아닙니다.
 
+${name}님의 사주를 보면 어떤 환경에서 능력이 살아나는지가 훨씬 중요합니다.
+
+이번 상담에서는 지금 당장 취업이나 이직을 해야 하는지를 판단하는 것이 아니라,
+앞으로 오래 성장할 수 있는 직업 구조를 중심으로 말씀드리겠습니다.`;
   switch (questionKey) {
     case "jobChange":
       reality = "이직운은 열려 있습니다. 다만 지금 흐름은 단순히 회사를 벗어나는 이직보다, 역할과 성장 구조가 더 맞는 자리로 옮길 때 좋아집니다. 연봉만 보고 움직이기보다 조직 분위기, 상사 스타일, 업무 권한, 장기 성장성을 함께 봐야 합니다.";
@@ -250,7 +255,7 @@ function buildJobAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
     question: getQuestionTitle(questionKey),
     decision,
   
-    opening: buildOpening(data, questionKey),
+    opening,
   
     sajuAnalysis: `${identity.workStyle}
   
