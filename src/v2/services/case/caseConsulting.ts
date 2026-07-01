@@ -284,28 +284,35 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
       break;
   }
 
-  return `${buildOpening(data, questionKey)}
-
-[사주 근거 분석]
-${identity.workStyle}
+  const decision = buildConsultingDecision(
+    data,
+    getQuestionTitle(questionKey)
+  );
+  
+  return buildConsultingReport({
+    title: "사업 상담",
+    question: getQuestionTitle(questionKey),
+    decision,
+  
+    opening: buildOpening(data, questionKey),
+  
+    sajuAnalysis: `${identity.workStyle}
 
 ${identity.moneyStyle}
-
-${name}님은 사업에서 감각보다 구조가 중요합니다. 강한 ${data.strongestElement} 기운은 추진력과 장점으로 쓰일 수 있지만, 부족한 ${data.weakestElement} 기운은 돈, 사람, 계약 관리에서 보완해야 할 지점입니다.
-
-[현실 판단]
-${reality}
-
-[지금 가장 조심할 점]
-${caution}
-
-[실천 전략]
-${strategy}
-
-[AI 원장 최종 판단]
-${name}님에게 사업은 가능성보다 버틸 구조가 먼저입니다.
-
-${identity.successPoint}`;
+  
+  ${name}님은 ${data.dayMaster} 일간의 특성상 사업에서도 자신의 기준과 판단권이 분명할 때 힘이 살아납니다.
+  
+  강한 ${data.strongestElement} 기운은 추진력과 확장성으로 활용하고,
+  부족한 ${data.weakestElement} 기운은 자금 관리, 사람 관리, 계약 판단에서 흔들리지 않도록 보완해야 합니다.`,
+  
+    reality,
+    caution,
+    strategy,
+  
+    future: identity.successPoint,
+  
+    closing: `${name}님은 사업을 크게 벌리는 것보다 작게 검증하고 안정적으로 키울 때 사업운이 살아납니다.`,
+  });
 }
 
 function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
