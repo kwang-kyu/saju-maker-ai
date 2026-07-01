@@ -12,6 +12,7 @@ export type ConsultingDecision = {
   riskLabel?: string;
   riskReason?: string;
   timing?: string;
+  actionCondition?: string;
 };
 export type ConsultingReportInput = {
   title: string;
@@ -42,6 +43,14 @@ function getTimingGuide(decision: ConsultingDecision) {
 [실행 시기 판단]
 ${decision.timing}`;
 }
+function getActionConditionGuide(decision: ConsultingDecision) {
+  if (!decision.actionCondition) {
+    return "";
+  }
+  return `
+[실행 조건]
+${decision.actionCondition}`;
+}
 function getReasonLines(reasons: string[]) {
   return reasons
     .filter((reason) => reason && reason.trim())
@@ -58,13 +67,14 @@ ${input.future}`
       : "";
   const riskGuide = getRiskGuide(input.decision);
   const timingGuide = getTimingGuide(input.decision);
+  const actionConditionGuide = getActionConditionGuide(input.decision);
   const reasonLines = getReasonLines(input.decision.reasons);
   return `[${input.title}]
 ━━━━━━━━━━━━━━━━━━━━━━
 [AI 원장 1차 판단]
 ${input.decision.grade}
 추천도 ${input.decision.score}점
-판정: ${input.decision.verdict}${riskGuide}${timingGuide}
+판정: ${input.decision.verdict}${riskGuide}${timingGuide}${actionConditionGuide}
 결론부터 말씀드리겠습니다.
 ${input.decision.headline}
 [판단 근거]
