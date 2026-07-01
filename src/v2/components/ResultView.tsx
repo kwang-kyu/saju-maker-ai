@@ -17,11 +17,7 @@ import LoveTodayResult from "./LoveTodayResult";
 import HealthTodayResult from "./HealthTodayResult";
 
 import { calculateSaju } from "../engine/sajuEngine";
-import { downloadSummaryPdf } from "../services/pdf/downloadSummaryPdf";
-import { downloadDetailPdf } from "../services/pdf/downloadDetailPdf";
 import { downloadDetailDocx } from "../services/docx/detailDocxService";
-import { downloadCasePdf } from "../services/pdf/downloadCasePdf";
-import { downloadAiTotalPdf } from "../services/pdf/downloadAiTotalPdf";
 
 import { basicConsulting } from "../services/basic/basicConsulting";
 import { basicMapper } from "../services/basic/basicMapper";
@@ -33,13 +29,6 @@ import { jobConsulting } from "../services/job/jobConsulting";
 import { loveConsulting } from "../services/love/loveConsulting";
 import { getHealthConsulting } from "../services/health/healthConsulting";
 import { getAiConsulting } from "../services/ai/aiConsulting";
-import {
-  getPremiumMoneyCareerStrategy,
-  getPremiumCareerBusinessStrategy,
-  getPremiumBusinessRealEstateStrategy,
-  getPremiumThreeYearStrategy,
-} from "../services/premium/premiumDetailStrategy";
-
 type ResultViewProps = {
   name: string;
   birthDate: string;
@@ -163,7 +152,7 @@ export default function ResultView({
           sajuPillars,
         }),
       },
-      { title: "기본 사주", content: basicConsulting(mappedBasic) },
+      { title: "기본 사주 분석", content: basicConsulting(mappedBasic) },
       { title: "전체 운세", content: totalConsulting(inputData) },
       { title: "올해 운세", content: yearConsulting(name) },
       { title: "오늘의 운세", content: todayConsulting(name) },
@@ -208,22 +197,6 @@ export default function ResultView({
         content: "사안별 상담은 질문 선택 방식으로 제공됩니다. 구체적인 고민이 입력되면 해당 사안에 맞춰 상담을 진행합니다.",
       },
       { title: "AI 종합상담", content: getAiConsulting(mappedBasic) },
-      {
-        title: "프리미엄 재테크직업 전략",
-        content: getPremiumMoneyCareerStrategy(mappedBasic),
-      },
-      {
-        title: "프리미엄 직업사업 전략",
-        content: getPremiumCareerBusinessStrategy(mappedBasic),
-      },
-      {
-        title: "프리미엄 사업부동산 전략",
-        content: getPremiumBusinessRealEstateStrategy(mappedBasic),
-      },
-      {
-        title: "프리미엄 3년 실행 전략",
-        content: getPremiumThreeYearStrategy(mappedBasic),
-      },
     ];
   };
 
@@ -269,31 +242,26 @@ export default function ResultView({
     },
   ];
 
-  const handleSummaryPdf = () => {
-    downloadSummaryPdf({ name, sections: getSummaryPdfSections() });
+  const handleSummaryDocx = () => {
+    void downloadDetailDocx({ name, sections: getSummaryPdfSections() });
   };
 
-  const handleDetailPdf = () => {
-    downloadDetailPdf({ name, sections: getPdfSections() });
-  };
   const handleDetailDocx = () => {
     void downloadDetailDocx({ name, sections: getPdfSections() });
   };
 
-  const handleCasePdf = () => {
+  const handleCaseDocx = () => {
     const sections = getPdfSections().filter((section) =>
       section.title.includes("사안별")
     );
-
-    downloadCasePdf({ name, sections });
+    void downloadDetailDocx({ name, sections });
   };
 
-  const handleAiTotalPdf = () => {
+  const handleAiTotalDocx = () => {
     const sections = getPdfSections().filter((section) =>
       section.title.includes("AI 종합")
     );
-
-    downloadAiTotalPdf({ name, sections });
+    void downloadDetailDocx({ name, sections });
   };
   const renderResult = () => {
     switch (selectedMenu) {
@@ -343,88 +311,85 @@ export default function ResultView({
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
         <button
           type="button"
-          onClick={handleSummaryPdf}
+          onClick={handleSummaryDocx}
           style={{
             flex: 1,
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#f59e0b",
-            color: "#111827",
+            minWidth: "190px",
+            padding: "18px 16px",
+            borderRadius: "18px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "linear-gradient(135deg,#1e293b,#0f172a)",
+            color: "#ffffff",
             fontWeight: 800,
+            fontSize: "15px",
             cursor: "pointer",
+            boxShadow: "0 10px 24px rgba(0,0,0,.28)",
+            transition: "all .2s ease",
           }}
         >
-          📄 요약 리포트
+          ?? 요약 보고서
         </button>
 
-        <button
-          type="button"
-          onClick={handleDetailPdf}
-          style={{
-            flex: 1,
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#38bdf8",
-            color: "#0f172a",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          📘 상세 리포트
-        </button>
         <button
           type="button"
           onClick={handleDetailDocx}
           style={{
             flex: 1,
-            minWidth: "180px",
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#22c55e",
-            color: "#052e16",
+            minWidth: "190px",
+            padding: "18px 16px",
+            borderRadius: "18px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "linear-gradient(135deg,#1e293b,#0f172a)",
+            color: "#ffffff",
             fontWeight: 800,
+            fontSize: "15px",
             cursor: "pointer",
+            boxShadow: "0 10px 24px rgba(0,0,0,.28)",
+            transition: "all .2s ease",
           }}
         >
-          📝 상세 DOCX
+          ?? 종합 보고서
         </button>
         <button
           type="button"
-          onClick={handleCasePdf}
+          onClick={handleCaseDocx}
           style={{
             flex: 1,
-            minWidth: "180px",
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#a78bfa",
-            color: "#111827",
+            minWidth: "190px",
+            padding: "18px 16px",
+            borderRadius: "18px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "linear-gradient(135deg,#1e293b,#0f172a)",
+            color: "#ffffff",
             fontWeight: 800,
+            fontSize: "15px",
             cursor: "pointer",
+            boxShadow: "0 10px 24px rgba(0,0,0,.28)",
+            transition: "all .2s ease",
           }}
         >
-          🧭 사안별 상담 PDF
+          ?? 사안별 상담
         </button>
 
         <button
           type="button"
-          onClick={handleAiTotalPdf}
+          onClick={handleAiTotalDocx}
           style={{
             flex: 1,
-            minWidth: "180px",
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#f97316",
-            color: "#111827",
+            minWidth: "190px",
+            padding: "18px 16px",
+            borderRadius: "18px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "linear-gradient(135deg,#1e293b,#0f172a)",
+            color: "#ffffff",
             fontWeight: 800,
+            fontSize: "15px",
             cursor: "pointer",
+            boxShadow: "0 10px 24px rgba(0,0,0,.28)",
+            transition: "all .2s ease",
           }}
         >
-          🤖 AI 종합상담 PDF
+          ?? AI 인생컨설팅
         </button>
       </div>
 
@@ -439,7 +404,7 @@ export default function ResultView({
         }}
       >
         <h3 style={{ marginTop: 0, marginBottom: "14px", fontSize: "20px" }}>
-          📋 상담 기준 정보
+          ?? 상담 기준 정보
         </h3>
         <div>이름: {name}</div>
         <div>출생 기준: {calendarType === "lunar" ? "음력 생일" : "양력 생일"}</div>
@@ -461,7 +426,7 @@ export default function ResultView({
         }}
       >
         <h3 style={{ marginTop: 0, marginBottom: "14px", fontSize: "20px" }}>
-          📜 만세력 사주팔자
+          ?? 만세력 사주팔자
         </h3>
         <div>연주: {sajuInfo.yearGanZhi}</div>
         <div>월주: {sajuInfo.monthGanZhi}</div>
@@ -488,6 +453,11 @@ export default function ResultView({
     </div>
   );
 }
+
+
+
+
+
 
 
 
