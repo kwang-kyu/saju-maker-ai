@@ -15,6 +15,7 @@ export type ConsultingDecision = {
   riskLabel: string;
   riskReason: string;
   timing: string;
+  actionCondition: string;
   grade: string;
   judgment: string;
   verdict: string;
@@ -102,6 +103,34 @@ function getRiskReason(riskLevel: ConsultingRiskLevel, topic: string) {
   }
   return `${topic}은 지금 무리하게 밀어붙이면 손실이나 피로가 커질 수 있으므로 실행보다 점검이 우선입니다.`;
 }
+function getActionCondition(riskLevel: ConsultingRiskLevel, score: number, topic: string) {
+  const value = topic.toLowerCase();
+  if (riskLevel === "safe") {
+    return "지금 실행은 가능합니다. 다만 계약, 자금, 일정 기준을 문서로 정리한 뒤 움직일수록 결과가 안정됩니다.";
+  }
+  if (value.includes("사업")) {
+    return "고정비, 예상 매출, 손익분기점, 인력 구조가 숫자로 확인될 때 실행하는 것이 좋습니다.";
+  }
+  if (value.includes("부동산")) {
+    return "대출 부담, 보유 기간, 공실 가능성, 매도 전략까지 확인된 뒤 움직이는 것이 안전합니다.";
+  }
+  if (value.includes("투자") || value.includes("재테크")) {
+    return "투자금 한도, 손실 기준, 현금 비중, 분할 진입 기준을 먼저 정한 뒤 실행해야 합니다.";
+  }
+  if (value.includes("이직") || value.includes("직업")) {
+    return "현재 직장의 불만만 보지 말고 새 환경의 수입, 역할, 성장 가능성이 확인될 때 움직이는 것이 좋습니다.";
+  }
+  if (value.includes("결혼") || value.includes("연애")) {
+    return "감정의 크기보다 생활 방식, 돈 관리, 가족 관계, 갈등 해결 방식이 맞을 때 결정하는 것이 좋습니다.";
+  }
+  if (value.includes("건강")) {
+    return "생활 리듬, 수면, 식사, 병원 점검, 회복 시간을 먼저 확보한 뒤 계획을 세워야 합니다.";
+  }
+  if (score >= 55) {
+    return "바로 결정하기보다 3~6개월 정도 준비하면서 조건이 맞는지 확인한 뒤 움직이는 것이 좋습니다.";
+  }
+  return "지금은 실행보다 보류가 우선입니다. 손실을 줄이고 회복할 수 있는 여력을 먼저 만들어야 합니다.";
+}
 function getJudgment(level: ConsultingDecisionLevel) {
   if (level === "veryGood") return "적극 추진";
   if (level === "good") return "준비 후 추진";
@@ -162,6 +191,7 @@ export function buildConsultingDecision(
   const riskLevel = getRiskLevel(score, topic);
   const riskLabel = getRiskLabel(riskLevel);
   const riskReason = getRiskReason(riskLevel, topic);
+  const actionCondition = getActionCondition(riskLevel, score, topic);
   const grade = getJudgment(level);
   const verdict = getVerdict(level);
   const timing = getTiming(score, riskLevel);
@@ -172,17 +202,20 @@ export function buildConsultingDecision(
     riskLabel,
     riskReason,
     timing,
+    actionCondition,
     grade,
     judgment: grade,
     verdict,
     headline: `${name}님의 ${topic} 상담은 ${verdict}
 위험도 : ${riskLabel}
-실행 시기 : ${timing}`,
+실행 시기 : ${timing}
+실행 조건 : ${actionCondition}`,
     reasons: [
       `${name}님은 ${dayMaster} 일간의 기질을 바탕으로 판단해야 합니다.`,
       `${yearGanZhi}${monthGanZhi}${dayGanZhi} 흐름을 보면 단순한 선택보다 시기와 감당 범위가 중요합니다.`,
       `${topic}은 결과만 보는 것이 아니라 현재의 준비 상태, 실행력, 지속 가능성을 함께 봐야 합니다.`,
       riskReason,
+      actionCondition,
     ],
   };
 }
