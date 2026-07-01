@@ -139,7 +139,14 @@ function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) 
   let reality = "";
   let caution = "";
   let strategy = "";
-
+  const opening = `재테크는 돈을 많이 버는 기술보다
+  돈을 지키고 키우는 구조를 만드는 상담입니다.
+  
+  ${name}님의 사주는 한 번에 크게 승부를 보기보다,
+  현금흐름과 손실 기준을 먼저 세울 때 재물운이 안정됩니다.
+  
+  이번 상담에서는 투자상품보다
+  돈이 새지 않고 쌓이는 구조를 중심으로 말씀드리겠습니다.`;
   switch (questionKey) {
     case "stockInvestment":
       reality = "주식 투자는 가능하지만 단기 수익보다 오래 버틸 수 있는 구조가 먼저입니다. 사주상 감정에 따라 매수매도를 반복하기보다 ETF, 우량주, 배당주처럼 기준을 세워 관리하는 방식이 더 안정적입니다.";
@@ -171,7 +178,7 @@ function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) 
   }
 
   
-  return `${buildOpening(data, questionKey)}
+  return `${opening}
 
 [사주 근거 분석]
 ${identity.moneyStyle}
@@ -365,7 +372,13 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
   let reality = "";
   let caution = "";
   let strategy = "";
+  const opening = `부동산은 가격보다 타이밍과 보유 전략이 더 중요합니다.
+
+  ${name}님의 사주는 무조건 사거나 파는 것이 중요한 것이 아니라,
+  언제 움직이고 얼마나 오래 보유해야 하는지가 더 중요한 구조입니다.
   
+  이번 상담에서는 시세 예측보다
+  매수·매도 시기와 보유 전략을 중심으로 말씀드리겠습니다.`;  
 
   switch (questionKey) {
     case "realEstateBuy":
@@ -407,7 +420,7 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
     question: getQuestionTitle(questionKey),
     decision,
   
-    opening: buildOpening(data, questionKey),
+    opening,
   
     sajuAnalysis: `${identity.lifeStyle}
   
