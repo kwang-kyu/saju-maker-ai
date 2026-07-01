@@ -86,6 +86,8 @@ ${input.question}
 ${input.opening}
 [사주 근거 분석]
 ${input.sajuAnalysis}
+[왜 이런 판단이 나왔는가]
+${reasonLines}
 [현실 판단]
 ${input.reality}
 [지금 가장 조심할 점]
@@ -95,3 +97,4 @@ ${input.strategy}${futureText}
 [AI 원장 최종 총평]
 ${input.closing}`;
 }
+
