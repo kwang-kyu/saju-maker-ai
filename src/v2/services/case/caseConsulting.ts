@@ -99,7 +99,39 @@ ${identity.decisionStyle}
 
 ${identity.riskPoint}`;
 }
+function buildCaseFutureStrategy(
+  decision: ReturnType<typeof buildConsultingDecision>,
+  name: string
+) {
+  if (decision.riskLevel === "danger") {
+    return `1년 차에는 실행보다 정리와 회복이 우선입니다.
+${name}님은 손실 가능성, 건강 부담, 자금 압박을 먼저 줄여야 합니다.
 
+2년 차에는 작은 테스트를 통해 가능성을 확인하는 시기입니다.
+큰 결정보다 작게 시작하고, 실패해도 회복 가능한 범위 안에서 움직이는 것이 좋습니다.
+
+3년 차에는 검증된 방향만 확장해야 합니다.
+아직 불안한 영역은 억지로 키우지 말고, 안정적으로 남는 구조만 선택해야 합니다.`;
+  }
+
+  if (decision.riskLevel === "watch") {
+    return `1년 차에는 준비와 검증이 핵심입니다.
+${name}님은 바로 크게 움직이기보다 자금, 사람, 일정, 건강 조건을 먼저 맞춰야 합니다.
+
+2년 차에는 조건이 맞는 영역부터 실행하는 시기입니다.
+한 번에 전체를 바꾸기보다 부담이 적은 부분부터 시작하는 것이 좋습니다.
+
+3년 차에는 결과가 확인된 방향을 넓히는 시기입니다.
+무리한 확장보다 검증된 구조를 반복해서 키우는 방식이 안정적입니다.`;
+  }
+
+  return `1년 차에는 방향 정리와 실행 기준을 세우는 것이 좋습니다.
+${name}님은 이미 가능한 흐름이 있으므로 지나치게 미루기보다 감당 가능한 범위부터 움직이는 것이 좋습니다.
+
+2년 차에는 성과가 나는 부분에 집중해야 합니다.
+
+3년 차에는 검증된 방향을 넓히고 장기적으로 유지할 구조를 만드는 것이 좋습니다.`;
+}
 function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
@@ -231,7 +263,7 @@ function buildJobAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
     caution,
     strategy,
   
-    future: identity.successPoint,
+    future: buildCaseFutureStrategy(decision, name),
   
     closing: `${name}님은 직업을 자주 바꾸는 것보다 자신의 장점이 살아나는 구조를 찾을 때 운이 크게 살아납니다.`,
   });
@@ -309,7 +341,7 @@ ${identity.moneyStyle}
     caution,
     strategy,
   
-    future: identity.successPoint,
+    future: buildCaseFutureStrategy(decision, name),
   
     closing: `${name}님은 사업을 크게 벌리는 것보다 작게 검증하고 안정적으로 키울 때 사업운이 살아납니다.`,
   });
@@ -378,7 +410,7 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
     caution,
     strategy,
   
-    future: identity.successPoint,
+    future: buildCaseFutureStrategy(decision, name),
   
     closing: `${name}님에게 부동산은 한 번의 큰 수익보다 오래 버틸 수 있는 구조를 만들 때 운이 안정적으로 살아납니다.`,
   });
@@ -497,7 +529,7 @@ function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestio
     caution,
     strategy,
   
-    future: identity.successPoint,
+    future: buildCaseFutureStrategy(decision, name),
   
     closing: `${name}님에게 연애와 결혼은 감정의 크기보다 함께 살아갈 수 있는 현실 기준이 맞을 때 안정적으로 이어집니다.`,
   });
@@ -602,7 +634,7 @@ function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
     caution,
     strategy,
   
-    future: identity.successPoint,
+    future: buildCaseFutureStrategy(decision, name),
   
     closing: `${name}님은 건강과 인생의 흐름을 한 번에 바꾸려 하기보다 꾸준한 생활 관리가 가장 큰 운을 만들어 갑니다.`,
   });
