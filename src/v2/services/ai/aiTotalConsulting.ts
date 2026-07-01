@@ -62,6 +62,9 @@ function getAssetLine(strongestElement: string, weakestElement: string) {
   }
   return "재테크 방향은 한 가지 자산에 몰기보다 현금, 안정형 자산, 성장형 자산을 나누는 방식이 좋습니다.";
 }
+function getPersonalCoreLine(name: string, dayMaster: string, strengthType: string, strongestElement: string, weakestElement: string) {
+  return `${name}님의 종합 흐름은 ${dayMaster} 일간의 기본 성향, ${strengthType}의 힘 조절 방식, 강한 ${strongestElement} 기운과 보완이 필요한 ${weakestElement} 기운을 함께 보아야 합니다. 그래서 이 상담은 단순히 좋다, 나쁘다로 말하기보다 어떤 선택을 줄이고 어떤 방향을 남길지에 초점을 둡니다.`;
+}
 function getThreeYearStrategy(decision: ReturnType<typeof buildConsultingDecision>, name: string) {
   if (decision.riskLevel === "danger") {
     return `1년 차에는 실행보다 정리와 회복이 우선입니다.
@@ -107,6 +110,7 @@ export function getAiTotalConsulting(data: BasicSajuResult): string {
   const elementLine = getElementLine(strongestElement, weakestElement);
   const assetLine = getAssetLine(strongestElement, weakestElement);
   const threeYearStrategy = getThreeYearStrategy(decision, name);
+  const personalCoreLine = getPersonalCoreLine(name, dayMaster, strengthType, strongestElement, weakestElement);
   return `
 AI 원장 종합상담
 
@@ -128,6 +132,7 @@ ${decision.riskReason}
 4. ${decision.reasons[3]}
 ${ageLine}
 사주의 핵심 진단
+${personalCoreLine}
 ${dayMasterLine}
 ${strengthLine}
 격국은 '${gyeokguk}'의 흐름을 참고해서 보면 좋습니다.
@@ -177,6 +182,7 @@ ${name}님의 사주는 조급하게 앞서갈 때보다
 방향이 정리되고 기준이 분명해질수록 힘이 깊어지는 흐름입니다.
 `.trim();
 }
+
 
 
 
