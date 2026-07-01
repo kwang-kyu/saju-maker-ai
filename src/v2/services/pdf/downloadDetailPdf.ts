@@ -2,7 +2,7 @@
 import { buildV2PdfHtml, type V2PdfSection } from "./pdfTemplate";
 import { getV2PdfStyle } from "./pdfStyle";
 
-export function downloadDetailPdf(params: {
+export async function downloadDetailPdf(params: {
   name: string;
   sections: V2PdfSection[];
 }) {
@@ -19,12 +19,23 @@ export function downloadDetailPdf(params: {
 
   const container = document.createElement("div");
   container.innerHTML = `<style>${getV2PdfStyle()}</style>${parsed.body.innerHTML}`;
-  container.style.background = "#e5e7eb";
+  container.style.background = "#ffffff";
   container.style.width = "794px";
   container.style.margin = "0 auto";
+  container.style.position = "absolute";
+  container.style.left = "0";
+  container.style.top = "0";
+  container.style.zIndex = "-1";
+
   document.body.appendChild(container);
 
-  html2pdf()
+  await new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(resolve);
+    });
+  });
+
+  await html2pdf()
     .set({
       margin: 0,
       filename: `${params.name}_천운문_상세리포트.pdf`,
@@ -35,16 +46,17 @@ export function downloadDetailPdf(params: {
         backgroundColor: "#ffffff",
         scrollX: 0,
         scrollY: 0,
+        windowWidth: 794,
       },
       jsPDF: {
         unit: "px",
         format: [794, 1123],
         orientation: "portrait",
       },
+      
     })
     .from(container)
-    .save()
-    .then(() => {
-      document.body.removeChild(container);
-    });
+    .save();
+
+  document.body.removeChild(container);
 }
