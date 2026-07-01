@@ -33,6 +33,12 @@ import { jobConsulting } from "../services/job/jobConsulting";
 import { loveConsulting } from "../services/love/loveConsulting";
 import { getHealthConsulting } from "../services/health/healthConsulting";
 import { getAiConsulting } from "../services/ai/aiConsulting";
+import {
+  getPremiumMoneyCareerStrategy,
+  getPremiumCareerBusinessStrategy,
+  getPremiumBusinessRealEstateStrategy,
+  getPremiumThreeYearStrategy,
+} from "../services/premium/premiumDetailStrategy";
 
 type ResultViewProps = {
   name: string;
@@ -202,6 +208,22 @@ export default function ResultView({
         content: "사안별 상담은 질문 선택 방식으로 제공됩니다. 구체적인 고민이 입력되면 해당 사안에 맞춰 상담을 진행합니다.",
       },
       { title: "AI 종합상담", content: getAiConsulting(mappedBasic) },
+      {
+        title: "프리미엄 재테크직업 전략",
+        content: getPremiumMoneyCareerStrategy(mappedBasic),
+      },
+      {
+        title: "프리미엄 직업사업 전략",
+        content: getPremiumCareerBusinessStrategy(mappedBasic),
+      },
+      {
+        title: "프리미엄 사업부동산 전략",
+        content: getPremiumBusinessRealEstateStrategy(mappedBasic),
+      },
+      {
+        title: "프리미엄 3년 실행 전략",
+        content: getPremiumThreeYearStrategy(mappedBasic),
+      },
     ];
   };
 
@@ -466,6 +488,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
