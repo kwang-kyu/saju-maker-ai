@@ -281,7 +281,13 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
   let reality = "";
   let caution = "";
   let strategy = "";
+  const opening = `사업은 업종보다 구조가 중요합니다.
 
+  ${name}님의 사주는 무조건 사업을 하라는 사주가 아니라,
+  어떤 방식으로 시작해야 오래 살아남는지를 먼저 보는 구조입니다.
+  
+  이번 상담에서는 창업 여부보다
+  지속 가능한 사업 구조를 중심으로 말씀드리겠습니다.`;
   switch (questionKey) {
     case "businessStart":
       reality = "사업 시작은 가능하지만 처음부터 크게 벌리는 방식보다 작게 검증하고 키우는 방식이 맞습니다. 사주상 추진력은 살릴 수 있지만, 수익 구조와 고객 반응이 확인되기 전까지는 고정비를 낮게 가져가는 것이 좋습니다.";
@@ -331,7 +337,7 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
     question: getQuestionTitle(questionKey),
     decision,
   
-    opening: buildOpening(data, questionKey),
+    opening,
   
     sajuAnalysis: `${identity.workStyle}
 
@@ -359,6 +365,7 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
   let reality = "";
   let caution = "";
   let strategy = "";
+  
 
   switch (questionKey) {
     case "realEstateBuy":
