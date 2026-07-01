@@ -19,6 +19,7 @@ import HealthTodayResult from "./HealthTodayResult";
 import { calculateSaju } from "../engine/sajuEngine";
 import { downloadSummaryPdf } from "../services/pdf/downloadSummaryPdf";
 import { downloadDetailPdf } from "../services/pdf/downloadDetailPdf";
+import { downloadDetailDocx } from "../services/docx/detailDocxService";
 import { downloadCasePdf } from "../services/pdf/downloadCasePdf";
 import { downloadAiTotalPdf } from "../services/pdf/downloadAiTotalPdf";
 
@@ -253,6 +254,9 @@ export default function ResultView({
   const handleDetailPdf = () => {
     downloadDetailPdf({ name, sections: getPdfSections() });
   };
+  const handleDetailDocx = () => {
+    void downloadDetailDocx({ name, sections: getPdfSections() });
+  };
 
   const handleCasePdf = () => {
     const sections = getPdfSections().filter((section) =>
@@ -347,6 +351,23 @@ export default function ResultView({
           }}
         >
           📘 상세 리포트
+        </button>
+        <button
+          type="button"
+          onClick={handleDetailDocx}
+          style={{
+            flex: 1,
+            minWidth: "180px",
+            padding: "13px",
+            border: "none",
+            borderRadius: "12px",
+            background: "#22c55e",
+            color: "#052e16",
+            fontWeight: 800,
+            cursor: "pointer",
+          }}
+        >
+          📝 상세 DOCX
         </button>
         <button
           type="button"
@@ -445,6 +466,13 @@ export default function ResultView({
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 
