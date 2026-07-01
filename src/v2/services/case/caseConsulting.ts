@@ -110,6 +110,25 @@ function buildOpening(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   
   ${identity.riskPoint}`;
     }
+    if (questionKey === "healthCare") {
+      return `[AI 원장 건강 상담 리포트]
+  
+  [상담 질문]
+  ${getQuestionTitle(questionKey)}
+  
+  [원장님의 첫 진단]
+  건강은 질병을 예측하는 상담이 아니라,
+  현재 사주에서 몸의 균형이 흔들리기 쉬운 부분과 생활 습관을 어떻게 관리해야 하는지를 살펴보는 상담입니다.
+  
+  ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면,
+  ${name}님은 무리하게 버티기보다 생활 리듬을 일정하게 유지할 때 운의 흐름도 함께 안정되는 구조입니다.
+  
+  ${ageLine}
+  
+  ${identity.decisionStyle}
+  
+  ${identity.riskPoint}`;
+    }  
   return `[AI 원장 사안별 판단 리포트]
 
 [상담 질문]
