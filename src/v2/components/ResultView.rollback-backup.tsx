@@ -158,7 +158,7 @@ export default function ResultView({
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
-          jobConsulting(mappedBasic),
+          jobConsulting(mappedBasic, birthDate),
       },
       {
         title: "연애 상담",
@@ -404,5 +404,6 @@ export default function ResultView({
     </div>
   );
 }
+
 
 

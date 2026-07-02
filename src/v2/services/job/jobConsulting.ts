@@ -2,9 +2,26 @@
 import { buildConsultingFramework } from "../framework/consultingFramework";
 import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 
-export function jobConsulting(data: BasicSajuResult): string {
+function getAge(birthDate?: string) {
+  const birthYear = Number(String(birthDate || "").slice(0, 4));
+  if (!birthYear) return 0;
+  return new Date().getFullYear() - birthYear + 1;
+}
+
+function getAgeCareerStrategy(age: number) {
+  if (!age) return "현재는 나이보다 경력 수준, 수입 구조, 전문성 축적 상태를 기준으로 직업 방향을 보는 것이 좋습니다.";
+  if (age <= 29) return "20대 흐름에서는 직업 이름보다 경험, 기술, 포트폴리오를 쌓는 것이 중요합니다.";
+  if (age <= 39) return "30대 흐름에서는 실무 역량을 수입 구조와 연결하고, 내가 잘하는 분야를 분명히 만들어야 합니다.";
+  if (age <= 49) return "40대 흐름에서는 직책, 책임, 전문성, 사업 가능성을 함께 보면서 오래 갈 구조를 만들어야 합니다.";
+  if (age <= 59) return "50대 흐름에서는 무리한 전환보다 기존 경험을 활용해 자문, 관리, 교육, 부업형 수입으로 확장하는 것이 좋습니다.";
+  return "60대 이후 흐름에서는 새로운 경쟁보다 경험, 신뢰, 관계를 활용한 안정형 일거리와 생활 리듬이 중요합니다.";
+}
+
+export function jobConsulting(data: BasicSajuResult, birthDate?: string): string {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
+  const age = getAge(birthDate);
+  const ageCareerStrategy = getAgeCareerStrategy(age);
 
   return buildConsultingFramework({
     name,
@@ -16,7 +33,9 @@ ${identity.lifeStyle}
 ${identity.decisionStyle}`,
     personInsight: `${name}님은 단순히 시키는 일만 반복하는 구조보다 스스로 판단하고 정리할 수 있는 일이 있을 때 집중력이 살아나는 편입니다. 강하게 살아나는 ${data.strongestElement} 기운은 일에서 자연스럽게 드러나는 장점이고, 부족한 ${data.weakestElement} 기운은 직업 선택에서 보완해야 할 부분입니다.
 
-${identity.workStyle}`,
+${identity.workStyle}
+
+${ageCareerStrategy}`,
     repeatedPattern: `${name}님은 아무 일이나 오래 버티는 사람은 아닙니다. 맡은 일은 책임 있게 하려 하지만, 역할이 애매하거나 성과가 인정되지 않는 환경에서는 마음이 쉽게 지칠 수 있습니다. 반대로 책임과 권한, 평가 기준이 분명한 곳에서는 시간이 갈수록 실력이 쌓이고 신뢰가 커집니다.
 
 ${identity.riskPoint}`,
@@ -39,3 +58,4 @@ ${identity.riskPoint}`,
 ${identity.successPoint}`,
   });
 }
+

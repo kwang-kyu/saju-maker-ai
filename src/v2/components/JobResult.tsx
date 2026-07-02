@@ -7,7 +7,7 @@ type JobResultProps = BasicSajuInput;
 
 export default function JobResult(props: JobResultProps) {
   const basic = basicMapper(props);
-  const consultingText = jobConsulting(basic);
+  const consultingText = jobConsulting(basic, props.birthDate);
   const summaryList = jobSummary(props.name);
 
   return (
@@ -35,3 +35,4 @@ export default function JobResult(props: JobResultProps) {
     </div>
   );
 }
+
