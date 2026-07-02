@@ -25,6 +25,7 @@ import { buildSummaryDocxSections } from "../services/docx/docxSummarySections";
 import {
   buildDetailDocxSections,
   buildDetailDocxPreparedData,
+  buildDetailDocxBaseSections,
 } from "../services/docx/docxDetailSections";
 import {
   buildSummarySections,
@@ -32,10 +33,6 @@ import {
   buildCaseSections,
   buildAiSections,
 } from "../services/docx/docxSectionFactory";
-import { basicConsulting } from "../services/basic/basicConsulting";
-import { totalConsulting } from "../services/total/totalConsulting";
-import { yearConsulting } from "../services/year/yearConsulting";
-import { todayConsulting } from "../services/today/todayConsulting";
 import { moneyConsulting } from "../services/money/moneyConsulting";
 import { jobConsulting } from "../services/job/jobConsulting";
 import { loveConsulting } from "../services/love/loveConsulting";
@@ -43,7 +40,6 @@ import { getHealthConsulting } from "../services/health/healthConsulting";
 import { getMarriageConsulting } from "../services/marriage/marriageConsulting";
 import { getBusinessConsulting } from "../services/business/businessConsulting";
 import { getRealEstateConsulting } from "../services/realEstate/realEstateConsulting";
-import { getAiTotalConsulting } from "../services/ai/aiTotalConsulting";
 
 type ResultViewProps = {
   name: string;
@@ -403,13 +399,16 @@ export default function ResultView({
   const sajuPillars = `${sajuInfo.yearGanZhi} / ${sajuInfo.monthGanZhi} / ${sajuInfo.dayGanZhi} / ${sajuInfo.timeGanZhi}`;
 
   const getDocxSections = () => {
-    const { inputData, mappedBasic, sajuPersonalNote } =
+    const { mappedBasic, sajuPersonalNote } =
       buildDetailDocxPreparedData({ name, birthDate, birthTime, gender });
 
     const baseSections = [
-      {
-        title: "개인 상담 기준",
-        content: buildPersonalProfile({
+      ...buildDetailDocxBaseSections({
+        name,
+        birthDate,
+        birthTime,
+        gender,
+        personalProfile: buildPersonalProfile({
           name,
           birthDate,
           birthTime,
@@ -419,11 +418,7 @@ export default function ResultView({
           lunarDate: sajuInfo.lunarDate,
           sajuPillars,
         }),
-      },
-      { title: "기본 사주", content: basicConsulting(mappedBasic) },
-      { title: "전체 운세", content: totalConsulting(inputData) },
-      { title: "올해 운세", content: yearConsulting(inputData) },
-      { title: "오늘의 운세", content: todayConsulting(name) },
+      }),
       {
         title: "재물 상담",
         content:
@@ -491,7 +486,6 @@ export default function ResultView({
         title: "사안별 상담",
         content: "사안별 상담은 질문 선택 방식으로 제공됩니다. 구체적인 고민이 입력되면 해당 사안에 맞춰 상담을 진행합니다.",
       },
-      { title: "AI 종합상담", content: getAiTotalConsulting(mappedBasic) },
     ];
 
     return baseSections.map((section) => ({
@@ -736,6 +730,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
