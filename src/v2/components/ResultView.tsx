@@ -112,7 +112,7 @@ function buildPersonalProfile(params: {
 성별: ${genderText}
 현재 나이: ${age ? `${age}세` : "확인 필요"}
 작성일: ${writtenDate}
-상담버전: 천운문 Premium 4.0
+상담버전: 천운문 Premium 11.0
 만세력 기준: 절기 기준 사주명리 해석
 사주팔자: ${sajuPillars}
 
@@ -409,7 +409,7 @@ export default function ResultView({
         <div>출생 당시 양력 환산일: {sajuInfo.solarDate}</div>
         <div>출생 시간: {birthTimeText}</div>
         <div>작성일: {writtenDateText}</div>
-        <div>상담버전: 천운문 Premium 4.0</div>
+        <div>상담버전: 천운문 Premium 11.0</div>
         <div>만세력 기준: 절기 기준 사주명리 해석</div>
         <div>성별: {gender === "male" ? "남성" : "여성"}</div>
       </div>
@@ -453,6 +453,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
