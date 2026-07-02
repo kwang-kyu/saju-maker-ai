@@ -22,6 +22,7 @@ import { downloadSummaryDocx } from "../services/docx/summaryDocxService";
 import { downloadCaseDocx } from "../services/docx/caseDocxService";
 import { downloadAiDocx } from "../services/docx/aiDocxService";
 import { buildSummaryDocxSections } from "../services/docx/docxSummarySections";
+import { buildDetailDocxSections } from "../services/docx/docxDetailSections";
 import {
   buildSummarySections,
   buildDetailSections,
@@ -533,7 +534,7 @@ export default function ResultView({
   const handleDetailDocx = () => {
     downloadDetailDocx({
       name,
-      sections: buildDetailSections(getDocxSections()),
+      sections: buildDetailDocxSections(buildDetailSections(getDocxSections())),
       reportTitle: "Premium Detail Report",
       fileSuffix: "Premium_상세리포트",
     });
@@ -737,6 +738,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
