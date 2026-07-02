@@ -29,15 +29,13 @@ import {
   buildDetailDocxMoneyJobSections,
 } from "../services/docx/docxDetailSections";
 import { buildDetailDocxLoveHealthSections } from "../services/docx/docxLoveHealthSections";
+import { buildDetailDocxLifeAssetSections } from "../services/docx/docxLifeAssetSections";
 import {
   buildSummarySections,
   buildDetailSections,
   buildCaseSections,
   buildAiSections,
 } from "../services/docx/docxSectionFactory";
-import { getMarriageConsulting } from "../services/marriage/marriageConsulting";
-import { getBusinessConsulting } from "../services/business/businessConsulting";
-import { getRealEstateConsulting } from "../services/realEstate/realEstateConsulting";
 
 type ResultViewProps = {
   name: string;
@@ -434,33 +432,16 @@ export default function ResultView({
         sajuPersonalNote,
         buildConsultingPersonalNote,
       }),
-      {
-        title: "결혼 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "결혼 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          getMarriageConsulting(mappedBasic),
-      },
-      {
-        title: "사업 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "사업 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          getBusinessConsulting(mappedBasic),
-      },
-      {
-        title: "부동산 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "부동산 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          getRealEstateConsulting(mappedBasic),
-      },
+      ...buildDetailDocxLifeAssetSections({
+        mappedBasic,
+        name,
+        birthDate,
+        birthTime,
+        gender,
+        calendarType,
+        sajuPersonalNote,
+        buildConsultingPersonalNote,
+      }),
       {
         title: "사안별 상담",
         content: "사안별 상담은 질문 선택 방식으로 제공됩니다. 구체적인 고민이 입력되면 해당 사안에 맞춰 상담을 진행합니다.",
@@ -709,6 +690,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
