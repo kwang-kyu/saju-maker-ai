@@ -3,28 +3,78 @@
   Document,
   Footer,
   Header,
+  HeadingLevel,
   Packer,
   PageNumber,
   Paragraph,
   TextRun,
 } from "docx";
-
-import {
-  splitContent,
-  textRun,
-  bodyParagraph,
-  guideParagraph,
-  smallParagraph,
-  sectionTitle,
-  subTitle,
-  divider,
-} from "./docxCommon";
 import { saveAs } from "file-saver";
 
 export type DocxSection = {
   title: string;
   content: string;
 };
+
+function splitContent(content: string) {
+  return content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function textRun(text: string, options?: { bold?: boolean; size?: number }) {
+  return new TextRun({
+    text,
+    bold: options?.bold,
+    size: options?.size ?? 22,
+  });
+}
+
+function bodyParagraph(text: string) {
+  return new Paragraph({
+    spacing: { after: 180 },
+    children: [textRun(text)],
+  });
+}
+
+function guideParagraph(text: string) {
+  return new Paragraph({
+    spacing: { after: 220 },
+    children: [textRun(text, { size: 23 })],
+  });
+}
+
+function smallParagraph(text: string) {
+  return new Paragraph({
+    spacing: { after: 140 },
+    children: [textRun(text, { size: 20 })],
+  });
+}
+
+function sectionTitle(title: string) {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_1,
+    pageBreakBefore: true,
+    spacing: { before: 240, after: 320 },
+    children: [textRun(title, { bold: true, size: 34 })],
+  });
+}
+
+function subTitle(title: string) {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_2,
+    spacing: { before: 280, after: 160 },
+    children: [textRun(title, { bold: true, size: 26 })],
+  });
+}
+
+function divider() {
+  return new Paragraph({
+    spacing: { before: 160, after: 160 },
+    children: [textRun("", { size: 18 })],
+  });
+}
 
 function createHeader() {
   return new Header({
@@ -270,6 +320,4 @@ export async function downloadDetailDocx({
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${name}_천운문_${fileSuffix}.docx`);
 }
-
-
 
