@@ -28,14 +28,13 @@ import {
   buildDetailDocxBaseSections,
   buildDetailDocxMoneyJobSections,
 } from "../services/docx/docxDetailSections";
+import { buildDetailDocxLoveHealthSections } from "../services/docx/docxLoveHealthSections";
 import {
   buildSummarySections,
   buildDetailSections,
   buildCaseSections,
   buildAiSections,
 } from "../services/docx/docxSectionFactory";
-import { loveConsulting } from "../services/love/loveConsulting";
-import { getHealthConsulting } from "../services/health/healthConsulting";
 import { getMarriageConsulting } from "../services/marriage/marriageConsulting";
 import { getBusinessConsulting } from "../services/business/businessConsulting";
 import { getRealEstateConsulting } from "../services/realEstate/realEstateConsulting";
@@ -425,24 +424,16 @@ export default function ResultView({
         moneyPersonalNote: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }),
         jobPersonalNote: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }),
       }),
-      {
-        title: "연애 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "연애 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          loveConsulting(mappedBasic),
-      },
-      {
-        title: "건강 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "건강 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          getHealthConsulting(mappedBasic),
-      },
+      ...buildDetailDocxLoveHealthSections({
+        mappedBasic,
+        name,
+        birthDate,
+        birthTime,
+        gender,
+        calendarType,
+        sajuPersonalNote,
+        buildConsultingPersonalNote,
+      }),
       {
         title: "결혼 상담",
         content:
@@ -718,6 +709,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
