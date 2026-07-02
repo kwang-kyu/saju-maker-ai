@@ -9,7 +9,7 @@ export function buildSummaryDocxSections({
 }): DocxSection[] {
   return [
     {
-      title: "개인 상담 기준",
+      title: "상담 기본 정보",
       content: personalProfile,
     },
     {
@@ -40,3 +40,4 @@ export function buildSummaryDocxSections({
     },
   ];
 }
+
