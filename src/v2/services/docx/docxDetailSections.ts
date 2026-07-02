@@ -4,6 +4,8 @@ import { basicConsulting } from "../basic/basicConsulting";
 import { totalConsulting } from "../total/totalConsulting";
 import { yearConsulting } from "../year/yearConsulting";
 import { todayConsulting } from "../today/todayConsulting";
+import { moneyConsulting } from "../money/moneyConsulting";
+import { jobConsulting } from "../job/jobConsulting";
 
 export function buildDetailDocxSections(
   sections: DocxSection[],
@@ -57,5 +59,26 @@ export function buildDetailDocxBaseSections(params: {
     { title: "전체 운세", content: totalConsulting(inputData) },
     { title: "올해 운세", content: yearConsulting(inputData) },
     { title: "오늘의 운세", content: todayConsulting(name) },
+  ];
+}
+
+export function buildDetailDocxMoneyJobSections(params: {
+  mappedBasic: ReturnType<typeof basicMapper>;
+  birthDate: string;
+  sajuPersonalNote: string;
+  moneyPersonalNote: string;
+  jobPersonalNote: string;
+}) {
+  const { mappedBasic, birthDate, sajuPersonalNote, moneyPersonalNote, jobPersonalNote } = params;
+
+  return [
+    {
+      title: "재물 상담",
+      content: moneyPersonalNote + "\n\n" + sajuPersonalNote + "\n\n" + moneyConsulting(mappedBasic, birthDate),
+    },
+    {
+      title: "직업 상담",
+      content: jobPersonalNote + "\n\n" + sajuPersonalNote + "\n\n" + jobConsulting(mappedBasic, birthDate),
+    },
   ];
 }
