@@ -26,6 +26,7 @@ import {
   buildDetailDocxSections,
   buildDetailDocxPreparedData,
   buildDetailDocxBaseSections,
+  buildDetailDocxMoneyJobSections,
 } from "../services/docx/docxDetailSections";
 import {
   buildSummarySections,
@@ -33,8 +34,6 @@ import {
   buildCaseSections,
   buildAiSections,
 } from "../services/docx/docxSectionFactory";
-import { moneyConsulting } from "../services/money/moneyConsulting";
-import { jobConsulting } from "../services/job/jobConsulting";
 import { loveConsulting } from "../services/love/loveConsulting";
 import { getHealthConsulting } from "../services/health/healthConsulting";
 import { getMarriageConsulting } from "../services/marriage/marriageConsulting";
@@ -419,24 +418,13 @@ export default function ResultView({
           sajuPillars,
         }),
       }),
-      {
-        title: "재물 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          moneyConsulting(mappedBasic, birthDate),
-      },
-      {
-        title: "직업 상담",
-        content:
-          buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }) +
-          "\n\n" +
-          sajuPersonalNote +
-          "\n\n" +
-          jobConsulting(mappedBasic, birthDate),
-      },
+      ...buildDetailDocxMoneyJobSections({
+        mappedBasic,
+        birthDate,
+        sajuPersonalNote,
+        moneyPersonalNote: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재물 상담" }),
+        jobPersonalNote: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }),
+      }),
       {
         title: "연애 상담",
         content:
@@ -730,6 +718,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
