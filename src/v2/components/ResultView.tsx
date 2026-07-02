@@ -19,6 +19,7 @@ import HealthTodayResult from "./HealthTodayResult";
 import { calculateSaju } from "../engine/sajuEngine";
 import { downloadDetailDocx } from "../services/docx/detailDocxService";
 import { downloadSummaryDocx } from "../services/docx/summaryDocxService";
+import { downloadCaseDocx } from "../services/docx/caseDocxService";
 import { basicConsulting } from "../services/basic/basicConsulting";
 import { basicMapper } from "../services/basic/basicMapper";
 import { totalConsulting } from "../services/total/totalConsulting";
@@ -557,13 +558,12 @@ export default function ResultView({
   };
 
   const handleCaseDocx = () => {
-    downloadDetailDocx({
+    downloadCaseDocx({
       name,
       sections: getDocxSections().filter((section) => section.title.includes("상담") && !section.title.includes("AI")),
-      reportTitle: "Case Consulting Report",
-      fileSuffix: "주제별_상담리포트",
     });
   };
+
 
   const handleAiTotalDocx = () => {
     downloadDetailDocx({
@@ -756,6 +756,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
