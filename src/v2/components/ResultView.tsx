@@ -158,7 +158,11 @@ export default function ResultView({
     calendarType,
   });
 
-  const sajuPillars = `${sajuInfo.yearGanZhi} / ${sajuInfo.monthGanZhi} / ${sajuInfo.dayGanZhi} / ${sajuInfo.timeGanZhi}`;
+  const displayTimeGanZhi =
+    sajuInfo.timeGanZhi && !sajuInfo.timeGanZhi.includes("계산 확인")
+      ? sajuInfo.timeGanZhi
+      : "시간 미상";
+  const sajuPillars = `${sajuInfo.yearGanZhi} / ${sajuInfo.monthGanZhi} / ${sajuInfo.dayGanZhi} / ${displayTimeGanZhi}`;
 
   const getDocxSections = () => {
     const { mappedBasic, sajuPersonalNote } =
@@ -453,6 +457,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
