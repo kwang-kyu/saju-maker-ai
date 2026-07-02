@@ -19,7 +19,7 @@ import HealthTodayResult from "./HealthTodayResult";
 import { calculateSaju } from "../engine/sajuEngine";
 import { downloadSummaryPdf } from "../services/pdf/downloadSummaryPdf";
 import { downloadDetailPdf } from "../services/pdf/downloadDetailPdf";
-
+import { downloadDetailDocx } from "../services/docx/detailDocxService";
 import { basicConsulting } from "../services/basic/basicConsulting";
 import { basicMapper } from "../services/basic/basicMapper";
 import { totalConsulting } from "../services/total/totalConsulting";
@@ -549,6 +549,10 @@ export default function ResultView({
     downloadDetailPdf({ name, sections: getPdfSections() });
   };
 
+  const handleDetailDocx = () => {
+    downloadDetailDocx({ name, sections: getPdfSections() });
+  };
+
   const renderResult = () => {
     switch (selectedMenu) {
       case "basic":
@@ -625,10 +629,29 @@ export default function ResultView({
             fontWeight: 800,
             cursor: "pointer",
           }}
+       
         >
           📘 상세 리포트
         </button>
+
+        <button
+          type="button"
+          onClick={handleDetailDocx}
+          style={{
+            flex: 1,
+            padding: "13px",
+            border: "none",
+            borderRadius: "12px",
+            background: "#22c55e",
+            color: "#052e16",
+            fontWeight: 800,
+            cursor: "pointer",
+          }}
+        >
+          📝 DOCX 리포트
+        </button>
       </div>
+    
 
       <div
         style={{
