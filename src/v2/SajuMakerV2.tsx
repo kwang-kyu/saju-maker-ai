@@ -2,7 +2,7 @@
 import { MainMenu, type MenuKey } from "./components/MainMenu";
 import InputForm from "./components/InputForm";
 import ResultView from "./components/ResultView";
-import { checkVoucherCode, useVoucherCode } from "./services/supabase/voucherService";
+import { checkCheonunVoucherCode, useCheonunVoucherCode } from "./services/supabase/cheonunVoucherService";
 
 type SajuFormData = {
   name: string;
@@ -27,7 +27,7 @@ export function SajuMakerV2() {
     setVoucherLoading(true);
     setVoucherMessage("");
 
-    const result = await checkVoucherCode(voucherCode);
+    const result = await checkCheonunVoucherCode(voucherCode);
 
     setVoucherMessage(result.message);
     setVoucherLoading(false);
@@ -40,7 +40,7 @@ export function SajuMakerV2() {
   }
 
   async function handleFormSubmit(data: SajuFormData) {
-    const result = await useVoucherCode(voucherCode);
+    const result = await useCheonunVoucherCode(voucherCode);
 
     setVoucherMessage(result.message);
 
@@ -228,6 +228,7 @@ export function SajuMakerV2() {
     </div>
   );
 }
+
 
 
 
