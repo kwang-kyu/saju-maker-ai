@@ -104,7 +104,7 @@ function createFooter() {
   });
 }
 
-function coverPage(name: string) {
+function coverPage(name: string, reportTitle: string) {
   return [
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -114,7 +114,7 @@ function coverPage(name: string) {
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 500 },
-      children: [textRun("Premium Report", { bold: true, size: 36 })],
+      children: [textRun(reportTitle, { bold: true, size: 36 })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -284,9 +284,13 @@ function finalReview(name: string) {
 export async function downloadDetailDocx({
   name,
   sections,
+  reportTitle = "Premium Report",
+  fileSuffix = "Premium_상세리포트",
 }: {
   name: string;
   sections: DocxSection[];
+  reportTitle?: string;
+  fileSuffix?: string;
 }) {
   const doc = new Document({
     sections: [
@@ -299,7 +303,7 @@ export async function downloadDetailDocx({
         },
         properties: {},
         children: [
-          ...coverPage(name),
+          ...coverPage(name, reportTitle),
           ...reportIntro(name),
           ...tableOfContents(sections),
           ...personalStandard(name),
@@ -314,5 +318,6 @@ export async function downloadDetailDocx({
   });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${name}_천운문_Premium_상세리포트.docx`);
+  saveAs(blob, `${name}_천운문_${fileSuffix}.docx`);
 }
+

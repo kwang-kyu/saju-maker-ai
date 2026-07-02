@@ -17,8 +17,6 @@ import LoveTodayResult from "./LoveTodayResult";
 import HealthTodayResult from "./HealthTodayResult";
 
 import { calculateSaju } from "../engine/sajuEngine";
-import { downloadSummaryPdf } from "../services/pdf/downloadSummaryPdf";
-import { downloadDetailPdf } from "../services/pdf/downloadDetailPdf";
 import { downloadDetailDocx } from "../services/docx/detailDocxService";
 import { basicConsulting } from "../services/basic/basicConsulting";
 import { basicMapper } from "../services/basic/basicMapper";
@@ -391,7 +389,7 @@ export default function ResultView({
 
   const sajuPillars = `${sajuInfo.yearGanZhi} / ${sajuInfo.monthGanZhi} / ${sajuInfo.dayGanZhi} / ${sajuInfo.timeGanZhi}`;
 
-  const getPdfSections = () => {
+  const getDocxSections = () => {
     const inputData = { name, birthDate, birthTime, gender };
     const mappedBasic = basicMapper(inputData);
 
@@ -499,7 +497,7 @@ export default function ResultView({
     }));
   };
 
-  const getSummaryPdfSections = () => [
+  const getSummaryDocxSections = () => [
     {
       title: "개인 상담 기준",
       content: buildPersonalProfile({
@@ -541,16 +539,40 @@ export default function ResultView({
     },
   ];
 
-  const handleSummaryPdf = () => {
-    downloadSummaryPdf({ name, sections: getSummaryPdfSections() });
-  };
-
-  const handleDetailPdf = () => {
-    downloadDetailPdf({ name, sections: getPdfSections() });
+  const handleSummaryDocx = () => {
+    downloadDetailDocx({
+      name,
+      sections: getSummaryDocxSections(),
+      reportTitle: "Summary Report",
+      fileSuffix: "요약리포트",
+    });
   };
 
   const handleDetailDocx = () => {
-    downloadDetailDocx({ name, sections: getPdfSections() });
+    downloadDetailDocx({
+      name,
+      sections: getDocxSections(),
+      reportTitle: "Premium Detail Report",
+      fileSuffix: "Premium_상세리포트",
+    });
+  };
+
+  const handleCaseDocx = () => {
+    downloadDetailDocx({
+      name,
+      sections: getDocxSections().filter((section) => section.title.includes("상담") && !section.title.includes("AI")),
+      reportTitle: "Case Consulting Report",
+      fileSuffix: "주제별_상담리포트",
+    });
+  };
+
+  const handleAiTotalDocx = () => {
+    downloadDetailDocx({
+      name,
+      sections: getDocxSections().filter((section) => section.title.includes("AI")),
+      reportTitle: "AI Total Consulting Report",
+      fileSuffix: "AI_종합상담리포트",
+    });
   };
 
   const renderResult = () => {
@@ -598,59 +620,78 @@ export default function ResultView({
     <div style={{ marginTop: "24px" }}>
       <h2 style={{ marginBottom: "16px" }}>결과 확인</h2>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
-        <button
-          type="button"
-          onClick={handleSummaryPdf}
-          style={{
-            flex: 1,
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#f59e0b",
-            color: "#111827",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          📄 요약 리포트
-        </button>
+      <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "10px",
+    marginBottom: "16px",
+  }}
+>
+  <button
+    type="button"
+    onClick={handleSummaryDocx}
+    style={{
+      padding: "13px",
+      border: "none",
+      borderRadius: "12px",
+      background: "#f59e0b",
+      color: "#111827",
+      fontWeight: 800,
+      cursor: "pointer",
+    }}
+  >
+    📄 요약 DOCX
+  </button>
 
-        <button
-          type="button"
-          onClick={handleDetailPdf}
-          style={{
-            flex: 1,
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#38bdf8",
-            color: "#0f172a",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-       
-        >
-          📘 상세 리포트
-        </button>
+  <button
+    type="button"
+    onClick={handleDetailDocx}
+    style={{
+      padding: "13px",
+      border: "none",
+      borderRadius: "12px",
+      background: "#38bdf8",
+      color: "#0f172a",
+      fontWeight: 800,
+      cursor: "pointer",
+    }}
+  >
+    📘 상세 DOCX
+  </button>
 
-        <button
-          type="button"
-          onClick={handleDetailDocx}
-          style={{
-            flex: 1,
-            padding: "13px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#22c55e",
-            color: "#052e16",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          📝 DOCX 리포트
-        </button>
-      </div>
+  <button
+    type="button"
+    onClick={handleCaseDocx}
+    style={{
+      padding: "13px",
+      border: "none",
+      borderRadius: "12px",
+      background: "#22c55e",
+      color: "#052e16",
+      fontWeight: 800,
+      cursor: "pointer",
+    }}
+  >
+    📚 주제별 상담 DOCX
+  </button>
+
+  <button
+    type="button"
+    onClick={handleAiTotalDocx}
+    style={{
+      padding: "13px",
+      border: "none",
+      borderRadius: "12px",
+      background: "#8b5cf6",
+      color: "#ffffff",
+      fontWeight: 800,
+      cursor: "pointer",
+    }}
+  >
+    🤖 AI 종합상담 DOCX
+  </button>
+</div>
     
 
       <div
@@ -704,8 +745,8 @@ export default function ResultView({
           border: "1px solid #334155",
           borderRadius: "16px",
           background: "#111827",
-          lineHeight: "2",
-          fontSize: "16px",
+          lineHeight: "1.8",
+          fontSize: "15px",
           letterSpacing: "-0.2px",
           wordBreak: "keep-all",
           overflowWrap: "break-word",
@@ -716,6 +757,10 @@ export default function ResultView({
     </div>
   );
 }
+
+
+
+
 
 
 
