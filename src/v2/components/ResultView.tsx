@@ -18,6 +18,7 @@ import HealthTodayResult from "./HealthTodayResult";
 
 import { calculateSaju } from "../engine/sajuEngine";
 import { downloadDetailDocx } from "../services/docx/detailDocxService";
+import { downloadSummaryDocx } from "../services/docx/summaryDocxService";
 import { basicConsulting } from "../services/basic/basicConsulting";
 import { basicMapper } from "../services/basic/basicMapper";
 import { totalConsulting } from "../services/total/totalConsulting";
@@ -540,11 +541,9 @@ export default function ResultView({
   ];
 
   const handleSummaryDocx = () => {
-    downloadDetailDocx({
+    downloadSummaryDocx({
       name,
       sections: getSummaryDocxSections(),
-      reportTitle: "Summary Report",
-      fileSuffix: "요약리포트",
     });
   };
 
@@ -757,6 +756,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
