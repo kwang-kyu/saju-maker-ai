@@ -54,7 +54,7 @@ export function buildDetailDocxBaseSections(params: {
   });
 
   return [
-    { title: "개인 상담 기준", content: personalProfile },
+    { title: "상담 기본 정보", content: personalProfile },
     { title: "기본 사주", content: basicConsulting(mappedBasic) },
     { title: "전체 운세", content: totalConsulting(inputData) },
     { title: "올해 운세", content: yearConsulting(inputData) },
@@ -82,3 +82,4 @@ export function buildDetailDocxMoneyJobSections(params: {
     },
   ];
 }
+
