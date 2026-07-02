@@ -7,7 +7,7 @@ type MoneyResultProps = BasicSajuInput;
 
 export default function MoneyResult(props: MoneyResultProps) {
   const basic = basicMapper(props);
-  const consultingText = moneyConsulting(basic);
+  const consultingText = moneyConsulting(basic, props.birthDate);
   const summaryList = moneySummary(props.name);
 
   return (
@@ -35,5 +35,6 @@ export default function MoneyResult(props: MoneyResultProps) {
     </div>
   );
 }
+
 
 

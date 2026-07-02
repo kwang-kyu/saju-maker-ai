@@ -149,7 +149,7 @@ export default function ResultView({
           "\n\n" +
           sajuPersonalNote +
           "\n\n" +
-          moneyConsulting(mappedBasic),
+          moneyConsulting(mappedBasic, birthDate),
       },
       {
         title: "직업 상담",
@@ -404,6 +404,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
