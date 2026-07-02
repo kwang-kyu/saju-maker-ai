@@ -21,6 +21,11 @@ import { downloadDetailDocx } from "../services/docx/detailDocxService";
 import { downloadSummaryDocx } from "../services/docx/summaryDocxService";
 import { downloadCaseDocx } from "../services/docx/caseDocxService";
 import { downloadAiDocx } from "../services/docx/aiDocxService";
+import {
+  buildDetailSections,
+  buildCaseSections,
+  buildAiSections,
+} from "../services/docx/docxSectionFactory";
 import { basicConsulting } from "../services/basic/basicConsulting";
 import { basicMapper } from "../services/basic/basicMapper";
 import { totalConsulting } from "../services/total/totalConsulting";
@@ -552,7 +557,7 @@ export default function ResultView({
   const handleDetailDocx = () => {
     downloadDetailDocx({
       name,
-      sections: getDocxSections(),
+      sections: buildDetailSections(getDocxSections()),
       reportTitle: "Premium Detail Report",
       fileSuffix: "Premium_상세리포트",
     });
@@ -561,7 +566,7 @@ export default function ResultView({
   const handleCaseDocx = () => {
     downloadCaseDocx({
       name,
-      sections: getDocxSections().filter((section) => section.title.includes("상담") && !section.title.includes("AI")),
+      sections: buildCaseSections(getDocxSections()),
     });
   };
 
@@ -569,7 +574,7 @@ export default function ResultView({
   const handleAiTotalDocx = () => {
     downloadAiDocx({
       name,
-      sections: getDocxSections().filter((section) => section.title.includes("AI")),
+      sections: buildAiSections(getDocxSections()),
     });
   };
 
@@ -756,6 +761,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
