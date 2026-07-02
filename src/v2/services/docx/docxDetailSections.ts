@@ -3,5 +3,8 @@
 export function buildDetailDocxSections(
   sections: DocxSection[],
 ): DocxSection[] {
-  return sections;
+  const detailSections = sections;
+
+  return detailSections;
 }
+
