@@ -321,7 +321,15 @@ ${name}님의 사주를 보면 어떤 환경에서 능력이 살아나는지가 
   
     future: buildCaseFutureStrategy(decision, name),
   
-    closing: `${name}님은 직업을 자주 바꾸는 것보다 자신의 장점이 살아나는 구조를 찾을 때 운이 크게 살아납니다.`,
+    closing: `AI 원장 최종 판단
+
+이번 직업 상담을 종합하면 ${name}님은 단순히 직장을 옮기는 것보다 자신의 장점이 살아나는 역할과 환경을 찾는 것이 먼저입니다.
+
+지금 해야 할 것은 감정적인 퇴사나 무작정 도전이 아니라, 앞으로 3년 동안 쌓을 경력과 전문성을 분명히 정하는 것입니다.
+
+${identity.successPoint}
+
+최종적으로 ${name}님은 직업을 자주 바꾸는 것보다 자신의 장점이 살아나는 구조를 찾을 때 운이 크게 살아납니다.`,
   });
 }
 
@@ -405,7 +413,15 @@ ${identity.moneyStyle}
   
     future: buildCaseFutureStrategy(decision, name),
   
-    closing: `${name}님은 사업을 감정으로 밀어붙이기보다 시장 반응과 수익 구조를 확인하며 키울 때 사업운이 살아납니다.`,
+    closing: `AI 원장 최종 판단
+
+이번 사업 상담을 종합하면 ${name}님은 감정이나 확신만으로 움직이기보다 시장 반응, 고정비, 반복 매출 구조를 먼저 확인해야 합니다.
+
+지금 해야 할 것은 크게 벌리는 것이 아니라 작게 검증하고, 손실을 감당할 수 있는 범위 안에서 사업성을 확인하는 것입니다.
+
+${identity.moneyStyle}
+
+최종적으로 ${name}님은 사업을 감정으로 밀어붙이기보다 시장 반응과 수익 구조를 확인하며 키울 때 사업운이 살아납니다.`,
   });
 }
 
@@ -481,7 +497,15 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
   
     future: buildCaseFutureStrategy(decision, name),
   
-    closing: `${name}님에게 부동산은 한 번의 큰 수익보다 오래 버틸 수 있는 구조를 만들 때 운이 안정적으로 살아납니다.`,
+    closing: `AI 원장 최종 판단
+
+이번 부동산 상담을 종합하면 ${name}님은 가격 상승 기대보다 자금 계획, 보유 기간, 대출 부담, 환금성을 먼저 봐야 합니다.
+
+지금 해야 할 것은 좋은 물건을 찾는 것보다 내가 오래 버틸 수 있는 구조인지 확인하는 것입니다.
+
+${identity.moneyStyle}
+
+최종적으로 ${name}님에게 부동산은 한 번의 큰 수익보다 오래 버틸 수 있는 구조를 만들 때 운이 안정적으로 살아납니다.`,
   });
 }
 
@@ -600,7 +624,15 @@ function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestio
   
     future: buildCaseFutureStrategy(decision, name),
   
-    closing: `${name}님에게 연애와 결혼은 감정의 크기보다 함께 살아갈 수 있는 현실 기준이 맞을 때 안정적으로 이어집니다.`,
+    closing: `AI 원장 최종 판단
+
+이번 연애결혼 상담을 종합하면 ${name}님은 설렘보다 생활 리듬, 책임감, 경제관, 대화 방식이 맞는 사람을 선택해야 합니다.
+
+지금 해야 할 것은 인연이 있느냐 없느냐를 기다리는 것이 아니라, 오래 갈 사람과 나를 소모시키는 사람을 구분하는 기준을 세우는 것입니다.
+
+${identity.relationshipStyle}
+
+최종적으로 ${name}님에게 연애와 결혼은 감정의 크기보다 함께 살아갈 수 있는 현실 기준이 맞을 때 안정적으로 이어집니다.`,
   });
 }
 
@@ -703,7 +735,15 @@ function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
   
     future: buildCaseFutureStrategy(decision, name),
   
-    closing: `${name}님은 몸의 리듬을 안정시키는 선택이 결국 일, 관계, 재물 흐름까지 편안하게 만들어 갑니다.`,
+    closing: `AI 원장 최종 판단
+
+이번 건강인생 상담을 종합하면 ${name}님은 큰 결심보다 매일 반복되는 생활 리듬을 안정시키는 것이 먼저입니다.
+
+지금 해야 할 것은 무리해서 버티는 것이 아니라 수면, 식사, 회복, 스트레스 관리의 기준을 다시 세우는 것입니다.
+
+${identity.riskPoint}
+
+최종적으로 ${name}님은 몸의 리듬을 안정시키는 선택이 결국 일, 관계, 재물 흐름까지 편안하게 만들어 갑니다.`,
   });
 }
 
@@ -740,6 +780,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
 

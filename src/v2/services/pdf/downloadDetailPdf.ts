@@ -47,7 +47,8 @@ export async function downloadDetailPdf(params: {
       },
       pagebreak: {
         mode: ["css", "legacy"],
-        avoid: [".pdf-section-title", ".pdf-toc-row", ".pdf-line"],
+        before: [".pdf-force-page"],
+        avoid: [".pdf-section-heading", ".pdf-section-title", ".pdf-toc-row"],
       },
       jsPDF: {
         unit: "px",
@@ -57,12 +58,13 @@ export async function downloadDetailPdf(params: {
     } as any;
 
     await html2pdf()
-      .set(options)
-      .from(container)
-      .save();
+    .set(options)
+    .from(container)
+    .save();
   } finally {
     document.body.removeChild(container);
   }
 }
+
 
 
