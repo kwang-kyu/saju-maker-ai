@@ -1,12 +1,8 @@
 ﻿import {
   AlignmentType,
   Document,
-  Footer,
-  Header,
   Packer,
-  PageNumber,
   Paragraph,
-  TextRun,
 } from "docx";
 
 import {
@@ -19,40 +15,17 @@ import {
   subTitle,
   divider,
 } from "./docxCommon";
+
+import {
+  createHeader,
+  createFooter,
+} from "./docxHeaderFooter";
 import { saveAs } from "file-saver";
 
 export type DocxSection = {
   title: string;
   content: string;
 };
-
-function createHeader() {
-  return new Header({
-    children: [
-      new Paragraph({
-        alignment: AlignmentType.RIGHT,
-        children: [textRun("천운문 Premium Report", { size: 18 })],
-      }),
-    ],
-  });
-}
-
-function createFooter() {
-  return new Footer({
-    children: [
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        children: [
-          textRun("천운문 Premium  Confidential  ", { size: 18 }),
-          new TextRun({
-            children: [PageNumber.CURRENT],
-            size: 18,
-          }),
-        ],
-      }),
-    ],
-  });
-}
 
 function coverPage(name: string, reportTitle: string) {
   return [
@@ -270,6 +243,7 @@ export async function downloadDetailDocx({
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${name}_천운문_${fileSuffix}.docx`);
 }
+
 
 
 
