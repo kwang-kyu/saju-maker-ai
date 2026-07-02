@@ -254,7 +254,7 @@ export default function ResultView({
     downloadDetailDocx({
       name,
       sections: buildDetailDocxSections(buildDetailSections(getDocxSections())),
-      reportTitle: "Premium Detail Report",
+      reportTitle: "천운문 Premium 상세 리포트",
       fileSuffix: "Premium_상세리포트",
     });
   };
@@ -457,6 +457,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 

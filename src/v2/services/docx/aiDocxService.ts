@@ -13,7 +13,8 @@ export async function downloadAiDocx({
   await downloadDetailDocx({
     name,
     sections,
-    reportTitle: "AI Total Consulting Report",
+    reportTitle: "천운문 AI 종합상담 리포트",
     fileSuffix: "AI_종합상담리포트",
   });
 }
+

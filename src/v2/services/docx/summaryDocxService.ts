@@ -13,7 +13,8 @@ export async function downloadSummaryDocx({
   await downloadDetailDocx({
     name,
     sections,
-    reportTitle: "Summary Report",
+    reportTitle: "천운문 요약 리포트",
     fileSuffix: "요약리포트",
   });
 }
+
