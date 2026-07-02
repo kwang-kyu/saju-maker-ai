@@ -22,7 +22,10 @@ import { downloadSummaryDocx } from "../services/docx/summaryDocxService";
 import { downloadCaseDocx } from "../services/docx/caseDocxService";
 import { downloadAiDocx } from "../services/docx/aiDocxService";
 import { buildSummaryDocxSections } from "../services/docx/docxSummarySections";
-import { buildDetailDocxSections } from "../services/docx/docxDetailSections";
+import {
+  buildDetailDocxSections,
+  buildDetailDocxPreparedData,
+} from "../services/docx/docxDetailSections";
 import {
   buildSummarySections,
   buildDetailSections,
@@ -30,7 +33,6 @@ import {
   buildAiSections,
 } from "../services/docx/docxSectionFactory";
 import { basicConsulting } from "../services/basic/basicConsulting";
-import { basicMapper } from "../services/basic/basicMapper";
 import { totalConsulting } from "../services/total/totalConsulting";
 import { yearConsulting } from "../services/year/yearConsulting";
 import { todayConsulting } from "../services/today/todayConsulting";
@@ -401,12 +403,8 @@ export default function ResultView({
   const sajuPillars = `${sajuInfo.yearGanZhi} / ${sajuInfo.monthGanZhi} / ${sajuInfo.dayGanZhi} / ${sajuInfo.timeGanZhi}`;
 
   const getDocxSections = () => {
-    const inputData = { name, birthDate, birthTime, gender };
-    const mappedBasic = basicMapper(inputData);
-
-    const sajuPersonalNote = `${name}님은 일간 기준으로 ${mappedBasic.summary}
-강하게 살아나는 기운은 ${mappedBasic.strongestElement}, 보완이 필요한 기운은 ${mappedBasic.weakestElement}입니다.
-이 흐름은 돈, 일, 관계, 건강, 사업 판단에 함께 반영됩니다.`;
+    const { inputData, mappedBasic, sajuPersonalNote } =
+      buildDetailDocxPreparedData({ name, birthDate, birthTime, gender });
 
     const baseSections = [
       {
@@ -738,6 +736,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
