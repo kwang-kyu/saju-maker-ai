@@ -1,13 +1,10 @@
 ﻿import {
-  AlignmentType,
   Document,
   Packer,
-  Paragraph,
 } from "docx";
 
 import {
   splitContent,
-  textRun,
   bodyParagraph,
   guideParagraph,
   smallParagraph,
@@ -20,41 +17,14 @@ import {
   createHeader,
   createFooter,
 } from "./docxHeaderFooter";
+
+import { coverPage } from "./docxCover";
 import { saveAs } from "file-saver";
 
 export type DocxSection = {
   title: string;
   content: string;
 };
-
-function coverPage(name: string, reportTitle: string) {
-  return [
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 1800, after: 300 },
-      children: [textRun("천운문", { bold: true, size: 60 })],
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 500 },
-      children: [textRun(reportTitle, { bold: true, size: 36 })],
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 800 },
-      children: [textRun("사주를 넘어 인생의 방향을 제시합니다.", { size: 24 })],
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 260 },
-      children: [textRun(name, { bold: true, size: 32 })],
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [textRun(`${new Date().getFullYear()}`, { size: 22 })],
-    }),
-  ];
-}
 
 function reportIntro(name: string) {
   return [
@@ -243,6 +213,8 @@ export async function downloadDetailDocx({
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${name}_천운문_${fileSuffix}.docx`);
 }
+
+
 
 
 
