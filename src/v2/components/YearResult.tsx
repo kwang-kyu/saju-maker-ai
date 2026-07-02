@@ -5,7 +5,7 @@ import type { BasicSajuInput } from "../types/basic";
 type YearResultProps = BasicSajuInput;
 
 export default function YearResult(props: YearResultProps) {
-  const consultingText = yearConsulting(props.name);
+  const consultingText = yearConsulting(props);
   const summaryList = yearSummary(props.name);
 
   return (

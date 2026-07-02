@@ -140,7 +140,7 @@ export default function ResultView({
       },
       { title: "기본 사주", content: basicConsulting(mappedBasic) },
       { title: "총운 컨설팅", content: totalConsulting(inputData) },
-      { title: "올해 운세", content: yearConsulting(name) },
+      { title: "올해 운세", content: yearConsulting(inputData) },
       { title: "오늘의 운세", content: todayConsulting(name) },
       {
         title: "재물 상담",
@@ -404,5 +404,6 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
