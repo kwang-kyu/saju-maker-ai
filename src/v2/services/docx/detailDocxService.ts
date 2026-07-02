@@ -1,14 +1,4 @@
-﻿import {
-  Document,
-  Packer,
-} from "docx";
-
-import {
-  createHeader,
-  createFooter,
-} from "./docxHeaderFooter";
-
-import { coverPage } from "./docxCover";
+﻿import { coverPage } from "./docxCover";
 
 import {
   reportIntro,
@@ -25,7 +15,8 @@ import {
   checklist,
   finalReview,
 } from "./docxClosing";
-import { saveAs } from "file-saver";
+
+import { buildAndSaveDocx } from "./docxBuilder";
 
 export type DocxSection = {
   title: string;
@@ -43,45 +34,19 @@ export async function downloadDetailDocx({
   reportTitle?: string;
   fileSuffix?: string;
 }) {
-  const doc = new Document({
-    sections: [
-      {
-        headers: {
-          default: createHeader(),
-        },
-        footers: {
-          default: createFooter(),
-        },
-        properties: {},
-        children: [
-          ...coverPage(name, reportTitle),
-          ...reportIntro(name),
-          ...tableOfContents(sections),
-          ...personalStandard(name),
-          ...originalSajuGuide(),
-          ...sections.flatMap(sectionToDocx),
-          ...threeYearStrategy(),
-          ...checklist(),
-          ...finalReview(name),
-        ],
-      },
+  await buildAndSaveDocx({
+    name,
+    fileSuffix,
+    children: [
+      ...coverPage(name, reportTitle),
+      ...reportIntro(name),
+      ...tableOfContents(sections),
+      ...personalStandard(name),
+      ...originalSajuGuide(),
+      ...sections.flatMap(sectionToDocx),
+      ...threeYearStrategy(),
+      ...checklist(),
+      ...finalReview(name),
     ],
   });
-
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${name}_천운문_${fileSuffix}.docx`);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
