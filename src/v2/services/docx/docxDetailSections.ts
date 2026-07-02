@@ -1,5 +1,9 @@
 ﻿import type { DocxSection } from "./detailDocxService";
 import { basicMapper } from "../basic/basicMapper";
+import { basicConsulting } from "../basic/basicConsulting";
+import { totalConsulting } from "../total/totalConsulting";
+import { yearConsulting } from "../year/yearConsulting";
+import { todayConsulting } from "../today/todayConsulting";
 
 export function buildDetailDocxSections(
   sections: DocxSection[],
@@ -31,3 +35,27 @@ export function buildDetailDocxPreparedData(params: {
 }
 
 
+
+export function buildDetailDocxBaseSections(params: {
+  name: string;
+  birthDate: string;
+  birthTime: string;
+  gender: string;
+  personalProfile: string;
+}) {
+  const { name, birthDate, birthTime, gender, personalProfile } = params;
+  const { inputData, mappedBasic } = buildDetailDocxPreparedData({
+    name,
+    birthDate,
+    birthTime,
+    gender,
+  });
+
+  return [
+    { title: "개인 상담 기준", content: personalProfile },
+    { title: "기본 사주", content: basicConsulting(mappedBasic) },
+    { title: "전체 운세", content: totalConsulting(inputData) },
+    { title: "올해 운세", content: yearConsulting(inputData) },
+    { title: "오늘의 운세", content: todayConsulting(name) },
+  ];
+}
