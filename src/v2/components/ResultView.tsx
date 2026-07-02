@@ -22,6 +22,7 @@ import { downloadSummaryDocx } from "../services/docx/summaryDocxService";
 import { downloadCaseDocx } from "../services/docx/caseDocxService";
 import { downloadAiDocx } from "../services/docx/aiDocxService";
 import {
+  buildSummarySections,
   buildDetailSections,
   buildCaseSections,
   buildAiSections,
@@ -550,7 +551,7 @@ export default function ResultView({
   const handleSummaryDocx = () => {
     downloadSummaryDocx({
       name,
-      sections: getSummaryDocxSections(),
+      sections: buildSummarySections(getSummaryDocxSections()),
     });
   };
 
@@ -761,6 +762,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
