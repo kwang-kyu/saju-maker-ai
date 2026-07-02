@@ -7,7 +7,6 @@ import {
   splitContent,
   bodyParagraph,
   guideParagraph,
-  smallParagraph,
   sectionTitle,
   subTitle,
 } from "./docxCommon";
@@ -24,27 +23,14 @@ import {
   personalStandard,
   originalSajuGuide,
 } from "./docxIntro";
+
+import { tableOfContents } from "./docxToc";
 import { saveAs } from "file-saver";
 
 export type DocxSection = {
   title: string;
   content: string;
 };
-
-function tableOfContents(sections: DocxSection[]) {
-  return [
-    sectionTitle("목차"),
-    ...[
-      "1. 상담 안내문",
-      "2. 개인 상담 기준",
-      "3. 사주 원국 해석",
-      ...sections.map((section, index) => `${index + 4}. ${section.title}`),
-      `${sections.length + 4}. 3년 전략`,
-      `${sections.length + 5}. 실천 체크리스트`,
-      `${sections.length + 6}. 최종 총평`,
-    ].map(smallParagraph),
-  ];
-}
 
 function premiumExpansion(section: DocxSection) {
   return [
@@ -170,6 +156,8 @@ export async function downloadDetailDocx({
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${name}_천운문_${fileSuffix}.docx`);
 }
+
+
 
 
 
