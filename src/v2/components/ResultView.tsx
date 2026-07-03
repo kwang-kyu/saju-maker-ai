@@ -30,7 +30,6 @@ import {
 } from "../services/docx/docxDetailSections";
 import { buildDetailDocxLoveHealthSections } from "../services/docx/docxLoveHealthSections";
 import { buildDetailDocxLifeAssetSections } from "../services/docx/docxLifeAssetSections";
-import { buildDetailDocxCaseAiSections } from "../services/docx/docxCaseAiSections";
 import { buildPremiumPdfExpansion } from "../services/docx/docxPremiumExpansion";
 import {
   buildSummarySections,
@@ -212,7 +211,6 @@ export default function ResultView({
         sajuPersonalNote,
         buildConsultingPersonalNote,
       }),
-      ...buildDetailDocxCaseAiSections(),
     ];
 
     return baseSections.map((section) => ({
@@ -457,6 +455,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
