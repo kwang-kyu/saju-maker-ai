@@ -29,7 +29,6 @@ import {
   buildDetailDocxMoneyJobSections,
 } from "../services/docx/docxDetailSections";
 import { buildDetailDocxLoveHealthSections } from "../services/docx/docxLoveHealthSections";
-import { buildDetailDocxLifeAssetSections } from "../services/docx/docxLifeAssetSections";
 import { buildPremiumPdfExpansion } from "../services/docx/docxPremiumExpansion";
 import {
   buildSummarySections,
@@ -192,16 +191,6 @@ export default function ResultView({
         jobPersonalNote: buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "직업 상담" }),
       }),
       ...buildDetailDocxLoveHealthSections({
-        mappedBasic,
-        name,
-        birthDate,
-        birthTime,
-        gender,
-        calendarType,
-        sajuPersonalNote,
-        buildConsultingPersonalNote,
-      }),
-      ...buildDetailDocxLifeAssetSections({
         mappedBasic,
         name,
         birthDate,
@@ -455,6 +444,8 @@ export default function ResultView({
     </div>
   );
 }
+
+
 
 
 
