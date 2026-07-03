@@ -12,7 +12,7 @@ export default function RealEstateResult(props: RealEstateResultProps) {
 
   return (
     <div>
-      <h3 style={{ marginTop: 0 }}>{props.name}님의 부동산 상담</h3>
+      <h3 style={{ marginTop: 0 }}>{props.name}님의 재테크 상담</h3>
 
       <h4>핵심 요약</h4>
       <p>{summary}</p>
@@ -24,3 +24,4 @@ export default function RealEstateResult(props: RealEstateResultProps) {
     </div>
   );
 }
+

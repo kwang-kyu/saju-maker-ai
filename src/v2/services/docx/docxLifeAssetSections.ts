@@ -32,9 +32,9 @@ export function buildDetailDocxLifeAssetSections({
         getBusinessConsulting(mappedBasic, birthDate),
     },
     {
-      title: "부동산 상담",
+      title: "재테크 상담",
       content:
-        buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "부동산 상담" }) +
+        buildConsultingPersonalNote({ name, birthDate, birthTime, gender, calendarType, area: "재테크 상담" }) +
         "\n\n" +
         sajuPersonalNote +
         "\n\n" +
@@ -42,4 +42,5 @@ export function buildDetailDocxLifeAssetSections({
     },
   ];
 }
+
 

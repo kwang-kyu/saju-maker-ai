@@ -24,7 +24,7 @@ export default function CaseResult(props: CaseResultProps) {
 
   return (
     <div>
-      <h3 style={{ marginTop: 0 }}>{props.name}님의 사안별 상담</h3>
+      <h3 style={{ marginTop: 0 }}>{props.name}님의 주제별 상담</h3>
 
       <h4>핵심 요약</h4>
       <p>{summary}</p>
@@ -108,3 +108,4 @@ export default function CaseResult(props: CaseResultProps) {
     </div>
   );
 }
+
