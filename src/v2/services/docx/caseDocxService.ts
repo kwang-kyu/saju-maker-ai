@@ -13,7 +13,7 @@ export async function downloadCaseDocx({
   await downloadDetailDocx({
     name,
     sections,
-    reportTitle: "천운문 사안별 상담 리포트",
+    reportTitle: "천운문 주제별 상담 리포트",
     fileSuffix: "주제별_상담리포트",
   });
 }
