@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 
 type InputFormProps = {
   onSubmit?: (formData: {
@@ -55,7 +55,7 @@ const labelStyle = {
 
 function InputForm({ onSubmit }: InputFormProps) {
   const [name, setName] = useState("");
-  const [year, setYear] = useState("1962");
+  const [year, setYear] = useState("");
   const [month, setMonth] = useState("06");
   const [day, setDay] = useState("07");
   const [birthTime, setBirthTime] = useState("15:00");
@@ -197,7 +197,7 @@ function InputForm({ onSubmit }: InputFormProps) {
           transition: "transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease",
         }}
       >
-        {isSubmitting ? "🔮 사주 분석 중..." : "🔮 사주 분석하기"}
+        {isSubmitting ? "?? 사주 분석 중..." : "?? 사주 분석하기"}
       </button>
     </div>
   );
