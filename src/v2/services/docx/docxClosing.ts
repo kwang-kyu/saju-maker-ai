@@ -5,6 +5,7 @@
   premiumBoxTitle,
   sectionTitle,
   subTitle,
+  smallParagraph,
 } from "./docxCommon";
 
 export function threeYearStrategy() {
@@ -57,5 +58,14 @@ export function finalReview(name: string) {
     guideParagraph(
       `${name}님은 앞으로 갑작스러운 변화보다 준비된 선택이 더 큰 차이를 만듭니다. 작은 실행을 반복하고, 중요한 결정은 기록과 검토를 거쳐 진행하는 것이 가장 안정적인 전략입니다.`
     ),
+
+    sectionTitle("감사합니다"),
+    premiumBoxTitle("천운문 PREMIUM"),
+    guideParagraph("본 보고서는 개인 맞춤형 사주 종합 컨설팅 리포트입니다."),
+    guideParagraph("천운문 Premium은 운의 흐름을 단정하기보다, 현실에서 선택할 수 있는 방향과 기준을 제안합니다."),
+    premiumBoxParagraph("CONFIDENTIAL REPORT"),
+    premiumBoxParagraph("Cheonunmun Premium Consulting Report"),
+    smallParagraph("본 문서는 상담 참고용 리포트이며, 중요한 의사결정은 현실 조건과 전문가 검토를 함께 고려해 진행하시기 바랍니다."),
   ];
 }
+
