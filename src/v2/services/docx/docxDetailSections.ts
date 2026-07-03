@@ -3,7 +3,6 @@ import { basicMapper } from "../basic/basicMapper";
 import { basicConsulting } from "../basic/basicConsulting";
 import { totalConsulting } from "../total/totalConsulting";
 import { yearConsulting } from "../year/yearConsulting";
-import { todayConsulting } from "../today/todayConsulting";
 import { moneyConsulting } from "../money/moneyConsulting";
 import { jobConsulting } from "../job/jobConsulting";
 
@@ -58,7 +57,6 @@ export function buildDetailDocxBaseSections(params: {
     { title: "기본 사주", content: basicConsulting(mappedBasic) },
     { title: "전체 운세", content: totalConsulting(inputData) },
     { title: "올해 운세", content: yearConsulting(inputData) },
-    { title: "오늘의 운세", content: todayConsulting(name) },
   ];
 }
 
@@ -73,14 +71,16 @@ export function buildDetailDocxMoneyJobSections(params: {
 
   return [
     {
-      title: "재물 상담",
+      title: "재물운",
       content: moneyPersonalNote + "\n\n" + sajuPersonalNote + "\n\n" + moneyConsulting(mappedBasic, birthDate),
     },
     {
-      title: "직업 상담",
+      title: "직업운",
       content: jobPersonalNote + "\n\n" + sajuPersonalNote + "\n\n" + jobConsulting(mappedBasic, birthDate),
     },
   ];
 }
+
+
 
 
