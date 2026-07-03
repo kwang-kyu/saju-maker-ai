@@ -2,6 +2,7 @@
 
 import {
   bodyParagraph,
+  divider,
   premiumBoxParagraph,
   premiumBoxTitle,
   sectionTitle,
@@ -9,7 +10,7 @@ import {
   subTitle,
 } from "./docxCommon";
 
-export function premiumExpansion(section: DocxSection) {
+function premiumExpansion(section: DocxSection) {
   return [
     premiumBoxTitle("전문가 한마디"),
     premiumBoxParagraph(
@@ -18,6 +19,8 @@ export function premiumExpansion(section: DocxSection) {
     premiumBoxParagraph(
       "좋은 운은 준비된 사람에게 기회가 되고, 불안한 운도 기준을 세우면 손실을 줄이는 지혜가 됩니다."
     ),
+
+    divider(),
 
     subTitle("현실 적용 방향"),
     bodyParagraph(
@@ -43,7 +46,7 @@ export function premiumExpansion(section: DocxSection) {
   ];
 }
 
-export function sectionToDocx(section: DocxSection) {
+export function buildChapter(section: DocxSection) {
   const lines = splitContent(section.content);
 
   return [
@@ -51,4 +54,8 @@ export function sectionToDocx(section: DocxSection) {
     ...lines.map(bodyParagraph),
     ...premiumExpansion(section),
   ];
+}
+
+export function sectionToDocx(section: DocxSection) {
+  return buildChapter(section);
 }
