@@ -89,35 +89,40 @@ export function totalConsulting(data: BasicSajuInput): string {
   const weakestMeaning = getElementMeaning(basic.weakestElement);
   const dayMasterAdvice = getDayMasterAdvice(basic.dayMaster);
 
-  const tenYearFlow = Array.from({ length: 10 }, (_, index) => {
-    const year = currentYear + index;
-    const ageText = age ? `${age + index}세` : "현재 나이 기준";
+  const formatAgeRange = (startOffset: number, endOffset: number) => {
+    if (!age) return "현재 나이 기준";
+    return `${age + startOffset}세~${age + endOffset}세`;
+  };
 
-    if (index <= 2) {
-      return `${year}년 (${ageText})
-- 핵심 흐름: 현재의 생활, 일, 돈, 관계 기준을 다시 정리하는 시기입니다.
+  const tenYearFlow = [
+    `${currentYear}년~${currentYear + 2}년 (${formatAgeRange(0, 2)})
+- 핵심 흐름: 현재의 생활, 일, 돈, 관계 기준을 다시 정리하는 3년 구간입니다.
 - 사주 근거: ${basic.dayMaster} 일간의 중심 기질과 ${basic.strongestElement} 기운이 강하게 작용하므로, 무작정 새로 벌리기보다 내 기준을 세울 때 운이 안정됩니다.
 - 좋은 기회: 흩어져 있던 일을 정리하고, 오래 가져갈 방향을 다시 잡는 데 유리합니다.
-- 주의할 점: ${basic.weakestElement} 기운이 약하게 작용하는 부분에서는 감정적 판단이나 미루는 습관이 생기기 쉽습니다.
-- 현실 조언: 큰 결정보다 생활 구조, 지출 구조, 일의 우선순위를 먼저 정리하는 것이 좋습니다.`;
-    }
+- 주의할 점: ${basic.weakestElement} 기운이 약하게 작용하는 부분에서는 감정적 판단, 미루는 습관, 주변 말에 흔들리는 흐름이 생기기 쉽습니다.
+- 현실 조언: 큰 결정보다 생활 구조, 지출 구조, 일의 우선순위를 먼저 정리하는 것이 좋습니다.`,
 
-    if (index <= 5) {
-      return `${year}년 (${ageText})
-- 핵심 흐름: 앞에서 정리한 기준이 실제 결과로 이어지기 시작하는 시기입니다.
+    `${currentYear + 3}년~${currentYear + 5}년 (${formatAgeRange(3, 5)})
+- 핵심 흐름: 앞에서 정리한 기준이 실제 결과로 이어지기 시작하는 구간입니다.
 - 사주 근거: ${basic.yearGanZhi}, ${basic.monthGanZhi}, ${basic.dayGanZhi}의 흐름을 함께 보면 결과는 한 번에 터지는 방식보다 쌓인 것이 드러나는 방식에 가깝습니다.
 - 좋은 기회: 직업, 사업, 재테크에서 현실적인 성과를 만들 수 있습니다.
 - 주의할 점: 성과가 보이기 시작할수록 욕심이 커져 관계나 건강 리듬이 흔들릴 수 있습니다.
-- 현실 조언: 확장하더라도 숫자, 계약, 사람 관계의 조건을 확인하면서 움직이는 것이 좋습니다.`;
-    }
+- 현실 조언: 확장하더라도 숫자, 계약, 사람 관계의 조건을 확인하면서 움직이는 것이 좋습니다.`,
 
-    return `${year}년 (${ageText})
-- 핵심 흐름: 무리한 확장보다 안정적인 관리가 중요해지는 시기입니다.
+    `${currentYear + 6}년~${currentYear + 7}년 (${formatAgeRange(6, 7)})
+- 핵심 흐름: 무리한 확장보다 안정적인 관리가 중요해지는 구간입니다.
 - 사주 근거: 강한 ${basic.strongestElement} 기운은 장점이지만, 오래 쓰면 피로가 쌓일 수 있습니다. 약한 ${basic.weakestElement} 기운은 보완해야 할 생활 습관으로 나타납니다.
 - 좋은 기회: 경험과 신뢰를 바탕으로 더 편안하고 오래 가는 구조를 만들 수 있습니다.
 - 주의할 점: 오래된 습관, 미뤄둔 건강 문제, 정리하지 않은 돈 문제가 다시 올라올 수 있습니다.
-- 현실 조언: 사람, 돈, 건강을 동시에 정리하면서 오래 갈 수 있는 방향을 선택해야 합니다.`;
-  }).join("\n\n");
+- 현실 조언: 사람, 돈, 건강을 동시에 정리하면서 오래 갈 수 있는 방향을 선택해야 합니다.`,
+
+    `${currentYear + 8}년~${currentYear + 9}년 (${formatAgeRange(8, 9)})
+- 핵심 흐름: 앞선 흐름을 마무리하고 다음 10년의 방향을 준비하는 구간입니다.
+- 사주 근거: ${basic.dayMaster} 일간의 중심이 안정될수록 선택이 단순해지고, 강한 ${basic.strongestElement} 기운은 경험과 신뢰로 바뀝니다.
+- 좋은 기회: 불필요한 일을 줄이고, 남길 것과 정리할 것을 구분하기 좋습니다.
+- 주의할 점: 익숙하다는 이유로 오래된 방식을 계속 고집하면 변화의 기회를 놓칠 수 있습니다.
+- 현실 조언: 다음 흐름을 위해 일, 자산, 관계, 건강의 기준을 다시 점검하는 것이 좋습니다.`,
+  ].join("\n\n");
 
   return buildConsultingFramework({
     name: data.name,
@@ -161,3 +166,4 @@ ${tenYearFlow}
 앞으로는 불안해서 움직이기보다 오래 가져갈 수 있는 일, 사람, 돈의 기준을 세우는 것이 가장 중요합니다. ${basic.dayMaster} 일간의 중심을 살리고, 강한 ${basic.strongestElement} 기운은 장점으로 쓰며, 약한 ${basic.weakestElement} 기운은 생활 속에서 보완한다면 총운은 훨씬 안정적으로 열릴 수 있습니다.`,
   });
 }
+
