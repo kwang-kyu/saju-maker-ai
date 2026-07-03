@@ -29,7 +29,7 @@ export function buildDetailDocxLifeAssetSections({
         "\n\n" +
         sajuPersonalNote +
         "\n\n" +
-        getBusinessConsulting(mappedBasic),
+        getBusinessConsulting(mappedBasic, birthDate),
     },
     {
       title: "부동산 상담",
@@ -42,3 +42,4 @@ export function buildDetailDocxLifeAssetSections({
     },
   ];
 }
+
