@@ -115,7 +115,7 @@ function buildPersonalProfile(params: {
 만세력 기준: 절기 기준 사주명리 해석
 사주팔자: ${sajuPillars}
 
-이번 리포트는 입력된 생년월일과 현재 나이 흐름을 기준으로 인생의 방향, 돈, 일, 관계, 건강, 결혼, 사업, 부동산 흐름을 종합 상담하는 방식으로 구성됩니다.`;
+이번 리포트는 입력된 생년월일과 현재 나이 흐름을 기준으로 인생의 방향, 재물, 직업, 관계, 건강, 대운과 세운 흐름을 종합 상담하는 방식으로 구성됩니다.`;
 }
 
 function buildConsultingPersonalNote(params: {
@@ -455,6 +455,7 @@ export default function ResultView({
     </div>
   );
 }
+
 
 
 
