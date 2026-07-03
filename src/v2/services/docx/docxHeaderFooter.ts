@@ -1,5 +1,6 @@
 ﻿import {
   AlignmentType,
+  BorderStyle,
   Footer,
   Header,
   PageNumber,
@@ -13,8 +14,27 @@ export function createHeader() {
   return new Header({
     children: [
       new Paragraph({
-        alignment: AlignmentType.RIGHT,
-        children: [textRun("천운문 Premium Report", { size: 18 })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 80 },
+        border: {
+          bottom: {
+            style: BorderStyle.SINGLE,
+            size: 6,
+            color: "D6B25E",
+          },
+        },
+        children: [
+          textRun("천운문 PREMIUM", {
+            bold: true,
+            size: 18,
+            color: "1E3A8A",
+          }),
+          textRun("   |   CONFIDENTIAL REPORT", {
+            bold: true,
+            size: 16,
+            color: "B45309",
+          }),
+        ],
       }),
     ],
   });
@@ -25,11 +45,24 @@ export function createFooter() {
     children: [
       new Paragraph({
         alignment: AlignmentType.CENTER,
+        spacing: { before: 80 },
+        border: {
+          top: {
+            style: BorderStyle.SINGLE,
+            size: 6,
+            color: "D6B25E",
+          },
+        },
         children: [
-          textRun("천운문 Premium  Confidential  ", { size: 18 }),
+          textRun(" Cheonunmun Premium Report      Page ", {
+            size: 17,
+            color: "6B7280",
+          }),
           new TextRun({
             children: [PageNumber.CURRENT],
-            size: 18,
+            size: 17,
+            color: "6B7280",
+            font: "Malgun Gothic",
           }),
         ],
       }),
