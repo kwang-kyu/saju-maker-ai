@@ -106,7 +106,7 @@ function InputForm({ onSubmit }: InputFormProps) {
           <input
             style={inputStyle}
             type="text"
-            placeholder="예: 김광규"
+            placeholder=""
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
