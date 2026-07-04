@@ -725,7 +725,9 @@ ${buildRealEstateAdvice(data, questionKey)}`;
       "familyConflict",
     ].includes(questionKey)
   ) {
-    return `${intentGuide}
+    return `${intentOpening}
+
+${intentGuide}
 
 ${buildRelationshipAdvice(data, questionKey)}`;
   }
