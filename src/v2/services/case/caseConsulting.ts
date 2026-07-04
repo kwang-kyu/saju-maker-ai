@@ -653,26 +653,57 @@ function buildIntentGuide(intent: CaseQuestionIntent) {
       return "이번 질문은 사주 흐름과 현실 조건을 함께 놓고 판단하겠습니다.";
   }
 }
+function buildIntentOpening(intent: CaseQuestionIntent) {
+  switch (intent) {
+    case "start":
+      return "새로운 시작은 가능성보다 준비 상태가 더 중요합니다.";
+    case "continue":
+      return "계속 가져가야 할 일인지, 방향을 바꿔야 할 일인지부터 보겠습니다.";
+    case "stop":
+      return "그만둘지 여부는 감정보다 손익과 흐름을 함께 봐야 합니다.";
+    case "expand":
+      return "확장은 속도보다 감당 가능한 구조인지가 핵심입니다.";
+    case "partner":
+      return "함께하는 일은 사람보다 역할과 책임 구조가 먼저입니다.";
+    case "timing":
+      return "좋은 시기인지보다 지금 움직일 준비가 되었는지가 중요합니다.";
+    case "possibility":
+      return "가능성은 있습니다. 다만 조건을 갖추었을 때 의미가 있습니다.";
+    case "risk":
+      return "이번 판단은 좋은 점보다 위험 요소를 먼저 봐야 합니다.";
+    case "decision":
+      return "이 선택은 마음보다 감당 가능성을 기준으로 봐야 합니다.";
+    default:
+      return "이번 상담은 사주 흐름과 현실 조건을 함께 놓고 보겠습니다.";
+  }
+}
 export function getCaseConsulting(data: BasicSajuResult, question: CaseQuestionKey | string) {
   const questionKey = resolveQuestionKey(question);
   const questionIntent = resolveQuestionIntent(question);
   const intentGuide = buildIntentGuide(questionIntent);
+  const intentOpening = buildIntentOpening(questionIntent);
   if (["investment", "moneyTiming", "stockInvestment"].includes(questionKey)) {
-    return `${intentGuide}
+    return `${intentOpening}
+
+${intentGuide}
 
 ${buildWealthAdvice(data, questionKey)}`;
   }
 
   if (["jobChange", "careerDirection", "promotion", "exam"].includes(questionKey)) {
-    return `${intentGuide}
+    return `${intentOpening}
+
+${intentGuide}
 
 ${buildJobAdvice(data, questionKey)}`;
   }
 
   if (["businessStart", "businessExpand", "partnership", "contract"].includes(questionKey)) {
-    return `${intentGuide}
-
-${buildBusinessAdvice(data, questionKey)}`;
+    return `${intentOpening}
+  
+  ${intentGuide}
+  
+  ${buildBusinessAdvice(data, questionKey)}`;
   }
 
   if (["realEstateBuy", "realEstateSell", "houseMove"].includes(questionKey)) {
