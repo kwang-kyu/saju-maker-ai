@@ -366,45 +366,18 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
       break;
   }
 
-  const decision = buildConsultingDecision(
-    data,
-    getQuestionTitle(questionKey)
-  );
-  
-  return buildConsultingReport({
-    title: "사업 상담",
-    question: getQuestionTitle(questionKey),
-    decision,
-  
-    opening,
-  
-    sajuAnalysis: `${identity.workStyle}
+  return `${opening}
 
-${identity.moneyStyle}
-  
-  ${name}님은 ${data.dayMaster} 일간의 특성상 사업에서도 자신의 기준과 판단권이 분명할 때 힘이 살아납니다.
-  
-  강한 ${data.strongestElement} 기운은 추진력과 확장성으로 활용하고,
-  부족한 ${data.weakestElement} 기운은 자금 관리, 사람 관리, 계약 판단에서 흔들리지 않도록 보완해야 합니다.`,
-  
-    reality,
-    caution,
-    strategy,
-  
-    future: buildCaseFutureStrategy(decision, name),
-  
-    closing: `AI 원장 최종 판단
-
-이번 사업 상담을 종합하면 ${name}님은 감정이나 확신만으로 움직이기보다 시장 반응, 고정비, 반복 매출 구조를 먼저 확인해야 합니다.
-
-지금 해야 할 것은 크게 벌리는 것이 아니라 작게 검증하고, 손실을 감당할 수 있는 범위 안에서 사업성을 확인하는 것입니다.
+${identity.workStyle}
 
 ${identity.moneyStyle}
 
-최종적으로 ${name}님은 사업을 감정으로 밀어붙이기보다 시장 반응과 수익 구조를 확인하며 키울 때 사업운이 살아납니다.`,
-  });
+${reality}
+
+${caution}
+
+${strategy}`;
 }
-
 function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
