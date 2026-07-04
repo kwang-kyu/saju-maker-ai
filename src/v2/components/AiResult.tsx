@@ -144,6 +144,16 @@ export default function AiResult(props: AiResultProps) {
               }}
             >
               <strong>Q{index + 1}. {item.question}</strong>
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  lineHeight: 1.8,
+                  margin: "10px 0 0",
+                  color: "#e5e7eb",
+                }}
+              >
+                A{index + 1}. {item.answer}
+              </pre>
             </div>
           ))}
         </div>
@@ -176,3 +186,5 @@ export default function AiResult(props: AiResultProps) {
     </div>
   );
 }
+
+
