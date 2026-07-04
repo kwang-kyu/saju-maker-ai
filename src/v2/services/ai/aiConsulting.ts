@@ -253,10 +253,156 @@ function getPracticalAdvice(topic: string) {
   return `현실 조언은 하나입니다. 지금 바로 큰 결정을 하지 말고, 이번 주 안에 작게 확인할 수 있는 행동 하나를 먼저 하세요.`;
 }
 
+
+type QuestionIntent = {
+  topic: string;
+  intent: string;
+  wantsTiming: boolean;
+  wantsWarning: boolean;
+  wantsPersonality: boolean;
+  wantsMoney: boolean;
+  wantsAction: boolean;
+};
+
+function analyzeQuestionIntent(question: string): QuestionIntent {
+  const topic = getTopicType(question);
+
+  const wantsTiming =
+    question.includes("언제") ||
+    question.includes("시기") ||
+    question.includes("올해") ||
+    question.includes("내년") ||
+    question.includes("몇 월") ||
+    question.includes("몇년") ||
+    question.includes("흐름");
+
+  const wantsWarning =
+    question.includes("조심") ||
+    question.includes("위험") ||
+    question.includes("피해야") ||
+    question.includes("문제") ||
+    question.includes("갈등") ||
+    question.includes("불안");
+
+  const wantsPersonality =
+    question.includes("어떤 사람") ||
+    question.includes("성격") ||
+    question.includes("상대") ||
+    question.includes("배우자") ||
+    question.includes("인연") ||
+    question.includes("좋은 사람");
+
+  const wantsMoney =
+    question.includes("돈") ||
+    question.includes("재산") ||
+    question.includes("재물") ||
+    question.includes("대출") ||
+    question.includes("투자") ||
+    question.includes("부동산") ||
+    question.includes("생활비");
+
+  const wantsAction =
+    question.includes("해야") ||
+    question.includes("하면") ||
+    question.includes("어떻게") ||
+    question.includes("가능") ||
+    question.includes("될까요") ||
+    question.includes("좋을까요");
+
+  let intent = "general_question";
+
+  if (topic === "love" && question.includes("인연")) {
+    intent = "new_relationship";
+  }
+
+  if (topic === "love" && wantsTiming) {
+    intent = "love_timing";
+  }
+
+  if (topic === "marriage" && wantsTiming) {
+    intent = "marriage_timing";
+  }
+
+  if (topic === "marriage" && wantsPersonality) {
+    intent = "spouse_type";
+  }
+
+  if (topic === "remarriage" && question.includes("자녀")) {
+    intent = "children_after_remarriage";
+  }
+
+  if (topic === "remarriage" && wantsMoney) {
+    intent = "money_after_remarriage";
+  }
+
+  if (topic === "children" && question.includes("출산")) {
+    intent = "childbirth";
+  }
+
+  if (topic === "children" && question.includes("교육")) {
+    intent = "children_education";
+  }
+
+  if (topic === "relationship" && question.includes("믿")) {
+    intent = "trusted_people";
+  }
+
+  if (topic === "relationship" && wantsWarning) {
+    intent = "relationship_warning";
+  }
+
+  if (topic === "business" && (question.includes("시작") || question.includes("창업"))) {
+    intent = "business_start";
+  }
+
+  if (topic === "business" && question.includes("동업")) {
+    intent = "business_partner";
+  }
+
+  if (topic === "business" && question.includes("확장")) {
+    intent = "business_expansion";
+  }
+
+  if (topic === "money" && question.includes("부동산")) {
+    intent = "real_estate_money";
+  }
+
+  if (topic === "money" && question.includes("투자")) {
+    intent = "investment";
+  }
+
+  if (topic === "money" && question.includes("돈")) {
+    intent = "money_flow";
+  }
+
+  if (topic === "job" && question.includes("이직")) {
+    intent = "job_change";
+  }
+
+  if (topic === "job" && question.includes("퇴사")) {
+    intent = "resignation";
+  }
+
+  if (topic === "health" && question.includes("검진")) {
+    intent = "health_checkup";
+  }
+
+  return {
+    topic,
+    intent,
+    wantsTiming,
+    wantsWarning,
+    wantsPersonality,
+    wantsMoney,
+    wantsAction,
+  };
+}
+
 export function getAiConsulting(data: BasicSajuResult, concern?: string): string {
   const rawTopic = getMainConcern(concern);
   const topic = getLatestQuestion(rawTopic);
   const continued = hasPreviousContext(rawTopic);
+  const intent = analyzeQuestionIntent(topic);
 
   const caseDecision = buildConsultingDecision(data, topic);
   const masterDecision = buildMasterDecision(data);
@@ -270,7 +416,7 @@ ${opening}
 
 ${naturalAnswer}
 
-사주 흐름으로 보면 ${data.name}님은 ${masterDecision.lifePhase} 흐름에 있고, 올해의 핵심 키워드는 "${masterDecision.yearlyKeyword}" 쪽으로 잡힙니다. 그래서 지금 질문도 단순히 마음만 보고 결정하기보다 ${masterDecision.priorityArea}을 먼저 기준으로 삼는 것이 좋습니다.
+사주 흐름으로 보면 ${data.name}님은 ${masterDecision.lifePhase} 흐름에 있고, 이번 질문은 ${intent.topic} 영역의 ${intent.intent} 상담으로 볼 수 있습니다. 올해의 핵심 키워드는 "${masterDecision.yearlyKeyword}" 쪽으로 잡힙니다. 그래서 지금 질문도 단순히 마음만 보고 결정하기보다 ${masterDecision.priorityArea}을 먼저 기준으로 삼는 것이 좋습니다.
 
 현재 판단은 이렇게 보시면 됩니다.
 
@@ -296,3 +442,5 @@ ${masterDecision.warnings[0]}
 언제쯤 다시 판단하는 게 좋을까요?
 `.trim();
 }
+
+
