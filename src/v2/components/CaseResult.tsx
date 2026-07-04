@@ -2,25 +2,102 @@
 import { basicMapper } from "../services/basic/basicMapper";
 import { getCaseConsulting } from "../services/case/caseConsulting";
 import { caseCategories, caseQuestions } from "../services/case/caseQuestions";
-import type { CaseCategoryKey, CaseQuestionKey } from "../services/case/caseQuestions";
+import type { CaseCategoryKey } from "../services/case/caseQuestions";
 import { getCaseSummary } from "../services/case/caseSummary";
 import type { BasicSajuInput } from "../types/basic";
 
 type CaseResultProps = BasicSajuInput;
 
+type CaseChatMessage = {
+  question: string;
+  answer: string;
+};
+
+function buildCaseQuestionContext(
+  categoryLabel: string,
+  history: CaseChatMessage[],
+  question: string
+) {
+  const recentHistory = history.slice(-5);
+
+  if (!recentHistory.length) {
+    return `[상담 분야: ${categoryLabel}]
+${question}`;
+  }
+
+  const historyText = recentHistory
+    .map(
+      (item, index) =>
+        `[이전 주제별 상담 ${index + 1}]
+질문: ${item.question}
+답변 요약: ${item.answer.slice(0, 700)}`
+    )
+    .join("\n\n");
+
+  return `
+[상담 분야: ${categoryLabel}]
+
+[이전 상담 흐름]
+${historyText}
+
+[현재 추가 질문]
+${question}
+
+위 상담 흐름을 이어받아 같은 말을 반복하지 말고, 현재 질문에 맞춰 주제별 상담처럼 자연스럽게 답변하세요.
+`.trim();
+}
+
 export default function CaseResult(props: CaseResultProps) {
   const [selectedCategory, setSelectedCategory] =
     useState<CaseCategoryKey>("wealth");
-  const [selectedQuestion, setSelectedQuestion] =
-    useState<CaseQuestionKey>("investment");
+  const [questionText, setQuestionText] = useState("");
+  const [chatHistory, setChatHistory] = useState<CaseChatMessage[]>([]);
+  const [currentAnswer, setCurrentAnswer] = useState("");
 
   const basic = basicMapper(props);
   const summary = getCaseSummary(props.name);
-  const consulting = getCaseConsulting(basic, selectedQuestion);
+
+  const selectedCategoryInfo =
+    caseCategories.find((category) => category.key === selectedCategory) ??
+    caseCategories[0];
 
   const filteredQuestions = caseQuestions.filter(
     (question) => question.category === selectedCategory
   );
+
+  const defaultQuestion =
+    filteredQuestions[0]?.label ?? "현재 가장 궁금한 내용을 질문해 주세요.";
+
+  const consulting =
+    currentAnswer ||
+    getCaseConsulting(
+      basic,
+      `[상담 분야: ${selectedCategoryInfo.label}]
+${defaultQuestion}`
+    );
+
+  const handleSubmit = () => {
+    const question = questionText.trim();
+
+    if (!question) return;
+
+    const contextQuestion = buildCaseQuestionContext(
+      selectedCategoryInfo.label,
+      chatHistory,
+      question
+    );
+    const answer = getCaseConsulting(basic, contextQuestion);
+
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        question,
+        answer,
+      },
+    ]);
+    setCurrentAnswer(answer);
+    setQuestionText("");
+  };
 
   return (
     <div>
@@ -44,12 +121,9 @@ export default function CaseResult(props: CaseResultProps) {
             type="button"
             onClick={() => {
               setSelectedCategory(category.key);
-              const firstQuestion = caseQuestions.find(
-                (question) => question.category === category.key
-              );
-              if (firstQuestion) {
-                setSelectedQuestion(firstQuestion.key);
-              }
+              setQuestionText("");
+              setChatHistory([]);
+              setCurrentAnswer("");
             }}
             style={{
               padding: "13px 14px",
@@ -75,22 +149,22 @@ export default function CaseResult(props: CaseResultProps) {
         ))}
       </div>
 
-      <h4>2단계. 세부 질문 선택</h4>
-      <div style={{ display: "grid", gap: "8px", marginBottom: "18px" }}>
+      <h4>2단계. 상담 질문 직접 입력</h4>
+      <p style={{ color: "#cbd5e1", lineHeight: 1.7 }}>
+        아래 예시를 참고해도 되고, 지금 궁금한 내용을 직접 적어도 됩니다.
+      </p>
+
+      <div style={{ display: "grid", gap: "8px", marginBottom: "14px" }}>
         {filteredQuestions.map((question) => (
           <button
             key={question.key}
             type="button"
-            onClick={() => setSelectedQuestion(question.key)}
+            onClick={() => setQuestionText(question.label)}
             style={{
               padding: "10px 12px",
               borderRadius: "10px",
-              border:
-                selectedQuestion === question.key
-                  ? "2px solid #38bdf8"
-                  : "1px solid #334155",
-              background:
-                selectedQuestion === question.key ? "#082f49" : "#1e293b",
+              border: "1px solid #334155",
+              background: "#1e293b",
               color: "#f8fafc",
               textAlign: "left",
               cursor: "pointer",
@@ -101,6 +175,80 @@ export default function CaseResult(props: CaseResultProps) {
         ))}
       </div>
 
+      <textarea
+        value={questionText}
+        onChange={(event) => setQuestionText(event.target.value)}
+        placeholder="예: 재혼하면 자녀 문제는 어떻게 봐야 하나요?"
+        style={{
+          width: "100%",
+          minHeight: "100px",
+          boxSizing: "border-box",
+          padding: "14px",
+          borderRadius: "12px",
+          border: "1px solid #475569",
+          background: "#0f172a",
+          color: "#ffffff",
+          lineHeight: 1.7,
+          resize: "vertical",
+          marginBottom: "12px",
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={handleSubmit}
+        style={{
+          width: "100%",
+          padding: "14px",
+          borderRadius: "12px",
+          border: "none",
+          background: "linear-gradient(135deg, #f59e0b, #ef4444)",
+          color: "#ffffff",
+          fontWeight: 800,
+          cursor: "pointer",
+          marginBottom: "18px",
+        }}
+      >
+        {chatHistory.length ? "이어서 주제별 상담하기" : "주제별 상담 시작"}
+      </button>
+
+      {chatHistory.length > 0 && (
+        <div
+          style={{
+            padding: "16px",
+            border: "1px solid #334155",
+            borderRadius: "14px",
+            background: "#0f172a",
+            marginBottom: "16px",
+          }}
+        >
+          <h4 style={{ marginTop: 0 }}>💬 주제별 상담 기록</h4>
+          {chatHistory.map((item, index) => (
+            <div
+              key={`${item.question}-${index}`}
+              style={{
+                padding: "12px",
+                borderRadius: "12px",
+                background: "#1e293b",
+                marginTop: "10px",
+              }}
+            >
+              <strong>Q{index + 1}. {item.question}</strong>
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  lineHeight: 1.8,
+                  margin: "10px 0 0",
+                  color: "#e5e7eb",
+                }}
+              >
+                A{index + 1}. {item.answer}
+              </pre>
+            </div>
+          ))}
+        </div>
+      )}
+
       <h4>원장님 상담</h4>
       <p style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}>
         {consulting}
@@ -108,4 +256,3 @@ export default function CaseResult(props: CaseResultProps) {
     </div>
   );
 }
-
