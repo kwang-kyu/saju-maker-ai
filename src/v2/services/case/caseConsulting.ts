@@ -1,8 +1,6 @@
 import type { BasicSajuResult } from "../../types/basic";
 import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 import type { CaseQuestionKey } from "./caseQuestions";
-import { buildConsultingDecision } from "./consultingDecision";
-import { buildConsultingReport } from "./consultingFramework";
 
 function getAge(data: BasicSajuResult) {
   const birthDate = String((data as unknown as { birthDate?: string }).birthDate || "");
@@ -71,38 +69,6 @@ function resolveQuestionKey(question: string): CaseQuestionKey {
 
   return "importantChoice";
 }
-function getQuestionTitle(questionKey: CaseQuestionKey) {
-  const map: Record<CaseQuestionKey, string> = {
-    jobChange: "지금 이직을 해도 괜찮을까요?",
-    businessStart: "지금 사업을 시작해도 될까요?",
-    realEstateBuy: "지금 부동산을 매수해도 될까요?",
-    investment: "지금 제 사주에서는 투자를 시작해도 될까요?",
-    marriagePrepare: "지금 결혼을 준비해도 될까요?",
-    relationshipCleanUp: "인간관계를 정리해야 할까요?",
-    moneyTiming: "금전 흐름은 언제부터 안정될까요?",
-    stockInvestment: "지금 제 사주에서는 주식 투자가 맞을까요?",
-    businessExpand: "지금 사업을 확장해도 될까요?",
-    partnership: "제 사주에는 동업이 맞을까요?",
-    careerDirection: "앞으로 어떤 일을 하면 좋을까요?",
-    promotion: "승진이나 인정운이 들어오는 흐름인가요?",
-    contract: "계약을 진행해도 괜찮을까요?",
-    houseMove: "이사를 해도 좋은 흐름인가요?",
-    realEstateSell: "지금 부동산을 매도해도 될까요?",
-    exam: "시험이나 자격증 준비는 제게 맞을까요?",
-    newRelationship: "새로운 인연이 들어올까요?",
-    marriageTiming: "결혼 시기는 언제가 좋을까요?",
-    remarriage: "재혼운은 어떻게 봐야 할까요?",
-    children: "자녀운은 어떨까요?",
-    familyConflict: "가족 갈등은 어떻게 풀어야 할까요?",
-    healthCare: "건강에서 특히 조심할 점은 무엇인가요?",
-    legalIssue: "소송이나 분쟁은 어떻게 봐야 할까요?",
-    overseas: "해외 이동이나 장거리 이동은 괜찮을까요?",
-    importantChoice: "올해 가장 중요한 선택은 무엇일까요?",
-  };
-
-  return map[questionKey];
-}
-
 function buildOpening(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
@@ -147,39 +113,6 @@ ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZh
 ${ageLine}
 
 ${identity.decisionStyle}`;
-}
-function buildCaseFutureStrategy(
-  decision: ReturnType<typeof buildConsultingDecision>,
-  name: string
-) {
-  if (decision.riskLevel === "danger") {
-    return `1년 차에는 실행보다 정리와 회복이 우선입니다.
-${name}님은 손실 가능성, 건강 부담, 자금 압박을 먼저 줄여야 합니다.
-
-2년 차에는 작은 테스트를 통해 가능성을 확인하는 시기입니다.
-큰 결정보다 작게 시작하고, 실패해도 회복 가능한 범위 안에서 움직이는 것이 좋습니다.
-
-3년 차에는 검증된 방향만 확장해야 합니다.
-아직 불안한 영역은 억지로 키우지 말고, 안정적으로 남는 구조만 선택해야 합니다.`;
-  }
-
-  if (decision.riskLevel === "watch") {
-    return `1년 차에는 준비와 검증이 핵심입니다.
-${name}님은 바로 크게 움직이기보다 자금, 사람, 일정, 건강 조건을 먼저 맞춰야 합니다.
-
-2년 차에는 조건이 맞는 영역부터 실행하는 시기입니다.
-한 번에 전체를 바꾸기보다 부담이 적은 부분부터 시작하는 것이 좋습니다.
-
-3년 차에는 결과가 확인된 방향을 넓히는 시기입니다.
-무리한 확장보다 검증된 구조를 반복해서 키우는 방식이 안정적입니다.`;
-  }
-
-  return `1년 차에는 방향 정리와 실행 기준을 세우는 것이 좋습니다.
-${name}님은 이미 가능한 흐름이 있으므로 지나치게 미루기보다 감당 가능한 범위부터 움직이는 것이 좋습니다.
-
-2년 차에는 성과가 나는 부분에 집중해야 합니다.
-
-3년 차에는 검증된 방향을 넓히고 장기적으로 유지할 구조를 만드는 것이 좋습니다.`;
 }
 function buildWealthAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
@@ -537,7 +470,6 @@ ${strategy}
 ${identity.relationshipStyle}`;
 }
 function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
-  const name = data.name;
   const identity = buildSajuIdentityProfile(data);
   const age = getAge(data);
   const stage = getLifeStage(age);
@@ -610,43 +542,18 @@ function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
       break;
   }
 
-  const decision = buildConsultingDecision(
-    data,
-    getQuestionTitle(questionKey)
-  );
-  
-  return buildConsultingReport({
-    title: "건강·인생 상담",
-    question: getQuestionTitle(questionKey),
-    decision,
-  
-    opening: buildOpening(data, questionKey),
-  
-    sajuAnalysis: `${identity.lifeStyle}
-  
-  ${identity.decisionStyle}
-  ${name}님은 ${data.dayMaster} 일간의 특성상 큰 결심보다 매일의 컨디션을 관리할 때 건강운이 안정되는 구조입니다.
+  return `${buildOpening(data, questionKey)}
 
-  특히 지금은 체력 신호를 가볍게 넘기지 말고 회복 시간, 식사 패턴, 정기 점검을 현실적으로 챙기는 것이 중요합니다.`,
-  
-    reality,
-    caution,
-    strategy,
-  
-    future: buildCaseFutureStrategy(decision, name),
-  
-    closing: `AI 원장 최종 판단
+${identity.lifeStyle}
 
-이번 건강인생 상담을 종합하면 ${name}님은 큰 결심보다 매일 반복되는 생활 리듬을 안정시키는 것이 먼저입니다.
+${reality}
 
-지금 해야 할 것은 무리해서 버티는 것이 아니라 수면, 식사, 회복, 스트레스 관리의 기준을 다시 세우는 것입니다.
+${caution}
 
-${identity.riskPoint}
+${strategy}
 
-최종적으로 ${name}님은 몸의 리듬을 안정시키는 선택이 결국 일, 관계, 재물 흐름까지 편안하게 만들어 갑니다.`,
-  });
+${identity.riskPoint}`;
 }
-
 export function getCaseConsulting(data: BasicSajuResult, question: CaseQuestionKey | string) {
   const questionKey = resolveQuestionKey(question);
   if (["investment", "moneyTiming", "stockInvestment"].includes(questionKey)) {
