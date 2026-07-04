@@ -45,6 +45,32 @@ function getLifeStageAdvice(age: number) {
 
   return "지금은 사주 구조와 현재 선택의 감당 가능성을 함께 봐야 하는 시기입니다.";
 }
+
+function resolveQuestionKey(question: string): CaseQuestionKey {
+  const q = question.toLowerCase();
+
+  if (q.includes("재혼")) return "remarriage";
+  if (q.includes("인연") || q.includes("새로운")) return "newRelationship";
+  if (q.includes("결혼")) return "marriageTiming";
+  if (q.includes("자녀") || q.includes("아이")) return "children";
+
+  if (q.includes("이직") || q.includes("퇴사") || q.includes("직장")) return "jobChange";
+  if (q.includes("동업")) return "partnership";
+  if (q.includes("확장") || q.includes("확대")) return "businessExpand";
+  if (q.includes("사업") || q.includes("창업")) return "businessStart";
+
+  if (q.includes("주식")) return "stockInvestment";
+  if (q.includes("투자")) return "investment";
+  if (q.includes("돈") || q.includes("금전") || q.includes("재물")) return "moneyTiming";
+
+  if (q.includes("부동산") || q.includes("매수") || q.includes("구입")) return "realEstateBuy";
+  if (q.includes("매도") || q.includes("팔")) return "realEstateSell";
+  if (q.includes("이사") || q.includes("이전")) return "houseMove";
+
+  if (q.includes("건강") || q.includes("질병") || q.includes("몸")) return "healthCare";
+
+  return "importantChoice";
+}
 function getQuestionTitle(questionKey: CaseQuestionKey) {
   const map: Record<CaseQuestionKey, string> = {
     jobChange: "지금 이직을 해도 괜찮을까요?",
@@ -747,7 +773,8 @@ ${identity.riskPoint}
   });
 }
 
-export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuestionKey) {
+export function getCaseConsulting(data: BasicSajuResult, question: CaseQuestionKey | string) {
+  const questionKey = resolveQuestionKey(question);
   if (["investment", "moneyTiming", "stockInvestment"].includes(questionKey)) {
     return buildWealthAdvice(data, questionKey);
   }
@@ -780,6 +807,7 @@ export function getCaseConsulting(data: BasicSajuResult, questionKey: CaseQuesti
 
   return buildHealthLifeAdvice(data, questionKey);
 }
+
 
 
 
