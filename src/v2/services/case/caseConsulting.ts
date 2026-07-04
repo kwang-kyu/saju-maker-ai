@@ -707,7 +707,9 @@ ${buildJobAdvice(data, questionKey)}`;
   }
 
   if (["realEstateBuy", "realEstateSell", "houseMove"].includes(questionKey)) {
-    return `${intentGuide}
+    return `${intentOpening}
+
+${intentGuide}
 
 ${buildRealEstateAdvice(data, questionKey)}`;
   }
