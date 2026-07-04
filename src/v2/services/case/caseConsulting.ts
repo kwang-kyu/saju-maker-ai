@@ -697,7 +697,9 @@ ${buildRealEstateAdvice(data, questionKey)}`;
 ${buildRelationshipAdvice(data, questionKey)}`;
   }
 
-  return buildHealthLifeAdvice(data, questionKey);
+  return `${intentGuide}
+
+${buildHealthLifeAdvice(data, questionKey)}`;
 }
 
 
