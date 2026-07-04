@@ -1,4 +1,5 @@
 ﻿import { basicMapper } from "../services/basic/basicMapper";
+import { buildMasterDecision } from "../services/framework/masterDecisionEngine";
 import { moneyConsulting } from "../services/money/moneyConsulting";
 import { moneySummary } from "../services/money/moneySummary";
 import type { BasicSajuInput } from "../types/basic";
@@ -7,7 +8,8 @@ type MoneyResultProps = BasicSajuInput;
 
 export default function MoneyResult(props: MoneyResultProps) {
   const basic = basicMapper(props);
-  const consultingText = moneyConsulting(basic, props.birthDate);
+  const decision = buildMasterDecision(basic);
+  const consultingText = moneyConsulting(basic, props.birthDate, decision);
   const summaryList = moneySummary(props.name);
 
   return (
@@ -35,6 +37,7 @@ export default function MoneyResult(props: MoneyResultProps) {
     </div>
   );
 }
+
 
 
 

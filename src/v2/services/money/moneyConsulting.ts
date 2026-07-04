@@ -63,10 +63,10 @@ function getInvestmentStyle(data: BasicSajuResult) {
   return `강한 ${strong} 기운은 투자 판단의 장점으로 쓰고, 부족한 ${weak} 기운은 리스크 관리 기준으로 보완하는 것이 좋습니다.`;
 }
 
-export function moneyConsulting(data: BasicSajuResult, birthDate?: string): string {
+export function moneyConsulting(data: BasicSajuResult, birthDate?: string, masterDecision?: ReturnType<typeof buildMasterDecision>): string {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
-  const decision = buildMasterDecision(data);
+  const decision = masterDecision ?? buildMasterDecision(data);
   const age = getAge(birthDate);
   const ageStrategy = getAgeStrategy(age);
   const investmentStyle = getInvestmentStyle(data);
@@ -132,6 +132,7 @@ ${identity.successPoint}
 최종적으로 ${name}님에게 가장 중요한 재테크 기준은 큰돈을 한 번에 잡는 것이 아니라 오래 버티고, 꾸준히 쌓고, 준비된 순간에 확장하는 것입니다.`,
   });
 }
+
 
 
 
