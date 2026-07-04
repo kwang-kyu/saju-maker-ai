@@ -1,5 +1,6 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
 import { buildConsultingFramework } from "../framework/consultingFramework";
+import { buildMasterDecision } from "../framework/masterDecisionEngine";
 import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 
 function getAge(birthDate?: string) {
@@ -65,6 +66,7 @@ function getInvestmentStyle(data: BasicSajuResult) {
 export function moneyConsulting(data: BasicSajuResult, birthDate?: string): string {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
+  const decision = buildMasterDecision(data);
   const age = getAge(birthDate);
   const ageStrategy = getAgeStrategy(age);
   const investmentStyle = getInvestmentStyle(data);
@@ -76,6 +78,8 @@ export function moneyConsulting(data: BasicSajuResult, birthDate?: string): stri
 
 중요한 것은 지금 나이와 사주 흐름에 맞게 현금, 투자, 부동산, 연금, 부업, 사업 가능성을 어떻게 나누느냐입니다.
 
+이번 상담의 핵심 방향은 ${decision.yearlyKeyword}입니다. 현재 우선순위는 ${decision.priorityArea}이고, 재테크 판단 방식은 ${decision.decisionStyle}에 가깝습니다.
+
 ${identity.moneyStyle}
 
 ${identity.decisionStyle}`,
@@ -83,6 +87,8 @@ ${identity.decisionStyle}`,
     personInsight: `${name}님은 돈을 무작정 따라가기보다 스스로 납득되는 기준이 있어야 안정적으로 움직이는 편입니다. 강하게 살아나는 ${data.strongestElement} 기운은 돈을 벌고 기회를 잡을 때 장점으로 나타나지만, 부족한 ${data.weakestElement} 기운은 투자 판단이 흔들리거나 리스크 관리가 약해질 수 있는 지점입니다.
 
 ${investmentStyle}
+
+Master Decision 기준으로 보면 ${name}님의 투자 전략은 ${decision.investmentStrategy}입니다.
 
 ${ageStrategy}`,
 
@@ -96,7 +102,9 @@ ${identity.riskPoint}`,
 
 예를 들어 주식이 좋아 보이면 주식에 몰리고, 부동산 이야기가 들리면 부동산으로 마음이 흔들리고, 코인이 오르면 뒤늦게 들어가고 싶은 마음이 생길 수 있습니다. 하지만 ${name}님에게 필요한 것은 유행을 따라가는 재테크가 아니라 본인 사주와 생활 구조에 맞는 자산관리 기준입니다.`,
 
-    futureFlow: `앞으로 3년 재테크 흐름은 정리, 분산, 확장의 순서로 보는 것이 좋습니다.
+    futureFlow: `앞으로 3년 재테크 흐름은 ${decision.lifePhase}의 관점에서 정리, 분산, 확장의 순서로 보는 것이 좋습니다.
+
+${decision.finalDirection}
 
 1년 차에는 고정 지출, 대출, 보험, 카드 사용, 현금 비중을 먼저 정리해야 합니다. 이 시기에는 수익률보다 돈이 새는 구멍을 막는 것이 먼저입니다.
 
@@ -104,7 +112,11 @@ ${identity.riskPoint}`,
 
 3년 차에는 부업, 사업, 부동산, 임대수익, 전문성 기반 수입처럼 현금흐름을 넓히는 방향을 검토할 수 있습니다. 다만 준비 없는 확장보다 검증된 방식 안에서 넓히는 것이 좋습니다.`,
 
-    actionGuide: `첫째, 최소 6개월 생활비에 해당하는 현금성 자산을 먼저 확보하는 것이 좋습니다.
+    actionGuide: `첫째, ${decision.actionNow[0]}
+둘째, ${decision.actionNow[1]}
+셋째, ${decision.actionNow[2]}
+
+넷째, 최소 6개월 생활비에 해당하는 현금성 자산을 먼저 확보하는 것이 좋습니다.
 둘째, 코인이나 단기 매매는 가능하더라도 전체 자산의 작은 비중으로 제한해야 합니다.
 셋째, ETF와 연금처럼 오래 쌓이는 자산을 기본 축으로 두는 것이 안정적입니다.
 넷째, 부동산은 무리한 대출보다 현금흐름과 보유 능력을 먼저 계산해야 합니다.
@@ -120,6 +132,7 @@ ${identity.successPoint}
 최종적으로 ${name}님에게 가장 중요한 재테크 기준은 큰돈을 한 번에 잡는 것이 아니라 오래 버티고, 꾸준히 쌓고, 준비된 순간에 확장하는 것입니다.`,
   });
 }
+
 
 
 
