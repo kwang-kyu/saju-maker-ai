@@ -436,7 +436,6 @@ ${caution}
 ${strategy}`;
 }
 function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
-  const name = data.name;
   const identity = buildSajuIdentityProfile(data);
   const age = getAge(data);
   const stage = getLifeStage(age);
@@ -525,43 +524,18 @@ function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestio
       break;
   }
 
-  const decision = buildConsultingDecision(
-    data,
-    getQuestionTitle(questionKey)
-  );
-  
-  return buildConsultingReport({
-    title: "연애·결혼 상담",
-    question: getQuestionTitle(questionKey),
-    decision,
-  
-    opening: buildOpening(data, questionKey),
-  
-    sajuAnalysis: `${identity.lifeStyle}
-  
-  ${name}님은 ${data.dayMaster} 일간의 특성상 관계에서도 감정보다 생활 리듬, 책임감, 경제 기준, 대화 방식이 맞을 때 안정됩니다.
-  
-  강한 ${data.strongestElement} 기운은 매력과 주도성으로 활용하고,
-  부족한 ${data.weakestElement} 기운은 서운함, 거리감, 현실 조건의 차이로 나타나지 않도록 조율해야 합니다.`,
-  
-    reality,
-    caution,
-    strategy,
-  
-    future: buildCaseFutureStrategy(decision, name),
-  
-    closing: `AI 원장 최종 판단
+  return `${buildOpening(data, questionKey)}
 
-이번 연애결혼 상담을 종합하면 ${name}님은 설렘보다 생활 리듬, 책임감, 경제관, 대화 방식이 맞는 사람을 선택해야 합니다.
+${identity.lifeStyle}
 
-지금 해야 할 것은 인연이 있느냐 없느냐를 기다리는 것이 아니라, 오래 갈 사람과 나를 소모시키는 사람을 구분하는 기준을 세우는 것입니다.
+${reality}
 
-${identity.relationshipStyle}
+${caution}
 
-최종적으로 ${name}님에게 연애와 결혼은 감정의 크기보다 함께 살아갈 수 있는 현실 기준이 맞을 때 안정적으로 이어집니다.`,
-  });
+${strategy}
+
+${identity.relationshipStyle}`;
 }
-
 function buildHealthLifeAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
