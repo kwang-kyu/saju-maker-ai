@@ -43,7 +43,82 @@ function getLifeStageAdvice(age: number) {
 
   return "지금은 사주 구조와 현재 선택의 감당 가능성을 함께 봐야 하는 시기입니다.";
 }
+type CaseQuestionIntent =
+  | "start"
+  | "continue"
+  | "stop"
+  | "expand"
+  | "partner"
+  | "timing"
+  | "possibility"
+  | "decision"
+  | "risk"
+  | "general";
 
+function resolveQuestionIntent(question: string): CaseQuestionIntent {
+  const q = question.toLowerCase();
+
+  if (
+    q.includes("그만") ||
+    q.includes("접") ||
+    q.includes("포기") ||
+    q.includes("정리") ||
+    q.includes("철수")
+  ) return "stop";
+
+  if (
+    q.includes("계속") ||
+    q.includes("유지") ||
+    q.includes("버텨")
+  ) return "continue";
+
+  if (
+    q.includes("확장") ||
+    q.includes("늘려") ||
+    q.includes("키워")
+  ) return "expand";
+
+  if (
+    q.includes("동업") ||
+    q.includes("파트너") ||
+    q.includes("같이")
+  ) return "partner";
+
+  if (
+    q.includes("언제") ||
+    q.includes("시기") ||
+    q.includes("때")
+  ) return "timing";
+
+  if (
+    q.includes("가능") ||
+    q.includes("될까") ||
+    q.includes("될까요") ||
+    q.includes("괜찮")
+  ) return "possibility";
+
+  if (
+    q.includes("위험") ||
+    q.includes("조심") ||
+    q.includes("불안")
+  ) return "risk";
+
+  if (
+    q.includes("시작") ||
+    q.includes("창업") ||
+    q.includes("준비") ||
+    q.includes("새로")
+  ) return "start";
+
+  if (
+    q.includes("선택") ||
+    q.includes("결정") ||
+    q.includes("어떻게") ||
+    q.includes("어때")
+  ) return "decision";
+
+  return "general";
+}
 function resolveQuestionKey(question: string): CaseQuestionKey {
   const q = question.toLowerCase();
 
@@ -554,22 +629,56 @@ ${strategy}
 
 ${identity.riskPoint}`;
 }
+function buildIntentGuide(intent: CaseQuestionIntent) {
+  switch (intent) {
+    case "start":
+      return "이번 질문은 새로 시작해도 되는지보다, 어떤 조건에서 시작해야 오래 갈 수 있는지를 중심으로 보겠습니다.";
+    case "continue":
+      return "이번 질문은 계속 버텨야 하는지보다, 유지할 가치와 손실 위험을 함께 보겠습니다.";
+    case "stop":
+      return "이번 질문은 포기 여부가 아니라, 정리해야 할 것과 남겨야 할 것을 구분해서 보겠습니다.";
+    case "expand":
+      return "이번 질문은 확장 가능성보다, 확장했을 때 감당할 수 있는 구조인지가 핵심입니다.";
+    case "partner":
+      return "이번 질문은 상대를 믿어도 되는지보다, 역할과 책임이 분명한 관계인지부터 보겠습니다.";
+    case "timing":
+      return "이번 질문은 시기가 좋은지보다, 지금 움직여도 되는 준비 상태인지를 함께 보겠습니다.";
+    case "possibility":
+      return "이번 질문은 단순히 된다, 안 된다보다 현실적으로 성사 가능성이 있는지를 보겠습니다.";
+    case "risk":
+      return "이번 질문은 좋은 점보다 먼저 조심해야 할 위험 요소를 중심으로 보겠습니다.";
+    case "decision":
+      return "이번 질문은 감정적인 판단보다 선택 후 감당 가능한지를 기준으로 보겠습니다.";
+    default:
+      return "이번 질문은 사주 흐름과 현실 조건을 함께 놓고 판단하겠습니다.";
+  }
+}
 export function getCaseConsulting(data: BasicSajuResult, question: CaseQuestionKey | string) {
   const questionKey = resolveQuestionKey(question);
+  const questionIntent = resolveQuestionIntent(question);
+  const intentGuide = buildIntentGuide(questionIntent);
   if (["investment", "moneyTiming", "stockInvestment"].includes(questionKey)) {
-    return buildWealthAdvice(data, questionKey);
+    return `${intentGuide}
+
+${buildWealthAdvice(data, questionKey)}`;
   }
 
   if (["jobChange", "careerDirection", "promotion", "exam"].includes(questionKey)) {
-    return buildJobAdvice(data, questionKey);
+    return `${intentGuide}
+
+${buildJobAdvice(data, questionKey)}`;
   }
 
   if (["businessStart", "businessExpand", "partnership", "contract"].includes(questionKey)) {
-    return buildBusinessAdvice(data, questionKey);
+    return `${intentGuide}
+
+${buildBusinessAdvice(data, questionKey)}`;
   }
 
   if (["realEstateBuy", "realEstateSell", "houseMove"].includes(questionKey)) {
-    return buildRealEstateAdvice(data, questionKey);
+    return `${intentGuide}
+
+${buildRealEstateAdvice(data, questionKey)}`;
   }
 
   if (
@@ -583,7 +692,9 @@ export function getCaseConsulting(data: BasicSajuResult, question: CaseQuestionK
       "familyConflict",
     ].includes(questionKey)
   ) {
-    return buildRelationshipAdvice(data, questionKey);
+    return `${intentGuide}
+
+${buildRelationshipAdvice(data, questionKey)}`;
   }
 
   return buildHealthLifeAdvice(data, questionKey);
