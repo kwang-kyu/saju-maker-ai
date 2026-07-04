@@ -732,7 +732,9 @@ ${intentGuide}
 ${buildRelationshipAdvice(data, questionKey)}`;
   }
 
-  return `${intentGuide}
+  return `${intentOpening}
+
+${intentGuide}
 
 ${buildHealthLifeAdvice(data, questionKey)}`;
 }
