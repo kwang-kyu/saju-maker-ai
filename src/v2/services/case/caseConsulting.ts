@@ -301,43 +301,18 @@ ${name}님의 사주를 보면 어떤 환경에서 능력이 살아나는지가 
       break;
   }
 
-  const decision = buildConsultingDecision(
-    data,
-    getQuestionTitle(questionKey)
-  );
-  
-  return buildConsultingReport({
-    title: "직업 상담",
-    question: getQuestionTitle(questionKey),
-    decision,
-  
-    opening,
-  
-    sajuAnalysis: `${identity.workStyle}
-  
-  ${name}님은 ${data.dayMaster} 일간의 특성상 일에서 기준과 역할이 분명할수록 집중력이 살아납니다.
-  
-  강한 ${data.strongestElement} 기운은 장점으로 활용하고,
-  부족한 ${data.weakestElement} 기운은 의사결정의 흔들림으로 나타나지 않도록 관리해야 합니다.`,
-  
-    reality,
-    caution,
-    strategy,
-  
-    future: buildCaseFutureStrategy(decision, name),
-  
-    closing: `AI 원장 최종 판단
+  return `${opening}
 
-이번 직업 상담을 종합하면 ${name}님은 단순히 직장을 옮기는 것보다 자신의 장점이 살아나는 역할과 환경을 찾는 것이 먼저입니다.
+${identity.workStyle}
 
-지금 해야 할 것은 감정적인 퇴사나 무작정 도전이 아니라, 앞으로 3년 동안 쌓을 경력과 전문성을 분명히 정하는 것입니다.
+${reality}
 
-${identity.successPoint}
+${caution}
 
-최종적으로 ${name}님은 직업을 자주 바꾸는 것보다 자신의 장점이 살아나는 구조를 찾을 때 운이 크게 살아납니다.`,
-  });
+${strategy}
+
+${identity.successPoint}`;
 }
-
 function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
