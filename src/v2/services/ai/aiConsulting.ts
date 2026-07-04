@@ -398,6 +398,118 @@ function analyzeQuestionIntent(question: string): QuestionIntent {
   };
 }
 
+
+function getIntentFocusedAdvice(intent: QuestionIntent, data: BasicSajuResult): string {
+  if (intent.intent === "new_relationship") {
+    return `${data.name}님 질문의 핵심은 단순히 사람이 들어오느냐가 아니라, 들어온 인연이 오래 갈 수 있는 인연인가입니다.
+
+이 경우에는 세 가지를 보셔야 합니다.
+첫째, 만남이 갑자기 뜨겁게 시작되는지보다 꾸준히 이어지는지 보세요.
+둘째, 상대가 말보다 행동으로 신뢰를 주는지 보세요.
+셋째, 돈과 생활 태도가 안정적인 사람인지 확인하세요.`;
+  }
+
+  if (intent.intent === "love_timing") {
+    return `만남의 시기를 묻는 질문이라면, 지금은 억지로 사람을 만들기보다 생활 반경을 넓히는 쪽이 좋습니다.
+
+소개, 모임, 일 관련 만남처럼 자연스럽게 반복해서 얼굴을 보는 자리에서 인연 가능성이 더 살아납니다. 단기간에 결론을 내기보다 2~3번 이상 만났을 때 편안함이 유지되는지를 보세요.`;
+  }
+
+  if (intent.intent === "marriage_timing") {
+    return `결혼 시기를 묻는다면, 지금은 날짜보다 조건을 먼저 봐야 합니다.
+
+결혼운은 감정만으로 움직일 때보다 돈, 주거, 가족과의 거리, 생활 리듬이 맞을 때 안정됩니다. 결혼 이야기가 나온다면 먼저 현실 조건을 정리한 뒤 시기를 잡는 것이 맞습니다.`;
+  }
+
+  if (intent.intent === "spouse_type") {
+    return `배우자운을 볼 때는 화려한 사람보다 생활이 안정된 사람을 보셔야 합니다.
+
+${data.name}님에게 맞는 상대는 감정 표현만 강한 사람이 아니라, 약속을 지키고 돈 문제를 숨기지 않고 갈등이 생겼을 때 대화가 되는 사람입니다.`;
+  }
+
+  if (intent.intent === "children_after_remarriage") {
+    return `재혼 후 자녀 문제는 가장 먼저 봐야 할 현실 변수입니다.
+
+이 문제는 감정으로 덮으면 나중에 커질 수 있습니다. 상대가 자녀의 존재를 존중하는지, 생활비와 양육 책임을 어떻게 볼 것인지, 가족 사이 경계를 어디까지 둘 것인지 초기에 확인해야 합니다.`;
+  }
+
+  if (intent.intent === "money_after_remarriage") {
+    return `재혼에서 재산과 돈 문제는 피하면 안 됩니다.
+
+좋아서 만나는 것과 생활을 합치는 것은 다릅니다. 재산, 부채, 생활비, 자녀 관련 지출은 처음부터 선을 정해야 합니다. 이 이야기를 불편해하는 사람이라면 신중하게 봐야 합니다.`;
+  }
+
+  if (intent.intent === "business_start") {
+    return `사업 시작 질문이라면, 지금 중요한 것은 가능성보다 시작 방식입니다.
+
+처음부터 크게 시작하지 말고 3개월 테스트로 가야 합니다. 작은 상품, 작은 고객, 작은 매출을 먼저 만들고 그 결과가 반복되는지 확인하세요. 고정비가 먼저 커지면 운이 좋아도 버티기 어렵습니다.`;
+  }
+
+  if (intent.intent === "business_partner") {
+    return `동업 질문이라면 매우 신중해야 합니다.
+
+동업은 사람 좋다고 하는 것이 아니라 역할, 돈, 책임, 퇴장 조건이 문서로 정리될 때 가능한 일입니다. 특히 매출이 나기 전보다 돈이 들어오기 시작한 뒤 갈등이 커질 수 있습니다.`;
+  }
+
+  if (intent.intent === "business_expansion") {
+    return `확장 질문이라면 지금은 속도보다 관리력이 핵심입니다.
+
+매출이 조금 늘었다고 바로 임대료, 인건비, 광고비를 키우면 부담이 커질 수 있습니다. 먼저 반복 매출이 있는지, 고객이 다시 오는지, 내가 없어도 돌아가는 구조인지 확인해야 합니다.`;
+  }
+
+  if (intent.intent === "real_estate_money") {
+    return `부동산 질문이라면 실거주인지 투자용인지 먼저 나눠야 합니다.
+
+실거주라면 월 상환 부담과 생활 안정성이 기준이고, 투자라면 공실, 대출금리, 환금성, 보유기간이 기준입니다. 지금은 분위기보다 숫자로 판단해야 합니다.`;
+  }
+
+  if (intent.intent === "investment") {
+    return `투자 질문이라면 지금은 수익률보다 손실 한도를 먼저 정해야 합니다.
+
+${data.name}님은 기회가 보이면 움직일 수 있지만, 기준 없이 들어가면 마음이 흔들릴 수 있습니다. 투자금과 생활비를 분리하고, 잃어도 생활이 무너지지 않는 범위에서만 해야 합니다.`;
+  }
+
+  if (intent.intent === "job_change") {
+    return `이직 질문이라면 가능성은 있지만, 이동 이유를 분명히 해야 합니다.
+
+단순히 힘들어서 옮기면 비슷한 문제가 반복될 수 있습니다. 다음 직장에서 역할, 권한, 성장성, 인정 구조가 나아지는지 확인해야 합니다.`;
+  }
+
+  if (intent.intent === "resignation") {
+    return `퇴사 질문이라면 감정적으로 바로 움직이면 안 됩니다.
+
+최소 3개월에서 6개월 생활비, 다음 수입 계획, 현재 직장에서 정리할 결과물이 있어야 합니다. 준비된 퇴사는 전환이지만, 준비 없는 퇴사는 부담이 됩니다.`;
+  }
+
+  if (intent.intent === "relationship_warning") {
+    return `사람을 조심해야 하는 질문이라면, 말이 아니라 반복 행동을 보셔야 합니다.
+
+필요할 때만 연락하는 사람, 돈 이야기를 자주 꺼내는 사람, 약속을 가볍게 여기는 사람, 감정적으로 몰아붙이는 사람은 거리를 두는 것이 좋습니다.`;
+  }
+
+  if (intent.intent === "trusted_people") {
+    return `믿을 사람은 말이 큰 사람이 아니라 행동이 일정한 사람입니다.
+
+약속을 지키는지, 불리할 때도 태도가 변하지 않는지, 돈 문제에서 선을 지키는지를 보면 됩니다. ${data.name}님은 가까운 사람을 빨리 믿기보다 시간을 두고 보는 편이 안전합니다.`;
+  }
+
+  if (intent.intent === "health_checkup") {
+    return `검진 질문이라면 미루지 않는 것이 좋습니다.
+
+사주 상담에서 건강은 병명을 맞히는 것이 아니라 약해지기 쉬운 흐름을 미리 관리하는 것입니다. 반복되는 증상, 수면 문제, 피로감이 있다면 검진으로 확인하는 것이 가장 현실적입니다.`;
+  }
+
+  if (intent.wantsTiming) {
+    return `시기를 묻는 질문이므로, 지금은 바로 결론을 내기보다 1개월은 관찰하고 3개월 안에 다시 판단하는 흐름이 좋습니다. 운은 방향을 주지만, 결과는 준비 상태에 따라 달라집니다.`;
+  }
+
+  if (intent.wantsWarning) {
+    return `조심할 점을 묻는 질문이므로, 지금은 좋은 가능성보다 위험요인을 먼저 보는 것이 맞습니다. 특히 사람, 돈, 건강, 시간 중 어디에서 부담이 생기는지 확인해야 합니다.`;
+  }
+
+  return `이 질문은 가능성만 볼 것이 아니라 조건을 같이 봐야 합니다. 지금 할 수 있는 작은 행동, 감당 가능한 부담, 3개월 뒤 확인할 결과를 기준으로 판단하는 것이 좋습니다.`;
+}
+
 export function getAiConsulting(data: BasicSajuResult, concern?: string): string {
   const rawTopic = getMainConcern(concern);
   const topic = getLatestQuestion(rawTopic);
@@ -410,6 +522,7 @@ export function getAiConsulting(data: BasicSajuResult, concern?: string): string
   const opening = getOpening(topic, continued);
   const naturalAnswer = getNaturalAnswer(topic, data);
   const practicalAdvice = getPracticalAdvice(topic);
+  const intentAdvice = getIntentFocusedAdvice(intent, data);
 
   return `
 ${opening}
@@ -423,6 +536,8 @@ ${naturalAnswer}
 ${caseDecision.verdict}
 
 다만 이 말은 무조건 하라거나 무조건 피하라는 뜻이 아닙니다. ${data.name}님에게 중요한 것은 ${masterDecision.decisionStyle} 방식으로 결정하되, 한 번에 크게 움직이지 않는 것입니다.
+
+${intentAdvice}
 
 ${practicalAdvice}
 
@@ -442,5 +557,6 @@ ${masterDecision.warnings[0]}
 언제쯤 다시 판단하는 게 좋을까요?
 `.trim();
 }
+
 
 
