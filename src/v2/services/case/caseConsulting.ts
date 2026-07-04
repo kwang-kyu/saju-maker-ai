@@ -423,45 +423,18 @@ function buildRealEstateAdvice(data: BasicSajuResult, questionKey: CaseQuestionK
       break;
   }
 
-  const decision = buildConsultingDecision(
-    data,
-    getQuestionTitle(questionKey)
-  );
-  
-  return buildConsultingReport({
-    title: "부동산 상담",
-    question: getQuestionTitle(questionKey),
-    decision,
-  
-    opening,
-  
-    sajuAnalysis: `${identity.lifeStyle}
-  
-  ${identity.moneyStyle}
-  
-  ${name}님은 ${data.dayMaster} 일간의 특성상 부동산을 볼 때 감정보다 기준, 위치, 자금 계획, 보유 기간을 함께 봐야 합니다.
-  
-  강한 ${data.strongestElement} 기운은 판단력과 실행력으로 활용하고,
-  부족한 ${data.weakestElement} 기운은 성급한 계약이나 자금 압박으로 나타나지 않도록 관리해야 합니다.`,
-  
-    reality,
-    caution,
-    strategy,
-  
-    future: buildCaseFutureStrategy(decision, name),
-  
-    closing: `AI 원장 최종 판단
+  return `${opening}
 
-이번 부동산 상담을 종합하면 ${name}님은 가격 상승 기대보다 자금 계획, 보유 기간, 대출 부담, 환금성을 먼저 봐야 합니다.
-
-지금 해야 할 것은 좋은 물건을 찾는 것보다 내가 오래 버틸 수 있는 구조인지 확인하는 것입니다.
+${identity.lifeStyle}
 
 ${identity.moneyStyle}
 
-최종적으로 ${name}님에게 부동산은 한 번의 큰 수익보다 오래 버틸 수 있는 구조를 만들 때 운이 안정적으로 살아납니다.`,
-  });
-}
+${reality}
 
+${caution}
+
+${strategy}`;
+}
 function buildRelationshipAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const name = data.name;
   const identity = buildSajuIdentityProfile(data);
