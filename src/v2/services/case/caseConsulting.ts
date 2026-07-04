@@ -1,4 +1,4 @@
-﻿import type { BasicSajuResult } from "../../types/basic";
+import type { BasicSajuResult } from "../../types/basic";
 import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 import type { CaseQuestionKey } from "./caseQuestions";
 import { buildConsultingDecision } from "./consultingDecision";
@@ -108,66 +108,45 @@ function buildOpening(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const identity = buildSajuIdentityProfile(data);
   const age = getAge(data);
   const ageLine = age
-    ? `${name}님은 현재 ${age}세, ${getLifeStage(age)} 흐름입니다. ${getLifeStageAdvice(age)}`
-    : `${name}님은 현재 나이 정보보다 사주 구조와 선택의 감당 가능성을 중심으로 판단하는 것이 좋습니다.`;
-    if (
-      [
-        "marriagePrepare",
-        "newRelationship",
-        "marriageTiming",
-        "remarriage",
-      ].includes(questionKey)
-    ) {
-      return `[AI 원장 연애·결혼 상담 리포트]
-  
-  [상담 질문]
-  ${getQuestionTitle(questionKey)}
-  
-  [원장님의 첫 진단]
-  연애와 결혼은 인연이 들어오는지만 보는 상담이 아닙니다.
-  
-  사주에서는 사람을 만나는 운보다 그 관계를 오래 이어갈 수 있는 준비와 시기를 더 중요하게 봅니다.
-  
-  ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면, ${name}님의 관계운은 감정의 크기보다 생활 리듬, 책임감, 경제 기준, 대화 방식이 맞을 때 안정됩니다.
-  
-  ${ageLine}
-  
-  ${identity.decisionStyle}
-  
-  ${identity.riskPoint}`;
-    }
-    if (questionKey === "healthCare") {
-      return `[AI 원장 건강 상담 리포트]
-  
-  [상담 질문]
-  ${getQuestionTitle(questionKey)}
-  
-  [원장님의 첫 진단]
-  건강은 질병을 예측하는 상담이 아니라,
-  현재 사주에서 몸의 균형이 흔들리기 쉬운 부분과 생활 습관을 어떻게 관리해야 하는지를 살펴보는 상담입니다.
-  
-  ${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면,
-  ${name}님은 무리하게 버티기보다 생활 리듬을 일정하게 유지할 때 운의 흐름도 함께 안정되는 구조입니다.
-  
-  ${ageLine}
-  
-  ${identity.decisionStyle}
-  
-  ${identity.riskPoint}`;
-    }  
-  return `[AI 원장 사안별 판단 리포트]
+    ? `${name}님은 현재 ${age}세 흐름에서 이 질문을 보셔야 합니다. ${getLifeStageAdvice(age)}`
+    : `${name}님은 나이보다 사주 구조와 현재 선택의 감당 가능성을 먼저 보는 것이 좋습니다.`;
 
-[상담 질문]
-${getQuestionTitle(questionKey)}
+  if (
+    [
+      "marriagePrepare",
+      "newRelationship",
+      "marriageTiming",
+      "remarriage",
+    ].includes(questionKey)
+  ) {
+    return `결론부터 보면, 이 관계 문제는 감정만으로 결정하면 안 됩니다.
 
-[원장님의 첫 진단]
-${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면, ${name}님의 이번 사안은 단순히 된다 안 된다로 볼 문제가 아닙니다.
+${name}님 사주는 사람을 만나는 운보다 그 관계를 오래 유지할 수 있는 조건이 더 중요합니다.
+
+${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 보면, 생활 리듬, 책임감, 경제 기준, 대화 방식이 맞을 때 관계가 안정됩니다.
 
 ${ageLine}
 
-${identity.decisionStyle}
+${identity.relationshipStyle}`;
+  }
+
+  if (questionKey === "healthCare") {
+    return `건강은 지금부터 생활 리듬을 바로잡는 쪽으로 보셔야 합니다.
+
+${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 보면, ${name}님은 무리하게 버티는 방식보다 수면, 식사, 회복 시간을 일정하게 잡을 때 전체 운도 안정됩니다.
+
+${ageLine}
 
 ${identity.riskPoint}`;
+  }
+
+  return `결론부터 말씀드리면, 이 사안은 가능성보다 감당 가능성을 먼저 봐야 합니다.
+
+${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 보면, ${name}님은 감정적으로 밀어붙일 때보다 기준을 세우고 움직일 때 결과가 안정됩니다.
+
+${ageLine}
+
+${identity.decisionStyle}`;
 }
 function buildCaseFutureStrategy(
   decision: ReturnType<typeof buildConsultingDecision>,
