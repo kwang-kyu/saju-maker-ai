@@ -30,7 +30,7 @@ ${question}`;
       (item, index) =>
         `[이전 주제별 상담 ${index + 1}]
 질문: ${item.question}
-답변 요약: ${item.answer.slice(0, 700)}`
+답변 요약: ${item.answer.slice(0, 220)}`
     )
     .join("\n\n");
 
@@ -40,10 +40,12 @@ ${question}`;
 [이전 상담 흐름]
 ${historyText}
 
-[현재 추가 질문]
+[현재 질문]
 ${question}
 
-위 상담 흐름을 이어받아 같은 말을 반복하지 말고, 현재 질문에 맞춰 주제별 상담처럼 자연스럽게 답변하세요.
+위 이전 상담은 참고만 하고, 반드시 현재 질문에 직접 답변하세요.
+현재 질문과 관련 없는 내용은 반복하지 마세요.
+답변 첫 문단은 현재 질문에 대한 결론부터 말하세요.
 `.trim();
 }
 
@@ -65,16 +67,7 @@ export default function CaseResult(props: CaseResultProps) {
     (question) => question.category === selectedCategory
   );
 
-  const defaultQuestion =
-    filteredQuestions[0]?.label ?? "현재 가장 궁금한 내용을 질문해 주세요.";
-
-  const consulting =
-    currentAnswer ||
-    getCaseConsulting(
-      basic,
-      `[상담 분야: ${selectedCategoryInfo.label}]
-${defaultQuestion}`
-    );
+  const consulting = currentAnswer;
 
   const handleSubmit = () => {
     const question = questionText.trim();
@@ -249,10 +242,16 @@ ${defaultQuestion}`
         </div>
       )}
 
-      <h4>원장님 상담</h4>
-      <p style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}>
-        {consulting}
-      </p>
+      {consulting && (
+        <>
+          <h4>원장님 상담</h4>
+          <p style={{ whiteSpace: "pre-line", lineHeight: 1.8 }}>
+            {consulting}
+          </p>
+        </>
+      )}
     </div>
   );
 }
+
+
