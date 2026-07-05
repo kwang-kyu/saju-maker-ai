@@ -529,8 +529,7 @@ export function getAiConsulting(data: BasicSajuResult, concern?: string): string
   
   ${naturalAnswer}
   
-  ${data.name}님의 사주 흐름에서 지금 이 질문은 ${intent.topic} 영역의 ${intent.intent} 상담으로 볼 수 있습니다. 올해의 핵심 키워드는 "${masterDecision.yearlyKeyword}"이며, 판단 기준은 ${masterDecision.priorityArea} 쪽에 두는 것이 좋습니다.
-  
+${data.name}님의 사주 흐름에서 지금은 질문의 겉모양보다 실제로 어떤 부담이 생길 수 있는지를 먼저 봐야 합니다. 올해의 핵심 키워드는 "${masterDecision.yearlyKeyword}"이며, 판단 기준은 ${masterDecision.priorityArea} 쪽에 두는 것이 좋습니다.  
   제가 보는 핵심은 하나입니다.
   
   ${caseDecision.verdict}
