@@ -1,4 +1,4 @@
-﻿import type { BasicSajuResult } from "../../types/basic";
+import type { BasicSajuResult } from "../../types/basic";
 import { buildSajuIdentityProfile } from "../profile/sajuIdentityProfile";
 import type { CaseQuestionKey } from "./caseQuestions";
 
@@ -84,6 +84,24 @@ function resolveQuestionKey(question: string): CaseQuestionKey {
   return toQuestionKey("importantChoice");
 }
 
+
+function buildDecisionView(question: string) {
+  const q = question.toLowerCase();
+
+  if (q.includes("언제") || q.includes("시기") || q.includes("몇 년") || q.includes("몇월")) {
+    return "timing";
+  }
+
+  if (q.includes("왜") || q.includes("이유") || q.includes("안 풀")) {
+    return "reason";
+  }
+
+  if (q.includes("될까요") || q.includes("해도") || q.includes("해야") || q.includes("말아야")) {
+    return "decision";
+  }
+
+  return "general";
+}
 function buildBaseReading(data: BasicSajuResult) {
   const identity = buildSajuIdentityProfile(data);
   const name = data.name || "의뢰인";
@@ -414,6 +432,8 @@ export function getCaseConsulting(
   question: CaseQuestionKey | string
 ) {
   const questionText = String(question || "");
+  const decisionView = buildDecisionView(questionText);
+  void decisionView;
   const questionKey = resolveQuestionKey(questionText);
   const key = String(questionKey);
 
