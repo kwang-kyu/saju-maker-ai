@@ -196,6 +196,7 @@ function buildMoneyAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const key = String(questionKey);
 
   let title = "재물 상담";
+  let opening = "재물 상담은 돈이 들어오는 시기보다 돈이 남는 구조를 먼저 봐야 합니다.";
   let reality = `${name}님의 질문은 단순히 돈이 들어오느냐보다, 돈이 들어왔을 때 얼마나 남기고 지킬 수 있는지를 함께 봐야 합니다. 이 사주는 큰 한 방보다 꾸준한 현금흐름과 반복 수입 구조를 만들 때 재물운이 살아나는 편입니다.`;
   let caution = "주변 말만 듣고 급하게 움직이면 수익보다 손실 관리가 먼저 무너질 수 있습니다. 특히 대출, 투자, 동업 자금처럼 책임이 길게 남는 돈은 한 번 더 계산해야 합니다.";
 let strategy = `1. 고정비와 변동비를 먼저 분리하세요.
@@ -205,19 +206,23 @@ let strategy = `1. 고정비와 변동비를 먼저 분리하세요.
 5. 돈이 들어오는 통로보다 돈이 새는 구멍을 먼저 막으세요.`;
   if (key === "stockInvestment") {
     title = "주식·투자 상담";
+    opening = "투자는 수익보다 손실을 견딜 수 있는 구조가 먼저입니다.";
     reality = "주식은 가능하지만 단타보다 장기적으로 버틸 수 있는 구조가 맞습니다. ETF, 우량주, 배당형 자산처럼 흔들림이 적은 축을 먼저 세우는 편이 좋습니다.";
     caution = "급등주, 테마주, 빚을 낸 투자는 사주 흐름상 감정 기복을 키울 수 있습니다.";
   }
 
   if (key === "moneyTiming") {
     title = "금전 흐름 상담";
+    opening = "금전 흐름은 운이 풀리는 시기보다 새는 돈을 막는 습관에서 먼저 바뀝니다.";
     reality = "금전운은 들어오는 돈보다 새어나가는 돈을 잡을 때 좋아집니다. 지금은 돈이 풀리는 시기를 기다리기보다 지출 구조를 정리해야 합니다.";
     caution = "돈이 들어오기 전에 소비나 대출 계획을 먼저 키우면 운의 흐름을 스스로 막을 수 있습니다.";
   }
 
   return `[${title}]
 
-${identity.moneyStyle}
+  ${opening}
+  
+  ${identity.moneyStyle}
 
 [현실 판단]
 ${reality}
@@ -279,7 +284,7 @@ ${identity.successPoint}`;
 function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey) {
   const { name, identity } = buildBaseReading(data);
   const key = String(questionKey);
-
+  let opening = "사업은 운보다 시작 방식이 중요합니다.";
   let title = "사업·동업 상담";
   let reality = "사업은 업종보다 구조를 먼저 봐야 합니다. 지금은 크게 벌릴 때가 아니라, 작게 시작해서 고객 반응과 돈의 흐름을 확인한 뒤 키우는 방식이 맞습니다.";
   let caution = "확신만 믿고 고정비를 크게 만들면 초반 부담이 커질 수 있습니다.";
@@ -290,12 +295,15 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
 
   if (key === "businessExpand") {
     title = "사업 확장 상담";
+    opening = "창업은 할 수 있느냐보다 어떻게 시작하느냐가 중요합니다.";
+    opening = "확장은 매출보다 운영 체계를 먼저 키우는 과정입니다.";
     reality = "확장은 가능합니다. 다만 매출 증가만 보고 움직이면 위험합니다. 직원, 고정비, 재고, 운영 관리가 함께 버틸 수 있는지를 먼저 봐야 합니다.";
     caution = "확장은 돈이 잘 들어올 때보다 지출이 늘어도 버틸 수 있을 때 해야 합니다.";
   }
 
   if (key === "partnership") {
     title = "동업 상담";
+    
     reality = `동업은 사업보다 사람을 먼저 보는 상담입니다. ${name}님 사주에서는 의욕과 추진력은 장점이지만, 가까운 사람을 믿고 시작한 일이 돈과 책임 문제로 부담이 되는 흐름은 조심해야 합니다.`;
     caution = "친분만 믿고 구두 약속으로 시작하는 동업은 피해야 합니다. 역할, 지분, 투자금, 수익분배, 퇴장 조건이 문서로 정리되지 않으면 권하지 않습니다.";
     strategy = `1. 상대가 좋은 사람인지보다 돈 앞에서 태도가 일정한지 보세요.
@@ -312,6 +320,8 @@ function buildBusinessAdvice(data: BasicSajuResult, questionKey: CaseQuestionKey
   }
 
   return `[${title}]
+
+${opening}
 
 ${identity.workStyle}
 
