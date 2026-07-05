@@ -525,38 +525,33 @@ export function getAiConsulting(data: BasicSajuResult, concern?: string): string
   const intentAdvice = getIntentFocusedAdvice(intent, data);
 
   return `
-${opening}
-
-${naturalAnswer}
-
-사주 흐름으로 보면 ${data.name}님은 ${masterDecision.lifePhase} 흐름에 있고, 이번 질문은 ${intent.topic} 영역의 ${intent.intent} 상담으로 볼 수 있습니다. 올해의 핵심 키워드는 "${masterDecision.yearlyKeyword}" 쪽으로 잡힙니다. 그래서 지금 질문도 단순히 마음만 보고 결정하기보다 ${masterDecision.priorityArea}을 먼저 기준으로 삼는 것이 좋습니다.
-
-현재 판단은 이렇게 보시면 됩니다.
-
-${caseDecision.verdict}
-
-다만 이 말은 무조건 하라거나 무조건 피하라는 뜻이 아닙니다. ${data.name}님에게 중요한 것은 ${masterDecision.decisionStyle} 방식으로 결정하되, 한 번에 크게 움직이지 않는 것입니다.
-
-${intentAdvice}
-
-${practicalAdvice}
-
-그리고 한 가지는 꼭 조심하세요.
-
-${masterDecision.warnings[0]}
-
-이 부분을 놓치면 좋은 흐름이 와도 결과가 흔들릴 수 있습니다.
-
-제 결론은 이렇습니다. 지금은 가능성보다 조건을 먼저 봐야 합니다. 사람, 돈, 건강, 시간 중 어디에서 부담이 생기는지 확인한 뒤 움직이는 것이 ${data.name}님에게 더 안전합니다.
-
-다음 질문에서는 이렇게 이어서 물어보시면 좋습니다.
-
-그럼 제가 지금 제일 먼저 확인해야 할 것은 무엇인가요?
-이 사람은 조심해야 할 사람인가요?
-이 일을 시작하면 돈 문제는 어떻게 봐야 하나요?
-언제쯤 다시 판단하는 게 좋을까요?
-`.trim();
+  ${opening}
+  
+  ${naturalAnswer}
+  
+  ${data.name}님의 사주 흐름에서 지금 이 질문은 ${intent.topic} 영역의 ${intent.intent} 상담으로 볼 수 있습니다. 올해의 핵심 키워드는 "${masterDecision.yearlyKeyword}"이며, 판단 기준은 ${masterDecision.priorityArea} 쪽에 두는 것이 좋습니다.
+  
+  제가 보는 핵심은 하나입니다.
+  
+  ${caseDecision.verdict}
+  
+  다만 중요한 것은 속도입니다. ${data.name}님은 ${masterDecision.decisionStyle} 방식으로 결정할 때 안정적이고, 한 번에 크게 움직이면 부담이 커질 수 있습니다.
+  
+  ${intentAdvice}
+  
+  현실적으로는 이렇게 보시면 됩니다.
+  
+  ${practicalAdvice}
+  
+  제 결론은 이렇습니다.
+  
+  지금은 가능성만 보고 움직일 때가 아니라, 조건을 먼저 확인해야 합니다. 특히 사람, 돈, 건강, 시간 중 어디에서 부담이 생기는지 따로 계산한 뒤 움직이는 것이 ${data.name}님에게 더 안전합니다.
+  
+  다음 상담에서는 이렇게 이어서 물어보셔도 좋습니다.
+  
+  제가 지금 가장 먼저 확인해야 할 것은 무엇인가요?
+  이 사람은 믿어도 되는 사람인가요?
+  돈 문제는 어떻게 봐야 하나요?
+  언제쯤 다시 판단하는 게 좋을까요?
+  `.trim();
 }
-
-
-
