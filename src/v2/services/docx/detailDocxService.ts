@@ -27,8 +27,8 @@ export type DocxSection = {
 export async function downloadDetailDocx({
   name,
   sections,
-  reportTitle = "Premium Report",
-  fileSuffix = "Premium_상세리포트",
+  reportTitle = "천운문 프리미엄 사주 리포트",
+fileSuffix = "천운문_프리미엄사주리포트",
 }: {
   name: string;
   sections: DocxSection[];
