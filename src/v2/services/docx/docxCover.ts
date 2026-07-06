@@ -12,7 +12,7 @@ export function coverPage(name: string, reportTitle: string) {
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { before: 1400, after: 220 },
-      children: [textRun("CONFIDENTIAL REPORT", { bold: true, size: 20 })],
+      children: [textRun("천운문", { bold: true, size: 22 })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -22,12 +22,12 @@ export function coverPage(name: string, reportTitle: string) {
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 220 },
-      children: [textRun("천운문 PREMIUM", { bold: true, size: 56 })],
+      children: [textRun("프리미엄 사주 리포트", { bold: true, size: 52 })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 260 },
-      children: [textRun("사주 종합 컨설팅 리포트", { bold: true, size: 34 })],
+      children: [textRun("사주를 읽고 삶의 방향을 정리합니다", { bold: true, size: 30 })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -42,17 +42,17 @@ export function coverPage(name: string, reportTitle: string) {
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 300 },
-      children: [textRun(`${name}님`, { bold: true, size: 36 })],
+      children: [textRun(`${name}님을 위한 사주 상담서`, { bold: true, size: 34 })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 620 },
-      children: [textRun("사주를 넘어 인생의 방향을 제시합니다.", { size: 24 })],
+      children: [textRun("사주를 설명하는 것이 아니라 사람의 방향을 함께 봅니다.", { size: 24 })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
-      children: [textRun("Premium Edition", { bold: true, size: 22 })],
+      children: [textRun("천운문 프리미엄 18.0", { bold: true, size: 22 })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
