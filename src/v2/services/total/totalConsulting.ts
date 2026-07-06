@@ -127,7 +127,9 @@ export function totalConsulting(data: BasicSajuInput): string {
   return buildConsultingFramework({
     name: data.name,
     title: "총운 상담",
-    firstImpression: `${data.name}님의 총운은 단순히 운이 좋다, 나쁘다로 볼 수 없습니다. ${basic.dayMaster} 일간, ${basic.yearGanZhi}년주, ${basic.monthGanZhi}월주, ${basic.dayGanZhi}일주를 함께 보면 인생의 방향은 빠른 승부보다 기준을 세우고 오래 쌓아가는 흐름에 가깝습니다.`,
+    firstImpression: `${data.name}님의 총운은 단순히 운이 좋다, 나쁘다로 볼 수 없습니다. ${data.name}님의 인생 흐름은 빠르게 치고 나가는 방식보다, 시간이 지날수록 경험과 신뢰가 쌓이며 힘이 커지는 구조입니다.
+
+    초년에는 방향을 찾는 데 시간이 걸릴 수 있지만, 중년 이후부터는 자신이 쌓아온 경험이 자산이 되고 선택의 기준이 분명해질수록 운이 안정됩니다. ${basic.dayMaster} 일간과 전체 사주 흐름을 함께 보면 빠른 승부보다 오래 가져갈 수 있는 길에서 성과가 살아납니다.`,
 
     personInsight: `${data.name}님은 현재 ${age ? `${age}세` : "현재 나이 기준"} 흐름에 있으며, 인생 단계로 보면 ${lifeStage.label}에 있습니다. ${lifeStage.message}
 
