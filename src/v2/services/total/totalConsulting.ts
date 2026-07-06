@@ -165,7 +165,7 @@ ${tenYearFlow}
 
     finalMessage: `${data.name}님은 운이 없어서 늦어지는 사람이 아닙니다. 기준이 흩어질 때 결과가 늦게 나타나는 사람입니다.
 
-앞으로는 불안해서 움직이기보다 오래 가져갈 수 있는 일, 사람, 돈의 기준을 세우는 것이 가장 중요합니다. ${basic.dayMaster} 일간의 중심을 살리고, 강한 ${basic.strongestElement} 기운은 장점으로 쓰며, 약한 ${basic.weakestElement} 기운은 생활 속에서 보완한다면 총운은 훨씬 안정적으로 열릴 수 있습니다.`,
+앞으로는 불안해서 움직이는 선택보다, 오래 가져갈 수 있는 일과 사람, 그리고 흔들리지 않는 돈의 기준을 세우는 것이 가장 중요합니다. ${basic.dayMaster} 일간의 중심을 살리고, 강한 ${basic.strongestElement} 기운은 장점으로 쓰며, 약한 ${basic.weakestElement} 기운은 생활 속에서 보완한다면 총운은 훨씬 안정적으로 열릴 수 있습니다.`,
   });
 }
 
