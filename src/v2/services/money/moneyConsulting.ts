@@ -74,9 +74,9 @@ export function moneyConsulting(data: BasicSajuResult, birthDate?: string, maste
   return buildConsultingFramework({
     name,
     title: "재테크 상담",
-    firstImpression: `${data.dayMaster} 일간과 ${data.yearGanZhi}${data.monthGanZhi}${data.dayGanZhi} 흐름을 함께 보면 ${name}님의 재테크는 단순히 돈복이 있느냐 없느냐로 볼 문제가 아닙니다.
+    firstImpression: `${name}님의 재물운은 단순히 돈이 들어오느냐 나가느냐의 문제가 아니라, 돈을 어떤 기준으로 모으고 지키며 키우느냐가 핵심입니다.
 
-중요한 것은 지금 나이와 사주 흐름에 맞게 현금, 투자, 부동산, 연금, 부업, 사업 가능성을 어떻게 나누느냐입니다.
+
 
 이번 상담의 핵심 방향은 ${decision.yearlyKeyword}입니다. 현재 우선순위는 ${decision.priorityArea}이고, 재테크 판단 방식은 ${decision.decisionStyle}에 가깝습니다.
 
@@ -92,13 +92,13 @@ Master Decision 기준으로 보면 ${name}님의 투자 전략은 ${decision.in
 
 ${ageStrategy}`,
 
-    repeatedPattern: `${name}님은 수익 가능성이 보이면 관심이 생기지만, 막상 결정할 때는 확신과 불안이 함께 올라올 수 있습니다. 그래서 재테크는 감으로 들어가는 방식보다 자산을 나누고 비중을 정해두는 방식이 훨씬 잘 맞습니다.
+    repeatedPattern: `${name}님은 돈을 벌 기회가 보이면 관심이 빠르게 움직이지만, 막상 큰 결정을 앞두면 확신과 불안이 함께 올라오는 흐름이 있습니다.
 
 현금, ETF, 주식, 부동산, 연금, 코인, 사업자금은 한 바구니에 담으면 안 됩니다. 특히 ${name}님은 투자 전에 얼마를 벌 수 있나보다 얼마까지 잃어도 생활이 흔들리지 않나를 먼저 봐야 합니다.
 
 ${identity.riskPoint}`,
 
-    realCase: `실제 상담에서 이런 흐름을 가진 분들은 돈을 못 버는 것이 문제가 아니라 돈을 어떻게 배치할지 정하지 못해 기회를 놓치거나 손실을 키우는 경우가 많습니다.
+    realCase: `실제 상담에서 이런 흐름을 가진 분들은 돈을 못 버는 것이 문제가 아니라, 벌어도 어디에 얼마를 남기고 어디까지 투자할지 기준이 없어 자산이 크게 쌓이지 않는 경우가 많습니다.
 
 예를 들어 주식이 좋아 보이면 주식에 몰리고, 부동산 이야기가 들리면 부동산으로 마음이 흔들리고, 코인이 오르면 뒤늦게 들어가고 싶은 마음이 생길 수 있습니다. 하지만 ${name}님에게 필요한 것은 유행을 따라가는 재테크가 아니라 본인 사주와 생활 구조에 맞는 자산관리 기준입니다.`,
 
@@ -129,7 +129,7 @@ ${decision.finalDirection}
 
 ${identity.successPoint}
 
-최종적으로 ${name}님에게 가장 중요한 재테크 기준은 큰돈을 한 번에 잡는 것이 아니라 오래 버티고, 꾸준히 쌓고, 준비된 순간에 확장하는 것입니다.`,
+최종적으로 ${name}님에게 가장 중요한 재테크 기준은 큰돈을 한 번에 잡는 것이 아니라, 돈이 새는 구조를 막고 오래 버틸 수 있는 자산의 틀을 만든 뒤 준비된 순간에 확장하는 것입니다.`,
   });
 }
 
