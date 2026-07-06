@@ -4,6 +4,7 @@ import {
   reportIntro,
   personalStandard,
   originalSajuGuide,
+  lifeStageFlow,
 } from "./docxIntro";
 
 import { tableOfContents } from "./docxToc";
@@ -43,6 +44,7 @@ export async function downloadDetailDocx({
       ...tableOfContents(sections),
       ...personalStandard(name),
       ...originalSajuGuide(),
+      ...lifeStageFlow(name),
       ...sections.flatMap(sectionToDocx),
       ...threeYearStrategy(),
       ...checklist(),
