@@ -87,7 +87,9 @@ export function basicConsulting(data: BasicSajuResult): string {
     title: "기본 사주 상담",
     firstImpression: `${data.name}님 사주에서 가장 먼저 보이는 키워드는 '${dayMasterMessage.keyword}'입니다.
 
-겉으로는 차분해 보여도 안쪽에는 자기만의 기준이 분명한 편입니다. 무조건 빠르게 움직이는 사람이라기보다, 스스로 납득이 되고 방향이 분명해졌을 때 힘이 제대로 살아나는 흐름입니다.
+겉으로는 차분해 보여도 안쪽에는 쉽게 흔들리지 않는 기준이 있습니다. 중요한 일을 결정할 때도 남들이 좋다고 해서 바로 따라가기보다, 본인이 납득할 수 있어야 움직이는 사람입니다.
+
+그래서 ${data.name}님은 속도가 빠른 사람이라기보다 방향이 맞을 때 오래 버티고 끝까지 해내는 사람에 가깝습니다.
 
 ${strongMessage}
 
