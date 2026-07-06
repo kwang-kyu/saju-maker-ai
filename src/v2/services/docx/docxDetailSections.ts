@@ -67,16 +67,17 @@ export function buildDetailDocxMoneyJobSections(params: {
   moneyPersonalNote: string;
   jobPersonalNote: string;
 }) {
-  const { mappedBasic, birthDate, sajuPersonalNote, moneyPersonalNote, jobPersonalNote } = params;
+  const { mappedBasic, birthDate, moneyPersonalNote, jobPersonalNote } = params;
 
   return [
     {
       title: "재물운",
-      content: moneyPersonalNote + "\n\n" + sajuPersonalNote + "\n\n" + moneyConsulting(mappedBasic, birthDate),
+      content: moneyPersonalNote + "\n\n" + moneyConsulting(mappedBasic, birthDate),
     },
     {
       title: "직업운",
-      content: jobPersonalNote + "\n\n" + sajuPersonalNote + "\n\n" + jobConsulting(mappedBasic, birthDate),
+      content: jobPersonalNote + "\n\n" + jobConsulting(mappedBasic, birthDate),
+      
     },
   ];
 }
