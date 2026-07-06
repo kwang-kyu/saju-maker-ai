@@ -66,7 +66,7 @@ export function yearConsulting(data: BasicSajuInput): string {
   return `
 ${data.name}님의 ${currentYear}년 운세
 
-올해 운세는 평생 흐름을 다시 말하는 것이 아니라, ${currentYear}년 한 해 동안 어떤 선택을 해야 하는지를 보는 상담입니다.
+올해 운세는 단순히 좋고 나쁨을 보는 것이 아니라, ${currentYear}년 한 해 동안 무엇을 정리하고 어디에 힘을 집중해야 하는지를 보는 전략 상담입니다.
 
 ${data.name}님은 ${basic.dayMaster} 일간이며, 사주 원국은 ${basic.yearGanZhi}년주, ${basic.monthGanZhi}월주, ${basic.dayGanZhi}일주 흐름을 가지고 있습니다.
 
