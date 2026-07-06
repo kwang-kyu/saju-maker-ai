@@ -139,7 +139,7 @@ export function totalConsulting(data: BasicSajuInput): string {
 
 ${dayMasterAdvice}`,
 
-    repeatedPattern: `${data.name}님은 한 번에 크게 바꾸기보다 시간을 두고 쌓아갈 때 운이 좋아지는 흐름입니다. 처음에는 느려 보여도 기준이 잡히면 결과가 오래 갑니다.
+    repeatedPattern: `${data.name}님 인생에서는 처음부터 모든 것이 빠르게 풀리기보다, 시행착오를 거치며 기준이 잡힌 뒤에 결과가 안정되는 흐름이 강합니다. 남들보다 늦어 보이는 시기가 있어도 그 시간이 경험과 판단력으로 쌓이는 구조입니다.
 
 반대로 마음이 불안해서 계획을 자주 바꾸거나, 남의 속도와 비교해서 급하게 움직이면 이미 쌓아둔 흐름이 끊길 수 있습니다. 총운에서 가장 중요한 것은 속도가 아니라 방향입니다.`,
 
