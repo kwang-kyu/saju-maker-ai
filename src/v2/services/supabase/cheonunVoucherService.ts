@@ -25,6 +25,10 @@ export async function checkCheonunVoucherCode(
     .eq("code", cleanCode)
     .maybeSingle();
 
+  console.log("Voucher cleanCode:", cleanCode);
+  console.log("Voucher error:", error);
+  console.log("Voucher data:", data);
+
   if (error || !data) {
     return {
       ok: false,
@@ -135,3 +139,4 @@ export async function useCheonunVoucherCode(
     totalCount: data.total_count,
   };
 }
+
