@@ -1,5 +1,6 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
 import { buildTotalSection } from "./sections/totalSection";
+import { buildTodaySection } from "./sections/todaySection";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -130,18 +131,7 @@ ${buildBasicSajuSection()}
   }
   
   if (title.includes("오늘")) {
-    return `
-[오늘의 활용법]
-오늘의 운세는 큰 운명을 단정하는 것이 아니라 하루의 리듬을 정리하는 기준입니다.
-중요한 일은 오전이나 집중이 잘 되는 시간에 먼저 처리하고, 감정적인 판단은 한 박자 늦추는 것이 좋습니다.
-
-[오늘 조심할 점]
-말을 빠르게 하거나 약속을 쉽게 잡으면 나중에 부담으로 돌아올 수 있습니다.
-작은 돈, 작은 실수, 작은 피로를 가볍게 넘기지 말고 바로 정리하는 것이 좋습니다.
-
-[오늘의 한 가지 실천]
-오늘은 많은 일을 벌리는 것보다 하나를 확실히 마무리하는 것이 운을 안정시키는 방법입니다.
-`;
+    return buildTodaySection(basic).join("\n\n");
   }
 
   if (title.includes("재물")) {
