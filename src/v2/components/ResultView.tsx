@@ -212,6 +212,7 @@ export default function ResultView({
         buildPremiumPdfExpansion({
           name,
           title: section.title,
+          basic: mappedBasic,
         }),
     }));
   };

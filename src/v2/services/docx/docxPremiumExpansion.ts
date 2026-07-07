@@ -1,9 +1,42 @@
-﻿export function buildPremiumPdfExpansion(params: {
+﻿import type { BasicSajuResult } from "../../types/basic";
+
+export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
+  basic: BasicSajuResult;
 }) {
-  const { name, title } = params;
+  const { name, title, basic } = params;
 
+  const strongElement = basic.strongestElement ?? "없음";
+  const weakElement = basic.weakestElement ?? "없음";
+  const dayMaster = basic.dayMaster ?? "일간";
+  const strength = basic.summary ?? "보통";
+  const profileText = `일간은 ${dayMaster}, 강한 오행은 ${strongElement}, 약한 오행은 ${weakElement}, 기본 흐름은 ${strength}입니다.`;
+  void profileText;
+  function getLifeBackground(): string {
+    if (strongElement === "목") {
+      return "스스로 길을 개척하려는 성향이 강하여 성장 과정에서 독립심을 키우며 살아온 경우가 많습니다.";
+    }
+  
+    if (strongElement === "화") {
+      return "주변 사람들과의 관계 속에서 성장하는 흐름이 강하며 사람의 도움을 받는 경우가 적지 않습니다.";
+    }
+  
+    if (strongElement === "토") {
+      return "안정적인 환경을 중요하게 여기며 가족이나 생활 기반의 영향을 크게 받는 사주입니다.";
+    }
+  
+    if (strongElement === "금") {
+      return "원칙과 책임감이 강하여 비교적 이른 시기부터 현실적인 판단을 하며 살아온 흐름이 많습니다.";
+    }
+  
+    if (strongElement === "수") {
+      return "환경 변화가 잦거나 다양한 경험을 통해 스스로 인생을 만들어가는 경향이 강합니다.";
+    }
+  
+    return "사주의 전체 균형을 바탕으로 자신의 경험을 통해 삶의 방향을 만들어가는 유형입니다.";
+  }
+  void getLifeBackground;
   if (title.includes("개인 상담 기준")) {
     return `
 [Premium 4.0 안내]
