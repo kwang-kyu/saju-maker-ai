@@ -4,6 +4,7 @@ import { buildTodaySection } from "./sections/todaySection";
 import { buildMoneySection } from "./sections/moneySection.ts";
 import { buildJobSection } from "./sections/jobSection.ts";
 import { buildBusinessSection } from "./sections/businessSection.ts";
+import { buildRealEstateSection } from "./sections/realEstateSection.ts";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -150,20 +151,7 @@ ${buildBasicSajuSection()}
   }
 
   if (title.includes("부동산")) {
-    return `
-[부동산 심층 상담]
-부동산운은 단순히 집을 사느냐 파느냐의 문제가 아니라, 삶의 기반과 자산의 방향을 정하는 문제입니다.
-${name}님은 분위기에 휩쓸린 결정보다 입지, 현금흐름, 보유기간을 함께 보는 것이 중요합니다.
-
-[실제 판단 기준]
-좋은 매물처럼 보여도 대출 부담, 공실 가능성, 관리 비용, 환금성을 함께 봐야 합니다.
-특히 남들이 좋다고 하는 지역보다 본인의 자금 구조와 생활 흐름에 맞는 선택이 더 중요합니다.
-
-[부동산 전략]
-첫째, 무리한 레버리지는 피하세요.
-둘째, 단기 차익보다 오래 버틸 수 있는 구조를 보세요.
-셋째, 계약 전에는 반드시 권리관계와 현장성을 확인하세요.
-`;
+    return buildRealEstateSection(basic).join("\n\n");
   }
 
   if (title.includes("연애")) {
