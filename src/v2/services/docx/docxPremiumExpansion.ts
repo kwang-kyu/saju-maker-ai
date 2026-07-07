@@ -1,5 +1,5 @@
 ﻿import type { BasicSajuResult } from "../../types/basic";
-
+import { buildTotalSection } from "./sections/totalSection";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -126,23 +126,9 @@ ${buildBasicSajuSection()}
   }
   
   if (title.includes("전체 운세")) {
-    return `
-[올해의 핵심 방향]
-올해는 무리한 확장보다 정리와 선택이 중요한 해입니다.
-새로운 기회가 보이더라도 모두 잡으려 하기보다, 실제로 남는 것이 무엇인지 따져보는 태도가 필요합니다.
-
-[현실 조언]
-계약, 금전, 약속, 인간관계는 말보다 기록을 남기는 것이 좋습니다.
-좋은 흐름도 준비 없이 잡으면 부담이 되고, 나쁜 흐름도 미리 정리하면 큰 문제로 번지지 않습니다.
-
-[올해 실천 체크]
-첫째, 지출 구조를 점검하세요.
-둘째, 건강 리듬을 무너뜨리지 마세요.
-셋째, 사람 관계에서 지나친 책임을 떠안지 마세요.
-넷째, 오래 가져갈 일과 정리할 일을 구분하세요.
-`;
+    return buildTotalSection(basic).join("\n\n");
   }
-
+  
   if (title.includes("오늘")) {
     return `
 [오늘의 활용법]
