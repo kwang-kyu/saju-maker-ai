@@ -2,6 +2,7 @@
 import { buildTotalSection } from "./sections/totalSection";
 import { buildTodaySection } from "./sections/todaySection";
 import { buildMoneySection } from "./sections/moneySection.ts";
+import { buildJobSection } from "./sections/jobSection.ts";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -140,19 +141,7 @@ ${buildBasicSajuSection()}
   }
 
   if (title.includes("직업")) {
-    return `
-[직업 심층 상담]
-${name}님은 단순히 오래 버티는 직업보다, 본인의 판단과 경험이 쌓이는 일에서 운이 살아납니다.
-시키는 일만 반복하는 환경에서는 답답함이 커질 수 있고, 반대로 책임과 권한이 적절히 주어지면 실력이 드러납니다.
-
-[일에서 반복되는 패턴]
-처음에는 조용히 배우고 관찰하지만, 시간이 지나면 자신만의 방식과 기준이 생깁니다.
-다만 인정받지 못하거나 역할이 불분명한 환경에서는 의욕이 떨어질 수 있습니다.
-
-[직업 전략]
-지금 중요한 것은 직업 이름이 아니라 일하는 구조입니다.
-본인이 성장할 수 있는 일, 성과가 남는 일, 경험이 자산이 되는 일을 선택해야 합니다.
-`;
+    return buildJobSection(basic).join("\n\n");
   }
 
   if (title.includes("사업")) {
