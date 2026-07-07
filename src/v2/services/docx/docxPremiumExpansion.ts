@@ -3,6 +3,7 @@ import { buildTotalSection } from "./sections/totalSection";
 import { buildTodaySection } from "./sections/todaySection";
 import { buildMoneySection } from "./sections/moneySection.ts";
 import { buildJobSection } from "./sections/jobSection.ts";
+import { buildBusinessSection } from "./sections/businessSection.ts";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -145,19 +146,7 @@ ${buildBasicSajuSection()}
   }
 
   if (title.includes("사업")) {
-    return `
-[사업 심층 상담]
-사업운은 무조건 창업을 하라는 뜻이 아닙니다.
-${name}님에게 사업은 확장보다 구조, 속도보다 관리, 감정보다 계산이 중요합니다.
-
-[사업에서 조심할 점]
-사람을 믿고 시작한 일이 돈 문제로 번질 수 있고, 준비되지 않은 확장은 부담으로 돌아올 수 있습니다.
-특히 초기에는 매출보다 고정비, 인건비, 재고, 계약 조건을 더 꼼꼼히 봐야 합니다.
-
-[사업 전략]
-작게 검증하고, 숫자로 확인하고, 반복 가능한 구조가 생겼을 때 확장하는 것이 좋습니다.
-감으로 시작한 사업보다 기록과 계산이 있는 사업이 오래 갑니다.
-`;
+    return buildBusinessSection(basic).join("\n\n");
   }
 
   if (title.includes("부동산")) {
