@@ -5,6 +5,8 @@ import { buildMoneySection } from "./sections/moneySection.ts";
 import { buildJobSection } from "./sections/jobSection.ts";
 import { buildBusinessSection } from "./sections/businessSection.ts";
 import { buildRealEstateSection } from "./sections/realEstateSection.ts";
+import { buildLoveSection } from "./sections/loveSection.ts";
+import { buildMarriageSection } from "./sections/marriageSection.ts";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -155,34 +157,12 @@ ${buildBasicSajuSection()}
   }
 
   if (title.includes("연애")) {
-    return `
-[연애 심층 상담]
-${name}님의 연애운은 감정의 시작보다 관계를 유지하는 방식이 중요합니다.
-처음에는 마음이 움직여도, 시간이 지나면서 신뢰와 생활 리듬이 맞는지를 크게 보게 됩니다.
-
-[반복되는 관계 패턴]
-상대에게 맞추다가 지치거나, 반대로 마음을 쉽게 표현하지 못해 오해가 생길 수 있습니다.
-좋은 인연은 감정을 급하게 밀어붙이는 사람이 아니라, ${name}님의 속도를 존중하는 사람입니다.
-
-[연애 조언]
-말하지 않아도 알아주길 기대하기보다, 불편한 점을 부드럽게 표현하는 연습이 필요합니다.
-관계는 참는 것이 아니라 조율하는 것입니다.
-`;
+    return buildLoveSection(basic).join("\n\n");
   }
+    
 
   if (title.includes("결혼")) {
-    return `
-[결혼 심층 상담]
-결혼운은 좋은 사람을 만나는 것만큼, 함께 생활을 유지할 수 있는 구조가 중요합니다.
-${name}님은 감정만으로 결혼을 결정하기보다 가치관, 돈 관리, 가족 관계, 생활 습관을 함께 봐야 합니다.
-
-[배우자 관계에서 중요한 점]
-상대가 화려하거나 강한 사람보다, 안정적으로 대화가 되고 책임을 나눌 수 있는 사람이 좋습니다.
-결혼 후에는 작은 불만을 쌓아두지 않는 것이 중요합니다.
-
-[결혼 전략]
-경제 기준, 부모가족 문제, 주거 계획, 일과 생활의 균형을 결혼 전부터 현실적으로 이야기하는 것이 좋습니다.
-`;
+    return buildMarriageSection(basic).join("\n\n");
   }
 
   if (title.includes("건강")) {
