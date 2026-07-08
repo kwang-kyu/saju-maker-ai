@@ -1,5 +1,5 @@
 import type { BasicSajuResult } from "../../types/basic";
-
+import { buildSajuProfile } from "../profile/sajuProfile";
 export type BusinessJudgement = {
   currentSituation: string;
   strengths: string[];
@@ -11,11 +11,18 @@ export type BusinessJudgement = {
 };
 
 export function analyzeBusiness(basic: BasicSajuResult): BusinessJudgement {
-  const strongElement = basic.strongestElement ?? "없음";
-  const weakElement = basic.weakestElement ?? "없음";
-  const dayMaster = basic.dayMaster ?? "일간";
-  const summary = basic.summary ?? "";
+    const profile = buildSajuProfile(basic);
 
+    const strongElement = profile.strongestElement;
+    const weakElement = profile.weakestElement;
+    const dayMaster = profile.dayMaster;
+    
+    const expansion = profile.expansionScore;
+    const stability = profile.stabilityScore;
+    // const investment = profile.investmentScore;
+    const partnership = profile.partnershipScore;
+    // const leadership = profile.leadershipScore;
+    const cashFlow = profile.cashFlowScore;
   const strengths: string[] = [];
   const weaknesses: string[] = [];
   const risks: string[] = [];
@@ -77,23 +84,36 @@ export function analyzeBusiness(basic: BasicSajuResult): BusinessJudgement {
     avoidActions.push("충분한 현금 없이 크게 벌이는 투자는 피하십시오.");
   }
 
-  const isStrong = summary.includes("강") || summary.includes("신강");
+  const isExpansion = expansion >= 70;
+  const isStable = stability >= 70;
+  const isCashWeak = cashFlow <= 40;
+  const isPartnershipWeak = partnership <= 40;
 
-  const currentSituation = isStrong
-    ? `${dayMaster}의 기운이 강하게 드러나는 흐름이라 사업에서는 주도권을 잡고 움직이려는 성향이 강합니다.`
-    : `${dayMaster}의 기운이 비교적 신중하게 작용하는 흐름이라 사업에서는 무리한 확장보다 안정적인 구조가 중요합니다.`;
+  const currentSituation = isExpansion
+  ? `${dayMaster}의 기운을 바탕으로 사업을 확장하거나 새로운 기회를 추진하기 좋은 흐름입니다.`
+  : `${dayMaster}의 기운은 안정적인 운영과 기반을 다지는 방향에서 더 좋은 결과를 기대할 수 있습니다.`;
 
-  const timing = isStrong
-    ? "지금은 완전히 멈추기보다 작게 시험하고 반응을 보며 키워 가는 시기입니다."
-    : "지금은 크게 벌이기보다 준비, 검증, 비용 관리에 집중해야 하는 시기입니다.";
+const timing = isExpansion
+  ? "지금은 사업 기회를 시험해 보고 점진적으로 확장하기에 적합한 시기입니다."
+  : "지금은 사업 규모를 키우기보다 내실을 다지고 준비하는 것이 유리한 시기입니다.";
 
-  if (isStrong) {
-    recommendedStrategies.push("처음부터 크게 확장하지 말고 작은 상품이나 서비스로 시장 반응을 확인하십시오.");
-    avoidActions.push("자신감만 믿고 대출, 인력, 공간을 한 번에 늘리는 것은 피하십시오.");
-  } else {
-    recommendedStrategies.push("혼자 모든 것을 떠안기보다 검증된 협력자와 역할을 나누는 것이 좋습니다.");
-    avoidActions.push("준비가 부족한 상태에서 체면 때문에 사업 규모를 키우는 것은 피하십시오.");
-  }
+  
+
+    if (isExpansion) {
+        recommendedStrategies.push("지금은 사업 확장을 검토할 수 있는 흐름입니다.");
+      }
+      
+      if (isStable) {
+        recommendedStrategies.push("급격한 변화보다 안정적인 운영을 유지하는 것이 유리합니다.");
+      }
+      
+      if (isCashWeak) {
+        recommendedStrategies.push("현금 확보를 최우선으로 하는 전략이 필요합니다.");
+      }
+      
+      if (isPartnershipWeak) {
+        avoidActions.push("동업이나 공동투자는 신중하게 판단하는 것이 좋습니다.");
+      }
 
   return {
     currentSituation,
