@@ -7,6 +7,7 @@ import { buildBusinessSection } from "./sections/businessSection.ts";
 import { buildRealEstateSection } from "./sections/realEstateSection.ts";
 import { buildLoveSection } from "./sections/loveSection.ts";
 import { buildMarriageSection } from "./sections/marriageSection.ts";
+import { buildHealthSection } from "./sections/healthSection";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -160,26 +161,12 @@ ${buildBasicSajuSection()}
     return buildLoveSection(basic).join("\n\n");
   }
     
-
   if (title.includes("결혼")) {
     return buildMarriageSection(basic).join("\n\n");
   }
-
+  
   if (title.includes("건강")) {
-    return `
-[건강 심층 상담]
-건강운은 병을 단정하는 것이 아니라 몸이 약해지는 생활 패턴을 보는 것입니다.
-${name}님은 무리할 때 바로 무너지는 흐름보다, 피로가 누적되다가 어느 순간 크게 나타나는 흐름을 조심해야 합니다.
-
-[생활에서 조심할 점]
-수면 부족, 불규칙한 식사, 스트레스성 긴장, 오래 참는 습관이 몸의 리듬을 흔들 수 있습니다.
-몸이 보내는 작은 신호를 무시하면 회복 시간이 길어질 수 있습니다.
-
-[건강 전략]
-첫째, 수면 시간을 일정하게 유지하세요.
-둘째, 몸이 피곤할 때 중요한 결정을 미루세요.
-셋째, 정기검진과 기본 운동을 생활화하세요.
-`;
+    return buildHealthSection(basic).join("\n\n");
   }
 
   if (title.includes("AI")) {
