@@ -1,10 +1,13 @@
 import type { BasicSajuResult } from "../../types/basic";
-
+import { getYongsinSet } from "../../../data/yongsinService";
 export type SajuProfile = {
   dayMaster: string;
   strongestElement: string;
   weakestElement: string;
-
+  yongsin: string;
+  heesin: string;
+  gisin: string;
+  yongsinDescription: string;
   businessScore: number;
   moneyScore: number;
   loveScore: number;
@@ -92,7 +95,10 @@ export function buildSajuProfile(
       investment -= 15;
       break;
   }
-
+  const yongsinSet = getYongsinSet(
+    basic.weakestElement,
+    basic.strongestElement
+  );
   return {
 
     dayMaster: basic.dayMaster,
@@ -100,7 +106,10 @@ export function buildSajuProfile(
     strongestElement: basic.strongestElement,
 
     weakestElement: basic.weakestElement,
-
+    yongsin: yongsinSet.yongsin,
+    heesin: yongsinSet.heesin,
+    gisin: yongsinSet.gisin,
+    yongsinDescription: yongsinSet.yongsinDescription,
     businessScore: clamp(business),
 
     moneyScore: clamp(money),
