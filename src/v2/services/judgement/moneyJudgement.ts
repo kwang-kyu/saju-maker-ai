@@ -1,4 +1,5 @@
 import type { BasicSajuResult } from "../../types/basic";
+import { buildSajuProfile } from "../profile/sajuProfile";
 
 export type MoneyJudgement = {
   currentSituation: string;
@@ -11,10 +12,15 @@ export type MoneyJudgement = {
 };
 
 export function analyzeMoney(basic: BasicSajuResult): MoneyJudgement {
-  const strongElement = basic.strongestElement ?? "없음";
-  const weakElement = basic.weakestElement ?? "없음";
-  const dayMaster = basic.dayMaster ?? "일간";
+    const profile = buildSajuProfile(basic);
+
+  const strongElement = profile.strongestElement;
+  const weakElement = profile.weakestElement;
+  const dayMaster = profile.dayMaster;
   const summary = basic.summary ?? "";
+
+  const yongsin = profile.yongsin;
+  const gisin = profile.gisin;
 
   const strengths: string[] = [];
   const weaknesses: string[] = [];
@@ -90,7 +96,13 @@ export function analyzeMoney(basic: BasicSajuResult): MoneyJudgement {
   const timing = isStrong
     ? "지금은 수익 확대보다 현금 흐름을 안정시키면서 기회를 준비하는 시기입니다."
     : "지금은 무리한 투자보다 자산을 축적하기에 적합한 시기입니다.";
-
+    if (weakElement === yongsin) {
+        recommendedStrategies.push(`부족한 ${yongsin} 기운을 보완하는 방향으로 돈의 구조를 짜는 것이 좋습니다.`);
+      }
+    
+      if (strongElement === gisin) {
+        avoidActions.push(`이미 강한 ${gisin} 기운이 과해지지 않도록 무리한 확장과 감정적 지출은 피하는 것이 좋습니다.`);
+      }
   if (isStrong) {
     recommendedStrategies.push("여유 자금을 확보한 뒤 투자 비중을 늘리십시오.");
     avoidActions.push("고수익만 보고 무리하게 투자하지 마십시오.");
