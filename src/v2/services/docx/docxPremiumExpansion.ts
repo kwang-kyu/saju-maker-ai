@@ -8,6 +8,7 @@ import { buildRealEstateSection } from "./sections/realEstateSection.ts";
 import { buildLoveSection } from "./sections/loveSection.ts";
 import { buildMarriageSection } from "./sections/marriageSection.ts";
 import { buildHealthSection } from "./sections/healthSection";
+import { buildFortuneSection } from "./sections/fortuneSection";
 export function buildPremiumPdfExpansion(params: {
   name: string;
   title: string;
@@ -164,9 +165,13 @@ ${buildBasicSajuSection()}
   if (title.includes("결혼")) {
     return buildMarriageSection(basic).join("\n\n");
   }
-  
+
   if (title.includes("건강")) {
     return buildHealthSection(basic).join("\n\n");
+  }
+
+  if (title.includes("종합") || title.includes("마무리")) {
+    return buildFortuneSection(basic).join("\n\n");
   }
 
   if (title.includes("AI")) {
