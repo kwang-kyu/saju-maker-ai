@@ -1,4 +1,7 @@
-﻿import { getTimeGanZhiByDayStem } from "../../data/tenGodService";
+﻿import {
+  getTenGodByStem,
+  getTimeGanZhiByDayStem,
+} from "../../data/tenGodService";
 import { convertToSajuSolarDate } from "../../services/sajuDateService";
 import { getSajuGanjiInfo } from "../../services/sajuGanjiService";
 import { getSajuElementInfo } from "../../services/sajuElementService";
@@ -42,11 +45,14 @@ export function calculateSaju(input: SajuEngineInput): SajuEngineResult {
   const dayMaster = String(ganji.dayGanZhi).charAt(0);
   const dayStem = String(ganji.dayGanZhi).charAt(0);
   const timeGanZhi = getTimeGanZhiByDayStem(dayStem, input.birthTime);
-
+  const yearTenGod = getTenGodByStem(dayStem, String(ganji.yearGanZhi).charAt(0));
+  const monthTenGod = getTenGodByStem(dayStem, String(ganji.monthGanZhi).charAt(0));
+  const timeTenGod = getTenGodByStem(dayStem, String(timeGanZhi).charAt(0));
   const elementInfo = getSajuElementInfo({
     yearGanZhi: ganji.yearGanZhi,
     monthGanZhi: ganji.monthGanZhi,
     dayGanZhi: ganji.dayGanZhi,
+   
     timeGanZhi,
   });
 
@@ -62,6 +68,9 @@ export function calculateSaju(input: SajuEngineInput): SajuEngineResult {
     monthGanZhi: ganji.monthGanZhi,
     dayGanZhi: ganji.dayGanZhi,
     timeGanZhi,
+    yearTenGod,
+    monthTenGod,
+    timeTenGod,
     dayMaster,
     strongestElement: elementInfo.strongest.name,
     weakestElement: elementInfo.weakest.name,

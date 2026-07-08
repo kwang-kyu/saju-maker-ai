@@ -18,7 +18,10 @@ export type SajuEngineResult = {
   monthGanZhi: string;
   dayGanZhi: string;
   timeGanZhi: string;
-  dayMaster: string;
+  yearTenGod: string;
+  monthTenGod: string;
+  timeTenGod: string;
+dayMaster: string;
   strongestElement: string;
   weakestElement: string;
 };
