@@ -1,6 +1,5 @@
 import type { BasicSajuResult } from "../../../types/basic";
 import { analyzeBusiness } from "../../judgement/businessJudgement";
-
 export function buildBusinessSection(basic: BasicSajuResult): string[] {
   const name = basic.name ?? "고객";
   const judgement = analyzeBusiness(basic);
