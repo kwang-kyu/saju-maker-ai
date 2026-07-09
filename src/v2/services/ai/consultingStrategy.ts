@@ -13,6 +13,9 @@ export type ConsultingStrategy = {
     sections: string[];
   
     synthesisOrder: string[];
+    summaryFocus: string;
+    recommendedAction: string;
+    riskLevel: "low" | "medium" | "high";
   };
 
 export function buildConsultingStrategy(
@@ -28,7 +31,21 @@ export function buildConsultingStrategy(
     primaryCore,
     ...supportingCores,
   ].filter((core): core is string => Boolean(core));
-  
+  const summaryFocus = primaryCore ?? "overall";
+
+  const recommendedAction =
+  timingCore !== undefined
+    ? "timingFirst"
+    : supportingCores.length > 0
+      ? "balancedDecision"
+      : "directDecision";
+
+   const riskLevel =
+  supportingCores.length >= 2
+    ? "high"
+    : supportingCores.length === 1
+      ? "medium"
+      : "low";
   return {
     intent: intentAnalysis.intent,
     purpose: intentAnalysis.purpose,
@@ -40,8 +57,12 @@ export function buildConsultingStrategy(
     timingCore,
   
     sections: resolveSections(intentAnalysis.intent),
-  
+
     synthesisOrder,
+
+    summaryFocus,
+    recommendedAction,
+    riskLevel,
   };
 }
 
