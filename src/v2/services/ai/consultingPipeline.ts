@@ -26,7 +26,7 @@ export function runConsultingPipeline(
 
   const coreResult = runRequiredCores({
     basic,
-    requiredCores: intentAnalysis.requiredCores,
+    intentAnalysis,
   });
 
   const answerPlan = buildAnswerPlan(intentAnalysis);

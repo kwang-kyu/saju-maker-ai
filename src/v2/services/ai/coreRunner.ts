@@ -1,4 +1,5 @@
 import type { BasicSajuResult } from "../../types/basic";
+import type { IntentAnalysisResult } from "./intentAnalyzer";
 import { analyzeBusiness } from "../judgement/businessJudgement";
 import { analyzeMoney } from "../judgement/moneyJudgement";
 import { analyzeLove } from "../judgement/loveJudgement";
@@ -17,7 +18,7 @@ export type CoreRunResult = {
 
 export type CoreRunnerInput = {
   basic: BasicSajuResult;
-  requiredCores: string[];
+  intentAnalysis: IntentAnalysisResult;
 };
 
 export type CoreRunnerResult = {
@@ -25,7 +26,8 @@ export type CoreRunnerResult = {
 };
 
 export function runRequiredCores(input: CoreRunnerInput): CoreRunnerResult {
-  const { basic, requiredCores } = input;
+  const { basic, intentAnalysis } = input;
+  const { requiredCores } = intentAnalysis;
 
   const executedCores: CoreRunResult[] = requiredCores.map((coreName) => {
     switch (coreName) {
