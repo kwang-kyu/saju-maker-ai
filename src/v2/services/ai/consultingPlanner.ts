@@ -5,12 +5,81 @@ export type ConsultingPlan = {
     emphasis: string[];
   };
   
+  function buildDefaultPlanByIntent(
+    intent: string,
+    purpose: string
+  ): ConsultingPlan {
+    switch (intent) {
+      case "business":
+        return {
+          purpose,
+          requiredCores: ["business"],
+          answerOrder: [
+            "currentSituation",
+            "strengths",
+            "risks",
+            "timing",
+            "recommendedStrategies",
+          ],
+          emphasis: ["business", "timing", "execution"],
+        };
+  
+      case "money":
+        return {
+          purpose,
+          requiredCores: ["money"],
+          answerOrder: [
+            "currentSituation",
+            "moneyType",
+            "investmentDecision",
+            "risks",
+            "recommendedStrategies",
+          ],
+          emphasis: ["cashflow", "risk", "stability"],
+        };
+  
+      case "love":
+        return {
+          purpose,
+          requiredCores: ["love"],
+          answerOrder: [
+            "currentSituation",
+            "loveType",
+            "matchingPartner",
+            "conflictPoint",
+            "timing",
+          ],
+          emphasis: ["relationship", "expression", "conflict"],
+        };
+  
+      case "marriage":
+        return {
+          purpose,
+          requiredCores: ["marriage"],
+          answerOrder: [
+            "currentSituation",
+            "marriageType",
+            "stability",
+            "financialView",
+            "longTermStability",
+          ],
+          emphasis: ["stability", "partner", "family"],
+        };
+  
+      default:
+        return {
+          purpose,
+          requiredCores: [],
+          answerOrder: [],
+          emphasis: [],
+        };
+    }
+  }
+  
   export function buildConsultingPlan(
     intent: string,
     purpose: string
   ): ConsultingPlan {
-    void intent;
-  
     switch (purpose) {
       case "startBusiness":
         return {
@@ -23,11 +92,7 @@ export type ConsultingPlan = {
             "risks",
             "recommendedStrategies",
           ],
-          emphasis: [
-            "timing",
-            "cashflow",
-            "execution",
-          ],
+          emphasis: ["timing", "cashflow", "execution"],
         };
   
       case "partnership":
@@ -40,18 +105,10 @@ export type ConsultingPlan = {
             "conflictPoint",
             "recommendedStrategies",
           ],
-          emphasis: [
-            "people",
-            "contract",
-          ],
+          emphasis: ["people", "contract", "conflict"],
         };
   
       default:
-        return {
-          purpose,
-          requiredCores: [],
-          answerOrder: [],
-          emphasis: [],
-        };
+        return buildDefaultPlanByIntent(intent, purpose);
     }
   }
