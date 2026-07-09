@@ -1,3 +1,4 @@
+import type { BasicSajuResult } from "../../types/basic";
 import { analyzeIntent } from "./intentAnalyzer";
 import { buildAnswerPlan } from "./answerPlanner";
 import { ConversationContext } from "./conversationContext";
@@ -17,11 +18,17 @@ export type ConsultingPipelineResult = {
 
 const conversationContext = new ConversationContext();
 
-export function runConsultingPipeline(question: string): ConsultingPipelineResult {
+export function runConsultingPipeline(
+  question: string,
+  basic: BasicSajuResult
+): ConsultingPipelineResult {
   const intentAnalysis = analyzeIntent(question);
+
   const coreResult = runRequiredCores({
+    basic,
     requiredCores: intentAnalysis.requiredCores,
   });
+
   const answerPlan = buildAnswerPlan(intentAnalysis);
   const lastTurn = conversationContext.getLastTurn();
 
