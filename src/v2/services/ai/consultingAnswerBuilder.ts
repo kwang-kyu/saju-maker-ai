@@ -1,4 +1,12 @@
 import type { ConsultingPipelineResult } from "./consultingPipeline";
+import { formatBusinessConsulting } from "./businessFormatter";
+import { formatMoneyConsulting } from "./moneyFormatter";
+import { formatLoveConsulting } from "./loveFormatter";
+import { formatMarriageConsulting } from "./marriageFormatter";
+import type { BusinessJudgement } from "../judgement/businessJudgement";
+import type { MoneyJudgement } from "../judgement/moneyJudgement";
+import type { LoveJudgement } from "../judgement/loveJudgement";
+import type { MarriageJudgement } from "../judgement/marriageJudgement";
 
 const SECTION_CORE = "[사주 판단 기준]";
 const SECTION_FLOW = "[상담 답변 흐름]";
@@ -17,11 +25,38 @@ function buildCoreText(result: ConsultingPipelineResult): string {
     return "이번 질문은 기본 상담 흐름으로 판단합니다.";
   }
 
-  return result.executedCores
-    .map((core) => {
-      return `${core.coreName}: ${core.summary}`;
-    })
-    .join("\n");
+  const messages: string[] = [];
+
+  result.executedCores.forEach((core) => {
+    if (core.status !== "executed" || !core.result) {
+      messages.push(`${core.coreName}: ${core.summary}`);
+      return;
+    }
+
+    if (core.coreName === "business") {
+      messages.push(...formatBusinessConsulting(core.result as BusinessJudgement));
+      return;
+    }
+
+    if (core.coreName === "money") {
+      messages.push(...formatMoneyConsulting(core.result as MoneyJudgement));
+      return;
+    }
+
+    if (core.coreName === "love") {
+      messages.push(...formatLoveConsulting(core.result as LoveJudgement));
+      return;
+    }
+
+    if (core.coreName === "marriage") {
+      messages.push(...formatMarriageConsulting(core.result as MarriageJudgement));
+      return;
+    }
+
+    messages.push(`${core.coreName}: ${core.summary}`);
+  });
+
+  return messages.join("\n");
 }
 
 function buildFlowText(result: ConsultingPipelineResult): string {
