@@ -33,6 +33,13 @@ export type SajuProfile = {
   emotionalStyle: string;
   riskFactors: string[];
   growthFactors: string[];
+
+  earlyLifeFlow: string;
+  middleLifeFlow: string;
+  matureLifeFlow: string;
+  lateLifeFlow: string;
+  currentLifeStage: string;
+  currentLifeFocus: string;
 };
 
 function clamp(v: number) {
@@ -142,6 +149,9 @@ export function buildSajuProfile(basic: BasicSajuResult): SajuProfile {
   const safeLeadership = clamp(leadership);
   const safeCashFlow = clamp(cashFlow);
   const safeLove = clamp(love);
+  const safeBusiness = clamp(business);
+  const safeMoney = clamp(money);
+  const safeHealth = clamp(health);
 
   const relationshipStyle =
     safeLeadership >= 65
@@ -201,6 +211,14 @@ export function buildSajuProfile(basic: BasicSajuResult): SajuProfile {
     ...(safeLeadership >= 65 ? ["\uB9AC\uB354\uC2ED"] : []),
   ];
 
+  const earlyLifeFlow = safeExpansion >= 60 ? "\uCD08\uB144\uC5D0\uB294 \uC131\uC7A5\uACFC \uACBD\uD5D8\uC744 \uD1B5\uD574 \uBC29\uD5A5\uC744 \uC7A1\uC544\uAC00\uB294 \uD750\uB984\uC785\uB2C8\uB2E4." : "\uCD08\uB144\uC5D0\uB294 \uC11C\uB450\uB974\uAE30\uBCF4\uB2E4 \uAE30\uCD08\uB97C \uB2E4\uC9C0\uB294 \uD750\uB984\uC785\uB2C8\uB2E4.";
+  const middleLifeFlow = safeBusiness >= 60 || safeMoney >= 60 ? "\uC911\uB144\uC5D0\uB294 \uC9C1\uC5C5, \uC0AC\uC5C5, \uC7AC\uBB3C \uAD6C\uC870\uB97C \uBCF8\uACA9\uC801\uC73C\uB85C \uB9CC\uB4E4\uC5B4\uAC00\uB294 \uD750\uB984\uC785\uB2C8\uB2E4." : "\uC911\uB144\uC5D0\uB294 \uBB34\uB9AC\uD55C \uD655\uC7A5\uBCF4\uB2E4 \uC548\uC815\uACFC \uAD00\uACC4 \uC815\uBE44\uAC00 \uC911\uC694\uD569\uB2C8\uB2E4.";
+  const matureLifeFlow = safeStability >= 60 ? "\uC7A5\uB144\uC5D0\uB294 \uC548\uC815, \uCC45\uC784, \uC790\uC0B0 \uAD00\uB9AC\uAC00 \uC911\uC2EC\uC774 \uB418\uB294 \uD750\uB984\uC785\uB2C8\uB2E4." : "\uC7A5\uB144\uC5D0\uB294 \uAE30\uC874 \uBC29\uC2DD\uC744 \uC815\uBE44\uD558\uACE0 \uC0DD\uD65C \uAD6C\uC870\uB97C \uC7AC\uC815\uB9BD\uD574\uC57C \uD569\uB2C8\uB2E4.";
+  const lateLifeFlow = safeCashFlow >= 60 || safeHealth >= 60 ? "\uB9D0\uB144\uC5D0\uB294 \uD604\uAE08\uD750\uB984, \uAC74\uAC15, \uC0DD\uD65C \uC548\uC815\uC774 \uD575\uC2EC\uC774 \uB418\uB294 \uD750\uB984\uC785\uB2C8\uB2E4." : "\uB9D0\uB144\uC5D0\uB294 \uBB34\uB9AC\uD55C \uBCC0\uD654\uBCF4\uB2E4 \uC548\uC815\uC801\uC778 \uC0DD\uD65C \uB9AC\uB4EC\uC744 \uC720\uC9C0\uD558\uB294 \uAC83\uC774 \uC911\uC694\uD569\uB2C8\uB2E4.";
+
+  const currentLifeStage = "\uC5F0\uB839\uC815\uBCF4 \uBBF8\uC801\uC6A9";
+  const currentLifeFocus = safeMoney >= safeBusiness && safeMoney >= safeLove ? "\uC7AC\uBB3C\uAD6C\uC870" : safeBusiness >= safeLove ? "\uC9C1\uC5C5\u00B7\uC0AC\uC5C5\uAD6C\uC870" : "\uAD00\uACC4\u00B7\uAC10\uC815\uAD6C\uC870";
+
   return {
     dayMaster: basic.dayMaster,
     yearTenGod: basic.yearTenGod,
@@ -215,10 +233,10 @@ export function buildSajuProfile(basic: BasicSajuResult): SajuProfile {
     gisin: yongsinSet.gisin,
     yongsinDescription: yongsinSet.yongsinDescription,
 
-    businessScore: clamp(business),
-    moneyScore: clamp(money),
+    businessScore: safeBusiness,
+    moneyScore: safeMoney,
     loveScore: safeLove,
-    healthScore: clamp(health),
+    healthScore: safeHealth,
 
     expansionScore: safeExpansion,
     stabilityScore: safeStability,
@@ -235,5 +253,12 @@ export function buildSajuProfile(basic: BasicSajuResult): SajuProfile {
     emotionalStyle,
     riskFactors,
     growthFactors,
+
+    earlyLifeFlow,
+    middleLifeFlow,
+    matureLifeFlow,
+    lateLifeFlow,
+    currentLifeStage,
+    currentLifeFocus,
   };
 }
