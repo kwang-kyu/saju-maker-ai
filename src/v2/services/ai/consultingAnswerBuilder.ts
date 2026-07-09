@@ -26,10 +26,7 @@ function buildCoreText(result: ConsultingPipelineResult): string {
     }
   
     const messages: string[] = [];
-    const orderedCoreNames = [
-      result.strategy.primaryCore,
-      ...result.strategy.supportingCores,
-    ].filter((coreName): coreName is string => Boolean(coreName));
+    const orderedCoreNames = result.strategy.synthesisOrder;
   
     orderedCoreNames.forEach((coreName) => {
       const core = result.executedCores.find(
