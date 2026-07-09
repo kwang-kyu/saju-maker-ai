@@ -14,6 +14,9 @@ export type BasicSajuResult = {
   yearGanZhi: string;
   monthGanZhi: string;
   dayGanZhi: string;
+  yearTenGod: string;
+  monthTenGod: string;
+  timeTenGod: string;
   dayMaster: string;
   strongestElement: string;
   weakestElement: string;
