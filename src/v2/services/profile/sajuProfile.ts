@@ -2,6 +2,9 @@ import type { BasicSajuResult } from "../../types/basic";
 import { getYongsinSet } from "../../../data/yongsinService";
 export type SajuProfile = {
   dayMaster: string;
+  yearTenGod: string;
+  monthTenGod: string;
+  timeTenGod: string;
   strongestElement: string;
   weakestElement: string;
   yongsin: string;
@@ -102,10 +105,13 @@ export function buildSajuProfile(
   return {
 
     dayMaster: basic.dayMaster,
-
+    yearTenGod: basic.yearTenGod,
+    monthTenGod: basic.monthTenGod,
+    timeTenGod: basic.timeTenGod,
+    
     strongestElement: basic.strongestElement,
-
     weakestElement: basic.weakestElement,
+    
     yongsin: yongsinSet.yongsin,
     heesin: yongsinSet.heesin,
     gisin: yongsinSet.gisin,
