@@ -1,54 +1,64 @@
+import type { IntentAnalysisResult } from "./intentAnalyzer";
+
 export type ConsultingStrategy = {
-    sections: string[];
+  intent: string;
+  purpose: string;
+  primaryCore?: string;
+  supportingCores: string[];
+  sections: string[];
+};
+
+export function buildConsultingStrategy(
+  intentAnalysis: IntentAnalysisResult
+): ConsultingStrategy {
+  const [primaryCore, ...supportingCores] = intentAnalysis.requiredCores;
+
+  return {
+    intent: intentAnalysis.intent,
+    purpose: intentAnalysis.purpose,
+    primaryCore,
+    supportingCores,
+    sections: resolveSections(intentAnalysis.intent),
   };
-  
-  export function buildConsultingStrategy(intent: string): ConsultingStrategy {
-    switch (intent) {
-      case "business":
-        return {
-          sections: [
-            "currentSituation",
-            "strengths",
-            "risks",
-            "timing",
-            "recommendedStrategies",
-          ],
-        };
-  
-      case "money":
-        return {
-          sections: [
-            "moneyType",
-            "investmentDecision",
-            "risks",
-            "timing",
-            "recommendedStrategies",
-          ],
-        };
-  
-      case "love":
-        return {
-          sections: [
-            "loveType",
-            "matchingPartner",
-            "conflictPoint",
-            "timing",
-          ],
-        };
-  
-      case "marriage":
-        return {
-          sections: [
-            "marriageType",
-            "stability",
-            "financialView",
-            "timing",
-          ],
-        };
-  
-      default:
-        return {
-          sections: [],
-        };
-    }
+}
+
+function resolveSections(intent: string): string[] {
+  switch (intent) {
+    case "business":
+      return [
+        "currentSituation",
+        "strengths",
+        "risks",
+        "timing",
+        "recommendedStrategies",
+      ];
+
+    case "money":
+      return [
+        "moneyType",
+        "investmentDecision",
+        "risks",
+        "timing",
+        "recommendedStrategies",
+      ];
+
+    case "love":
+      return [
+        "loveType",
+        "matchingPartner",
+        "conflictPoint",
+        "timing",
+      ];
+
+    case "marriage":
+      return [
+        "marriageType",
+        "stability",
+        "financialView",
+        "timing",
+      ];
+
+    default:
+      return [];
   }
+}
