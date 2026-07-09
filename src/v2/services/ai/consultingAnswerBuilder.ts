@@ -21,43 +21,59 @@ function buildPreviousText(result: ConsultingPipelineResult): string {
 }
 
 function buildCoreText(result: ConsultingPipelineResult): string {
-  if (result.executedCores.length === 0) {
-    return "이번 질문은 기본 상담 흐름으로 판단합니다.";
-  }
-
-  const messages: string[] = [];
-
-  result.executedCores.forEach((core) => {
-    if (core.status !== "executed" || !core.result) {
+    if (result.executedCores.length === 0) {
+      return "이번 질문은 기본 상담 흐름으로 판단합니다.";
+    }
+  
+    const messages: string[] = [];
+    const orderedCoreNames = [
+      result.strategy.primaryCore,
+      ...result.strategy.supportingCores,
+    ].filter((coreName): coreName is string => Boolean(coreName));
+  
+    orderedCoreNames.forEach((coreName) => {
+      const core = result.executedCores.find(
+        (executedCore) => executedCore.coreName === coreName
+      );
+  
+      if (!core) {
+        return;
+      }
+  
+      if (core.status !== "executed" || !core.result) {
+        messages.push(`${core.coreName}: ${core.summary}`);
+        return;
+      }
+  
+      if (core.coreName === "business") {
+        messages.push(...formatBusinessConsulting(core.result as BusinessJudgement));
+        return;
+      }
+  
+      if (core.coreName === "money") {
+        messages.push(...formatMoneyConsulting(core.result as MoneyJudgement));
+        return;
+      }
+  
+      if (core.coreName === "love") {
+        messages.push(...formatLoveConsulting(core.result as LoveJudgement));
+        return;
+      }
+  
+      if (core.coreName === "marriage") {
+        messages.push(...formatMarriageConsulting(core.result as MarriageJudgement));
+        return;
+      }
+  
       messages.push(`${core.coreName}: ${core.summary}`);
-      return;
+    });
+  
+    if (messages.length === 0) {
+      return "이번 질문은 연결된 Core 결과를 바탕으로 상담 흐름을 정리합니다.";
     }
-
-    if (core.coreName === "business") {
-      messages.push(...formatBusinessConsulting(core.result as BusinessJudgement));
-      return;
-    }
-
-    if (core.coreName === "money") {
-      messages.push(...formatMoneyConsulting(core.result as MoneyJudgement));
-      return;
-    }
-
-    if (core.coreName === "love") {
-      messages.push(...formatLoveConsulting(core.result as LoveJudgement));
-      return;
-    }
-
-    if (core.coreName === "marriage") {
-      messages.push(...formatMarriageConsulting(core.result as MarriageJudgement));
-      return;
-    }
-
-    messages.push(`${core.coreName}: ${core.summary}`);
-  });
-
-  return messages.join("\n");
-}
+  
+    return messages.join("\n");
+  }
 
 function buildFlowText(result: ConsultingPipelineResult): string {
   if (result.answerFlow.length === 0) {
