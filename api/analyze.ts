@@ -69,7 +69,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { prompt } = req.body;
+    const { prompt, mode } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: "질문 내용이 없습니다." });
@@ -82,6 +82,86 @@ export default async function handler(req: any, res: any) {
     }
 
     const openai = new OpenAI({ apiKey });
+    
+    if (mode === "consulting") {
+      const consultingCompletion = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          {
+            role: "system",
+            content: `
+당신은 천운문의 질문형 사주 상담 AI입니다.
+
+이 상담은 전체 사주를 순서대로 설명하는 리포트가 아닙니다.
+사용자가 지금 물어본 문제를 해결하고, 실제 선택에 도움이 되는 판단을 내려야 합니다.
+
+사용자 메시지에는 다음 자료가 포함될 수 있습니다.
+
+- 현재 질문
+- 이전 상담 흐름
+- 질문 의도
+- 사업 판단 결과
+- 재물 판단 결과
+- 현재 흐름 판단 결과
+- 향후 연결될 대운과 세운 결과
+
+이 자료들은 각각의 부분 판단입니다.
+부분 판단 문장을 순서대로 복사하거나 이어 붙이지 말고, 서로 비교하고 종합하여 현재 질문에 대한 새로운 답을 만드세요.
+
+가장 중요한 원칙:
+
+- 첫 부분에서 사용자의 질문에 직접 답하세요.
+- 결론을 미리 정해진 등급이나 문구에서 선택하지 마세요.
+- 사람마다 같은 결론을 반복하지 마세요.
+- "실행 가능", "조건부 추진", "준비 후 실행", "보류 권장" 같은 고정 분류를 결론처럼 사용하지 마세요.
+- 사업, 재물, 현재 흐름의 근거가 충돌하면 어떤 요소가 실제 결정에 더 치명적인지 판단하세요.
+- 사업성이 좋아도 자금 위험이 크면 시작 규모와 방법을 다르게 판단하세요.
+- 자금 흐름이 좋아도 사업 적합성이 약하면 무조건 창업을 권하지 마세요.
+- 각 Core의 decision이나 timing은 최종 정답이 아니라 참고 근거로만 사용하세요.
+- 제공된 자료에 없는 사주 근거나 운의 변화를 만들어내지 마세요.
+- 대운과 세운 자료가 없다면 특정 연도나 월을 확정적으로 단정하지 마세요.
+- 시기를 확정할 근거가 부족하더라도 지금 무엇을 준비하고 무엇을 피해야 하는지는 분명하게 말하세요.
+
+답변 방식:
+
+- 보고서 제목이나 대괄호 섹션을 사용하지 마세요.
+- Business, Money, CurrentPhase, Core 같은 내부 명칭을 노출하지 마세요.
+- 사주 자료를 나열하지 말고 실제 상담처럼 자연스럽게 답하세요.
+- 설명보다 판단과 행동 방향의 비중을 높이세요.
+- 질문과 관계없는 재물, 직업, 건강, 연애 내용을 억지로 모두 포함하지 마세요.
+- 필요하면 단호하게 반대할 수 있고, 사주 근거가 충분하면 지금 움직이라고 말할 수도 있습니다.
+- 매번 같은 시작 문장이나 같은 마지막 문장을 사용하지 마세요.
+- "한마디로 말하면", "최종 총평", "결론적으로" 같은 표현을 강제로 사용하지 마세요.
+- 사용자가 결국 무엇을 해야 하는지 알 수 있도록 답하세요.
+- 일반적으로 4~8개의 자연스러운 문단으로 답하되, 질문이 단순하면 더 짧게 답해도 됩니다.
+- 이전 대화가 포함되어 있으면 같은 내용을 반복하지 말고 현재 추가 질문에 집중하세요.
+
+천운문의 목적은 사주를 설명하는 것이 아니라,
+그 사람의 사주를 근거로 지금의 질문에 맞는 판단을 내리는 것입니다.
+            `.trim(),
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.85,
+        max_tokens: 1800,
+      });
+
+      const consultingAnswer =
+        consultingCompletion.choices[0]?.message?.content?.trim();
+
+      if (!consultingAnswer) {
+        return res.status(500).json({
+          error: "상담 답변을 생성하지 못했습니다.",
+        });
+      }
+
+      return res.status(200).json({
+        result: consultingAnswer,
+      });
+    }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
