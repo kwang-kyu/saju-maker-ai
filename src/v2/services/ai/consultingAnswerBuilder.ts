@@ -7,6 +7,7 @@ import type { BusinessJudgement } from "../judgement/businessJudgement";
 import type { MoneyJudgement } from "../judgement/moneyJudgement";
 import type { LoveJudgement } from "../judgement/loveJudgement";
 import type { MarriageJudgement } from "../judgement/marriageJudgement";
+import type { MasterDecision } from "../framework/masterDecisionEngine";
 
 const SECTION_CORE = "[사주 판단 기준]";
 const SECTION_SYNTHESIS = "[종합 판단]";
@@ -62,7 +63,32 @@ function buildCoreText(result: ConsultingPipelineResult): string {
         messages.push(...formatMarriageConsulting(core.result as MarriageJudgement));
         return;
       }
-  
+       
+      if (core.coreName === "currentPhase") {
+        const currentPhase = core.result as MasterDecision;
+
+        messages.push(
+          `현재 흐름은 '${currentPhase.lifePhase}'입니다. ` +
+          `올해의 핵심 키워드는 '${currentPhase.yearlyKeyword}'이며, ` +
+          `지금 가장 먼저 살펴야 할 영역은 ${currentPhase.priorityArea}입니다.`
+        );
+
+        messages.push(
+          `지금 해야 할 일은 다음과 같습니다. ${currentPhase.actionNow.join(" ")}`
+        );
+
+        messages.push(
+          `다음 단계는 다음과 같습니다. ${currentPhase.actionNext.join(" ")}`
+        );
+
+        messages.push(
+          `주의할 점은 다음과 같습니다. ${currentPhase.warnings.join(" ")}`
+        );
+
+        messages.push(currentPhase.finalDirection);
+
+        return;
+      }
       messages.push(`${core.coreName}: ${core.summary}`);
     });
   

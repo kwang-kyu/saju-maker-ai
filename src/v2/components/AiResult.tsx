@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import { basicMapper } from "../services/basic/basicMapper";
-import { getAiConsulting } from "../services/ai/aiConsulting";
+import { runConsultingPipeline } from "../services/ai/consultingPipeline";
+import { buildConsultingAnswer } from "../services/ai/consultingAnswerBuilder";
 import { getAiSummary } from "../services/ai/aiSummary";
 import type { BasicSajuInput } from "../types/basic";
 
@@ -41,12 +42,9 @@ ${question}
 export default function AiResult(props: AiResultProps) {
   const [concern, setConcern] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [currentAnswer, setCurrentAnswer] = useState("");
 
   const basic = basicMapper(props);
   const summary = getAiSummary(props.name);
-  const defaultConsulting = getAiConsulting(basic);
-  const consulting = currentAnswer || defaultConsulting;
 
   const handleSubmit = () => {
     const question = concern.trim();
@@ -54,7 +52,8 @@ export default function AiResult(props: AiResultProps) {
     if (!question) return;
 
     const contextQuestion = buildChatContext(chatHistory, question);
-    const answer = getAiConsulting(basic, contextQuestion);
+    const pipelineResult = runConsultingPipeline(contextQuestion, basic);
+    const answer = buildConsultingAnswer(pipelineResult);
 
     setChatHistory((prev) => [
       ...prev,
@@ -63,7 +62,6 @@ export default function AiResult(props: AiResultProps) {
         answer,
       },
     ]);
-    setCurrentAnswer(answer);
     setConcern("");
   };
 
@@ -172,17 +170,7 @@ export default function AiResult(props: AiResultProps) {
         <p style={{ lineHeight: 1.8 }}>{summary}</p>
       </div>
 
-      <div
-        style={{
-          padding: "18px",
-          border: "1px solid #334155",
-          background: "#111827",
-        }}
-      >
-        <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.8, margin: 0 }}>
-          {consulting}
-        </pre>
-      </div>
+    
     </div>
   );
 }

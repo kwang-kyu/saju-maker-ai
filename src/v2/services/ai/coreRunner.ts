@@ -6,6 +6,7 @@ import { analyzeLove } from "../judgement/loveJudgement";
 import { analyzeMarriage } from "../judgement/marriageJudgement";
 import { buildSajuProfile } from "../profile/sajuProfile";
 import { buildLifeTimeline } from "../profile/lifeTimeline";
+import { buildMasterDecision } from "../framework/masterDecisionEngine";
 
 export type CoreRunStatus = "executed" | "skipped";
 
@@ -74,7 +75,18 @@ export function runRequiredCores(input: CoreRunnerInput): CoreRunnerResult {
           result,
         };
       }
+      
+      case "currentPhase": {
+        const result = buildMasterDecision(basic);
 
+        return {
+          coreName,
+          status: "executed",
+          summary: "현재 흐름 판단 Core 실행 완료",
+          result,
+        };
+      }
+      
       case "lifeTimeline": {
         const profile = buildSajuProfile(basic);
         const result = buildLifeTimeline(profile);
