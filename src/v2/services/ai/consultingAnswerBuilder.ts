@@ -10,6 +10,7 @@ import type { MoneyJudgement } from "../judgement/moneyJudgement";
 import type { LoveJudgement } from "../judgement/loveJudgement";
 import type { MarriageJudgement } from "../judgement/marriageJudgement";
 import type { MasterDecision } from "../framework/masterDecisionEngine";
+import type { CompatibilityResult } from "../compatibility/compatibilityTypes";
 
 function buildPreviousConversationText(
   result: ConsultingPipelineResult
@@ -52,6 +53,109 @@ function buildCurrentPhaseText(currentPhase: MasterDecision): string[] {
   return lines;
 }
 
+  
+  function buildCompatibilityText(
+    compatibility: CompatibilityResult
+  ): string[] {
+    const lines: string[] = [];
+  
+    lines.push(
+      `궁합 분석 유형: ${compatibility.mode}`
+    );
+  
+    lines.push(
+      `궁합 당사자: ${compatibility.self.name} / ${compatibility.other.name}`
+    );
+  
+    lines.push(
+      `전체 궁합 점수: ${compatibility.overallScore}점`
+    );
+  
+    lines.push(
+      `궁합 수준: ${compatibility.level}`
+    );
+  
+    lines.push(
+      `궁합 위험도: ${compatibility.riskLevel}`
+    );
+  
+    if (compatibility.directConclusion) {
+      lines.push(
+        `직접 결론: ${compatibility.directConclusion}`
+      );
+    }
+  
+    if (compatibility.summary) {
+      lines.push(
+        `궁합 종합 판단: ${compatibility.summary}`
+      );
+    }
+  
+    if (compatibility.strengths.length > 0) {
+      lines.push(
+        `서로 잘 맞는 점: ${compatibility.strengths.join(" ")}`
+      );
+    }
+  
+    if (compatibility.conflicts.length > 0) {
+      lines.push(
+        `충돌 가능성이 있는 점: ${compatibility.conflicts.join(" ")}`
+      );
+    }
+  
+    if (compatibility.communicationCompatibility.length > 0) {
+      lines.push(
+        `대화와 소통 궁합: ${compatibility.communicationCompatibility.join(" ")}`
+      );
+    }
+  
+    if (compatibility.workCompatibility.length > 0) {
+      lines.push(
+        `일과 역할 궁합: ${compatibility.workCompatibility.join(" ")}`
+      );
+    }
+  
+    if (compatibility.moneyCompatibility.length > 0) {
+      lines.push(
+        `금전 궁합: ${compatibility.moneyCompatibility.join(" ")}`
+      );
+    }
+  
+    if (compatibility.roleRecommendation.length > 0) {
+      lines.push(
+        `권장 역할 분담: ${compatibility.roleRecommendation.join(" ")}`
+      );
+    }
+  
+    if (compatibility.riskFactors.length > 0) {
+      lines.push(
+        `관계 위험 요소: ${compatibility.riskFactors.join(" ")}`
+      );
+    }
+  
+    if (compatibility.recommendations.length > 0) {
+      lines.push(
+        `관계 운영 조언: ${compatibility.recommendations.join(" ")}`
+      );
+    }
+  
+    if (compatibility.evidence.length > 0) {
+      const evidenceText = compatibility.evidence
+        .map(
+          (item) =>
+            `[${item.category}/${item.influence}] ${item.title}: ${item.description}`
+        )
+        .join(" ");
+  
+      lines.push(
+        `궁합 판단 근거: ${evidenceText}`
+      );
+    }
+  
+    return lines;
+  }
+  
+
 function buildCoreEvidence(result: ConsultingPipelineResult): string {
   if (result.executedCores.length === 0) {
     return "이번 질문에 연결된 세부 판단 자료가 없습니다.";
@@ -59,6 +163,14 @@ function buildCoreEvidence(result: ConsultingPipelineResult): string {
 
   const evidence: string[] = [];
   const synthesisOrder = result.strategy.synthesisOrder;
+  if (
+    synthesisOrder.includes("compatibility") &&
+    result.compatibility
+  ) {
+    evidence.push(
+      ...buildCompatibilityText(result.compatibility)
+    );
+  }
 
   synthesisOrder.forEach((coreName) => {
     const core = result.executedCores.find(
@@ -127,19 +239,61 @@ function buildCoreEvidence(result: ConsultingPipelineResult): string {
 }
 
 function buildDecisionInstruction(
-  result: ConsultingPipelineResult
-): string {
-  const riskLevel = result.strategy.riskLevel;
-  const recommendedAction = result.strategy.recommendedAction;
-
-  return [
-    `질문 의도: ${result.intent}`,
-    `판단 위험도: ${riskLevel}`,
-    `권장 판단 방식: ${recommendedAction}`,
-    `중심 판단 영역: ${result.strategy.summaryFocus}`,
-  ].join("\n");
-}
-
+    result: ConsultingPipelineResult
+  ): string {
+    const {
+      ruleId,
+      primaryCore,
+      coreWeights,
+      reasoningOrder,
+      decisionFocus,
+      riskLevel,
+      recommendedAction,
+      summaryFocus,
+    } = result.strategy;
+  
+    const weightText = [...coreWeights]
+      .sort((a, b) => a.priority - b.priority)
+      .map(
+        (item) =>
+          `${item.priority}순위 ${item.coreName}: ${item.weight}%`
+      )
+      .join("\n");
+  
+    const reasoningText = reasoningOrder
+      .map(
+        (item, index) =>
+          `${index + 1}. ${item}`
+      )
+      .join("\n");
+  
+    const focusText = decisionFocus
+      .map(
+        (item, index) =>
+          `${index + 1}. ${item}`
+      )
+      .join("\n");
+  
+    return [
+      `적용 판단 규칙: ${ruleId}`,
+      `질문 주제: ${result.intent}`,
+      `핵심 판단 Core: ${primaryCore ?? "currentPhase"}`,
+      "",
+      "[Core 판단 비중]",
+      weightText,
+      "",
+      "[판단 순서]",
+      reasoningText,
+      "",
+      "[반드시 답해야 할 핵심]",
+      focusText,
+      "",
+      `판단 위험도: ${riskLevel}`,
+      `권장 행동 방향: ${recommendedAction}`,
+      `최종 판단 초점: ${summaryFocus}`,
+    ].join("\n");
+  }
+  
 function buildEntityContext(
     result: ConsultingPipelineResult
   ): string {
