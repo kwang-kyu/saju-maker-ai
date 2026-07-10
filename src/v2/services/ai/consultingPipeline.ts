@@ -4,9 +4,13 @@ import { buildAnswerPlan } from "./answerPlanner";
 import { ConversationContext } from "./conversationContext";
 import { runRequiredCores, type CoreRunResult } from "./coreRunner";
 import {
-    buildConsultingStrategy,
-    type ConsultingStrategy,
-  } from "./consultingStrategy";
+  buildConsultingStrategy,
+  type ConsultingStrategy,
+} from "./consultingStrategy";
+import {
+  extractQuestionEntities,
+  type QuestionEntityExtractionResult,
+} from "./questionEntityExtractor";
 
 export type ConsultingPipelineResult = {
   question: string;
@@ -14,6 +18,7 @@ export type ConsultingPipelineResult = {
   requiredCores: string[];
   executedCores: CoreRunResult[];
   strategy: ConsultingStrategy;
+  entities: QuestionEntityExtractionResult;
   hasPreviousConversation: boolean;
   previousQuestion?: string;
   opening: string;
@@ -27,15 +32,15 @@ export function runConsultingPipeline(
   question: string,
   basic: BasicSajuResult
 ): ConsultingPipelineResult {
+  const entities = extractQuestionEntities(question);
   const intentAnalysis = analyzeIntent(question);
 
   const coreResult = runRequiredCores({
     basic,
     intentAnalysis,
   });
-  
+
   const strategy = buildConsultingStrategy(intentAnalysis);
-  
   const answerPlan = buildAnswerPlan(intentAnalysis);
   const lastTurn = conversationContext.getLastTurn();
 
@@ -47,6 +52,7 @@ export function runConsultingPipeline(
     requiredCores: intentAnalysis.requiredCores,
     executedCores: coreResult.executedCores,
     strategy,
+    entities,
     hasPreviousConversation: Boolean(lastTurn),
     previousQuestion: lastTurn?.question,
     opening: answerPlan.opening,
