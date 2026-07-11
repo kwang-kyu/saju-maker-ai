@@ -19,8 +19,11 @@ function unique(values: string[]): string[] {
 }
 
 export function buildMasterHumanSummary(
-  result: MasterReaderResult,
-): MasterHumanSummary {
+    result: Pick<
+      MasterReaderResult,
+      "profile" | "explanation"
+    >,
+  ): MasterHumanSummary {
   const { explanation } = result;
 
   const lifeDriver = explanation.lifeDriver;
