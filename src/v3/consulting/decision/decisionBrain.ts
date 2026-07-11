@@ -1,5 +1,9 @@
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import type { QuestionReaderResult } from "../question/questionReader";
+import {
+  buildBrainSnapshot,
+  type BrainSnapshot,
+} from "./brainSnapshot";
 
 export type BrainStep =
   | "humanIdentity"
@@ -17,6 +21,19 @@ export type BrainPriority = {
 };
 
 export type DecisionBrain = {
+  snapshot: BrainSnapshot;
+
+  question: {
+    topic: QuestionReaderResult["topic"];
+    intent: QuestionReaderResult["intent"];
+    motive: QuestionReaderResult["motive"];
+    decisionTarget: QuestionReaderResult["decisionTarget"];
+    urgency: QuestionReaderResult["urgency"];
+    asksWhat: string;
+    asksWhy: string;
+    decisionQuestion: string;
+  };
+
   thinkingOrder: BrainPriority[];
 };
 
@@ -35,45 +52,62 @@ export function buildDecisionBrain(
   humanContext: HumanDestinyContext,
   question: QuestionReaderResult,
 ): DecisionBrain {
-  void humanContext;
-  void question;
+  const snapshot = buildBrainSnapshot(humanContext);
 
   return {
+    snapshot,
+
+    question: {
+      topic: question.topic,
+      intent: question.intent,
+      motive: question.motive,
+      decisionTarget: question.decisionTarget,
+      urgency: question.urgency,
+      asksWhat: question.asksWhat,
+      asksWhy: question.asksWhy,
+      decisionQuestion: question.decisionQuestion,
+    },
+
     thinkingOrder: [
       {
         step: "humanIdentity",
         priority: 1,
-        reason: "사람의 본질을 가장 먼저 이해한다.",
+        reason: snapshot.identity,
       },
       {
         step: "lifePhase",
         priority: 2,
-        reason: "현재 인생 국면을 먼저 판단한다.",
+        reason: snapshot.currentPhase,
       },
       {
         step: "lifeDriver",
         priority: 3,
-        reason: "삶을 움직이는 핵심 동력을 확인한다.",
+        reason: snapshot.lifeDriver,
       },
       {
         step: "survivalStyle",
         priority: 4,
-        reason: "생존 방식과 대응 성향을 확인한다.",
+        reason: snapshot.survivalStyle,
       },
       {
         step: "repeatedPattern",
         priority: 5,
-        reason: "반복되는 성공과 실패 패턴을 확인한다.",
+        reason: snapshot.repeatedPattern,
       },
       {
         step: "question",
         priority: 6,
-        reason: "질문을 현재 사람의 맥락 안에서 해석한다.",
+        reason: [
+          question.asksWhat,
+          question.asksWhy,
+          `결정 대상은 '${question.decisionQuestion}'이다.`,
+        ].join(" "),
       },
       {
         step: "decision",
         priority: 7,
-        reason: "모든 정보를 종합하여 최종 판단한다.",
+        reason:
+          "사람의 본질, 현재 국면, 삶의 동력, 생존 방식, 반복 패턴과 질문을 종합해 최종 판단한다.",
       },
     ],
   };
