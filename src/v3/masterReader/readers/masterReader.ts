@@ -7,7 +7,7 @@ import {
 import { readLifeDriver } from "./lifeDriverReader";
 import { readRepeatedPattern } from "./repeatedPatternReader";
 import { readSurvivalStyle } from "./survivalStyleReader";
-
+import { buildMasterHumanSummary } from "./masterHumanSummaryBuilder";
 
 export function readMasterProfile(
   input: MasterReaderInput,
@@ -34,9 +34,14 @@ export function readMasterProfile(
 
   const explanation =
     buildMasterProfileExplanation(profile);
+    const humanSummary = buildMasterHumanSummary({
+        profile,
+        explanation,
+      });
 
-  return {
-    profile,
-    explanation,
-  };
+      return {
+        profile,
+        explanation,
+        humanSummary,
+      };
 }
