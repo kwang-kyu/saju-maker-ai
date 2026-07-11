@@ -1,17 +1,13 @@
 import type { MasterProfile } from "../types/masterProfile";
 import type { MasterReaderInput } from "../types/masterReaderInput";
+import type { MasterReaderResult } from "../types/masterReaderResult";
 import {
-  buildMasterProfileExplanation,
-  type MasterProfileExplanation,
-} from "./masterProfileExplanationBuilder";
+    buildMasterProfileExplanation,
+  } from "./masterProfileExplanationBuilder";
 import { readLifeDriver } from "./lifeDriverReader";
 import { readRepeatedPattern } from "./repeatedPatternReader";
 import { readSurvivalStyle } from "./survivalStyleReader";
 
-export type MasterReaderResult = {
-  profile: MasterProfile;
-  explanation: MasterProfileExplanation;
-};
 
 export function readMasterProfile(
   input: MasterReaderInput,
