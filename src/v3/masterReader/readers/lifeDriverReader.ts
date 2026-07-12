@@ -88,16 +88,17 @@ import type {
         weight: match.rule.weight,
       }));
   
-    return {
-      driver: score.driver,
-      evidence,
-      counterEvidence: [],
-      confidence: getConfidence(
-        status,
-        score,
-      ),
-      exceptionConditions: [],
-    };
+      return {
+        driver: score.driver,
+        interpretation: null,
+        evidence,
+        counterEvidence: [],
+        confidence: getConfidence(
+          status,
+          score,
+        ),
+        exceptionConditions: [],
+      };
   }
   
   export function readLifeDriver(

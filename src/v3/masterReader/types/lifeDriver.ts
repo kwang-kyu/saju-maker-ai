@@ -25,13 +25,21 @@ export type DriverEvidence = {
   weight: number;
 };
 
+export type LifeDriverInterpretation = {
+    mode: string;
+    operatingStyle: string;
+    strengthExpression: string;
+    riskPattern: string;
+    suitableConditions: string[];
+  };
 export type LifeDriverJudgement = {
-  driver: LifeDriverType;
-  evidence: DriverEvidence[];
-  counterEvidence: DriverEvidence[];
-  confidence: DriverConfidence;
-  exceptionConditions: string[];
-};
+    driver: LifeDriverType;
+    interpretation: LifeDriverInterpretation | null;
+    evidence: DriverEvidence[];
+    counterEvidence: DriverEvidence[];
+    confidence: DriverConfidence;
+    exceptionConditions: string[];
+  };
 
 export type LifeDriverResult = {
   primary: LifeDriverJudgement;
