@@ -40,6 +40,21 @@ export type SajuElementDistribution = {
   water: number;
 };
 
+export type SajuStructureSignal =
+  | {
+      kind: "tenGodDominance";
+
+      dominantTenGod: string | null;
+
+      dominantCount: number;
+
+      totalCount: number;
+
+      counts: Record<string, number>;
+
+      distributed: boolean;
+    };
+
 export type SajuStructureFact = {
   category:
     | "monthCommand"
@@ -63,7 +78,9 @@ export type SajuStructureFact = {
 
   exceptions?: string[];
 
+  signal?: SajuStructureSignal;
 };
+
 export type SajuInteractionFact = {
   type:
     | "combination"
