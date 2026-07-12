@@ -1,4 +1,7 @@
-import type { LifeDriverType } from "../types/lifeDriver";
+import type {
+    LifeDriverInterpretation,
+    LifeDriverType,
+  } from "../types/lifeDriver";
 import type {
   LifeDriverEvidenceSource,
   LifeDriverMeaning,
@@ -12,6 +15,7 @@ export type LifeDriverRule = {
   driver: LifeDriverType;
   weight: number;
   reason: string;
+  interpretation?: LifeDriverInterpretation;
   matches: (
     signal: SajuStructureSignal,
     meanings: LifeDriverMeaning[],
@@ -178,6 +182,20 @@ export const LIFE_DRIVER_RULES: LifeDriverRule[] = [
   },
   {
     id: "wealth-strong-and-rooted",
+    interpretation: {
+        mode: "현실 성과 축적형",
+        operatingStyle:
+          "수익 가능성을 발견하면 직접 움직여 결과를 만들고, 확보한 기반을 바탕으로 재물을 반복적으로 축적한다.",
+        strengthExpression:
+          "현실 감각과 실행력이 함께 작동하여 돈이 되는 기회를 빠르게 알아보고 실제 수익 구조로 연결하는 힘이 강하다.",
+        riskPattern:
+          "자신의 실행력과 버티는 힘을 과신하면 수익 확대에 집중한 나머지 현금 흐름, 고정비, 자금 회수 시점을 놓칠 수 있다.",
+        suitableConditions: [
+          "본인이 수익 구조와 의사결정권을 직접 관리할 수 있는 환경",
+          "단기 투기보다 반복 매출과 자산 축적이 가능한 구조",
+          "수익과 비용을 수치로 확인하며 단계적으로 규모를 키우는 방식",
+        ],
+      },
     source: "tenGodStrength",
     signalKind: "tenGodDominance",
     driver: "wealth",
