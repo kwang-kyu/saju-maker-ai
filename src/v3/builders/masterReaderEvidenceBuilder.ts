@@ -48,6 +48,7 @@ function buildLifeDriverMeanings(
     meaning: fact.description,
     strength: fact.strength,
     confidence: toConfidence(fact.confidence),
+    signal: fact.signal,
   }));
 }
 
