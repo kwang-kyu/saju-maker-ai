@@ -74,6 +74,28 @@ import type {
   
     return "low";
   }
+
+  function selectStrongestInterpretation(
+    score: LifeDriverScore,
+  ) {
+    const interpretedMatches =
+      score.matches
+        .filter(
+          (match) =>
+            match.rule.interpretation !==
+            undefined,
+        )
+        .sort(
+          (a, b) =>
+            b.rule.weight -
+            a.rule.weight,
+        );
+  
+    return (
+      interpretedMatches[0]?.rule
+        .interpretation ?? null
+    );
+  }
   
   function buildJudgement(
     score: LifeDriverScore,
@@ -90,7 +112,10 @@ import type {
   
       return {
         driver: score.driver,
-        interpretation: null,
+        interpretation:
+  selectStrongestInterpretation(
+    score,
+  ),
         evidence,
         counterEvidence: [],
         confidence: getConfidence(
