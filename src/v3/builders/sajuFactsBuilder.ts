@@ -1,3 +1,4 @@
+import { calculateDayMasterStrength } from "../calculators/dayMasterStrengthCalculator";
 import { calculateSajuInteractions } from "../calculators/sajuInteractionCalculator";
 import type {
     SajuElementDistribution,
@@ -272,7 +273,27 @@ import type {
         counts: elementCounts,
         direction: "lowest",
       });
-  
+      const baseStructureFacts = buildStructureFacts({
+        calculated,
+        distribution: elementDistribution,
+        strongestElement,
+        weakestElement,
+      });
+      
+      const dayMasterStrength =
+        calculateDayMasterStrength({
+          dayMaster: calculated.dayMaster,
+          monthGanZhi: calculated.monthGanZhi,
+          pillars,
+          elementDistribution,
+        });
+      
+      const structureFacts = dayMasterStrength
+        ? [
+            ...baseStructureFacts,
+            dayMasterStrength.fact,
+          ]
+        : baseStructureFacts;
     return {
       name: calculated.name,
       birthDate: calculated.birthDate,
@@ -292,12 +313,7 @@ import type {
   
       elementDistribution,
   
-      structureFacts: buildStructureFacts({
-        calculated,
-        distribution: elementDistribution,
-        strongestElement,
-        weakestElement,
-      }),
+      structureFacts,
       interactionFacts: calculateSajuInteractions(
         pillars,
       ),
