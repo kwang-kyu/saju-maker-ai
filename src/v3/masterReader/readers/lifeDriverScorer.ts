@@ -28,8 +28,10 @@ function getStrengthMultiplier(
   switch (strength) {
     case "strong":
       return 1.5;
+
     case "medium":
       return 1;
+
     case "weak":
       return 0.5;
   }
@@ -41,8 +43,10 @@ function getConfidenceMultiplier(
   switch (confidence) {
     case "high":
       return 1.25;
+
     case "medium":
       return 1;
+
     case "low":
       return 0.75;
   }
@@ -53,7 +57,10 @@ export function scoreLifeDrivers(
 ): LifeDriverScore[] {
   const matches = matchLifeDriverRules(meanings);
 
-  const scores = new Map<LifeDriverType, LifeDriverScore>();
+  const scores = new Map<
+    LifeDriverType,
+    LifeDriverScore
+  >();
 
   for (const driver of LIFE_DRIVER_TYPES) {
     scores.set(driver, {
@@ -64,19 +71,23 @@ export function scoreLifeDrivers(
   }
 
   for (const match of matches) {
-    const current = scores.get(match.rule.driver);
+    const current = scores.get(
+      match.rule.driver,
+    );
 
     if (!current) {
       continue;
     }
 
-    const strengthMultiplier = getStrengthMultiplier(
-      match.meaning.strength,
-    );
+    const strengthMultiplier =
+      getStrengthMultiplier(
+        match.meaning.strength,
+      );
 
-    const confidenceMultiplier = getConfidenceMultiplier(
-      match.meaning.confidence,
-    );
+    const confidenceMultiplier =
+      getConfidenceMultiplier(
+        match.meaning.confidence,
+      );
 
     current.score +=
       match.rule.weight *
@@ -86,7 +97,9 @@ export function scoreLifeDrivers(
     current.matches.push(match);
   }
 
-  return Array.from(scores.values()).sort(
+  return Array.from(
+    scores.values(),
+  ).sort(
     (a, b) => b.score - a.score,
   );
 }
