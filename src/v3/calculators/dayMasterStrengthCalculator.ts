@@ -399,15 +399,25 @@ import type {
   
       fact: {
         category: "dayMasterStrength",
-  
+      
         description,
-  
+      
         strength:
           type === "balanced"
             ? "medium"
             : confidence,
-  
+      
         confidence,
-      },
-    };
-  }
+      
+        signal: {
+            kind: "dayMasterStrength",
+            type,
+            score,
+            supportScore,
+            opposingScore,
+            monthCommandScore,
+            rootingScore,
+          },
+        },
+      };
+    }
