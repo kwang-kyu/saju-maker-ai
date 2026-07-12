@@ -86,28 +86,30 @@ export type MatchedLifeDriverRule = {
 };
 
 export function matchLifeDriverRules(
-  meanings: LifeDriverMeaning[],
-): MatchedLifeDriverRule[] {
-  const matched: MatchedLifeDriverRule[] = [];
-
-  for (const meaning of meanings) {
-    for (const rule of LIFE_DRIVER_RULES) {
-      if (rule.source !== meaning.source) {
-        continue;
-      }
-
-      const hasKeyword = rule.keywords.some((keyword) =>
-        meaning.meaning.includes(keyword),
-      );
-
-      if (hasKeyword) {
+    meanings: LifeDriverMeaning[],
+  ): MatchedLifeDriverRule[] {
+    const matched: MatchedLifeDriverRule[] = [];
+  
+    for (const meaning of meanings) {
+      for (const rule of LIFE_DRIVER_RULES) {
+        if (rule.source !== meaning.source) {
+          continue;
+        }
+  
+        const hasKeyword = rule.keywords.some((keyword) =>
+          meaning.meaning.includes(keyword),
+        );
+  
+        if (!hasKeyword) {
+          continue;
+        }
+  
         matched.push({
           rule,
           meaning,
         });
       }
     }
+  
+    return matched;
   }
-
-  return matched;
-}
