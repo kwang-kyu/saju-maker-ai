@@ -38,10 +38,15 @@ import type {
     let rootingCount = 0;
   
     for (const branch of branches) {
-      const hiddenStems = HIDDEN_STEMS[branch] ?? [];
+      const hiddenStems =
+        HIDDEN_STEMS[branch] ?? [];
   
-      if (hiddenStems.includes(input.dayStem)) {
-        rootingCount++;
+      if (
+        hiddenStems.includes(
+          input.dayStem,
+        )
+      ) {
+        rootingCount += 1;
       }
     }
   
@@ -49,9 +54,12 @@ import type {
       return {
         category: "rooting",
         description:
-          "일간이 여러 지지에 통근하여 기반이 매우 안정적이다.",
+          "일간이 여러 지지에 통근하고 있다.",
         strength: "strong",
         confidence: "strong",
+        evidence: [
+          `네 지지 중 ${rootingCount}곳에서 일간과 같은 천간이 지장간으로 확인된다.`,
+        ],
       };
     }
   
@@ -59,17 +67,23 @@ import type {
       return {
         category: "rooting",
         description:
-          "일간이 일부 지지에 통근하여 기본적인 기반을 갖추고 있다.",
+          "일간이 일부 지지에 통근하고 있다.",
         strength: "medium",
         confidence: "strong",
+        evidence: [
+          `네 지지 중 ${rootingCount}곳에서 일간과 같은 천간이 지장간으로 확인된다.`,
+        ],
       };
     }
   
     return {
       category: "rooting",
       description:
-        "일간이 지지에 통근하지 않아 기반이 약한 구조이다.",
+        "일간과 같은 천간이 지장간에서 확인되지 않는다.",
       strength: "weak",
-      confidence: "medium",
+      confidence: "strong",
+      evidence: [
+        "년지·월지·일지·시지의 지장간에서 일간과 같은 천간이 확인되지 않는다.",
+      ],
     };
   }
