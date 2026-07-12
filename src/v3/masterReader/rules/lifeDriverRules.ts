@@ -341,6 +341,51 @@ matches: (signal, meanings) => {
       );
     },
   },
+  {
+    id: "wealth-weak-day-master",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "wealth",
+    weight: 4,
+    reason:
+      "재성의 현실 욕구와 수익 지향성은 강하지만 일간의 감당력이 약해 돈과 기회를 크게 다루는 과정에서 부담이 커질 수 있다.",
+    interpretation: {
+      mode: "재물 추구 부담형",
+      operatingStyle:
+        "현실적인 수익과 자산 기회에 빠르게 반응하지만, 직접 감당할 수 있는 범위를 넘어가면 돈이 기회보다 압박으로 작용하기 쉽다.",
+      strengthExpression:
+        "수익 가능성과 시장의 흐름을 알아보는 감각이 있으며 실질적인 결과와 재물의 움직임에 민감하게 반응한다.",
+      riskPattern:
+        "수익 욕구가 감당 능력보다 앞서면 과도한 투자, 대출, 고정비, 책임 부담으로 인해 벌어들인 돈을 지키지 못할 수 있다.",
+      suitableConditions: [
+        "초기 자금과 고정비를 작게 통제할 수 있는 구조",
+        "본인이 모든 부담을 지기보다 재무와 운영 역할을 분리한 환경",
+        "확장보다 현금 흐름과 자금 회수를 먼저 확인하는 방식",
+      ],
+    },
+    matches: (signal, meanings) => {
+      if (
+        signal.kind !== "tenGodDominance" ||
+        signal.dominantTenGod === null ||
+        signal.dominantCount < 2 ||
+        !["정재", "편재"].includes(
+          signal.dominantTenGod,
+        )
+      ) {
+        return false;
+      }
+  
+      const hasWeakDayMaster =
+        meanings.some(
+          (meaning) =>
+            meaning.signal?.kind ===
+              "dayMasterStrength" &&
+            meaning.signal.type === "weak",
+        );
+  
+      return hasWeakDayMaster;
+    },
+  },
 ];
 
 
