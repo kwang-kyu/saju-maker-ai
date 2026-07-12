@@ -383,7 +383,63 @@ matches: (signal, meanings) => {
             meaning.signal.type === "weak",
         );
   
-      return hasWeakDayMaster;
+        return hasWeakDayMaster;
+    },
+  },
+  {
+    id: "wealth-dominant-but-unrooted",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "wealth",
+    weight: 4,
+    reason:
+      "재성의 현실 감각과 수익 기회에 대한 반응은 강하지만 지지의 뿌리가 약해 벌어들인 결과를 장기간 유지하고 축적하는 힘은 흔들릴 수 있다.",
+    interpretation: {
+      mode: "기회 포착 변동형",
+      operatingStyle:
+        "돈이 움직이는 기회와 시장 변화에는 빠르게 반응하지만, 하나의 수익 구조를 오래 유지하기보다 새로운 기회를 따라 이동하려는 경향이 있다.",
+      strengthExpression:
+        "시장 변화와 수익 가능성을 빠르게 포착하고 정체된 상황에서 새로운 현금 흐름을 만들어내는 능력이 강하다.",
+      riskPattern:
+        "수익 구조가 안정되기 전에 다음 투자나 확장으로 이동하면 매출은 발생해도 자산과 현금이 실제로 남지 않는 흐름이 반복될 수 있다.",
+      suitableConditions: [
+        "수익 발생 후 일정 금액을 자동으로 보유하는 자금 관리 구조",
+        "새로운 기회 탐색과 기존 수익 관리 역할이 분리된 환경",
+        "확장 전에 회수 기간과 손실 한도를 먼저 정하는 방식",
+      ],
+    },
+    matches: (signal, meanings) => {
+      if (
+        signal.kind !== "tenGodDominance" ||
+        signal.dominantTenGod === null ||
+        signal.dominantCount < 2 ||
+        !["정재", "편재"].includes(
+          signal.dominantTenGod,
+        )
+      ) {
+        return false;
+      }
+
+      const hasWeakDayMaster =
+        meanings.some(
+          (meaning) =>
+            meaning.signal?.kind ===
+              "dayMasterStrength" &&
+            meaning.signal.type === "weak",
+        );
+
+      const hasUnrootedSignal =
+        meanings.some(
+          (meaning) =>
+            meaning.signal?.kind ===
+              "rooting" &&
+            meaning.signal.rooted === false,
+        );
+
+      return (
+        !hasWeakDayMaster &&
+        hasUnrootedSignal
+      );
     },
   },
 ];
