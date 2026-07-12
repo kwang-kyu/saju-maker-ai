@@ -11,6 +11,10 @@ export function selectHumanLifePhase(
 
   const best = scores[0];
 
+  if (best.finalScore <= 0 || best.supportScore <= 0) {
+    return null;
+  }
+
   const definition = getHumanLifePhaseDefinition(
     best.phase,
   );
