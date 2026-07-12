@@ -49,36 +49,57 @@ import type {
     const season =
       MONTH_BRANCH_SEASON[input.monthBranch];
   
-    if (!season) {
-      return {
-        category: "monthCommand",
-        description:
-          "월령을 판정할 수 없습니다.",
-        strength: "weak",
-        confidence: "weak",
-      };
-    }
+      if (!season) {
+        return {
+          category: "monthCommand",
+          description:
+            "월령을 판정할 수 없습니다.",
+          strength: "weak",
+          confidence: "weak",
+          signal: {
+            kind: "monthCommand",
+            season: null,
+            supported: null,
+            dayMasterElement:
+              input.dayMasterElement,
+          },
+        };
+      }
   
     const supported =
       FAVORABLE_SEASON[
         input.dayMasterElement
       ].includes(season);
   
-    if (supported) {
+      if (supported) {
+        return {
+          category: "monthCommand",
+          description:
+            "월령이 일간을 생조하는 계절입니다.",
+          strength: "strong",
+          confidence: "strong",
+          signal: {
+            kind: "monthCommand",
+            season,
+            supported: true,
+            dayMasterElement:
+              input.dayMasterElement,
+          },
+        };
+      }
+  
       return {
         category: "monthCommand",
         description:
-          "월령이 일간을 생조하는 계절입니다.",
-        strength: "strong",
-        confidence: "strong",
+          "월령이 일간을 직접 생조하지 않는 계절입니다.",
+        strength: "weak",
+        confidence: "medium",
+        signal: {
+          kind: "monthCommand",
+          season,
+          supported: false,
+          dayMasterElement:
+            input.dayMasterElement,
+        },
       };
     }
-  
-    return {
-      category: "monthCommand",
-      description:
-        "월령이 일간을 직접 생조하지 않는 계절입니다.",
-      strength: "weak",
-      confidence: "medium",
-    };
-  }
