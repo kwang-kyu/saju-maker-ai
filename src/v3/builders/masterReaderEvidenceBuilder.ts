@@ -40,17 +40,28 @@ function toConfidence(
 }
 
 function buildLifeDriverMeanings(
-  structureFacts: SajuStructureFact[],
-): LifeDriverMeaning[] {
-  return structureFacts.map((fact, index) => ({
-    id: `${fact.category}-${index + 1}`,
-    source: fact.category,
-    meaning: fact.description,
-    strength: fact.strength,
-    confidence: toConfidence(fact.confidence),
-    signal: fact.signal,
-  }));
-}
+    structureFacts: SajuStructureFact[],
+  ): LifeDriverMeaning[] {
+    return structureFacts.map(
+      (fact, index): LifeDriverMeaning => {
+        const meaning: LifeDriverMeaning = {
+          id: `${fact.category}-${index + 1}`,
+          source: fact.category,
+          meaning: fact.description,
+          strength: fact.strength,
+          confidence: toConfidence(
+            fact.confidence,
+          ),
+        };
+  
+        if (fact.signal) {
+          meaning.signal = fact.signal;
+        }
+  
+        return meaning;
+      },
+    );
+  }
 
 function buildSurvivalEvidence(
   structureFacts: SajuStructureFact[],
@@ -72,11 +83,16 @@ function buildRepeatedPatternEvidence(
   }));
 }
 
-export function buildMasterReaderEvidenceBundle(params: {
-  facts: SajuFacts;
-  lifePhaseInput: HumanLifePhaseReaderInput;
-}): MasterReaderEvidenceBundle {
-  const { facts, lifePhaseInput } = params;
+export function buildMasterReaderEvidenceBundle(
+  params: {
+    facts: SajuFacts;
+    lifePhaseInput: HumanLifePhaseReaderInput;
+  },
+): MasterReaderEvidenceBundle {
+  const {
+    facts,
+    lifePhaseInput,
+  } = params;
 
   return {
     masterReaderInput: {
@@ -86,9 +102,10 @@ export function buildMasterReaderEvidenceBundle(params: {
         ),
       },
 
-      survivalEvidence: buildSurvivalEvidence(
-        facts.structureFacts,
-      ),
+      survivalEvidence:
+        buildSurvivalEvidence(
+          facts.structureFacts,
+        ),
 
       repeatedPatternEvidence:
         buildRepeatedPatternEvidence(
