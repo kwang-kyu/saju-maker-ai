@@ -181,7 +181,7 @@ export const LIFE_DRIVER_RULES: LifeDriverRule[] = [
       signal.rooted,
   },
   {
-    id: "wealth-strong-and-rooted",
+    id: "wealth-strong-and-rooted",    
     interpretation: {
         mode: "현실 성과 축적형",
         operatingStyle:
@@ -232,7 +232,62 @@ export const LIFE_DRIVER_RULES: LifeDriverRule[] = [
       return hasStrongDayMaster && hasRooting;
     },
   },
+{
+id: "achievement-competitive-rooted",
+source: "tenGodStrength",
+signalKind: "tenGodDominance",
+driver: "achievement",
+weight: 4,
+reason:
+  "강한 추진력과 경쟁 성향, 안정된 기반이 함께 작동하여 스스로 목표를 만들고 성과를 만들어내는 힘이 강하다.",
+interpretation: {
+  mode: "자기개척 성취형",
+  operatingStyle:
+    "주어진 환경보다 스스로 기회를 만들고 경쟁을 통해 자신의 영역을 넓혀가는 방식으로 성장한다.",
+  strengthExpression:
+    "도전과 경쟁 상황에서 실행력이 크게 살아나며 어려운 목표일수록 집중력이 높아진다.",
+  riskPattern:
+    "성과를 지나치게 앞세우면 주변과의 협력보다 속도를 우선하게 되어 갈등과 소진이 반복될 수 있다.",
+  suitableConditions: [
+    "독립적인 의사결정이 가능한 환경",
+    "명확한 목표와 성과 기준이 있는 조직",
+    "새로운 시장이나 프로젝트를 개척하는 역할",
+  ],
+},
+matches: (signal, meanings) => {
+  if (
+    signal.kind !== "tenGodDominance" ||
+    signal.dominantTenGod === null ||
+    signal.dominantCount < 2 ||
+    !["상관", "겁재"].includes(
+      signal.dominantTenGod,
+    )
+  ) {
+    return false;
+  }
+
+  const hasStrongDayMaster =
+    meanings.some(
+      (meaning) =>
+        meaning.signal?.kind ===
+          "dayMasterStrength" &&
+        meaning.signal.type === "strong",
+    );
+
+  const hasRooting =
+    meanings.some(
+      (meaning) =>
+        meaning.signal?.kind ===
+          "rooting" &&
+        meaning.signal.rooted,
+    );
+
+  return hasStrongDayMaster && hasRooting;
+},
+},
 ];
+
+
 
 export type MatchedLifeDriverRule = {
   rule: LifeDriverRule;
