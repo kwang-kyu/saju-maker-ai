@@ -52,7 +52,9 @@ import type {
     score: LifeDriverScore,
   ): DriverConfidence {
     const independentSources = new Set(
-      score.matches.map((match) => match.meaning.source),
+      score.matches.map(
+        (match) => match.meaning.source,
+      ),
     ).size;
   
     if (
@@ -63,7 +65,10 @@ import type {
       return "high";
     }
   
-    if (independentSources >= 2 && score.score >= 4) {
+    if (
+      independentSources >= 2 &&
+      score.score >= 4
+    ) {
       return "medium";
     }
   
@@ -74,17 +79,23 @@ import type {
     score: LifeDriverScore,
     status: LifeDriverSelectionStatus,
   ): LifeDriverJudgement {
-    const evidence: DriverEvidence[] = score.matches.map((match) => ({
-      source: mapEvidenceSource(match.meaning.source),
-      description: match.rule.reason,
-      weight: match.rule.weight,
-    }));
+    const evidence: DriverEvidence[] =
+      score.matches.map((match) => ({
+        source: mapEvidenceSource(
+          match.meaning.source,
+        ),
+        description: match.rule.reason,
+        weight: match.rule.weight,
+      }));
   
     return {
       driver: score.driver,
       evidence,
       counterEvidence: [],
-      confidence: getConfidence(status, score),
+      confidence: getConfidence(
+        status,
+        score,
+      ),
       exceptionConditions: [],
     };
   }
@@ -92,8 +103,12 @@ import type {
   export function readLifeDriver(
     input: LifeDriverReaderInput,
   ): LifeDriverResult | null {
-    const scores = scoreLifeDrivers(input.meanings);
-    const selection = selectLifeDrivers(scores);
+    const scores = scoreLifeDrivers(
+      input.meanings,
+    );
+  
+    const selection =
+      selectLifeDrivers(scores);
   
     if (!selection.primary) {
       return null;
