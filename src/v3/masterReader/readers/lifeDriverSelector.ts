@@ -21,13 +21,18 @@ const DISTRIBUTED_GAP = 1;
 export function selectLifeDrivers(
   scores: LifeDriverScore[],
 ): LifeDriverSelection {
-  const ranked = [...scores].sort((a, b) => b.score - a.score);
+  const ranked = [...scores].sort(
+    (a, b) => b.score - a.score,
+  );
 
   const primary = ranked[0] ?? null;
   const secondary = ranked[1] ?? null;
   const remaining = ranked.slice(2);
 
-  if (!primary || primary.score < MINIMUM_PRIMARY_SCORE) {
+  if (
+    !primary ||
+    primary.score < MINIMUM_PRIMARY_SCORE
+  ) {
     return {
       primary: null,
       secondary: null,
@@ -37,7 +42,10 @@ export function selectLifeDrivers(
     };
   }
 
-  if (!secondary || secondary.score <= 0) {
+  if (
+    !secondary ||
+    secondary.score <= 0
+  ) {
     return {
       primary,
       secondary: null,
@@ -47,7 +55,8 @@ export function selectLifeDrivers(
     };
   }
 
-  const scoreGap = primary.score - secondary.score;
+  const scoreGap =
+    primary.score - secondary.score;
 
   if (scoreGap >= CLEAR_PRIMARY_GAP) {
     return {
@@ -64,7 +73,8 @@ export function selectLifeDrivers(
   if (
     third &&
     third.score > 0 &&
-    secondary.score - third.score <= DISTRIBUTED_GAP
+    secondary.score - third.score <=
+      DISTRIBUTED_GAP
   ) {
     return {
       primary,
