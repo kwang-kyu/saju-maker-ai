@@ -1,3 +1,4 @@
+import { calculateSajuInteractions } from "../calculators/sajuInteractionCalculator";
 import type {
     SajuElementDistribution,
     SajuEvidenceStrength,
@@ -252,6 +253,7 @@ import type {
   export function buildSajuFacts(
     calculated: V3CalculatedSaju,
   ): SajuFacts {
+    const pillars = buildPillars(calculated);
     const elementDistribution =
       buildElementDistribution(calculated);
   
@@ -281,7 +283,7 @@ import type {
       solarDate: calculated.solarDate,
       lunarDate: calculated.lunarDate,
   
-      pillars: buildPillars(calculated),
+      pillars,
   
       dayMaster: calculated.dayMaster,
   
@@ -296,7 +298,9 @@ import type {
         strongestElement,
         weakestElement,
       }),
-      interactionFacts: [],
+      interactionFacts: calculateSajuInteractions(
+        pillars,
+      ),
       luckFlow: {
         currentAge: calculateCurrentAge(
           calculated.birthDate,
