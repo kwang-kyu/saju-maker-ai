@@ -13,15 +13,25 @@ export function buildLifeDriverExplanation(
   judgement: LifeDriverJudgement,
 ): LifeDriverExplanation {
   const definition = getLifeDriverDefinition(judgement.driver);
-
+  const interpretation =
+  judgement.interpretation;
   return {
     title: definition.label,
 
-    summary: definition.description,
+    summary: interpretation
+    ? `${definition.description} ${interpretation.operatingStyle}`
+    : definition.description,
 
-    strengths: [...definition.activationKeywords],
+    strengths: interpretation
+    ? [
+        interpretation.strengthExpression,
+        ...interpretation.suitableConditions,
+      ]
+    : [...definition.activationKeywords],
 
-    cautions: [...definition.riskKeywords],
+    cautions: interpretation
+    ? [interpretation.riskPattern]
+    : [...definition.riskKeywords],
 
     evidence: judgement.evidence.map(
       (item) => item.description,
