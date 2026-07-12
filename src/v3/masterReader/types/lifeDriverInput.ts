@@ -1,3 +1,4 @@
+import type { SajuStructureSignal } from "../../types/sajuFacts";
 export type LifeDriverEvidenceSource =
   | "monthCommand"
   | "dayMasterStrength"
@@ -14,6 +15,7 @@ export type LifeDriverMeaning = {
   meaning: string;
   strength: "weak" | "medium" | "strong";
   confidence: "low" | "medium" | "high";
+  signal?: SajuStructureSignal;
 };
 
 export type LifeDriverReaderInput = {
