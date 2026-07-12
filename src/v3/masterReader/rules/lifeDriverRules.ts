@@ -285,6 +285,62 @@ matches: (signal, meanings) => {
   return hasStrongDayMaster && hasRooting;
 },
 },
+{
+    id: "achievement-strong-but-unrooted",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "achievement",
+    weight: 4,
+    reason:
+      "경쟁과 돌파의 힘은 강하지만 지지의 뿌리가 약해 시작과 확장은 빠른 반면 지속과 유지에서 흔들릴 가능성이 있다.",
+    interpretation: {
+      mode: "돌파 우선 성취형",
+      operatingStyle:
+        "새로운 목표나 경쟁 상황을 만나면 빠르게 움직여 성과를 만들지만, 장기간 같은 구조를 유지하기보다 다음 기회를 향해 이동하려는 성향이 강하다.",
+      strengthExpression:
+        "초기 실행과 문제 돌파 능력이 뛰어나며 정체된 환경에서 새로운 흐름을 만들어내는 힘이 크다.",
+      riskPattern:
+        "성과가 보이기 전에 방향을 바꾸거나 기반이 충분히 마련되지 않은 상태에서 확장을 반복하면 성취가 자산과 경력으로 남지 않을 수 있다.",
+      suitableConditions: [
+        "짧은 실행 주기와 명확한 중간 성과가 있는 환경",
+        "초기 개척과 문제 해결을 담당한 뒤 운영을 넘길 수 있는 역할",
+        "속도뿐 아니라 유지 기준과 후속 관리자가 준비된 구조",
+      ],
+    },
+    matches: (signal, meanings) => {
+      if (
+        signal.kind !== "tenGodDominance" ||
+        signal.dominantTenGod === null ||
+        signal.dominantCount < 2 ||
+        !["상관", "겁재"].includes(
+          signal.dominantTenGod,
+        )
+      ) {
+        return false;
+      }
+  
+      const hasStrongDayMaster =
+        meanings.some(
+          (meaning) =>
+            meaning.signal?.kind ===
+              "dayMasterStrength" &&
+            meaning.signal.type === "strong",
+        );
+  
+      const hasUnrootedSignal =
+        meanings.some(
+          (meaning) =>
+            meaning.signal?.kind ===
+              "rooting" &&
+            meaning.signal.rooted === false,
+        );
+  
+      return (
+        hasStrongDayMaster &&
+        hasUnrootedSignal
+      );
+    },
+  },
 ];
 
 
