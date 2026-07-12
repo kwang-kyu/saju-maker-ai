@@ -53,6 +53,44 @@ export type SajuStructureSignal =
       counts: Record<string, number>;
 
       distributed: boolean;
+    }
+  | {
+      kind: "dayMasterStrength";
+
+      type: "strong" | "balanced" | "weak";
+
+      score: number;
+
+      supportScore: number;
+
+      opposingScore: number;
+
+      monthCommandScore: number;
+
+      rootingScore: number;
+    }
+  | {
+      kind: "monthCommand";
+
+      season:
+        | "spring"
+        | "summer"
+        | "autumn"
+        | "winter"
+        | null;
+
+      supported: boolean | null;
+
+      dayMasterElement: SajuFiveElement;
+    }
+  | {
+      kind: "rooting";
+
+      rootingCount: number;
+
+      totalBranches: number;
+
+      rooted: boolean;
     };
 
 export type SajuStructureFact = {
