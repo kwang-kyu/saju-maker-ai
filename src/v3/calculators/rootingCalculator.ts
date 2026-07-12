@@ -60,6 +60,12 @@ import type {
         evidence: [
           `네 지지 중 ${rootingCount}곳에서 일간과 같은 천간이 지장간으로 확인된다.`,
         ],
+        signal: {
+          kind: "rooting",
+          rootingCount,
+          totalBranches: 4,
+          rooted: true,
+        },
       };
     }
   
@@ -73,6 +79,12 @@ import type {
         evidence: [
           `네 지지 중 ${rootingCount}곳에서 일간과 같은 천간이 지장간으로 확인된다.`,
         ],
+        signal: {
+          kind: "rooting",
+          rootingCount,
+          totalBranches: 4,
+          rooted: true,
+        },
       };
     }
   
@@ -85,5 +97,14 @@ import type {
       evidence: [
         "년지·월지·일지·시지의 지장간에서 일간과 같은 천간이 확인되지 않는다.",
       ],
+      signal: {
+        kind: "rooting",
+        rootingCount: 0,
+        totalBranches: 4,
+        rooted: false,
+      },
     };
   }
+    
+  
+      
