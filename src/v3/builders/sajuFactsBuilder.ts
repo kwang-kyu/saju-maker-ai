@@ -1,5 +1,8 @@
 import { calculateDayMasterStrength } from "../calculators/dayMasterStrengthCalculator";
 import { calculateSajuInteractions } from "../calculators/sajuInteractionCalculator";
+import { calculateMonthCommand } from "../calculators/monthCommandCalculator";
+import { calculateRooting } from "../calculators/rootingCalculator";
+import { calculateTenGodStructure } from "../calculators/tenGodStructureCalculator";
 import type {
     SajuElementDistribution,
     SajuEvidenceStrength,
@@ -15,7 +18,32 @@ import type {
     element: SajuFiveElement;
     count: number;
   };
-  
+  const DAY_MASTER_ELEMENT_MAP: Record<
+  string,
+  SajuFiveElement
+> = {
+  甲: "wood",
+  乙: "wood",
+  丙: "fire",
+  丁: "fire",
+  戊: "earth",
+  己: "earth",
+  庚: "metal",
+  辛: "metal",
+  壬: "water",
+  癸: "water",
+
+  갑: "wood",
+  을: "wood",
+  병: "fire",
+  정: "fire",
+  무: "earth",
+  기: "earth",
+  경: "metal",
+  신: "metal",
+  임: "water",
+  계: "water",
+};
   function buildPillarFact(params: {
     position: SajuPillarPosition;
     ganZhi: string;
@@ -261,6 +289,36 @@ import type {
     const elementCounts = getElementCounts(
       elementDistribution,
     );
+    const dayMasterElement =
+  DAY_MASTER_ELEMENT_MAP[calculated.dayMaster];
+
+const monthCommand =
+  dayMasterElement
+    ? calculateMonthCommand({
+        monthBranch:
+          calculated.monthGanZhi.charAt(1),
+        dayMasterElement,
+      })
+    : null;
+
+const rooting = calculateRooting({
+  dayStem: calculated.dayMaster,
+  yearBranch:
+    calculated.yearGanZhi.charAt(1),
+  monthBranch:
+    calculated.monthGanZhi.charAt(1),
+  dayBranch:
+    calculated.dayGanZhi.charAt(1),
+  timeBranch:
+    calculated.timeGanZhi.charAt(1),
+});
+
+const tenGodStructure =
+  calculateTenGodStructure({
+    yearTenGod: calculated.yearTenGod,
+    monthTenGod: calculated.monthTenGod,
+    timeTenGod: calculated.timeTenGod,
+  });
   
     const strongestElement =
       findUniqueExtremeElement({
@@ -288,12 +346,21 @@ import type {
           elementDistribution,
         });
       
-      const structureFacts = dayMasterStrength
-        ? [
+        const structureFacts = [
             ...baseStructureFacts,
-            dayMasterStrength.fact,
-          ]
-        : baseStructureFacts;
+          
+            ...(dayMasterStrength
+              ? [dayMasterStrength.fact]
+              : []),
+          
+            ...(monthCommand
+              ? [monthCommand]
+              : []),
+          
+            rooting,
+          
+            tenGodStructure,
+          ];
     return {
       name: calculated.name,
       birthDate: calculated.birthDate,
