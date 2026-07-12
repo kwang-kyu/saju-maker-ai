@@ -56,8 +56,14 @@ export type SajuStructureFact = {
   strength: SajuEvidenceStrength;
 
   confidence: SajuEvidenceStrength;
-};
 
+  evidence?: string[];
+
+  conditions?: string[];
+
+  exceptions?: string[];
+
+};
 export type SajuInteractionFact = {
   type:
     | "combination"
