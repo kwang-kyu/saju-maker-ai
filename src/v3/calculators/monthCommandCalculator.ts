@@ -8,10 +8,13 @@ import type {
     dayMasterElement: SajuFiveElement;
   };
   
-  const MONTH_BRANCH_SEASON: Record<
-    string,
-    "spring" | "summer" | "autumn" | "winter"
-  > = {
+  type Season =
+    | "spring"
+    | "summer"
+    | "autumn"
+    | "winter";
+  
+  const MONTH_BRANCH_SEASON: Record<string, Season> = {
     寅: "spring",
     卯: "spring",
     辰: "spring",
@@ -31,7 +34,7 @@ import type {
   
   const FAVORABLE_SEASON: Record<
     SajuFiveElement,
-    ("spring" | "summer" | "autumn" | "winter")[]
+    Season[]
   > = {
     wood: ["spring"],
     fire: ["summer"],
@@ -50,7 +53,7 @@ import type {
       return {
         category: "monthCommand",
         description:
-          "월령을 판정할 수 없는 월지입니다.",
+          "월령을 판정할 수 없습니다.",
         strength: "weak",
         confidence: "weak",
       };
@@ -65,7 +68,7 @@ import type {
       return {
         category: "monthCommand",
         description:
-          "월령이 일간을 생조하는 계절에 위치하여 기본적인 계절의 도움을 받는다.",
+          "월령이 일간을 생조하는 계절입니다.",
         strength: "strong",
         confidence: "strong",
       };
@@ -74,7 +77,7 @@ import type {
     return {
       category: "monthCommand",
       description:
-        "월령이 일간을 직접 생조하지 않는 계절에 위치하여 계절적 지원은 제한적이다.",
+        "월령이 일간을 직접 생조하지 않는 계절입니다.",
       strength: "weak",
       confidence: "medium",
     };
