@@ -81,11 +81,11 @@ export function scoreHumanLifePhases(
       if (b.finalScore !== a.finalScore) {
         return b.finalScore - a.finalScore;
       }
-
+    
       if (b.supportScore !== a.supportScore) {
         return b.supportScore - a.supportScore;
       }
-
+    
       return a.counterScore - b.counterScore;
     });
 }
