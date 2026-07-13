@@ -16,15 +16,24 @@ import type {
     lifeDriverConfidence:
       DecisionEngineInput["humanContext"]["identity"]["profile"]["lifeDriver"]["primary"]["confidence"];
   
+    primarySurvivalStyle:
+      DecisionEngineInput["humanContext"]["identity"]["profile"]["survivalStyle"]["primary"]["style"];
+  
+    survivalStyleConfidence:
+      DecisionEngineInput["humanContext"]["identity"]["profile"]["survivalStyle"]["primary"]["confidence"];
+  
     currentPhase:
       DecisionEngineInput["humanContext"]["currentPhase"]["phase"];
   
     topic: DecisionEngineInput["question"]["topic"];
     intent: DecisionEngineInput["question"]["intent"];
     motive: DecisionEngineInput["question"]["motive"];
+  
     decisionTarget:
       DecisionEngineInput["question"]["decisionTarget"];
-    urgency: DecisionEngineInput["question"]["urgency"];
+  
+    urgency:
+      DecisionEngineInput["question"]["urgency"];
   };
   
   export type VerdictContextBuilderInput = {
@@ -42,6 +51,9 @@ import type {
     const primaryLifeDriver =
       decisionInput.humanContext.identity.profile.lifeDriver.primary;
   
+    const primarySurvivalStyle =
+      decisionInput.humanContext.identity.profile.survivalStyle.primary;
+  
     return {
       alignment: input.alignment,
       readiness: input.readiness,
@@ -50,12 +62,17 @@ import type {
       primaryLifeDriver: primaryLifeDriver.driver,
       lifeDriverConfidence: primaryLifeDriver.confidence,
   
-      currentPhase: decisionInput.humanContext.currentPhase.phase,
+      primarySurvivalStyle: primarySurvivalStyle.style,
+      survivalStyleConfidence: primarySurvivalStyle.confidence,
+  
+      currentPhase:
+        decisionInput.humanContext.currentPhase.phase,
   
       topic: decisionInput.question.topic,
       intent: decisionInput.question.intent,
       motive: decisionInput.question.motive,
-      decisionTarget: decisionInput.question.decisionTarget,
+      decisionTarget:
+        decisionInput.question.decisionTarget,
       urgency: decisionInput.question.urgency,
     };
   }
