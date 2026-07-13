@@ -88,6 +88,20 @@ export type DecisionRisk = {
 };
 
 /**
+ * 엔진이 판단한 구체적인 실행 형태다.
+ *
+ * Verdict가 선택의 가능 여부를 결정한다면,
+ * DecisionShape는 그 선택을 어떤 방식으로
+ * 실행해야 하는지를 구조화한다.
+ */
+export type DecisionShape = {
+  recommendationType: string;
+  executionScale: string;
+  executionStyle: string;
+  priority: string;
+  avoid: string[];
+};
+/**
  * 현재 국면과 질문이 충돌하는 지점이다.
  */
 export type DecisionConflict = {
