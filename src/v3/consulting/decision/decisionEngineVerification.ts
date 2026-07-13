@@ -374,3 +374,146 @@ export function verifyDecisionEngineLifeDriverSensitivity(
     passed,
   };
 }
+
+export type SurvivalStyleVerificationResult = {
+  question: string;
+
+  pushResult: DecisionResult;
+  stabilityResult: DecisionResult;
+
+  alignmentStayedSame: boolean;
+  readinessStayedSame: boolean;
+  verdictChanged: boolean;
+
+  passed: boolean;
+};
+
+/**
+ * Decision Engine Survival Style 민감도 검증
+ *
+ * 동일한 질문, 동일한 현재 국면,
+ * 동일한 Life Driver를 유지하고
+ * Primary Survival Style만 push와 stability로 변경하여
+ * Verdict가 실제로 달라지는지 확인한다.
+ *
+ * Context Alignment와 Action Readiness는 동일해야 하며,
+ * Verdict 변화는 Survival Style 규칙에서만 발생해야 한다.
+ */
+export function verifyDecisionEngineSurvivalStyleSensitivity(
+  baseContext: HumanDestinyContext,
+  questionText = "지금 사업을 시작해도 될까요?",
+): SurvivalStyleVerificationResult {
+  const growthContext: HumanDestinyContext = {
+    ...baseContext,
+    currentPhase: {
+      ...baseContext.currentPhase,
+      phase: "growth",
+      title: "성장 국면",
+      description:
+        "현재는 활동 범위를 넓히고 새로운 기회를 실행으로 연결해야 하는 국면이다.",
+    },
+    identity: {
+      ...baseContext.identity,
+      profile: {
+        ...baseContext.identity.profile,
+        lifeDriver: {
+          ...baseContext.identity.profile.lifeDriver,
+          primary: {
+            ...baseContext.identity.profile.lifeDriver.primary,
+            driver: "relationship",
+            confidence: "high",
+          },
+        },
+      },
+    },
+  };
+
+  const pushContext: HumanDestinyContext = {
+    ...growthContext,
+    identity: {
+      ...growthContext.identity,
+      profile: {
+        ...growthContext.identity.profile,
+        survivalStyle: {
+          ...growthContext.identity.profile.survivalStyle,
+          primary: {
+            ...growthContext.identity.profile.survivalStyle.primary,
+            style: "push",
+            confidence: "high",
+          },
+        },
+      },
+    },
+  };
+
+  const stabilityContext: HumanDestinyContext = {
+    ...growthContext,
+    identity: {
+      ...growthContext.identity,
+      profile: {
+        ...growthContext.identity.profile,
+        survivalStyle: {
+          ...growthContext.identity.profile.survivalStyle,
+          primary: {
+            ...growthContext.identity.profile.survivalStyle.primary,
+            style: "stability",
+            confidence: "high",
+          },
+        },
+      },
+    },
+  };
+
+  const pushQuestion = readQuestion(
+    pushContext,
+    questionText,
+  );
+
+  const stabilityQuestion = readQuestion(
+    stabilityContext,
+    questionText,
+  );
+
+  const pushResult = runDecisionEngine({
+    humanContext: pushContext,
+    question: pushQuestion,
+  });
+
+  const stabilityResult = runDecisionEngine({
+    humanContext: stabilityContext,
+    question: stabilityQuestion,
+  });
+
+  const alignmentStayedSame =
+    pushResult.contextAlignment ===
+    stabilityResult.contextAlignment;
+
+  const readinessStayedSame =
+    pushResult.actionReadiness ===
+    stabilityResult.actionReadiness;
+
+  const verdictChanged =
+    pushResult.verdict !==
+    stabilityResult.verdict;
+
+  const passed =
+    alignmentStayedSame &&
+    readinessStayedSame &&
+    verdictChanged &&
+    pushResult.verdict === "recommended" &&
+    stabilityResult.verdict ===
+      "conditionallyRecommended";
+
+  return {
+    question: questionText,
+
+    pushResult,
+    stabilityResult,
+
+    alignmentStayedSame,
+    readinessStayedSame,
+    verdictChanged,
+
+    passed,
+  };
+}
