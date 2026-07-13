@@ -7,6 +7,9 @@ import type {
 import {
   evaluateLifeDriverVerdictRule,
 } from "./lifeDriverVerdictRules";
+import {
+  evaluateSurvivalStyleVerdictRule,
+} from "./survivalStyleVerdictRules";
 
 function applyLifeDriverEffect(
   verdict: DecisionVerdict,
@@ -42,6 +45,53 @@ function applyLifeDriverEffect(
 
   if (
     context.lifeDriverConfidence === "high" &&
+    verdict === "conditionallyRecommended"
+  ) {
+    return "wait";
+  }
+
+  return verdict;
+}
+
+function applySurvivalStyleEffect(
+  verdict: DecisionVerdict,
+  context: VerdictContext,
+): DecisionVerdict {
+  if (
+    context.survivalStyleConfidence === "low"
+  ) {
+    return verdict;
+  }
+
+  const result =
+    evaluateSurvivalStyleVerdictRule(
+      context.primarySurvivalStyle,
+      context.decisionTarget,
+    );
+
+  if (result.effect === "neutral") {
+    return verdict;
+  }
+
+  if (result.effect === "support") {
+    if (
+      context.survivalStyleConfidence ===
+        "high" &&
+      verdict === "insufficientEvidence"
+    ) {
+      return "conditionallyRecommended";
+    }
+
+    return verdict;
+  }
+
+  if (verdict === "recommended") {
+    return "conditionallyRecommended";
+  }
+
+  if (
+    context.survivalStyleConfidence ===
+      "high" &&
     verdict === "conditionallyRecommended"
   ) {
     return "wait";
@@ -89,8 +139,14 @@ export function buildVerdict(
     verdict = "conditionallyRecommended";
   }
 
-  return applyLifeDriverEffect(
-    verdict,
+  const lifeDriverVerdict =
+    applyLifeDriverEffect(
+      verdict,
+      context,
+    );
+
+  return applySurvivalStyleEffect(
+    lifeDriverVerdict,
     context,
   );
 }
