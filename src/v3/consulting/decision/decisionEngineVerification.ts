@@ -517,3 +517,175 @@ export function verifyDecisionEngineSurvivalStyleSensitivity(
     passed,
   };
 }
+export type RepeatedPatternVerdictVerificationResult = {
+  question: string;
+
+  opportunityMissResult: DecisionResult;
+  earlyCollapseResult: DecisionResult;
+
+  alignmentStayedSame: boolean;
+  readinessStayedSame: boolean;
+  verdictChanged: boolean;
+
+  passed: boolean;
+};
+
+/**
+ * Decision Engine Repeated Pattern Verdict 민감도 검증
+ *
+ * 동일한 질문, 동일한 현재 국면,
+ * 동일한 Life Driver와 Survival Style을 유지하고
+ * Primary Repeated Pattern만 변경하여
+ * Verdict가 실제로 달라지는지 확인한다.
+ *
+ * Context Alignment와 Action Readiness는 동일해야 하며,
+ * Verdict 변화는 Repeated Pattern 규칙에서만 발생해야 한다.
+ */
+export function verifyDecisionEngineRepeatedPatternVerdictSensitivity(
+  baseContext: HumanDestinyContext,
+  questionText = "지금 사업을 시작해도 될까요?",
+): RepeatedPatternVerdictVerificationResult {
+  const growthContext: HumanDestinyContext = {
+    ...baseContext,
+    currentPhase: {
+      ...baseContext.currentPhase,
+      phase: "growth",
+      title: "성장 국면",
+      description:
+        "현재는 활동 범위를 넓히고 새로운 기회를 실행으로 연결해야 하는 국면이다.",
+    },
+    identity: {
+      ...baseContext.identity,
+      profile: {
+        ...baseContext.identity.profile,
+        lifeDriver: {
+          ...baseContext.identity.profile.lifeDriver,
+          primary: {
+            ...baseContext.identity.profile.lifeDriver.primary,
+            driver: "relationship",
+            confidence: "high",
+          },
+        },
+        survivalStyle: {
+          ...baseContext.identity.profile.survivalStyle,
+          primary: {
+            ...baseContext.identity.profile.survivalStyle.primary,
+            style: "relationship",
+            confidence: "high",
+          },
+        },
+      },
+    },
+  };
+
+  const opportunityMissContext: HumanDestinyContext = {
+    ...growthContext,
+    identity: {
+      ...growthContext.identity,
+      profile: {
+        ...growthContext.identity.profile,
+        repeatedPattern: {
+          ...growthContext.identity.profile.repeatedPattern,
+          primary: {
+            ...growthContext.identity.profile.repeatedPattern.primary,
+            pattern: "opportunityMiss",
+            confidence: "high",
+          },
+          secondary: null,
+          repeatedBehaviors: [
+            "충분히 검토한 뒤에도 실행 결정을 계속 미룬다.",
+          ],
+          strengths: [
+            "결정 전에 위험을 신중하게 살핀다.",
+          ],
+          risks: [
+            "검토가 길어져 실행 기회를 놓칠 수 있다.",
+          ],
+        },
+      },
+    },
+  };
+
+  const earlyCollapseContext: HumanDestinyContext = {
+    ...growthContext,
+    identity: {
+      ...growthContext.identity,
+      profile: {
+        ...growthContext.identity.profile,
+        repeatedPattern: {
+          ...growthContext.identity.profile.repeatedPattern,
+          primary: {
+            ...growthContext.identity.profile.repeatedPattern.primary,
+            pattern: "earlySuccessCollapse",
+            confidence: "high",
+          },
+          secondary: null,
+          repeatedBehaviors: [
+            "초기 성과가 생기면 검증 전에 확장을 서두른다.",
+          ],
+          strengths: [
+            "기회를 빠르게 실행으로 옮긴다.",
+          ],
+          risks: [
+            "초기 성과를 장기 안정성으로 오인할 수 있다.",
+            "확장 이후 비용과 책임을 감당하지 못할 수 있다.",
+          ],
+        },
+      },
+    },
+  };
+
+  const opportunityMissQuestion = readQuestion(
+    opportunityMissContext,
+    questionText,
+  );
+
+  const earlyCollapseQuestion = readQuestion(
+    earlyCollapseContext,
+    questionText,
+  );
+
+  const opportunityMissResult = runDecisionEngine({
+    humanContext: opportunityMissContext,
+    question: opportunityMissQuestion,
+  });
+
+  const earlyCollapseResult = runDecisionEngine({
+    humanContext: earlyCollapseContext,
+    question: earlyCollapseQuestion,
+  });
+
+  const alignmentStayedSame =
+    opportunityMissResult.contextAlignment ===
+    earlyCollapseResult.contextAlignment;
+
+  const readinessStayedSame =
+    opportunityMissResult.actionReadiness ===
+    earlyCollapseResult.actionReadiness;
+
+  const verdictChanged =
+    opportunityMissResult.verdict !==
+    earlyCollapseResult.verdict;
+
+  const passed =
+    alignmentStayedSame &&
+    readinessStayedSame &&
+    verdictChanged &&
+    opportunityMissResult.verdict ===
+      "recommended" &&
+    earlyCollapseResult.verdict ===
+      "conditionallyRecommended";
+
+  return {
+    question: questionText,
+
+    opportunityMissResult,
+    earlyCollapseResult,
+
+    alignmentStayedSame,
+    readinessStayedSame,
+    verdictChanged,
+
+    passed,
+  };
+}
