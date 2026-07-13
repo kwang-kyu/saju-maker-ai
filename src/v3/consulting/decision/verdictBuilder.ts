@@ -10,6 +10,9 @@ import {
 import {
   evaluateSurvivalStyleVerdictRule,
 } from "./survivalStyleVerdictRules";
+import {
+  evaluateRepeatedPatternVerdictRule,
+} from "./repeatedPatternVerdictRules";
 
 function applyLifeDriverEffect(
   verdict: DecisionVerdict,
@@ -100,6 +103,57 @@ function applySurvivalStyleEffect(
   return verdict;
 }
 
+function applyRepeatedPatternEffect(
+  verdict: DecisionVerdict,
+  context: VerdictContext,
+): DecisionVerdict {
+  if (
+    context.repeatedPatternConfidence === "low"
+  ) {
+    return verdict;
+  }
+
+  const result =
+    evaluateRepeatedPatternVerdictRule(
+      context.primaryRepeatedPattern,
+      context.decisionTarget,
+    );
+
+  if (result.effect === "neutral") {
+    return verdict;
+  }
+
+  if (result.effect === "block") {
+    return "notRecommended";
+  }
+
+  if (result.effect === "support") {
+    if (
+      context.repeatedPatternConfidence ===
+        "high" &&
+      verdict === "insufficientEvidence"
+    ) {
+      return "conditionallyRecommended";
+    }
+
+    return verdict;
+  }
+
+  if (verdict === "recommended") {
+    return "conditionallyRecommended";
+  }
+
+  if (
+    context.repeatedPatternConfidence ===
+      "high" &&
+    verdict === "conditionallyRecommended"
+  ) {
+    return "wait";
+  }
+
+  return verdict;
+}
+
 export function buildVerdict(
   context: VerdictContext,
 ): DecisionVerdict {
@@ -140,13 +194,19 @@ export function buildVerdict(
   }
 
   const lifeDriverVerdict =
-    applyLifeDriverEffect(
-      verdict,
-      context,
-    );
+  applyLifeDriverEffect(
+    verdict,
+    context,
+  );
 
-  return applySurvivalStyleEffect(
+const survivalStyleVerdict =
+  applySurvivalStyleEffect(
     lifeDriverVerdict,
     context,
   );
+
+return applyRepeatedPatternEffect(
+  survivalStyleVerdict,
+  context,
+);
 }
