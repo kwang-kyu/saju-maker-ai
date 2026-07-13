@@ -1,12 +1,68 @@
-import type { DecisionVerdict } from "./decisionTypes";
-import type { VerdictContext } from "./verdictContextBuilder";
+import type {
+  DecisionVerdict,
+} from "./decisionTypes";
+import type {
+  VerdictContext,
+} from "./verdictContextBuilder";
+import {
+  evaluateLifeDriverVerdictRule,
+} from "./lifeDriverVerdictRules";
+
+function applyLifeDriverEffect(
+  verdict: DecisionVerdict,
+  context: VerdictContext,
+): DecisionVerdict {
+  if (context.lifeDriverConfidence === "low") {
+    return verdict;
+  }
+
+  const result = evaluateLifeDriverVerdictRule(
+    context.primaryLifeDriver,
+    context.decisionTarget,
+  );
+
+  if (result.effect === "neutral") {
+    return verdict;
+  }
+
+  if (result.effect === "support") {
+    if (
+      context.lifeDriverConfidence === "high" &&
+      verdict === "insufficientEvidence"
+    ) {
+      return "conditionallyRecommended";
+    }
+
+    return verdict;
+  }
+
+  if (verdict === "recommended") {
+    return "conditionallyRecommended";
+  }
+
+  if (
+    context.lifeDriverConfidence === "high" &&
+    verdict === "conditionallyRecommended"
+  ) {
+    return "wait";
+  }
+
+  return verdict;
+}
 
 export function buildVerdict(
   context: VerdictContext,
 ): DecisionVerdict {
-  const { alignment, readiness } = context;
+  const {
+    alignment,
+    readiness,
+  } = context;
 
   if (alignment === "stronglyConflicted") {
+    return "notRecommended";
+  }
+
+  if (readiness === "stopRequired") {
     return "notRecommended";
   }
 
@@ -18,23 +74,23 @@ export function buildVerdict(
     return "wait";
   }
 
-  if (readiness === "stopRequired") {
-    return "notRecommended";
-  }
+  let verdict: DecisionVerdict =
+    "insufficientEvidence";
 
   if (
     alignment === "stronglyAligned" &&
     readiness === "ready"
   ) {
-    return "recommended";
-  }
-
-  if (
+    verdict = "recommended";
+  } else if (
     alignment === "aligned" ||
     readiness === "readyWithConditions"
   ) {
-    return "conditionallyRecommended";
+    verdict = "conditionallyRecommended";
   }
 
-  return "insufficientEvidence";
+  return applyLifeDriverEffect(
+    verdict,
+    context,
+  );
 }
