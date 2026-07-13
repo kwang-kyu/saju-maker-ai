@@ -34,7 +34,8 @@ export function buildLifeDriverExplanation(
     : [...definition.riskKeywords],
 
     evidence: judgement.evidence.map(
-      (item) => item.description,
+      (item) =>
+        `[${item.source}] ${item.description}`,
     ),
   };
 }
