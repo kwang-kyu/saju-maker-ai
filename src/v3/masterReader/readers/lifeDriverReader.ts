@@ -52,8 +52,11 @@ import type {
     score: LifeDriverScore,
   ): DriverConfidence {
     const independentSources = new Set(
-      score.matches.map(
-        (match) => match.meaning.source,
+      score.matches.flatMap(
+        (match) =>
+          match.evidenceMeanings.map(
+            (meaning) => meaning.source,
+          ),
       ),
     ).size;
   
@@ -102,13 +105,17 @@ import type {
     status: LifeDriverSelectionStatus,
   ): LifeDriverJudgement {
     const evidence: DriverEvidence[] =
-      score.matches.map((match) => ({
-        source: mapEvidenceSource(
-          match.meaning.source,
-        ),
-        description: match.rule.reason,
-        weight: match.rule.weight,
-      }));
+    score.matches.flatMap((match) =>
+      match.evidenceMeanings.map(
+        (meaning) => ({
+          source: mapEvidenceSource(
+            meaning.source,
+          ),
+          description: match.rule.reason,
+          weight: match.rule.weight,
+        }),
+      ),
+    );
   
       return {
         driver: score.driver,
