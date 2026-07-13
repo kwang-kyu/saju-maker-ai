@@ -179,6 +179,8 @@ export function verifyDecisionEnginePhaseSensitivity(
       description:
         "현재는 활동 범위를 넓히고 새로운 기회를 실행으로 연결해야 하는 국면이다.",
     },
+
+    
   };
 
   const recoveryContext: HumanDestinyContext = {
@@ -240,6 +242,134 @@ export function verifyDecisionEnginePhaseSensitivity(
     verdictChanged,
     readinessChanged,
     alignmentChanged,
+
+    passed,
+  };
+}
+
+export type LifeDriverVerificationResult = {
+  question: string;
+
+  achievementResult: DecisionResult;
+  stabilityResult: DecisionResult;
+
+  alignmentStayedSame: boolean;
+  readinessStayedSame: boolean;
+  verdictChanged: boolean;
+
+  passed: boolean;
+};
+
+/**
+ * Decision Engine Life Driver 민감도 검증
+ *
+ * 동일한 질문과 동일한 현재 국면을 유지하고
+ * Primary Life Driver만 achievement와 stability로 변경하여
+ * Verdict가 실제로 달라지는지 확인한다.
+ *
+ * Context Alignment와 Action Readiness는 동일해야 하며,
+ * Verdict 변화는 Life Driver 규칙에서만 발생해야 한다.
+ */
+export function verifyDecisionEngineLifeDriverSensitivity(
+  baseContext: HumanDestinyContext,
+  questionText = "지금 사업을 시작해도 될까요?",
+): LifeDriverVerificationResult {
+  const growthContext: HumanDestinyContext = {
+    ...baseContext,
+    currentPhase: {
+      ...baseContext.currentPhase,
+      phase: "growth",
+      title: "성장 국면",
+      description:
+        "현재는 활동 범위를 넓히고 새로운 기회를 실행으로 연결해야 하는 국면이다.",
+    },
+  };
+
+  const achievementContext: HumanDestinyContext = {
+    ...growthContext,
+    identity: {
+      ...growthContext.identity,
+      profile: {
+        ...growthContext.identity.profile,
+        lifeDriver: {
+          ...growthContext.identity.profile.lifeDriver,
+          primary: {
+            ...growthContext.identity.profile.lifeDriver.primary,
+            driver: "achievement",
+            confidence: "high",
+          },
+        },
+      },
+    },
+  };
+
+  const stabilityContext: HumanDestinyContext = {
+    ...growthContext,
+    identity: {
+      ...growthContext.identity,
+      profile: {
+        ...growthContext.identity.profile,
+        lifeDriver: {
+          ...growthContext.identity.profile.lifeDriver,
+          primary: {
+            ...growthContext.identity.profile.lifeDriver.primary,
+            driver: "stability",
+            confidence: "high",
+          },
+        },
+      },
+    },
+  };
+
+  const achievementQuestion = readQuestion(
+    achievementContext,
+    questionText,
+  );
+
+  const stabilityQuestion = readQuestion(
+    stabilityContext,
+    questionText,
+  );
+
+  const achievementResult = runDecisionEngine({
+    humanContext: achievementContext,
+    question: achievementQuestion,
+  });
+
+  const stabilityResult = runDecisionEngine({
+    humanContext: stabilityContext,
+    question: stabilityQuestion,
+  });
+
+  const alignmentStayedSame =
+    achievementResult.contextAlignment ===
+    stabilityResult.contextAlignment;
+
+  const readinessStayedSame =
+    achievementResult.actionReadiness ===
+    stabilityResult.actionReadiness;
+
+  const verdictChanged =
+    achievementResult.verdict !==
+    stabilityResult.verdict;
+
+  const passed =
+    alignmentStayedSame &&
+    readinessStayedSame &&
+    verdictChanged &&
+    achievementResult.verdict ===
+      "conditionallyRecommended" &&
+    stabilityResult.verdict === "wait";
+
+  return {
+    question: questionText,
+
+    achievementResult,
+    stabilityResult,
+
+    alignmentStayedSame,
+    readinessStayedSame,
+    verdictChanged,
 
     passed,
   };
