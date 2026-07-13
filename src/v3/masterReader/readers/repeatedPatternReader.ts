@@ -45,8 +45,8 @@ import {
   ): RepeatedPatternJudgement {
     const evidence: PatternEvidence[] = score.matches.map((match) => ({
       source: match.evidence.source,
-      description: match.rule.reason,
-      weight: match.rule.weight,
+      description: match.evidence.description,
+      weight: match.evidence.weight,
     }));
   
     return {
