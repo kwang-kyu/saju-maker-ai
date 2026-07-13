@@ -11,6 +11,7 @@ import type {
   DecisionVerdict,
 } from "./decisionTypes";
 import { buildVerdict } from "./verdictBuilder";
+import { buildVerdictContext } from "./verdictContextBuilder";
 
 function resolveConfidence(
   questionConfidence: number,
@@ -481,11 +482,14 @@ export function runDecisionEngine(
     input.question.urgency,
   );
 
-  const verdict = buildVerdict({
+  const verdictContext = buildVerdictContext({
+    decisionInput: input,
     alignment: alignmentResult.alignment,
     readiness: actionReadiness,
     confidence,
   });
+  
+  const verdict = buildVerdict(verdictContext);
 
   const evidence = buildEvidence(input);
   const conditions = [
