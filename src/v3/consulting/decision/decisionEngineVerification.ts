@@ -16,6 +16,145 @@ export type DecisionEngineVerificationResult = {
   passed: boolean;
 };
 
+export type RepeatedPatternVerificationResult = {
+  question: string;
+
+  stableGrowthResult: DecisionResult;
+  earlyCollapseResult: DecisionResult;
+
+  conditionsChanged: boolean;
+  risksChanged: boolean;
+  prohibitedDirectionChanged: boolean;
+  verdictChanged: boolean;
+
+  passed: boolean;
+};
+/**
+ * Decision Engine 반복 패턴 민감도 검증
+ *
+ * 동일한 사람, 동일한 질문, 동일한 현재 국면을 유지하고
+ * Repeated Pattern만 변경하여
+ * 조건·위험·금지 방향이 실제로 달라지는지 확인한다.
+ *
+ * 이 단계에서는 Repeated Pattern이 Verdict를 변경하는 것을
+ * 필수 통과 조건으로 요구하지 않는다.
+ */
+export function verifyDecisionEngineRepeatedPatternSensitivity(
+  baseContext: HumanDestinyContext,
+  questionText = "지금 사업을 시작해도 될까요?",
+): RepeatedPatternVerificationResult {
+  const stableGrowthContext: HumanDestinyContext = {
+    ...baseContext,
+    identity: {
+      ...baseContext.identity,
+      profile: {
+        ...baseContext.identity.profile,
+        repeatedPattern: {
+          ...baseContext.identity.profile.repeatedPattern,
+          primary: {
+            ...baseContext.identity.profile.repeatedPattern.primary,
+            pattern: "slowGrowthStable",
+            confidence: "high",
+          },
+          secondary: null,
+          repeatedBehaviors: [
+            "작게 시작하여 점진적으로 성장한다.",
+          ],
+          strengths: [
+            "지속력이 강하다.",
+          ],
+          risks: [
+            "결정이 늦어질 수 있다.",
+          ],
+        },
+      },
+    },
+  };
+
+  const earlyCollapseContext: HumanDestinyContext = {
+    ...baseContext,
+    identity: {
+      ...baseContext.identity,
+      profile: {
+        ...baseContext.identity.profile,
+        repeatedPattern: {
+          ...baseContext.identity.profile.repeatedPattern,
+          primary: {
+            ...baseContext.identity.profile.repeatedPattern.primary,
+            pattern: "earlySuccessCollapse",
+            confidence: "high",
+          },
+          secondary: null,
+          repeatedBehaviors: [
+            "성과가 생기면 확장을 서두른다.",
+          ],
+          strengths: [
+            "실행력이 빠르다.",
+          ],
+          risks: [
+            "과도한 확장이 반복될 수 있다.",
+            "재무 관리가 흔들릴 수 있다.",
+          ],
+        },
+      },
+    },
+  };
+
+  const stableGrowthQuestion = readQuestion(
+    stableGrowthContext,
+    questionText,
+  );
+
+  const earlyCollapseQuestion = readQuestion(
+    earlyCollapseContext,
+    questionText,
+  );
+
+  const stableGrowthResult = runDecisionEngine({
+    humanContext: stableGrowthContext,
+    question: stableGrowthQuestion,
+  });
+
+  const earlyCollapseResult = runDecisionEngine({
+    humanContext: earlyCollapseContext,
+    question: earlyCollapseQuestion,
+  });
+
+  const conditionsChanged =
+    JSON.stringify(stableGrowthResult.conditions) !==
+    JSON.stringify(earlyCollapseResult.conditions);
+
+  const risksChanged =
+    JSON.stringify(stableGrowthResult.risks) !==
+    JSON.stringify(earlyCollapseResult.risks);
+
+  const prohibitedDirectionChanged =
+    stableGrowthResult.prohibitedDirection !==
+    earlyCollapseResult.prohibitedDirection;
+
+  const verdictChanged =
+    stableGrowthResult.verdict !==
+    earlyCollapseResult.verdict;
+
+  const passed =
+    conditionsChanged &&
+    risksChanged &&
+    prohibitedDirectionChanged;
+
+  return {
+    question: questionText,
+
+    stableGrowthResult,
+    earlyCollapseResult,
+
+    conditionsChanged,
+    risksChanged,
+    prohibitedDirectionChanged,
+    verdictChanged,
+
+    passed,
+  };
+}
 /**
  * Decision Engine 국면 민감도 검증
  *
