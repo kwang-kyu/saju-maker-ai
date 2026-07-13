@@ -22,6 +22,12 @@ import type {
     survivalStyleConfidence:
       DecisionEngineInput["humanContext"]["identity"]["profile"]["survivalStyle"]["primary"]["confidence"];
   
+    primaryRepeatedPattern:
+      DecisionEngineInput["humanContext"]["identity"]["profile"]["repeatedPattern"]["primary"]["pattern"];
+  
+    repeatedPatternConfidence:
+      DecisionEngineInput["humanContext"]["identity"]["profile"]["repeatedPattern"]["primary"]["confidence"];
+  
     currentPhase:
       DecisionEngineInput["humanContext"]["currentPhase"]["phase"];
   
@@ -54,25 +60,48 @@ import type {
     const primarySurvivalStyle =
       decisionInput.humanContext.identity.profile.survivalStyle.primary;
   
+    const primaryRepeatedPattern =
+      decisionInput.humanContext.identity.profile.repeatedPattern.primary;
+  
     return {
       alignment: input.alignment,
       readiness: input.readiness,
       confidence: input.confidence,
   
-      primaryLifeDriver: primaryLifeDriver.driver,
-      lifeDriverConfidence: primaryLifeDriver.confidence,
+      primaryLifeDriver:
+        primaryLifeDriver.driver,
   
-      primarySurvivalStyle: primarySurvivalStyle.style,
-      survivalStyleConfidence: primarySurvivalStyle.confidence,
+      lifeDriverConfidence:
+        primaryLifeDriver.confidence,
+  
+      primarySurvivalStyle:
+        primarySurvivalStyle.style,
+  
+      survivalStyleConfidence:
+        primarySurvivalStyle.confidence,
+  
+      primaryRepeatedPattern:
+        primaryRepeatedPattern.pattern,
+  
+      repeatedPatternConfidence:
+        primaryRepeatedPattern.confidence,
   
       currentPhase:
         decisionInput.humanContext.currentPhase.phase,
   
-      topic: decisionInput.question.topic,
-      intent: decisionInput.question.intent,
-      motive: decisionInput.question.motive,
+      topic:
+        decisionInput.question.topic,
+  
+      intent:
+        decisionInput.question.intent,
+  
+      motive:
+        decisionInput.question.motive,
+  
       decisionTarget:
         decisionInput.question.decisionTarget,
-      urgency: decisionInput.question.urgency,
+  
+      urgency:
+        decisionInput.question.urgency,
     };
   }
