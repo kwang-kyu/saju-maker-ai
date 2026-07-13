@@ -20,19 +20,25 @@ import {
     status: RepeatedPatternSelectionStatus,
     score: RepeatedPatternScore,
   ): PatternConfidence {
-    const independentSources = new Set(
-      score.matches.map((match) => match.evidence.source),
+    const independentEvidenceCount = new Set(
+      score.matches.map(
+        (match) =>
+          `${match.evidence.source}:${match.evidence.description}`,
+      ),
     ).size;
   
     if (
       status === "clear" &&
-      independentSources >= 3 &&
+      independentEvidenceCount >= 2 &&
       score.score >= 8
     ) {
       return "high";
     }
   
-    if (independentSources >= 2 && score.score >= 4) {
+    if (
+      independentEvidenceCount >= 1 &&
+      score.score >= 4
+    ) {
       return "medium";
     }
   
