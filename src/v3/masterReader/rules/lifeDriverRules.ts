@@ -20,6 +20,10 @@ export type LifeDriverRule = {
     signal: SajuStructureSignal,
     meanings: LifeDriverMeaning[],
   ) => boolean;
+  collectEvidenceMeanings?: (
+    meaning: LifeDriverMeaning,
+    meanings: LifeDriverMeaning[],
+  ) => LifeDriverMeaning[];
 };
 
 export const LIFE_DRIVER_RULES: LifeDriverRule[] = [
@@ -229,9 +233,40 @@ export const LIFE_DRIVER_RULES: LifeDriverRule[] = [
             meaning.signal.rooted,
         );
 
-      return hasStrongDayMaster && hasRooting;
+        return hasStrongDayMaster && hasRooting;
+      },
+      collectEvidenceMeanings: (
+        meaning,
+        meanings,
+      ) => {
+        const strongDayMasterMeaning =
+          meanings.find(
+            (candidate) =>
+              candidate.signal?.kind ===
+                "dayMasterStrength" &&
+              candidate.signal.type === "strong",
+          );
+  
+        const rootedMeaning =
+          meanings.find(
+            (candidate) =>
+              candidate.signal?.kind ===
+                "rooting" &&
+              candidate.signal.rooted,
+          );
+  
+        return [
+          meaning,
+          strongDayMasterMeaning,
+          rootedMeaning,
+        ].filter(
+          (
+            candidate,
+          ): candidate is LifeDriverMeaning =>
+            candidate !== undefined,
+        );
+      },
     },
-  },
 {
 id: "achievement-competitive-rooted",
 source: "tenGodStrength",
@@ -449,6 +484,7 @@ matches: (signal, meanings) => {
 export type MatchedLifeDriverRule = {
   rule: LifeDriverRule;
   meaning: LifeDriverMeaning;
+  evidenceMeanings: LifeDriverMeaning[];
 };
 
 export function matchLifeDriverRules(
@@ -479,10 +515,19 @@ export function matchLifeDriverRules(
         continue;
       }
 
-      matched.push({
-        rule,
-        meaning,
-      });
+      const evidenceMeanings =
+      rule.collectEvidenceMeanings
+        ? rule.collectEvidenceMeanings(
+            meaning,
+            meanings,
+          )
+        : [meaning];
+
+    matched.push({
+      rule,
+      meaning,
+      evidenceMeanings,
+    });
     }
   }
 
