@@ -97,12 +97,26 @@ function buildEvidence(
       description: brain.snapshot.survivalStyle,
       weight: 3,
     },
-    {
-      source: "repeatedPattern",
-      key: "repeatedPattern",
-      description: brain.snapshot.repeatedPattern,
-      weight: 4,
-    },
+    ...input.humanContext.identity.profile.repeatedPattern.primary.evidence.map(
+      (item, index): DecisionEvidence => ({
+        source: "repeatedPattern",
+        key: `repeatedPattern-primary-${index + 1}`,
+        description: item.description,
+        weight: item.weight,
+      }),
+    ),
+    
+    ...(
+      input.humanContext.identity.profile.repeatedPattern.secondary
+        ?.evidence ?? []
+    ).map(
+      (item, index): DecisionEvidence => ({
+        source: "repeatedPattern",
+        key: `repeatedPattern-secondary-${index + 1}`,
+        description: item.description,
+        weight: item.weight,
+      }),
+    ),
     {
       source: "questionIntent",
       key: "questionIntent",
@@ -116,6 +130,108 @@ function buildEvidence(
       weight: 3,
     },
   ];
+}
+
+function buildRepeatedPatternConditions(
+  input: DecisionEngineInput,
+): DecisionCondition[] {
+  const repeatedPattern =
+    input.humanContext.identity.profile.repeatedPattern;
+
+    const patterns = [
+      repeatedPattern.primary.pattern,
+      ...(repeatedPattern.secondary
+        ? [repeatedPattern.secondary.pattern]
+        : []),
+    ];
+
+  const conditions: DecisionCondition[] = [];
+
+  for (const pattern of patterns) {
+    switch (pattern) {
+      case "earlySuccessCollapse":
+        conditions.push({
+          key: "verifyBeforeExpansion",
+          description:
+            "초기 성과만 보고 규모를 확대하지 말고 유지 가능성과 반복 수익을 먼저 검증해야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+
+      case "slowGrowthStable":
+        conditions.push({
+          key: "useGradualGrowth",
+          description:
+            "작게 시작해 경험과 수익을 축적하는 점진적 실행 방식을 유지해야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+
+      case "relationshipLoss":
+        conditions.push({
+          key: "defineRelationshipBoundaries",
+          description:
+            "역할, 권한, 책임과 금전 관계를 감정과 분리하여 명확히 정해야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+
+      case "wealthLeak":
+        conditions.push({
+          key: "protectCashFlow",
+          description:
+            "실행 전에 고정비, 현금흐름과 감당 가능한 손실 한도를 확정해야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+
+      case "restartCycle":
+        conditions.push({
+          key: "confirmContinuationPlan",
+          description:
+            "새로운 시작뿐 아니라 일정 기간 유지할 운영 계획과 중단 기준을 함께 세워야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+
+      case "responsibilityOverload":
+        conditions.push({
+          key: "divideResponsibility",
+          description:
+            "책임과 실무를 혼자 떠안지 않도록 역할 분담과 휴식 기준을 마련해야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+
+      case "lateBloom":
+        conditions.push({
+          key: "allowLongTermAccumulation",
+          description:
+            "빠른 결과를 강요하지 말고 경험과 전문성이 축적될 시간을 확보해야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+
+      case "opportunityMiss":
+        conditions.push({
+          key: "setDecisionDeadline",
+          description:
+            "검토 후에도 결정을 계속 미루지 않도록 판단 기한과 실행 기준을 정해야 한다.",
+          required: true,
+          satisfied: false,
+        });
+        break;
+    }
+  }
+
+  return conditions;
 }
 
 function buildConditions(
@@ -182,6 +298,29 @@ function buildConditions(
       satisfied: false,
     },
   ];
+}
+
+function buildRepeatedPatternRisks(
+  input: DecisionEngineInput,
+): DecisionRisk[] {
+  const repeatedPattern =
+    input.humanContext.identity.profile.repeatedPattern;
+
+  const severity: DecisionRisk["severity"] =
+    repeatedPattern.primary.confidence === "high"
+      ? "high"
+      : repeatedPattern.primary.confidence === "medium"
+        ? "medium"
+        : "low";
+
+  return repeatedPattern.risks.map(
+    (description, index): DecisionRisk => ({
+      key: `repeatedPattern-${index + 1}`,
+      description,
+      severity,
+      source: "repeatedPattern",
+    }),
+  );
 }
 
 function buildRisks(
@@ -255,6 +394,40 @@ function buildRecommendedDirection(
   }
 }
 
+function buildRepeatedPatternProhibition(
+  input: DecisionEngineInput,
+): string {
+  const pattern =
+    input.humanContext.identity.profile.repeatedPattern.primary
+      .pattern;
+
+  switch (pattern) {
+    case "earlySuccessCollapse":
+      return "초기 성과만 믿고 검증 없이 규모와 고정비를 확대하지 않는다.";
+
+    case "slowGrowthStable":
+      return "빠른 성과를 만들기 위해 본래의 점진적 성장 방식을 무리하게 바꾸지 않는다.";
+
+    case "relationshipLoss":
+      return "감정과 신뢰만으로 동업, 금전 거래 또는 권한 공유를 결정하지 않는다.";
+
+    case "wealthLeak":
+      return "현금흐름과 손실 한도를 확인하지 않은 투자와 확장을 추진하지 않는다.";
+
+    case "restartCycle":
+      return "현재 문제를 정리하지 않은 채 직업이나 환경만 반복해서 바꾸지 않는다.";
+
+    case "responsibilityOverload":
+      return "모든 책임과 실무를 혼자 떠안는 방식으로 실행하지 않는다.";
+
+    case "lateBloom":
+      return "초기 결과가 느리다는 이유로 축적 중인 방향을 성급하게 포기하지 않는다.";
+
+    case "opportunityMiss":
+      return "완벽한 확신만 기다리며 실행 시기를 계속 미루지 않는다.";
+  }
+}
+
 function buildProhibitedDirection(
   verdict: DecisionVerdict,
 ): string {
@@ -315,14 +488,20 @@ export function runDecisionEngine(
   });
 
   const evidence = buildEvidence(input);
-  const conditions = buildConditions(
-    actionReadiness,
-    alignmentResult.reason,
-  );
-  const risks = buildRisks(
-    alignmentResult.alignment,
-    input.question.urgency,
-  );
+  const conditions = [
+    ...buildConditions(
+      actionReadiness,
+      alignmentResult.reason,
+    ),
+    ...buildRepeatedPatternConditions(input),
+  ];
+  const risks = [
+    ...buildRisks(
+      alignmentResult.alignment,
+      input.question.urgency,
+    ),
+    ...buildRepeatedPatternRisks(input),
+  ];
 
   const conflictExists =
     alignmentResult.alignment === "conflicted" ||
@@ -336,8 +515,10 @@ export function runDecisionEngine(
   const recommendedDirection =
     buildRecommendedDirection(verdict);
 
-  const prohibitedDirection =
-    buildProhibitedDirection(verdict);
+    const prohibitedDirection = [
+      buildProhibitedDirection(verdict),
+      buildRepeatedPatternProhibition(input),
+    ].join(" ");
 
   return {
     verdict,
