@@ -1,4 +1,4 @@
-import { analyzeContextAlignment } from "./contextAlignment";
+﻿import { analyzeContextAlignment } from "./contextAlignment";
 import { buildDecisionBrain } from "./decisionBrain";
 import type {
   ActionReadiness,
@@ -12,6 +12,7 @@ import type {
 } from "./decisionTypes";
 import { buildVerdict } from "./verdictBuilder";
 import { buildVerdictContext } from "./verdictContextBuilder";
+import { buildDirectionJudgement } from "./directionJudgementBuilder";
 import {
   assessLifeContext,
   type LifeContextAssessment,
@@ -513,82 +514,6 @@ function buildCoreDecision(
   return `${decisionQuestion}: ${verdictText[verdict]}`;
 }
 
-function buildRecommendedDirection(
-  verdict: DecisionVerdict,
-): string {
-  switch (verdict) {
-    case "recommended":
-      return "현재 국면의 흐름을 활용해 실행하되, 사람의 반복 패턴이 재현되지 않도록 기준을 세워 진행한다.";
-
-    case "conditionallyRecommended":
-      return "필수 조건과 위험 관리 기준을 먼저 갖춘 뒤 제한적으로 진행한다.";
-
-    case "wait":
-      return "현재 충돌 요소를 정리하고 국면이 바뀌거나 준비가 완료될 때까지 판단을 유보한다.";
-
-    case "notRecommended":
-      return "현재 선택을 중단하고 사람의 본질과 현재 국면에 맞는 다른 방향을 찾는다.";
-
-    case "insufficientEvidence":
-      return "결정 대상과 시기를 구체화한 뒤 다시 판단한다.";
-  }
-}
-
-function buildRepeatedPatternProhibition(
-  input: DecisionEngineInput,
-): string {
-  const pattern =
-    input.humanContext.identity.profile.repeatedPattern.primary
-      .pattern;
-
-  switch (pattern) {
-    case "earlySuccessCollapse":
-      return "초기 성과만 믿고 검증 없이 규모와 고정비를 확대하지 않는다.";
-
-    case "slowGrowthStable":
-      return "빠른 성과를 만들기 위해 본래의 점진적 성장 방식을 무리하게 바꾸지 않는다.";
-
-    case "relationshipLoss":
-      return "감정과 신뢰만으로 동업, 금전 거래 또는 권한 공유를 결정하지 않는다.";
-
-    case "wealthLeak":
-      return "현금흐름과 손실 한도를 확인하지 않은 투자와 확장을 추진하지 않는다.";
-
-    case "restartCycle":
-      return "현재 문제를 정리하지 않은 채 직업이나 환경만 반복해서 바꾸지 않는다.";
-
-    case "responsibilityOverload":
-      return "모든 책임과 실무를 혼자 떠안는 방식으로 실행하지 않는다.";
-
-    case "lateBloom":
-      return "초기 결과가 느리다는 이유로 축적 중인 방향을 성급하게 포기하지 않는다.";
-
-    case "opportunityMiss":
-      return "완벽한 확신만 기다리며 실행 시기를 계속 미루지 않는다.";
-  }
-}
-
-function buildProhibitedDirection(
-  verdict: DecisionVerdict,
-): string {
-  switch (verdict) {
-    case "recommended":
-      return "근거 없이 규모를 확대하거나 준비되지 않은 상태에서 속도를 높이지 않는다.";
-
-    case "conditionallyRecommended":
-      return "필수 조건을 충족하지 않은 채 바로 실행하지 않는다.";
-
-    case "wait":
-      return "불안과 조급함만으로 결정을 밀어붙이지 않는다.";
-
-    case "notRecommended":
-      return "현재 국면과 충돌하는 선택을 억지로 추진하지 않는다.";
-
-    case "insufficientEvidence":
-      return "판단 근거가 부족한 상태에서 확정적인 결정을 내리지 않는다.";
-  }
-}
-
 /**
  * Decision Engine
  *
@@ -636,6 +561,11 @@ export function runDecisionEngine(
   
   const verdict = buildVerdict(verdictContext);
 
+  const directionJudgement = buildDirectionJudgement({
+    verdict,
+    context: verdictContext,
+  });
+
   const evidence = buildEvidence(input);
   const conditions = [
     ...buildConditions(
@@ -667,14 +597,6 @@ export function runDecisionEngine(
     input.question.decisionQuestion,
   );
 
-  const recommendedDirection =
-    buildRecommendedDirection(verdict);
-
-    const prohibitedDirection = [
-      buildProhibitedDirection(verdict),
-      buildRepeatedPatternProhibition(input),
-    ].join(" ");
-
   return {
     verdict,
     confidence,
@@ -702,12 +624,15 @@ export function runDecisionEngine(
       questionSide: input.question.decisionQuestion,
     },
 
-    recommendedDirection,
-    prohibitedDirection,
+    recommendedDirection:
+      directionJudgement.recommendedDirection,
+
+    prohibitedDirection:
+      directionJudgement.prohibitedDirection,
 
     finalDecisionSentence: [
       coreDecision,
-      recommendedDirection,
+      directionJudgement.recommendedDirection,
     ].join(" "),
 
     humanContextUsed: true,
