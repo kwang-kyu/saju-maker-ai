@@ -5,7 +5,6 @@ import type {
   DecisionCondition,
   DecisionConfidence,
   DecisionEngineInput,
-  DecisionEvidence,
   DecisionResult,
   DecisionRisk,
   DecisionVerdict,
@@ -13,6 +12,7 @@ import type {
 import { buildVerdict } from "./verdictBuilder";
 import { buildVerdictContext } from "./verdictContextBuilder";
 import { buildDirectionJudgement } from "./directionJudgementBuilder";
+import { buildDecisionEvidence } from "./evidenceBuilder";
 import {
   assessLifeContext,
   type LifeContextAssessment,
@@ -68,74 +68,6 @@ function resolveActionReadiness(
   }
 
   return "unknown";
-}
-
-function buildEvidence(
-  input: DecisionEngineInput,
-): DecisionEvidence[] {
-  const brain = buildDecisionBrain(
-    input.humanContext,
-    input.question,
-  );
-
-  return [
-    {
-      source: "humanIdentity",
-      key: "identity",
-      description: brain.snapshot.identity,
-      weight: 5,
-    },
-    {
-      source: "lifePhase",
-      key: "currentPhase",
-      description: brain.snapshot.currentPhase,
-      weight: 5,
-    },
-    {
-      source: "lifeDriver",
-      key: "lifeDriver",
-      description: brain.snapshot.lifeDriver,
-      weight: 4,
-    },
-    {
-      source: "survivalStyle",
-      key: "survivalStyle",
-      description: brain.snapshot.survivalStyle,
-      weight: 3,
-    },
-    ...input.humanContext.identity.profile.repeatedPattern.primary.evidence.map(
-      (item, index): DecisionEvidence => ({
-        source: "repeatedPattern",
-        key: `repeatedPattern-primary-${index + 1}`,
-        description: item.description,
-        weight: item.weight,
-      }),
-    ),
-    
-    ...(
-      input.humanContext.identity.profile.repeatedPattern.secondary
-        ?.evidence ?? []
-    ).map(
-      (item, index): DecisionEvidence => ({
-        source: "repeatedPattern",
-        key: `repeatedPattern-secondary-${index + 1}`,
-        description: item.description,
-        weight: item.weight,
-      }),
-    ),
-    {
-      source: "questionIntent",
-      key: "questionIntent",
-      description: [
-        input.question.asksWhat,
-        input.question.asksWhy,
-        input.question.decisionQuestion,
-      ]
-        .filter(Boolean)
-        .join(" "),
-      weight: 3,
-    },
-  ];
 }
 
 function buildRepeatedPatternConditions(
@@ -566,7 +498,7 @@ export function runDecisionEngine(
     context: verdictContext,
   });
 
-  const evidence = buildEvidence(input);
+  const evidence = buildDecisionEvidence(input);
   const conditions = [
     ...buildConditions(
       actionReadiness,
