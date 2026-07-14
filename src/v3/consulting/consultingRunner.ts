@@ -1,4 +1,4 @@
-import type { HumanDestinyContext } from "../types/humanDestinyContext";
+import type { ConsultingInput } from "./consultingInput";
 
 import { readQuestion } from "./question/questionReader";
 
@@ -13,17 +13,20 @@ import { buildDecisionExplanationPayload } from "./explanation/decisionExplanati
 import { buildConsultingPrompt } from "./explanation/consultingPromptBuilder";
 
 export function runConsulting(
-  context: HumanDestinyContext,
-  question: string,
+  input: ConsultingInput,
 ) {
   const questionResult =
-    readQuestion(context, question);
+    readQuestion(
+      input.humanContext,
+      input.question,
+    );
 
-  const decision =
-    runDecisionEngine({
-      humanContext: context,
-      question: questionResult,
-    });
+    const decision =
+  runDecisionEngine({
+    humanContext: input.humanContext,
+    lifeContext: input.lifeContext,
+    question: questionResult,
+  });
 
   const explanation =
     readDecisionResult(decision);

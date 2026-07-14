@@ -1,25 +1,51 @@
-import { readHumanDestinyContext } from "../src/v3/readers/humanDestinyContextReader";
 import { runConsulting } from "../src/v3/consulting/consultingRunner";
 import { buildConsultingOpenAIRequest } from "../src/v3/consulting/openai/consultingOpenAIAdapter";
+import { readHumanDestinyContext } from "../src/v3/readers/humanDestinyContextReader";
+import { readHumanLifeContext } from "../src/v3/readers/humanLifeContextReader";
 
 export async function buildV3ConsultingRequest(params: {
-  masterReaderInput: Parameters<typeof readHumanDestinyContext>[0]["masterReaderInput"];
-  lifePhaseInput: Parameters<typeof readHumanDestinyContext>[0]["lifePhaseInput"];
+  masterReaderInput:
+    Parameters<
+      typeof readHumanDestinyContext
+    >[0]["masterReaderInput"];
+
+  lifePhaseInput:
+    Parameters<
+      typeof readHumanDestinyContext
+    >[0]["lifePhaseInput"];
+
+  humanLifeContextInput:
+    Parameters<typeof readHumanLifeContext>[0];
+
   question: string;
 }) {
-  const context = readHumanDestinyContext({
-    masterReaderInput: params.masterReaderInput,
-    lifePhaseInput: params.lifePhaseInput,
-  });
+  const humanContext =
+    readHumanDestinyContext({
+      masterReaderInput:
+        params.masterReaderInput,
+      lifePhaseInput:
+        params.lifePhaseInput,
+    });
 
-  if (!context) {
-    throw new Error("Failed to build Human Destiny Context.");
+  if (!humanContext) {
+    throw new Error(
+      "Failed to build Human Destiny Context.",
+    );
   }
 
-  const prompt = runConsulting(
-    context,
-    params.question,
-  );
+  const lifeContext =
+    readHumanLifeContext(
+      params.humanLifeContextInput,
+    );
 
-  return buildConsultingOpenAIRequest(prompt);
+  const prompt =
+    runConsulting({
+      humanContext,
+      lifeContext,
+      question: params.question,
+    });
+
+  return buildConsultingOpenAIRequest(
+    prompt,
+  );
 }

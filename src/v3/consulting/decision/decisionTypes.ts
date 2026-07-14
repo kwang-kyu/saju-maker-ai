@@ -1,4 +1,5 @@
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+import type { HumanLifeContext } from "../../types/humanLifeContext";
 import type { QuestionReaderResult } from "../question/questionReader";
 
 /**
@@ -119,6 +120,9 @@ export type DecisionConflict = {
  */
 export type DecisionEngineInput = {
   humanContext: HumanDestinyContext;
+
+  lifeContext: HumanLifeContext;
+
   question: QuestionReaderResult;
 };
 

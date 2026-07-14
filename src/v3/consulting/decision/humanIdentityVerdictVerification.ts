@@ -1,6 +1,7 @@
 import type {
     HumanDestinyContext,
   } from "../../types/humanDestinyContext";
+  import type { HumanLifeContext } from "../../types/humanLifeContext";
   import {
     readQuestion,
   } from "../question/questionReader";
@@ -41,6 +42,7 @@ import type {
    */
   export function verifyHumanIdentityVerdictSensitivity(
     baseContext: HumanDestinyContext,
+    lifeContext: HumanLifeContext,
     questionText = "지금 사업을 시작해도 될까요?",
   ): HumanIdentityVerdictVerificationResult {
     const growthContext: HumanDestinyContext = {
@@ -161,11 +163,13 @@ import type {
   
     const actionIdentityResult = runDecisionEngine({
       humanContext: actionIdentityContext,
+      lifeContext,
       question: actionIdentityQuestion,
     });
   
     const cautionIdentityResult = runDecisionEngine({
       humanContext: cautionIdentityContext,
+      lifeContext,
       question: cautionIdentityQuestion,
     });
   

@@ -1,4 +1,5 @@
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+import type { HumanLifeContext } from "../../types/humanLifeContext";
 import { readQuestion } from "../question/questionReader";
 import { runDecisionEngine } from "./decisionEngine";
 import type { DecisionResult } from "./decisionTypes";
@@ -41,6 +42,7 @@ export type RepeatedPatternVerificationResult = {
  */
 export function verifyDecisionEngineRepeatedPatternSensitivity(
   baseContext: HumanDestinyContext,
+  lifeContext: HumanLifeContext,
   questionText = "지금 사업을 시작해도 될까요?",
 ): RepeatedPatternVerificationResult {
   const stableGrowthContext: HumanDestinyContext = {
@@ -112,11 +114,13 @@ export function verifyDecisionEngineRepeatedPatternSensitivity(
 
   const stableGrowthResult = runDecisionEngine({
     humanContext: stableGrowthContext,
+    lifeContext,
     question: stableGrowthQuestion,
   });
 
   const earlyCollapseResult = runDecisionEngine({
     humanContext: earlyCollapseContext,
+    lifeContext,
     question: earlyCollapseQuestion,
   });
 
@@ -168,6 +172,7 @@ export function verifyDecisionEngineRepeatedPatternSensitivity(
  */
 export function verifyDecisionEnginePhaseSensitivity(
   baseContext: HumanDestinyContext,
+  lifeContext: HumanLifeContext,
   questionText = "지금 사업을 시작해도 될까요?",
 ): DecisionEngineVerificationResult {
   const growthContext: HumanDestinyContext = {
@@ -206,11 +211,13 @@ export function verifyDecisionEnginePhaseSensitivity(
 
   const growthResult = runDecisionEngine({
     humanContext: growthContext,
+    lifeContext,
     question: growthQuestion,
   });
 
   const recoveryResult = runDecisionEngine({
     humanContext: recoveryContext,
+    lifeContext,
     question: recoveryQuestion,
   });
 
@@ -272,6 +279,7 @@ export type LifeDriverVerificationResult = {
  */
 export function verifyDecisionEngineLifeDriverSensitivity(
   baseContext: HumanDestinyContext,
+  lifeContext: HumanLifeContext,
   questionText = "지금 사업을 시작해도 될까요?",
 ): LifeDriverVerificationResult {
   const growthContext: HumanDestinyContext = {
@@ -333,11 +341,13 @@ export function verifyDecisionEngineLifeDriverSensitivity(
 
   const achievementResult = runDecisionEngine({
     humanContext: achievementContext,
+    lifeContext,
     question: achievementQuestion,
   });
 
   const stabilityResult = runDecisionEngine({
     humanContext: stabilityContext,
+    lifeContext,
     question: stabilityQuestion,
   });
 
@@ -401,6 +411,7 @@ export type SurvivalStyleVerificationResult = {
  */
 export function verifyDecisionEngineSurvivalStyleSensitivity(
   baseContext: HumanDestinyContext,
+  lifeContext: HumanLifeContext,
   questionText = "지금 사업을 시작해도 될까요?",
 ): SurvivalStyleVerificationResult {
   const growthContext: HumanDestinyContext = {
@@ -476,11 +487,13 @@ export function verifyDecisionEngineSurvivalStyleSensitivity(
 
   const pushResult = runDecisionEngine({
     humanContext: pushContext,
+    lifeContext,
     question: pushQuestion,
   });
 
   const stabilityResult = runDecisionEngine({
     humanContext: stabilityContext,
+    lifeContext,
     question: stabilityQuestion,
   });
 
@@ -543,6 +556,7 @@ export type RepeatedPatternVerdictVerificationResult = {
  */
 export function verifyDecisionEngineRepeatedPatternVerdictSensitivity(
   baseContext: HumanDestinyContext,
+  lifeContext: HumanLifeContext,
   questionText = "지금 사업을 시작해도 될까요?",
 ): RepeatedPatternVerdictVerificationResult {
   const growthContext: HumanDestinyContext = {
@@ -647,11 +661,13 @@ export function verifyDecisionEngineRepeatedPatternVerdictSensitivity(
 
   const opportunityMissResult = runDecisionEngine({
     humanContext: opportunityMissContext,
+    lifeContext,
     question: opportunityMissQuestion,
   });
 
   const earlyCollapseResult = runDecisionEngine({
     humanContext: earlyCollapseContext,
+    lifeContext,
     question: earlyCollapseQuestion,
   });
 
