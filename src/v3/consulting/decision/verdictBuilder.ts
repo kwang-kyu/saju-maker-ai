@@ -154,6 +154,57 @@ function applyRepeatedPatternEffect(
   return verdict;
 }
 
+function applyLifeContextEffect(
+  verdict: DecisionVerdict,
+  context: VerdictContext,
+): DecisionVerdict {
+  if (
+    verdict === "notRecommended" ||
+    verdict === "wait"
+  ) {
+    return verdict;
+  }
+
+  const {
+    executionConstraint,
+    financialPressure,
+    transitionDifficulty,
+    expansionRisk,
+  } = context.lifeAssessment;
+
+  const highConstraintCount = [
+    executionConstraint,
+    financialPressure,
+    transitionDifficulty,
+    expansionRisk,
+  ].filter(
+    (level) => level === "high",
+  ).length;
+
+  if (
+    highConstraintCount >= 2 &&
+    context.urgency === "immediate"
+  ) {
+    return "wait";
+  }
+
+  if (
+    highConstraintCount >= 3 &&
+    verdict === "conditionallyRecommended"
+  ) {
+    return "wait";
+  }
+
+  if (
+    highConstraintCount >= 1 &&
+    verdict === "recommended"
+  ) {
+    return "conditionallyRecommended";
+  }
+
+  return verdict;
+}
+
 export function buildVerdict(
   context: VerdictContext,
 ): DecisionVerdict {
@@ -205,8 +256,14 @@ const survivalStyleVerdict =
     context,
   );
 
-return applyRepeatedPatternEffect(
-  survivalStyleVerdict,
+const repeatedPatternVerdict =
+  applyRepeatedPatternEffect(
+    survivalStyleVerdict,
+    context,
+  );
+
+return applyLifeContextEffect(
+  repeatedPatternVerdict,
   context,
 );
 }

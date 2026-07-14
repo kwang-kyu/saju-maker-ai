@@ -4,11 +4,17 @@ import type {
     DecisionConfidence,
     DecisionEngineInput,
   } from "./decisionTypes";
-  
+
+import type {
+    LifeContextAssessment,
+  } from "./lifeContextAssessment"; 
+
   export type VerdictContext = {
     alignment: ContextAlignment;
     readiness: ActionReadiness;
     confidence: DecisionConfidence;
+
+    lifeAssessment: LifeContextAssessment;
   
     primaryLifeDriver:
       DecisionEngineInput["humanContext"]["identity"]["profile"]["lifeDriver"]["primary"]["driver"];
@@ -47,6 +53,7 @@ import type {
     alignment: ContextAlignment;
     readiness: ActionReadiness;
     confidence: DecisionConfidence;
+    lifeAssessment: LifeContextAssessment;
   };
   
   export function buildVerdictContext(
@@ -67,6 +74,8 @@ import type {
       alignment: input.alignment,
       readiness: input.readiness,
       confidence: input.confidence,
+
+      lifeAssessment: input.lifeAssessment,
   
       primaryLifeDriver:
         primaryLifeDriver.driver,

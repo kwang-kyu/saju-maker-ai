@@ -12,6 +12,7 @@ import type {
 } from "./decisionTypes";
 import { buildVerdict } from "./verdictBuilder";
 import { buildVerdictContext } from "./verdictContextBuilder";
+import { assessLifeContext } from "./lifeContextAssessment";
 
 function resolveConfidence(
   questionConfidence: number,
@@ -482,11 +483,17 @@ export function runDecisionEngine(
     input.question.urgency,
   );
 
+  const lifeAssessment =
+  assessLifeContext(
+    input.lifeContext,
+  );
+
   const verdictContext = buildVerdictContext({
     decisionInput: input,
     alignment: alignmentResult.alignment,
     readiness: actionReadiness,
     confidence,
+    lifeAssessment,
   });
   
   const verdict = buildVerdict(verdictContext);
