@@ -12,7 +12,10 @@ import type {
 } from "./decisionTypes";
 import { buildVerdict } from "./verdictBuilder";
 import { buildVerdictContext } from "./verdictContextBuilder";
-import { assessLifeContext } from "./lifeContextAssessment";
+import {
+  assessLifeContext,
+  type LifeContextAssessment,
+} from "./lifeContextAssessment";
 
 function resolveConfidence(
   questionConfidence: number,
@@ -236,6 +239,74 @@ function buildRepeatedPatternConditions(
   return conditions;
 }
 
+function buildLifeContextConditions(
+  assessment: LifeContextAssessment,
+): DecisionCondition[] {
+  const conditions: DecisionCondition[] = [];
+
+  if (
+    assessment.financialPressure === "high"
+  ) {
+    conditions.push({
+      key: "protectExistingCashFlow",
+      description:
+        "현재 수입과 필수 지출을 보호할 수 있도록 실행 자금, 생활비와 감당 가능한 손실 한도를 먼저 분리해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  if (
+    assessment.familyResponsibility === "high"
+  ) {
+    conditions.push({
+      key: "protectFamilyResponsibility",
+      description:
+        "가족 부양과 생활 책임이 흔들리지 않도록 실행 규모와 월별 부담 한도를 먼저 확정해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  if (
+    assessment.transitionDifficulty === "high"
+  ) {
+    conditions.push({
+      key: "useGradualTransition",
+      description:
+        "기존 직업이나 수입 기반을 즉시 포기하지 말고 병행 검증과 단계적 전환 계획을 마련해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  if (
+    assessment.expansionRisk === "high"
+  ) {
+    conditions.push({
+      key: "limitExpansionScale",
+      description:
+        "신규 고정비와 추가 책임을 확대하기 전에 현재 운영 능력과 현금흐름의 지속 가능성을 검증해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  if (
+    assessment.executionConstraint === "high"
+  ) {
+    conditions.push({
+      key: "secureExecutionCapacity",
+      description:
+        "현재 책임과 일정 안에서 실제로 감당할 수 있는 시간, 인력과 실행 범위를 먼저 확보해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  return conditions;
+}
+
 function buildConditions(
   readiness: ActionReadiness,
   alignmentReason: string,
@@ -325,6 +396,73 @@ function buildRepeatedPatternRisks(
   );
 }
 
+function buildLifeContextRisks(
+  assessment: LifeContextAssessment,
+): DecisionRisk[] {
+  const risks: DecisionRisk[] = [];
+
+  if (
+    assessment.financialPressure === "high"
+  ) {
+    risks.push({
+      key: "lifeContextFinancialPressure",
+      description:
+        "현재 재정 책임이 큰 상태이므로 예상보다 수익 발생이 늦어질 경우 기존 생활 기반과 현금흐름이 함께 흔들릴 수 있다.",
+      severity: "high",
+      source: "lifeContext",
+    });
+  }
+
+  if (
+    assessment.familyResponsibility === "high"
+  ) {
+    risks.push({
+      key: "lifeContextFamilyResponsibility",
+      description:
+        "가족 부양 책임이 큰 상태에서 새로운 선택의 부담까지 동시에 떠안으면 생활 안정성과 관계가 함께 압박받을 수 있다.",
+      severity: "high",
+      source: "lifeContext",
+    });
+  }
+
+  if (
+    assessment.transitionDifficulty === "high"
+  ) {
+    risks.push({
+      key: "lifeContextTransitionDifficulty",
+      description:
+        "기존 직업이나 수입 기반을 한 번에 정리하면 새로운 선택이 자리 잡기 전에 회복하기 어려운 공백이 생길 수 있다.",
+      severity: "high",
+      source: "lifeContext",
+    });
+  }
+
+  if (
+    assessment.expansionRisk === "high"
+  ) {
+    risks.push({
+      key: "lifeContextExpansionRisk",
+      description:
+        "현재 책임 위에 사업, 투자 또는 고정비를 추가하면 관리 범위를 넘어서는 동시 확장 위험이 커진다.",
+      severity: "high",
+      source: "lifeContext",
+    });
+  }
+
+  if (
+    assessment.executionConstraint === "high"
+  ) {
+    risks.push({
+      key: "lifeContextExecutionConstraint",
+      description:
+        "실행 가능한 시간과 자원이 부족한 상태에서 결정을 추진하면 준비 부족과 책임 과부하로 중단될 가능성이 높다.",
+      severity: "high",
+      source: "lifeContext",
+    });
+  }
+
+  return risks;
+}
 function buildRisks(
   alignment: DecisionResult["contextAlignment"],
   urgency: DecisionEngineInput["question"]["urgency"],
@@ -504,12 +642,18 @@ export function runDecisionEngine(
       actionReadiness,
       alignmentResult.reason,
     ),
+    ...buildLifeContextConditions(
+      lifeAssessment,
+    ),
     ...buildRepeatedPatternConditions(input),
   ];
   const risks = [
     ...buildRisks(
       alignmentResult.alignment,
       input.question.urgency,
+    ),
+    ...buildLifeContextRisks(
+      lifeAssessment,
     ),
     ...buildRepeatedPatternRisks(input),
   ];

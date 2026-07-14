@@ -56,7 +56,8 @@ export type DecisionEvidenceSource =
   | "lifeDriver"
   | "survivalStyle"
   | "questionIntent"
-  | "currentContext";
+  | "currentContext"
+  | "lifeContext";
 
 /**
  * Decision Engine이 사용하는 개별 판단 근거다.
