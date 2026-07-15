@@ -115,6 +115,67 @@ import type {
         comparisonAnalysisRequired: true,
       },
     },
+
+    {
+        id: "real-estate-partner-investment",
+    
+        question:
+          "친구와 상가를 공동 투자해도 될까요?",
+    
+        expected: {
+          topic: "realEstate",
+          decisionTarget: "invest",
+          counterpartExists: true,
+          compatibilityAnalysisRequired: false,
+          timingAnalysisRequired: false,
+          comparisonAnalysisRequired: false,
+        },
+      },
+      {
+        id: "spouse-business-partner",
+    
+        question:
+          "배우자와 같이 사업해도 될까요?",
+    
+        expected: {
+          topic: "business",
+          decisionTarget: "partner",
+          counterpartExists: true,
+          compatibilityAnalysisRequired: true,
+          timingAnalysisRequired: false,
+          comparisonAnalysisRequired: false,
+        },
+      },
+      {
+        id: "remarriage-specific-person",
+    
+        question:
+          "이 사람과 재혼해도 될까요?",
+    
+        expected: {
+          topic: "marriage",
+          decisionTarget: "marry",
+          counterpartExists: true,
+          compatibilityAnalysisRequired: true,
+          timingAnalysisRequired: false,
+          comparisonAnalysisRequired: false,
+        },
+      },
+      {
+        id: "divorce-decision",
+    
+        question:
+          "배우자와 이혼하는 것이 맞을까요?",
+    
+        expected: {
+          topic: "marriage",
+          decisionTarget: "separate",
+          counterpartExists: true,
+          compatibilityAnalysisRequired: false,
+          timingAnalysisRequired: false,
+          comparisonAnalysisRequired: false,
+        },
+      },
   ];
   
   export function verifyQuestionContextBuilder(
