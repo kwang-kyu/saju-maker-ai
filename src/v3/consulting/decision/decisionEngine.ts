@@ -6,6 +6,7 @@ import type {
 } from "./decisionTypes";
 import { buildVerdict } from "./verdictBuilder";
 import { buildCoreDecision } from "./coreDecisionBuilder";
+import { buildDecisionResult } from "./decisionResultBuilder";
 import {
   resolveConfidence,
   resolveActionReadiness,
@@ -96,25 +97,18 @@ export function runDecisionEngine(
     ...buildRepeatedPatternRisks(input),
   ];
 
-  const conflictExists =
-    alignmentResult.alignment === "conflicted" ||
-    alignmentResult.alignment === "stronglyConflicted";
-
   const coreDecision = buildCoreDecision(
     verdict,
     input.question.decisionQuestion,
   );
 
-  return {
+  return buildDecisionResult({
+    decisionInput: input,
+
     verdict,
     confidence,
-
     contextAlignment: alignmentResult.alignment,
     actionReadiness,
-
-    decisionTarget: input.question.decisionTarget,
-    topic: input.question.topic,
-    intent: input.question.intent,
 
     coreDecision,
     decisionReason: alignmentResult.reason,
@@ -123,27 +117,12 @@ export function runDecisionEngine(
     conditions,
     risks,
 
-    conflict: {
-      exists: conflictExists,
-      description: conflictExists
-        ? alignmentResult.reason
-        : "현재 사람의 국면과 질문 속 선택 사이에 직접적인 충돌은 확인되지 않았다.",
-      humanContextSide: brain.snapshot.currentPhase,
-      questionSide: input.question.decisionQuestion,
-    },
+    currentPhaseDescription:
+      brain.snapshot.currentPhase,
 
     recommendedDirection:
       directionJudgement.recommendedDirection,
-
     prohibitedDirection:
       directionJudgement.prohibitedDirection,
-
-    finalDecisionSentence: [
-      coreDecision,
-      directionJudgement.recommendedDirection,
-    ].join(" "),
-
-    humanContextUsed: true,
-    questionContextUsed: true,
-  };
+  });
 }
