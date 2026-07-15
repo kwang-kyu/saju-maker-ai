@@ -46,13 +46,6 @@ function applyLifeDriverEffect(
     return "conditionallyRecommended";
   }
 
-  if (
-    context.lifeDriverConfidence === "high" &&
-    verdict === "conditionallyRecommended"
-  ) {
-    return "wait";
-  }
-
   return verdict;
 }
 
@@ -79,7 +72,7 @@ function applySurvivalStyleEffect(
   if (result.effect === "support") {
     if (
       context.survivalStyleConfidence ===
-        "high" &&
+      "high" &&
       verdict === "insufficientEvidence"
     ) {
       return "conditionallyRecommended";
@@ -90,14 +83,6 @@ function applySurvivalStyleEffect(
 
   if (verdict === "recommended") {
     return "conditionallyRecommended";
-  }
-
-  if (
-    context.survivalStyleConfidence ===
-      "high" &&
-    verdict === "conditionallyRecommended"
-  ) {
-    return "wait";
   }
 
   return verdict;
@@ -130,7 +115,7 @@ function applyRepeatedPatternEffect(
   if (result.effect === "support") {
     if (
       context.repeatedPatternConfidence ===
-        "high" &&
+      "high" &&
       verdict === "insufficientEvidence"
     ) {
       return "conditionallyRecommended";
@@ -141,14 +126,6 @@ function applyRepeatedPatternEffect(
 
   if (verdict === "recommended") {
     return "conditionallyRecommended";
-  }
-
-  if (
-    context.repeatedPatternConfidence ===
-      "high" &&
-    verdict === "conditionallyRecommended"
-  ) {
-    return "wait";
   }
 
   return verdict;
@@ -245,25 +222,25 @@ export function buildVerdict(
   }
 
   const lifeDriverVerdict =
-  applyLifeDriverEffect(
-    verdict,
+    applyLifeDriverEffect(
+      verdict,
+      context,
+    );
+
+  const survivalStyleVerdict =
+    applySurvivalStyleEffect(
+      lifeDriverVerdict,
+      context,
+    );
+
+  const repeatedPatternVerdict =
+    applyRepeatedPatternEffect(
+      survivalStyleVerdict,
+      context,
+    );
+
+  return applyLifeContextEffect(
+    repeatedPatternVerdict,
     context,
   );
-
-const survivalStyleVerdict =
-  applySurvivalStyleEffect(
-    lifeDriverVerdict,
-    context,
-  );
-
-const repeatedPatternVerdict =
-  applyRepeatedPatternEffect(
-    survivalStyleVerdict,
-    context,
-  );
-
-return applyLifeContextEffect(
-  repeatedPatternVerdict,
-  context,
-);
 }
