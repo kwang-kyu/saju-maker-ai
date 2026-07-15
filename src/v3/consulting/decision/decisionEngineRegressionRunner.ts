@@ -42,12 +42,12 @@ import type {
         regressionCase.expectedResult,
       );
   
-    return {
-      id: regressionCase.id,
-      description: regressionCase.description,
-  
-      verification,
-  
-      passed: verification.passed,
-    };
+      return {
+        id: regressionCase.id,
+        description: regressionCase.description,
+      
+        verification,
+      
+        passed: verification.passed,
+      };
   }
