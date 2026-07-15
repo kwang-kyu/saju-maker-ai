@@ -119,3 +119,30 @@ import type {
   
     return risks;
   }
+
+  export function buildDecisionRisks(params: {
+    decisionInput: DecisionEngineInput;
+    alignment: DecisionResult["contextAlignment"];
+    urgency: DecisionEngineInput["question"]["urgency"];
+    lifeAssessment: LifeContextAssessment;
+  }): DecisionRisk[] {
+    const {
+      decisionInput,
+      alignment,
+      urgency,
+      lifeAssessment,
+    } = params;
+  
+    return [
+      ...buildRisks(
+        alignment,
+        urgency,
+      ),
+      ...buildLifeContextRisks(
+        lifeAssessment,
+      ),
+      ...buildRepeatedPatternRisks(
+        decisionInput,
+      ),
+    ];
+  }

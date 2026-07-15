@@ -15,11 +15,7 @@ import { buildVerdictContext } from "./verdictContextBuilder";
 import { buildDirectionJudgement } from "./directionJudgementBuilder";
 import { buildDecisionEvidence } from "./evidenceBuilder";
 import { buildDecisionConditions } from "./conditionBuilder";
-import {
-  buildRisks,
-  buildLifeContextRisks,
-  buildRepeatedPatternRisks,
-} from "./riskBuilder";
+import { buildDecisionRisks } from "./riskBuilder";
 import {
   assessLifeContext,
 } from "./lifeContextAssessment";
@@ -86,16 +82,12 @@ export function runDecisionEngine(
     lifeAssessment,
   });
 
-  const risks = [
-    ...buildRisks(
-      alignmentResult.alignment,
-      input.question.urgency,
-    ),
-    ...buildLifeContextRisks(
-      lifeAssessment,
-    ),
-    ...buildRepeatedPatternRisks(input),
-  ];
+  const risks = buildDecisionRisks({
+    decisionInput: input,
+    alignment: alignmentResult.alignment,
+    urgency: input.question.urgency,
+    lifeAssessment,
+  });
 
   const coreDecision = buildCoreDecision(
     verdict,
