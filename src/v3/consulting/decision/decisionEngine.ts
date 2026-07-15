@@ -1,13 +1,15 @@
 ﻿import { analyzeContextAlignment } from "./contextAlignment";
 import { buildDecisionBrain } from "./decisionBrain";
 import type {
-  ActionReadiness,
-  DecisionConfidence,
   DecisionEngineInput,
   DecisionResult,
 } from "./decisionTypes";
 import { buildVerdict } from "./verdictBuilder";
 import { buildCoreDecision } from "./coreDecisionBuilder";
+import {
+  resolveConfidence,
+  resolveActionReadiness,
+} from "./decisionResolver";
 import { buildVerdictContext } from "./verdictContextBuilder";
 import { buildDirectionJudgement } from "./directionJudgementBuilder";
 import { buildDecisionEvidence } from "./evidenceBuilder";
@@ -21,57 +23,7 @@ import {
   assessLifeContext,
 } from "./lifeContextAssessment";
 
-function resolveConfidence(
-  questionConfidence: number,
-  alignment: DecisionResult["contextAlignment"],
-): DecisionConfidence {
-  if (
-    questionConfidence >= 0.85 &&
-    alignment !== "unknown"
-  ) {
-    return "high";
-  }
 
-  if (
-    questionConfidence >= 0.6 ||
-    alignment !== "unknown"
-  ) {
-    return "medium";
-  }
-
-  return "low";
-}
-
-function resolveActionReadiness(
-  alignment: DecisionResult["contextAlignment"],
-  urgency: DecisionEngineInput["question"]["urgency"],
-): ActionReadiness {
-  if (alignment === "stronglyConflicted") {
-    return "stopRequired";
-  }
-
-  if (alignment === "conflicted") {
-    return "delayRequired";
-  }
-
-  if (alignment === "stronglyAligned") {
-    if (urgency === "immediate") {
-      return "readyWithConditions";
-    }
-
-    return "ready";
-  }
-
-  if (alignment === "aligned") {
-    return "readyWithConditions";
-  }
-
-  if (alignment === "partiallyAligned") {
-    return "preparationRequired";
-  }
-
-  return "unknown";
-}
 
 /**
  * Decision Engine
