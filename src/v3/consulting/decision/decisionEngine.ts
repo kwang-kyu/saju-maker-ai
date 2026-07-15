@@ -74,7 +74,10 @@ export function runDecisionEngine(
     context: verdictContext,
   });
 
-  const evidence = buildDecisionEvidence(input);
+  const evidence = buildDecisionEvidence(
+    input,
+    brain,
+  );
   const conditions = buildDecisionConditions({
     decisionInput: input,
     readiness: actionReadiness,

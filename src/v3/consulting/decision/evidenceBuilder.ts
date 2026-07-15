@@ -1,4 +1,4 @@
-import { buildDecisionBrain } from "./decisionBrain";
+import type { DecisionBrain } from "./decisionBrain";
 import type {
   DecisionEngineInput,
   DecisionEvidence,
@@ -13,12 +13,9 @@ import type {
  * 이 Builder는 Verdict를 결정하지 않는다.
  */
 export function buildDecisionEvidence(
-  input: DecisionEngineInput,
-): DecisionEvidence[] {
-  const brain = buildDecisionBrain(
-    input.humanContext,
-    input.question,
-  );
+    input: DecisionEngineInput,
+    brain: DecisionBrain,
+  ): DecisionEvidence[] {
 
   return [
     {
