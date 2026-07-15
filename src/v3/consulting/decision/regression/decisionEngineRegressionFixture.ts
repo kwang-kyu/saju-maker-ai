@@ -1,24 +1,24 @@
 import {
-    buildMasterHumanSummary,
-  } from "../../masterReader/readers/masterHumanSummaryBuilder";
-  import {
-    buildMasterProfileExplanation,
-  } from "../../masterReader/readers/masterProfileExplanationBuilder";
-  import type {
-    MasterProfile,
-  } from "../../masterReader/types/masterProfile";
-  import type {
-    HumanDestinyContext,
-  } from "../../types/humanDestinyContext";
-  import type {
-    HumanLifeContext,
-  } from "../../types/humanLifeContext";
-  import {
-    readQuestion,
-  } from "../question/questionReader";
-  import type {
-    DecisionEngineInput,
-  } from "./decisionTypes";
+  buildMasterHumanSummary,
+} from "../../../masterReader/readers/masterHumanSummaryBuilder";
+import {
+  buildMasterProfileExplanation,
+} from "../../../masterReader/readers/masterProfileExplanationBuilder";
+import type {
+  MasterProfile,
+} from "../../../masterReader/types/masterProfile";
+import type {
+  HumanDestinyContext,
+} from "../../../types/humanDestinyContext";
+import type {
+  HumanLifeContext,
+} from "../../../types/humanLifeContext";
+import {
+  readQuestion,
+} from "../../question/questionReader";
+import type {
+  DecisionEngineInput,
+} from "../decisionTypes";
   
   const BUSINESS_START_QUESTION =
     "지금 통닭집을 시작해도 될까요?";

@@ -1,6 +1,6 @@
 import type {
     DecisionResult,
-  } from "./decisionTypes";
+  } from "../decisionTypes";
   
   export const BUSINESS_START_EXPECTED_RESULT:
     DecisionResult = {

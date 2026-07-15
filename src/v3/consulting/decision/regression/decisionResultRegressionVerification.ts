@@ -1,8 +1,10 @@
-import { runDecisionEngine } from "./decisionEngine";
-import type {
+import {
+    runDecisionEngine,
+  } from "../decisionEngine";
+  import type {
     DecisionEngineInput,
     DecisionResult,
-} from "./decisionTypes";
+  } from "../decisionTypes";
 
 export type DecisionResultRegressionComparison = {
     verdictMatched: boolean;

@@ -1,7 +1,7 @@
 import type {
     DecisionEngineInput,
     DecisionResult,
-  } from "./decisionTypes";
+  } from "../decisionTypes";
   import {
     verifyDecisionEngineRegression,
     type DecisionEngineRegressionVerificationResult,
