@@ -19,8 +19,9 @@ import { buildDecisionRisks } from "./riskBuilder";
 import {
   assessLifeContext,
 } from "./lifeContextAssessment";
-
-
+import {
+  assessCompatibility,
+} from "./compatibilityAssessment";
 
 /**
  * Decision Engine
@@ -59,6 +60,11 @@ export function runDecisionEngine(
     input.lifeContext,
   );
 
+  const compatibilityAssessment =
+  assessCompatibility(
+    input.questionContext,
+  );
+
   const verdictContext = buildVerdictContext({
     decisionInput: input,
     alignment: alignmentResult.alignment,
@@ -83,6 +89,7 @@ export function runDecisionEngine(
     readiness: actionReadiness,
     alignmentReason: alignmentResult.reason,
     lifeAssessment,
+    compatibilityAssessment,
   });
 
   const risks = buildDecisionRisks({

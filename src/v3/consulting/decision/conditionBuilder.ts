@@ -4,6 +4,9 @@ import type {
     DecisionEngineInput,
   } from "./decisionTypes";
   import type { LifeContextAssessment } from "./lifeContextAssessment";
+  import type {
+    CompatibilityAssessment,
+  } from "./compatibilityAssessment";
   
   /**
    * Decision Condition Builder
@@ -111,6 +114,42 @@ import type {
           });
           break;
       }
+    }
+  
+    return conditions;
+  }
+
+  function buildCompatibilityConditions(
+    assessment: CompatibilityAssessment,
+  ): DecisionCondition[] {
+    if (!assessment.analysisRequired) {
+      return [];
+    }
+  
+    const conditions: DecisionCondition[] = [];
+  
+    if (!assessment.counterpartExists) {
+      conditions.push({
+        key: "identifyCompatibilityCounterpart",
+        description:
+          "궁합 판단의 대상이 되는 상대방과 관계를 먼저 구체적으로 확인해야 한다.",
+        required: true,
+        satisfied: false,
+      });
+  
+      return conditions;
+    }
+  
+    if (
+      assessment.additionalCounterpartDataRequired
+    ) {
+      conditions.push({
+        key: "provideCounterpartBirthData",
+        description:
+          "특정 상대방과의 궁합을 완전하게 판단하려면 상대방의 생년월일과 출생시간 정보가 필요하다.",
+        required: true,
+        satisfied: false,
+      });
     }
   
     return conditions;
@@ -245,6 +284,7 @@ import type {
     readiness: ActionReadiness;
     alignmentReason: string;
     lifeAssessment: LifeContextAssessment;
+    compatibilityAssessment: CompatibilityAssessment;
   };
   
   export function buildDecisionConditions(
@@ -257,6 +297,9 @@ import type {
       ),
       ...buildLifeContextConditions(
         input.lifeAssessment,
+      ),
+      ...buildCompatibilityConditions(
+        input.compatibilityAssessment,
       ),
       ...buildRepeatedPatternConditions(
         input.decisionInput,
