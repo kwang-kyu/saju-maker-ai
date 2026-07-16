@@ -57,6 +57,9 @@ import type {
     question:
       QuestionReaderResult;
   
+    timingType:
+      QuestionReaderResult["timingType"];
+  
     counterpart:
       QuestionCounterpartContext;
   

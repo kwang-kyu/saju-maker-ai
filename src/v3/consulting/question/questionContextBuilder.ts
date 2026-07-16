@@ -143,7 +143,8 @@ import type {
   
     return {
       question,
-  
+      timingType:
+        question.timingType,
       counterpart: {
         exists: counterpartExists,
         relation,
