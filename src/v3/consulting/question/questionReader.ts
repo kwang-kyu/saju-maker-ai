@@ -62,7 +62,11 @@ export type DecisionTarget =
   | "none";
 
 export type QuestionUrgency = "immediate" | "nearTerm" | "longTerm" | "unknown";
-
+export type QuestionTimingType =
+  | "bestTiming"
+  | "executionTiming"
+  | "waitingTiming"
+  | "unknown";
 export type QuestionReaderResult = {
   originalQuestion: string;
   normalizedQuestion: string;
@@ -72,6 +76,7 @@ export type QuestionReaderResult = {
   motive: QuestionMotive;
   decisionTarget: DecisionTarget;
   urgency: QuestionUrgency;
+  timingType: QuestionTimingType;
 
   asksWhat: string;
   asksWhy: string;
@@ -654,6 +659,41 @@ function detectUrgency(question: string): {
   };
 }
 
+function detectTimingType(
+  question: string,
+): QuestionTimingType {
+  if (
+    question.includes("기다려") ||
+    question.includes("미뤄") ||
+    question.includes("보류") ||
+    question.includes("언제까지 기다")
+  ) {
+    return "waitingTiming";
+  }
+
+  if (
+    question.includes("지금") ||
+    question.includes("당장") ||
+    question.includes("바로") ||
+    question.includes("오늘")
+  ) {
+    return "executionTiming";
+  }
+
+  if (
+    question.includes("언제") ||
+    question.includes("몇 월") ||
+    question.includes("몇월") ||
+    question.includes("시기") ||
+    question.includes("올해") ||
+    question.includes("내년")
+  ) {
+    return "bestTiming";
+  }
+
+  return "unknown";
+}
+
 function buildAsksWhat(topic: QuestionTopic, intent: QuestionIntent): string {
   const topicText: Record<QuestionTopic, string> = {
     business: "사업과 창업의 적합성",
@@ -805,6 +845,10 @@ export function readQuestion(
   );
 
   const urgencyMatch = detectUrgency(normalizedQuestion);
+  const timingType =
+  detectTimingType(
+    normalizedQuestion,
+  );
 
   const evidence = Array.from(
     new Set([
@@ -825,7 +869,7 @@ export function readQuestion(
     motive: motiveMatch.result,
     decisionTarget: decisionMatch.result,
     urgency: urgencyMatch.urgency,
-
+    timingType,
     asksWhat: buildAsksWhat(topicMatch.result, intentMatch.result),
     asksWhy: buildAsksWhy(motiveMatch.result),
     decisionQuestion: buildDecisionQuestion(
