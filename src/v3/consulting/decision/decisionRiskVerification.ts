@@ -442,3 +442,97 @@ import type {
       passed,
     };
   }
+
+  export type UrgencyRiskVerificationResult = {
+    unknownRisks: DecisionRisk[];
+    immediateRisks: DecisionRisk[];
+  
+    unknownHasNoUrgentDecisionRisk: boolean;
+    immediateDetected: boolean;
+  
+    passed: boolean;
+  };
+  
+  /**
+   * Risk Builder Urgency 민감도 검증
+   *
+   * 동일한 DecisionEngineInput, Alignment,
+   * LifeContextAssessment, CompatibilityAssessment를 유지하고
+   * Urgency만 변경한다.
+   *
+   * unknown 상태에서는 urgentDecision 위험이 없어야 하며,
+   * immediate 상태에서는 medium severity와
+   * repeatedPattern source의 urgentDecision 위험이 생성되어야 한다.
+   */
+  export function verifyUrgencyRiskSensitivity(
+    decisionInput: DecisionEngineInput,
+  ): UrgencyRiskVerificationResult {
+    const neutralLifeAssessment: LifeContextAssessment = {
+      executionConstraint: "low",
+      familyResponsibility: "low",
+      financialPressure: "low",
+      transitionDifficulty: "low",
+      expansionRisk: "low",
+    };
+  
+    const neutralCompatibilityAssessment: CompatibilityAssessment = {
+      analysisRequired: false,
+      counterpartExists: false,
+      counterpartRelation: "unknown",
+      identityProvided: false,
+      birthDataProvided: false,
+      evidenceLevel: "notRequired",
+      analysisScope: "none",
+      counterpartReadingRequired: false,
+      additionalCounterpartDataRequired: false,
+    };
+  
+    const buildRisks = (
+      urgency: DecisionEngineInput["question"]["urgency"],
+    ): DecisionRisk[] => {
+      return buildDecisionRisks({
+        decisionInput,
+        alignment: "aligned",
+        urgency,
+        lifeAssessment: neutralLifeAssessment,
+        compatibilityAssessment:
+          neutralCompatibilityAssessment,
+      });
+    };
+  
+    const unknownRisks =
+      buildRisks("unknown");
+  
+    const immediateRisks =
+      buildRisks("immediate");
+  
+    const urgentDecisionRiskKey =
+      "urgentDecision";
+  
+    const unknownHasNoUrgentDecisionRisk =
+      !unknownRisks.some(
+        (risk) => risk.key === urgentDecisionRiskKey,
+      );
+  
+    const immediateDetected =
+      immediateRisks.some(
+        (risk) =>
+          risk.key === urgentDecisionRiskKey &&
+          risk.severity === "medium" &&
+          risk.source === "repeatedPattern",
+      );
+  
+    const passed =
+      unknownHasNoUrgentDecisionRisk &&
+      immediateDetected;
+  
+    return {
+      unknownRisks,
+      immediateRisks,
+  
+      unknownHasNoUrgentDecisionRisk,
+      immediateDetected,
+  
+      passed,
+    };
+  }

@@ -5,6 +5,7 @@ import {
   verifyCompatibilityRiskSensitivity,
   verifyContextAlignmentRiskSensitivity,
   verifyLifeContextRiskSensitivity,
+  verifyUrgencyRiskSensitivity,
 } from "./decisionRiskVerification";
 
 const decisionInput =
@@ -25,10 +26,16 @@ const contextAlignmentResult =
     decisionInput,
   );
 
+const urgencyResult =
+  verifyUrgencyRiskSensitivity(
+    decisionInput,
+  );
+
 const results = {
   lifeContext: lifeContextResult,
   compatibility: compatibilityResult,
   contextAlignment: contextAlignmentResult,
+  urgency: urgencyResult,
 };
 
 console.log(
@@ -42,7 +49,8 @@ console.log(
 if (
   !lifeContextResult.passed ||
   !compatibilityResult.passed ||
-  !contextAlignmentResult.passed
+  !contextAlignmentResult.passed ||
+  !urgencyResult.passed
 ) {
   process.exitCode = 1;
 }
