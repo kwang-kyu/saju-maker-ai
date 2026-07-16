@@ -2,6 +2,7 @@
   buildDecisionEngineRegressionInput,
 } from "./regression/decisionEngineRegressionFixture";
 import {
+  verifyCompatibilityRiskSensitivity,
   verifyLifeContextRiskSensitivity,
 } from "./decisionRiskVerification";
 
@@ -13,8 +14,14 @@ const lifeContextResult =
     decisionInput,
   );
 
+const compatibilityResult =
+  verifyCompatibilityRiskSensitivity(
+    decisionInput,
+  );
+
 const results = {
   lifeContext: lifeContextResult,
+  compatibility: compatibilityResult,
 };
 
 console.log(
@@ -25,6 +32,9 @@ console.log(
   ),
 );
 
-if (!lifeContextResult.passed) {
+if (
+  !lifeContextResult.passed ||
+  !compatibilityResult.passed
+) {
   process.exitCode = 1;
 }

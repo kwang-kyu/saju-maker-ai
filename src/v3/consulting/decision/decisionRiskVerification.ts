@@ -197,3 +197,135 @@ import type {
       passed,
     };
   }
+  export type CompatibilityRiskVerificationResult = {
+    notRequiredRisks: DecisionRisk[];
+    counterpartMissingRisks: DecisionRisk[];
+    counterpartPresentRisks: DecisionRisk[];
+  
+    notRequiredHasNoCompatibilityRisk: boolean;
+    counterpartMissingDetected: boolean;
+    counterpartPresentHasNoCompatibilityRisk: boolean;
+  
+    passed: boolean;
+  };
+  
+  /**
+   * Risk Builder Compatibility 민감도 검증
+   *
+   * 동일한 DecisionEngineInput, Alignment, Urgency와
+   * LifeContextAssessment를 유지하고
+   * CompatibilityAssessment만 변경한다.
+   *
+   * 궁합 분석이 필요하지 않은 경우와
+   * 상대방이 확인된 경우에는 Compatibility 전용 위험이 없어야 한다.
+   *
+   * 궁합 분석이 필요하지만 상대방이 확인되지 않은 경우에는
+   * compatibilityCounterpartMissing 위험이
+   * high severity와 questionIntent source로 생성되어야 한다.
+   */
+  export function verifyCompatibilityRiskSensitivity(
+    decisionInput: DecisionEngineInput,
+  ): CompatibilityRiskVerificationResult {
+    const neutralLifeAssessment: LifeContextAssessment = {
+      executionConstraint: "low",
+      familyResponsibility: "low",
+      financialPressure: "low",
+      transitionDifficulty: "low",
+      expansionRisk: "low",
+    };
+  
+    const buildRisks = (
+      compatibilityAssessment: CompatibilityAssessment,
+    ): DecisionRisk[] => {
+      return buildDecisionRisks({
+        decisionInput,
+        alignment: "aligned",
+        urgency: "unknown",
+        lifeAssessment: neutralLifeAssessment,
+        compatibilityAssessment,
+      });
+    };
+  
+    const notRequiredAssessment: CompatibilityAssessment = {
+      analysisRequired: false,
+      counterpartExists: false,
+      counterpartRelation: "unknown",
+      identityProvided: false,
+      birthDataProvided: false,
+      evidenceLevel: "notRequired",
+      analysisScope: "none",
+      counterpartReadingRequired: false,
+      additionalCounterpartDataRequired: false,
+    };
+  
+    const counterpartMissingAssessment: CompatibilityAssessment = {
+      analysisRequired: true,
+      counterpartExists: false,
+      counterpartRelation: "unknown",
+      identityProvided: false,
+      birthDataProvided: false,
+      evidenceLevel: "insufficient",
+      analysisScope: "relationshipContext",
+      counterpartReadingRequired: true,
+      additionalCounterpartDataRequired: true,
+    };
+  
+    const counterpartPresentAssessment: CompatibilityAssessment = {
+      analysisRequired: true,
+      counterpartExists: true,
+      counterpartRelation: "businessPartner",
+      identityProvided: true,
+      birthDataProvided: true,
+      evidenceLevel: "sufficient",
+      analysisScope: "fullCompatibility",
+      counterpartReadingRequired: true,
+      additionalCounterpartDataRequired: false,
+    };
+  
+    const notRequiredRisks =
+      buildRisks(notRequiredAssessment);
+  
+    const counterpartMissingRisks =
+      buildRisks(counterpartMissingAssessment);
+  
+    const counterpartPresentRisks =
+      buildRisks(counterpartPresentAssessment);
+  
+    const compatibilityRiskKey =
+      "compatibilityCounterpartMissing";
+  
+    const notRequiredHasNoCompatibilityRisk =
+      !notRequiredRisks.some(
+        (risk) => risk.key === compatibilityRiskKey,
+      );
+  
+    const counterpartMissingDetected =
+      counterpartMissingRisks.some(
+        (risk) =>
+          risk.key === compatibilityRiskKey &&
+          risk.severity === "high" &&
+          risk.source === "questionIntent",
+      );
+  
+    const counterpartPresentHasNoCompatibilityRisk =
+      !counterpartPresentRisks.some(
+        (risk) => risk.key === compatibilityRiskKey,
+      );
+  
+    const passed =
+      notRequiredHasNoCompatibilityRisk &&
+      counterpartMissingDetected &&
+      counterpartPresentHasNoCompatibilityRisk;
+  
+    return {
+      notRequiredRisks,
+      counterpartMissingRisks,
+      counterpartPresentRisks,
+  
+      notRequiredHasNoCompatibilityRisk,
+      counterpartMissingDetected,
+      counterpartPresentHasNoCompatibilityRisk,
+  
+      passed,
+    };
+  }
