@@ -828,6 +828,21 @@ export type LifeContextConditionVerificationResult = {
   passed: boolean;
 };
 
+export type CompatibilityConditionVerificationResult = {
+  notRequiredConditions: DecisionCondition[];
+  missingCounterpartConditions: DecisionCondition[];
+  missingBirthDataConditions: DecisionCondition[];
+  sufficientDataConditions: DecisionCondition[];
+
+  notRequiredHasNoCompatibilityCondition: boolean;
+  missingCounterpartDetected: boolean;
+  missingCounterpartStopsFurtherCondition: boolean;
+  missingBirthDataDetected: boolean;
+  sufficientDataHasNoCompatibilityCondition: boolean;
+
+  passed: boolean;
+};
+
 /**
  * Condition Builder Action Readiness 민감도 검증
  *
@@ -1152,6 +1167,168 @@ export function verifyLifeContextConditionSensitivity(
     transitionDifficultyDetected,
     expansionRiskDetected,
     executionConstraintDetected,
+
+    passed,
+  };
+}
+
+/**
+ * Condition Builder Compatibility 민감도 검증
+ *
+ * 동일한 DecisionEngineInput과 다른 Assessment를 유지하고
+ * CompatibilityAssessment만 변경하여
+ * 상대방 정보 수준에 맞는 조건이 생성되는지 확인한다.
+ *
+ * 분석이 필요하지 않거나 출생정보가 충분한 경우에는
+ * Compatibility 고유 조건이 생성되지 않아야 한다.
+ */
+export function verifyCompatibilityConditionSensitivity(
+  decisionInput: DecisionEngineInput,
+): CompatibilityConditionVerificationResult {
+  const neutralLifeAssessment: LifeContextAssessment = {
+    executionConstraint: "low",
+    familyResponsibility: "low",
+    financialPressure: "low",
+    transitionDifficulty: "low",
+    expansionRisk: "low",
+  };
+
+  const neutralTimingAssessment: TimingAssessment = {
+    analysisRequired: false,
+    timingType: "unknown",
+    evidenceLevel: "notRequired",
+    assessmentScope: "none",
+  };
+
+  const buildConditions = (
+    compatibilityAssessment: CompatibilityAssessment,
+  ): DecisionCondition[] => {
+    return buildDecisionConditions({
+      decisionInput,
+      readiness: "ready",
+      alignmentReason:
+        "현재 국면과 질문 방향의 충돌을 먼저 해소해야 한다.",
+      lifeAssessment: neutralLifeAssessment,
+      compatibilityAssessment,
+      timingAssessment: neutralTimingAssessment,
+    });
+  };
+
+  const notRequiredAssessment: CompatibilityAssessment = {
+    analysisRequired: false,
+    counterpartExists: false,
+    counterpartRelation: "unknown",
+    identityProvided: false,
+    birthDataProvided: false,
+    evidenceLevel: "notRequired",
+    analysisScope: "none",
+    counterpartReadingRequired: false,
+    additionalCounterpartDataRequired: false,
+  };
+
+  const missingCounterpartAssessment: CompatibilityAssessment = {
+    analysisRequired: true,
+    counterpartExists: false,
+    counterpartRelation: "unknown",
+    identityProvided: false,
+    birthDataProvided: false,
+    evidenceLevel: "insufficient",
+    analysisScope: "selfPatternOnly",
+    counterpartReadingRequired: true,
+    additionalCounterpartDataRequired: true,
+  };
+
+  const missingBirthDataAssessment: CompatibilityAssessment = {
+    analysisRequired: true,
+    counterpartExists: true,
+    counterpartRelation: "friend",
+    identityProvided: true,
+    birthDataProvided: false,
+    evidenceLevel: "partial",
+    analysisScope: "counterpartIdentity",
+    counterpartReadingRequired: true,
+    additionalCounterpartDataRequired: true,
+  };
+
+  const sufficientDataAssessment: CompatibilityAssessment = {
+    analysisRequired: true,
+    counterpartExists: true,
+    counterpartRelation: "friend",
+    identityProvided: true,
+    birthDataProvided: true,
+    evidenceLevel: "sufficient",
+    analysisScope: "fullCompatibility",
+    counterpartReadingRequired: true,
+    additionalCounterpartDataRequired: false,
+  };
+
+  const notRequiredConditions =
+    buildConditions(notRequiredAssessment);
+
+  const missingCounterpartConditions =
+    buildConditions(missingCounterpartAssessment);
+
+  const missingBirthDataConditions =
+    buildConditions(missingBirthDataAssessment);
+
+  const sufficientDataConditions =
+    buildConditions(sufficientDataAssessment);
+
+  const compatibilityConditionKeys =
+    new Set<DecisionCondition["key"]>([
+      "identifyCompatibilityCounterpart",
+      "provideCounterpartBirthData",
+    ]);
+
+  const notRequiredHasNoCompatibilityCondition =
+    !notRequiredConditions.some((condition) =>
+      compatibilityConditionKeys.has(condition.key),
+    );
+
+  const missingCounterpartDetected =
+    missingCounterpartConditions.some(
+      (condition) =>
+        condition.key ===
+        "identifyCompatibilityCounterpart",
+    );
+
+  const missingCounterpartStopsFurtherCondition =
+    !missingCounterpartConditions.some(
+      (condition) =>
+        condition.key ===
+        "provideCounterpartBirthData",
+    );
+
+  const missingBirthDataDetected =
+    missingBirthDataConditions.some(
+      (condition) =>
+        condition.key ===
+        "provideCounterpartBirthData",
+    );
+
+  const sufficientDataHasNoCompatibilityCondition =
+    !sufficientDataConditions.some((condition) =>
+      compatibilityConditionKeys.has(condition.key),
+    );
+
+  const passed =
+    notRequiredHasNoCompatibilityCondition &&
+    missingCounterpartDetected &&
+    missingCounterpartStopsFurtherCondition &&
+    missingBirthDataDetected &&
+    sufficientDataHasNoCompatibilityCondition;
+
+  return {
+    notRequiredConditions,
+    missingCounterpartConditions,
+    missingBirthDataConditions,
+    sufficientDataConditions,
+
+    notRequiredHasNoCompatibilityCondition,
+    missingCounterpartDetected,
+    missingCounterpartStopsFurtherCondition,
+    missingBirthDataDetected,
+    sufficientDataHasNoCompatibilityCondition,
 
     passed,
   };
