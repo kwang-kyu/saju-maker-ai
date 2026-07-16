@@ -452,6 +452,16 @@ import type {
   
     passed: boolean;
   };
+
+  export type RepeatedPatternRiskVerificationResult = {
+    noRepeatedPatternRisks: DecisionRisk[];
+    repeatedPatternRisks: DecisionRisk[];
+  
+    noRepeatedPatternHasNoRepeatedPatternRisk: boolean;
+    repeatedPatternDetected: boolean;
+  
+    passed: boolean;
+  };
   
   /**
    * Risk Builder Urgency 민감도 검증
@@ -532,6 +542,129 @@ import type {
   
       unknownHasNoUrgentDecisionRisk,
       immediateDetected,
+  
+      passed,
+    };
+  }
+
+  /**
+ * Risk Builder Repeated Pattern 민감도 검증
+ *
+ * 동일한 DecisionEngineInput의 다른 모든 조건을 유지하고
+ * Repeated Pattern의 risks 배열만 변경한다.
+ *
+ * 반복 위험이 없는 상태에서는 repeatedPattern 전용 위험이
+ * 생성되지 않아야 한다.
+ *
+ * 반복 위험이 존재하는 상태에서는 각 위험이
+ * primary confidence에 대응하는 severity와
+ * repeatedPattern source로 생성되어야 한다.
+ */
+export function verifyRepeatedPatternRiskSensitivity(
+    decisionInput: DecisionEngineInput,
+  ): RepeatedPatternRiskVerificationResult {
+    const neutralLifeAssessment: LifeContextAssessment = {
+      executionConstraint: "low",
+      familyResponsibility: "low",
+      financialPressure: "low",
+      transitionDifficulty: "low",
+      expansionRisk: "low",
+    };
+  
+    const neutralCompatibilityAssessment: CompatibilityAssessment = {
+      analysisRequired: false,
+      counterpartExists: false,
+      counterpartRelation: "unknown",
+      identityProvided: false,
+      birthDataProvided: false,
+      evidenceLevel: "notRequired",
+      analysisScope: "none",
+      counterpartReadingRequired: false,
+      additionalCounterpartDataRequired: false,
+    };
+  
+    const repeatedPattern =
+      decisionInput.humanContext.identity.profile.repeatedPattern;
+  
+    const noRepeatedPatternInput: DecisionEngineInput = {
+      ...decisionInput,
+      humanContext: {
+        ...decisionInput.humanContext,
+        identity: {
+          ...decisionInput.humanContext.identity,
+          profile: {
+            ...decisionInput.humanContext.identity.profile,
+            repeatedPattern: {
+              ...repeatedPattern,
+              risks: [],
+            },
+          },
+        },
+      },
+    };
+  
+    const buildRisks = (
+      input: DecisionEngineInput,
+    ): DecisionRisk[] => {
+      return buildDecisionRisks({
+        decisionInput: input,
+        alignment: "aligned",
+        urgency: "unknown",
+        lifeAssessment: neutralLifeAssessment,
+        compatibilityAssessment:
+          neutralCompatibilityAssessment,
+      });
+    };
+  
+    const noRepeatedPatternRisks =
+      buildRisks(noRepeatedPatternInput);
+  
+    const repeatedPatternRisks =
+      buildRisks(decisionInput);
+  
+    const isRepeatedPatternRisk = (
+      risk: DecisionRisk,
+    ): boolean => {
+      return (
+        risk.key.startsWith("repeatedPattern-") &&
+        risk.source === "repeatedPattern"
+      );
+    };
+  
+    const expectedSeverity: DecisionRisk["severity"] =
+      repeatedPattern.primary.confidence === "high"
+        ? "high"
+        : repeatedPattern.primary.confidence === "medium"
+          ? "medium"
+          : "low";
+  
+    const noRepeatedPatternHasNoRepeatedPatternRisk =
+      !noRepeatedPatternRisks.some(isRepeatedPatternRisk);
+  
+    const generatedRepeatedPatternRisks =
+      repeatedPatternRisks.filter(isRepeatedPatternRisk);
+  
+    const repeatedPatternDetected =
+      repeatedPattern.risks.length > 0 &&
+      generatedRepeatedPatternRisks.length ===
+        repeatedPattern.risks.length &&
+      generatedRepeatedPatternRisks.every(
+        (risk, index) =>
+          risk.key === `repeatedPattern-${index + 1}` &&
+          risk.description === repeatedPattern.risks[index] &&
+          risk.severity === expectedSeverity,
+      );
+  
+    const passed =
+      noRepeatedPatternHasNoRepeatedPatternRisk &&
+      repeatedPatternDetected;
+  
+    return {
+      noRepeatedPatternRisks,
+      repeatedPatternRisks,
+  
+      noRepeatedPatternHasNoRepeatedPatternRisk,
+      repeatedPatternDetected,
   
       passed,
     };

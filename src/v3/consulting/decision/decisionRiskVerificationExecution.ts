@@ -5,6 +5,7 @@ import {
   verifyCompatibilityRiskSensitivity,
   verifyContextAlignmentRiskSensitivity,
   verifyLifeContextRiskSensitivity,
+  verifyRepeatedPatternRiskSensitivity,
   verifyUrgencyRiskSensitivity,
 } from "./decisionRiskVerification";
 
@@ -31,11 +32,16 @@ const urgencyResult =
     decisionInput,
   );
 
+  const repeatedPatternResult =
+  verifyRepeatedPatternRiskSensitivity(
+    decisionInput,
+  );
 const results = {
   lifeContext: lifeContextResult,
   compatibility: compatibilityResult,
   contextAlignment: contextAlignmentResult,
   urgency: urgencyResult,
+  repeatedPattern: repeatedPatternResult,
 };
 
 console.log(
