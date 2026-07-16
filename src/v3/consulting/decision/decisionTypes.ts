@@ -1,6 +1,7 @@
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import type { HumanLifeContext } from "../../types/humanLifeContext";
 import type { QuestionReaderResult } from "../question/questionReader";
+import type { QuestionContext } from "../question/questionContext";
 
 /**
  * Decision Engine이 내릴 수 있는 최종 판단이다.
@@ -125,6 +126,8 @@ export type DecisionEngineInput = {
   lifeContext: HumanLifeContext;
 
   question: QuestionReaderResult;
+
+  questionContext: QuestionContext;
 };
 
 /**

@@ -16,6 +16,9 @@ import type {
 import {
   readQuestion,
 } from "../../question/questionReader";
+import {
+  buildQuestionContext,
+} from "../../question/questionContextBuilder";
 import type {
   DecisionEngineInput,
 } from "../decisionTypes";
@@ -258,10 +261,16 @@ import type {
       humanContext,
       BUSINESS_START_QUESTION,
     );
+
+    const questionContext =
+      buildQuestionContext(
+      question,
+    );
   
     return {
       humanContext,
       lifeContext,
       question,
+      questionContext,
     };
   }

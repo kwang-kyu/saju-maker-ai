@@ -1,6 +1,7 @@
 import type { ConsultingInput } from "./consultingInput";
 
 import { readQuestion } from "./question/questionReader";
+import { buildQuestionContext } from "./question/questionContextBuilder";
 
 import { runDecisionEngine } from "./decision/decisionEngine";
 
@@ -21,12 +22,18 @@ export function runConsulting(
       input.question,
     );
 
-    const decision =
-  runDecisionEngine({
-    humanContext: input.humanContext,
-    lifeContext: input.lifeContext,
-    question: questionResult,
-  });
+  const questionContext =
+    buildQuestionContext(
+      questionResult,
+    );
+
+  const decision =
+    runDecisionEngine({
+      humanContext: input.humanContext,
+      lifeContext: input.lifeContext,
+      question: questionResult,
+      questionContext,
+    });
 
   const explanation =
     readDecisionResult(decision);

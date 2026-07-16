@@ -1,13 +1,23 @@
 import type {
     HumanDestinyContext,
   } from "../../types/humanDestinyContext";
-  import type { HumanLifeContext } from "../../types/humanLifeContext";
+  
+  import type {
+    HumanLifeContext,
+  } from "../../types/humanLifeContext";
+  
   import {
     readQuestion,
   } from "../question/questionReader";
+  
+  import {
+    buildQuestionContext,
+  } from "../question/questionContextBuilder";
+  
   import {
     runDecisionEngine,
   } from "./decisionEngine";
+  
   import type {
     DecisionResult,
   } from "./decisionTypes";
@@ -160,17 +170,29 @@ import type {
       cautionIdentityContext,
       questionText,
     );
+
+    const actionIdentityQuestionContext =
+    buildQuestionContext(
+      actionIdentityQuestion,
+    );
+
+  const cautionIdentityQuestionContext =
+    buildQuestionContext(
+      cautionIdentityQuestion,
+    );
   
     const actionIdentityResult = runDecisionEngine({
       humanContext: actionIdentityContext,
       lifeContext,
       question: actionIdentityQuestion,
+      questionContext: actionIdentityQuestionContext,
     });
   
     const cautionIdentityResult = runDecisionEngine({
       humanContext: cautionIdentityContext,
       lifeContext,
       question: cautionIdentityQuestion,
+      questionContext: cautionIdentityQuestionContext,
     });
   
     const lifeDriverChanged =

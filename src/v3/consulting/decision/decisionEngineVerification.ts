@@ -1,6 +1,7 @@
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import type { HumanLifeContext } from "../../types/humanLifeContext";
 import { readQuestion } from "../question/questionReader";
+import { buildQuestionContext } from "../question/questionContextBuilder";
 import { runDecisionEngine } from "./decisionEngine";
 import type { DecisionResult } from "./decisionTypes";
 
@@ -112,16 +113,28 @@ export function verifyDecisionEngineRepeatedPatternSensitivity(
     questionText,
   );
 
+  const stableGrowthQuestionContext =
+    buildQuestionContext(
+      stableGrowthQuestion,
+  );
+
+  const earlyCollapseQuestionContext =
+    buildQuestionContext(
+      earlyCollapseQuestion,
+  );
+
   const stableGrowthResult = runDecisionEngine({
     humanContext: stableGrowthContext,
     lifeContext,
     question: stableGrowthQuestion,
+    questionContext: stableGrowthQuestionContext,
   });
 
   const earlyCollapseResult = runDecisionEngine({
     humanContext: earlyCollapseContext,
     lifeContext,
     question: earlyCollapseQuestion,
+    questionContext: earlyCollapseQuestionContext,
   });
 
   const conditionsChanged =
@@ -209,16 +222,28 @@ export function verifyDecisionEnginePhaseSensitivity(
     questionText,
   );
 
+  const growthQuestionContext =
+    buildQuestionContext(
+      growthQuestion,
+    );
+
+  const recoveryQuestionContext =
+    buildQuestionContext(
+      recoveryQuestion,
+    );
+
   const growthResult = runDecisionEngine({
     humanContext: growthContext,
     lifeContext,
     question: growthQuestion,
+    questionContext: growthQuestionContext,
   });
 
   const recoveryResult = runDecisionEngine({
     humanContext: recoveryContext,
     lifeContext,
     question: recoveryQuestion,
+    questionContext: recoveryQuestionContext,
   });
 
   const verdictChanged =
@@ -338,17 +363,27 @@ export function verifyDecisionEngineLifeDriverSensitivity(
     stabilityContext,
     questionText,
   );
+  const achievementQuestionContext =
+  buildQuestionContext(
+    achievementQuestion,
+  );
 
+const stabilityQuestionContext =
+  buildQuestionContext(
+    stabilityQuestion,
+  );
   const achievementResult = runDecisionEngine({
     humanContext: achievementContext,
     lifeContext,
     question: achievementQuestion,
+    questionContext: achievementQuestionContext,
   });
 
   const stabilityResult = runDecisionEngine({
     humanContext: stabilityContext,
     lifeContext,
     question: stabilityQuestion,
+    questionContext: stabilityQuestionContext,
   });
 
   const alignmentStayedSame =
@@ -485,16 +520,28 @@ export function verifyDecisionEngineSurvivalStyleSensitivity(
     questionText,
   );
 
+  const pushQuestionContext =
+  buildQuestionContext(
+    pushQuestion,
+  );
+
+const stabilityQuestionContext =
+  buildQuestionContext(
+    stabilityQuestion,
+  );
+
   const pushResult = runDecisionEngine({
     humanContext: pushContext,
     lifeContext,
     question: pushQuestion,
+    questionContext: pushQuestionContext,
   });
 
   const stabilityResult = runDecisionEngine({
     humanContext: stabilityContext,
     lifeContext,
     question: stabilityQuestion,
+    questionContext: stabilityQuestionContext,
   });
 
   const alignmentStayedSame =
@@ -658,17 +705,28 @@ export function verifyDecisionEngineRepeatedPatternVerdictSensitivity(
     earlyCollapseContext,
     questionText,
   );
+  const opportunityMissQuestionContext =
+  buildQuestionContext(
+    opportunityMissQuestion,
+  );
 
+const earlyCollapseQuestionContext =
+  buildQuestionContext(
+    earlyCollapseQuestion,
+  );
   const opportunityMissResult = runDecisionEngine({
     humanContext: opportunityMissContext,
     lifeContext,
     question: opportunityMissQuestion,
+    questionContext: opportunityMissQuestionContext,
   });
 
   const earlyCollapseResult = runDecisionEngine({
     humanContext: earlyCollapseContext,
     lifeContext,
     question: earlyCollapseQuestion,
+    questionContext: earlyCollapseQuestionContext,
+  
   });
 
   const alignmentStayedSame =
