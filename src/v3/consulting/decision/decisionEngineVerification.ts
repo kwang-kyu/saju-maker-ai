@@ -3,7 +3,16 @@ import type { HumanLifeContext } from "../../types/humanLifeContext";
 import { readQuestion } from "../question/questionReader";
 import { buildQuestionContext } from "../question/questionContextBuilder";
 import { runDecisionEngine } from "./decisionEngine";
-import type { DecisionResult } from "./decisionTypes";
+import type {
+  ActionReadiness,
+  DecisionCondition,
+  DecisionEngineInput,
+  DecisionResult,
+} from "./decisionTypes";
+import { buildDecisionConditions } from "./conditionBuilder";
+import type { LifeContextAssessment } from "./lifeContextAssessment";
+import type { CompatibilityAssessment } from "./compatibilityAssessment";
+import type { TimingAssessment } from "./timingAssessment";
 
 export type DecisionEngineVerificationResult = {
   question: string;
@@ -781,6 +790,169 @@ export type TimingVerificationResult = {
 
   passed: boolean;
 };
+
+export type ReadinessConditionVerificationResult = {
+  readyConditions: DecisionCondition[];
+  readyWithConditionsConditions: DecisionCondition[];
+  preparationRequiredConditions: DecisionCondition[];
+  delayRequiredConditions: DecisionCondition[];
+  stopRequiredConditions: DecisionCondition[];
+  unknownConditions: DecisionCondition[];
+
+  readyHasNoReadinessCondition: boolean;
+  readyWithConditionsDetected: boolean;
+  preparationRequiredDetected: boolean;
+  delayRequiredDetected: boolean;
+  stopRequiredDetected: boolean;
+  unknownDetected: boolean;
+
+  passed: boolean;
+};
+
+/**
+ * Condition Builder Action Readiness 민감도 검증
+ *
+ * 동일한 DecisionEngineInput과 Assessment를 유지하고
+ * ActionReadiness만 변경하여
+ * 각 상태에 맞는 실행 조건이 생성되는지 확인한다.
+ *
+ * Verdict, Alignment, Assessment를 다시 판단하지 않고
+ * Condition Builder의 조건 생성 책임만 검증한다.
+ */
+export function verifyReadinessConditionSensitivity(
+  decisionInput: DecisionEngineInput,
+): ReadinessConditionVerificationResult {
+  const neutralLifeAssessment: LifeContextAssessment = {
+    executionConstraint: "low",
+    familyResponsibility: "low",
+    financialPressure: "low",
+    transitionDifficulty: "low",
+    expansionRisk: "low",
+  };
+
+  const neutralCompatibilityAssessment: CompatibilityAssessment = {
+    analysisRequired: false,
+    counterpartExists: false,
+    counterpartRelation: "unknown",
+    identityProvided: false,
+    birthDataProvided: false,
+    evidenceLevel: "notRequired",
+    analysisScope: "none",
+    counterpartReadingRequired: false,
+    additionalCounterpartDataRequired: false,
+  };
+
+  const neutralTimingAssessment: TimingAssessment = {
+    analysisRequired: false,
+    timingType: "unknown",
+    evidenceLevel: "notRequired",
+    assessmentScope: "none",
+  };
+
+  const buildConditions = (
+    readiness: ActionReadiness,
+  ): DecisionCondition[] => {
+    return buildDecisionConditions({
+      decisionInput,
+      readiness,
+      alignmentReason:
+        "현재 국면과 질문 방향의 충돌을 먼저 해소해야 한다.",
+      lifeAssessment: neutralLifeAssessment,
+      compatibilityAssessment:
+        neutralCompatibilityAssessment,
+      timingAssessment: neutralTimingAssessment,
+    });
+  };
+
+  const readyConditions =
+    buildConditions("ready");
+
+  const readyWithConditionsConditions =
+    buildConditions("readyWithConditions");
+
+  const preparationRequiredConditions =
+    buildConditions("preparationRequired");
+
+  const delayRequiredConditions =
+    buildConditions("delayRequired");
+
+  const stopRequiredConditions =
+    buildConditions("stopRequired");
+
+  const unknownConditions =
+    buildConditions("unknown");
+
+  const readinessConditionKeys =
+    new Set<DecisionCondition["key"]>([
+      "confirmExecutionConditions",
+      "completePreparation",
+      "resolveContextConflict",
+      "stopCurrentDirection",
+      "clarifyDecisionTarget",
+    ]);
+
+  const readyHasNoReadinessCondition =
+    !readyConditions.some((condition) =>
+      readinessConditionKeys.has(condition.key),
+    );
+
+  const readyWithConditionsDetected =
+    readyWithConditionsConditions.some(
+      (condition) =>
+        condition.key ===
+        "confirmExecutionConditions",
+    );
+
+  const preparationRequiredDetected =
+    preparationRequiredConditions.some(
+      (condition) =>
+        condition.key === "completePreparation",
+    );
+
+  const delayRequiredDetected =
+    delayRequiredConditions.some(
+      (condition) =>
+        condition.key === "resolveContextConflict",
+    );
+
+  const stopRequiredDetected =
+    stopRequiredConditions.some(
+      (condition) =>
+        condition.key === "stopCurrentDirection",
+    );
+
+  const unknownDetected =
+    unknownConditions.some(
+      (condition) =>
+        condition.key === "clarifyDecisionTarget",
+    );
+
+  const passed =
+    readyHasNoReadinessCondition &&
+    readyWithConditionsDetected &&
+    preparationRequiredDetected &&
+    delayRequiredDetected &&
+    stopRequiredDetected &&
+    unknownDetected;
+
+  return {
+    readyConditions,
+    readyWithConditionsConditions,
+    preparationRequiredConditions,
+    delayRequiredConditions,
+    stopRequiredConditions,
+    unknownConditions,
+
+    readyHasNoReadinessCondition,
+    readyWithConditionsDetected,
+    preparationRequiredDetected,
+    delayRequiredDetected,
+    stopRequiredDetected,
+    unknownDetected,
+
+    passed,
+  };
+}
 
 /**
  * Decision Engine Timing Condition 민감도 검증
