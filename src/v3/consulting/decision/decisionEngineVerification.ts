@@ -763,3 +763,156 @@ const earlyCollapseQuestionContext =
     passed,
   };
 }
+
+export type TimingVerificationResult = {
+  question: string;
+
+  executionResult: DecisionResult;
+  waitingResult: DecisionResult;
+  bestTimingResult: DecisionResult;
+
+  executionVsWaitingChanged: boolean;
+  waitingVsBestChanged: boolean;
+  executionVsBestChanged: boolean;
+
+  executionConditionDetected: boolean;
+  waitingConditionDetected: boolean;
+  bestTimingConditionDetected: boolean;
+
+  passed: boolean;
+};
+
+/**
+ * Decision Engine Timing Condition 민감도 검증
+ *
+ * 동일한 사람, 동일한 Life Context,
+ * 동일한 질문 해석 결과를 유지하고
+ * QuestionContext의 timingType만 변경하여
+ * TimingAssessment가 서로 다른 조건을 생성하는지 확인한다.
+ *
+ * executionTiming, waitingTiming, bestTiming은
+ * 각각 고유한 조건을 생성해야 한다.
+ */
+export function verifyDecisionEngineTimingSensitivity(
+  baseContext: HumanDestinyContext,
+  lifeContext: HumanLifeContext,
+  questionText = "사업을 언제 시작하는 것이 좋을까요?",
+): TimingVerificationResult {
+  const question = readQuestion(
+    baseContext,
+    questionText,
+  );
+
+  const baseQuestionContext =
+    buildQuestionContext(question);
+
+  const executionQuestionContext = {
+    ...baseQuestionContext,
+    timingType: "executionTiming" as const,
+    requirements: {
+      ...baseQuestionContext.requirements,
+      timingAnalysisRequired: true,
+    },
+  };
+
+  const waitingQuestionContext = {
+    ...baseQuestionContext,
+    timingType: "waitingTiming" as const,
+    requirements: {
+      ...baseQuestionContext.requirements,
+      timingAnalysisRequired: true,
+    },
+  };
+
+  const bestTimingQuestionContext = {
+    ...baseQuestionContext,
+    timingType: "bestTiming" as const,
+    requirements: {
+      ...baseQuestionContext.requirements,
+      timingAnalysisRequired: true,
+    },
+  };
+
+  const executionResult = runDecisionEngine({
+    humanContext: baseContext,
+    lifeContext,
+    question,
+    questionContext:
+      executionQuestionContext,
+  });
+
+  const waitingResult = runDecisionEngine({
+    humanContext: baseContext,
+    lifeContext,
+    question,
+    questionContext:
+      waitingQuestionContext,
+  });
+
+  const bestTimingResult = runDecisionEngine({
+    humanContext: baseContext,
+    lifeContext,
+    question,
+    questionContext:
+      bestTimingQuestionContext,
+  });
+
+  const executionVsWaitingChanged =
+    JSON.stringify(executionResult.conditions) !==
+    JSON.stringify(waitingResult.conditions);
+
+  const waitingVsBestChanged =
+    JSON.stringify(waitingResult.conditions) !==
+    JSON.stringify(bestTimingResult.conditions);
+
+  const executionVsBestChanged =
+    JSON.stringify(executionResult.conditions) !==
+    JSON.stringify(bestTimingResult.conditions);
+
+  const executionConditionDetected =
+    executionResult.conditions.some(
+      (condition) =>
+        condition.key ===
+        "verifyImmediateExecutionReadiness",
+    );
+
+  const waitingConditionDetected =
+    waitingResult.conditions.some(
+      (condition) =>
+        condition.key ===
+        "defineWaitingCondition",
+    );
+
+  const bestTimingConditionDetected =
+    bestTimingResult.conditions.some(
+      (condition) =>
+        condition.key ===
+        "identifyActionTimingWindow",
+    );
+
+  const passed =
+    executionVsWaitingChanged &&
+    waitingVsBestChanged &&
+    executionVsBestChanged &&
+    executionConditionDetected &&
+    waitingConditionDetected &&
+    bestTimingConditionDetected;
+
+  return {
+    question: questionText,
+
+    executionResult,
+    waitingResult,
+    bestTimingResult,
+
+    executionVsWaitingChanged,
+    waitingVsBestChanged,
+    executionVsBestChanged,
+
+    executionConditionDetected,
+    waitingConditionDetected,
+    bestTimingConditionDetected,
+
+    passed,
+  };
+}
