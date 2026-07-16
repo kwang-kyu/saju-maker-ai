@@ -79,6 +79,13 @@ import type {
         satisfied: false,
       },
       {
+        key: "verifyImmediateExecutionReadiness",
+        description:
+          "지금 바로 실행하려는 질문이므로 자금, 역할, 일정과 실제 실행 준비가 갖춰졌는지 먼저 확인해야 한다.",
+        required: true,
+        satisfied: false,
+      },
+      {
         key: "useGradualGrowth",
         description:
           "작게 시작해 경험과 수익을 축적하는 점진적 실행 방식을 유지해야 한다.",
