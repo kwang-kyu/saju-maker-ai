@@ -3,6 +3,7 @@
 } from "./regression/decisionEngineRegressionFixture";
 import {
   verifyCompatibilityRiskSensitivity,
+  verifyContextAlignmentRiskSensitivity,
   verifyLifeContextRiskSensitivity,
 } from "./decisionRiskVerification";
 
@@ -19,9 +20,15 @@ const compatibilityResult =
     decisionInput,
   );
 
+const contextAlignmentResult =
+  verifyContextAlignmentRiskSensitivity(
+    decisionInput,
+  );
+
 const results = {
   lifeContext: lifeContextResult,
   compatibility: compatibilityResult,
+  contextAlignment: contextAlignmentResult,
 };
 
 console.log(
@@ -34,7 +41,8 @@ console.log(
 
 if (
   !lifeContextResult.passed ||
-  !compatibilityResult.passed
+  !compatibilityResult.passed ||
+  !contextAlignmentResult.passed
 ) {
   process.exitCode = 1;
 }

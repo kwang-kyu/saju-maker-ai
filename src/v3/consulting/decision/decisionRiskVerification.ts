@@ -329,3 +329,116 @@ import type {
       passed,
     };
   }
+
+  export type ContextAlignmentRiskVerificationResult = {
+    alignedRisks: DecisionRisk[];
+    conflictedRisks: DecisionRisk[];
+    stronglyConflictedRisks: DecisionRisk[];
+  
+    alignedHasNoPhaseConflictRisk: boolean;
+    conflictedDetected: boolean;
+    stronglyConflictedDetected: boolean;
+  
+    passed: boolean;
+  };
+  
+  /**
+   * Risk Builder Context Alignment 민감도 검증
+   *
+   * 동일한 DecisionEngineInput, Urgency,
+   * LifeContextAssessment, CompatibilityAssessment를 유지하고
+   * Context Alignment만 변경한다.
+   *
+   * aligned 상태에서는 phaseConflict 위험이 없어야 하며,
+   * conflicted 상태에서는 medium severity,
+   * stronglyConflicted 상태에서는 high severity로
+   * lifePhase source의 phaseConflict 위험이 생성되어야 한다.
+   */
+  export function verifyContextAlignmentRiskSensitivity(
+    decisionInput: DecisionEngineInput,
+  ): ContextAlignmentRiskVerificationResult {
+    const neutralLifeAssessment: LifeContextAssessment = {
+      executionConstraint: "low",
+      familyResponsibility: "low",
+      financialPressure: "low",
+      transitionDifficulty: "low",
+      expansionRisk: "low",
+    };
+  
+    const neutralCompatibilityAssessment: CompatibilityAssessment = {
+      analysisRequired: false,
+      counterpartExists: false,
+      counterpartRelation: "unknown",
+      identityProvided: false,
+      birthDataProvided: false,
+      evidenceLevel: "notRequired",
+      analysisScope: "none",
+      counterpartReadingRequired: false,
+      additionalCounterpartDataRequired: false,
+    };
+  
+    const buildRisks = (
+      alignment: Parameters<
+        typeof buildDecisionRisks
+      >[0]["alignment"],
+    ): DecisionRisk[] => {
+      return buildDecisionRisks({
+        decisionInput,
+        alignment,
+        urgency: "unknown",
+        lifeAssessment: neutralLifeAssessment,
+        compatibilityAssessment:
+          neutralCompatibilityAssessment,
+      });
+    };
+  
+    const alignedRisks =
+      buildRisks("aligned");
+  
+    const conflictedRisks =
+      buildRisks("conflicted");
+  
+    const stronglyConflictedRisks =
+      buildRisks("stronglyConflicted");
+  
+    const phaseConflictRiskKey =
+      "phaseConflict";
+  
+    const alignedHasNoPhaseConflictRisk =
+      !alignedRisks.some(
+        (risk) => risk.key === phaseConflictRiskKey,
+      );
+  
+    const conflictedDetected =
+      conflictedRisks.some(
+        (risk) =>
+          risk.key === phaseConflictRiskKey &&
+          risk.severity === "medium" &&
+          risk.source === "lifePhase",
+      );
+  
+    const stronglyConflictedDetected =
+      stronglyConflictedRisks.some(
+        (risk) =>
+          risk.key === phaseConflictRiskKey &&
+          risk.severity === "high" &&
+          risk.source === "lifePhase",
+      );
+  
+    const passed =
+      alignedHasNoPhaseConflictRisk &&
+      conflictedDetected &&
+      stronglyConflictedDetected;
+  
+    return {
+      alignedRisks,
+      conflictedRisks,
+      stronglyConflictedRisks,
+  
+      alignedHasNoPhaseConflictRisk,
+      conflictedDetected,
+      stronglyConflictedDetected,
+  
+      passed,
+    };
+  }
