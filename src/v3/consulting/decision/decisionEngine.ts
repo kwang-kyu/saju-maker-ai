@@ -97,8 +97,8 @@ export function runDecisionEngine(
     alignment: alignmentResult.alignment,
     urgency: input.question.urgency,
     lifeAssessment,
+    compatibilityAssessment,
   });
-
   const coreDecision = buildCoreDecision(
     verdict,
     input.question.decisionQuestion,

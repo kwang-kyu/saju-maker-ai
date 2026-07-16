@@ -4,6 +4,31 @@ import type {
     DecisionRisk,
   } from "./decisionTypes";
   import type { LifeContextAssessment } from "./lifeContextAssessment";
+  import type {
+    CompatibilityAssessment,
+  } from "./compatibilityAssessment";
+
+  export function buildCompatibilityRisks(
+    assessment: CompatibilityAssessment,
+  ): DecisionRisk[] {
+    if (!assessment.analysisRequired) {
+      return [];
+    }
+  
+    if (!assessment.counterpartExists) {
+      return [
+        {
+          key: "compatibilityCounterpartMissing",
+          description:
+            "궁합 판단이 필요한 질문이지만 판단 대상이 되는 상대방이 구체적으로 확인되지 않아 관계 결합과 충돌을 충분히 검토할 수 없다.",
+          severity: "high",
+          source: "questionIntent",
+        },
+      ];
+    }
+  
+    return [];
+  }
   export function buildLifeContextRisks(
     assessment: LifeContextAssessment,
   ): DecisionRisk[] {
@@ -125,14 +150,15 @@ import type {
     alignment: DecisionResult["contextAlignment"];
     urgency: DecisionEngineInput["question"]["urgency"];
     lifeAssessment: LifeContextAssessment;
-  }): DecisionRisk[] {
-    const {
-      decisionInput,
-      alignment,
-      urgency,
-      lifeAssessment,
-    } = params;
-  
+  compatibilityAssessment: CompatibilityAssessment;
+}): DecisionRisk[] {
+  const {
+    decisionInput,
+    alignment,
+    urgency,
+    lifeAssessment,
+    compatibilityAssessment,
+  } = params;
     return [
       ...buildRisks(
         alignment,
@@ -140,6 +166,9 @@ import type {
       ),
       ...buildLifeContextRisks(
         lifeAssessment,
+      ),
+      ...buildCompatibilityRisks(
+        compatibilityAssessment,
       ),
       ...buildRepeatedPatternRisks(
         decisionInput,
