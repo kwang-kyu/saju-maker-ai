@@ -7,6 +7,9 @@ import type {
   import type {
     CompatibilityAssessment,
   } from "./compatibilityAssessment";
+  import type {
+    TimingAssessment,
+  } from "./timingAssessment";
   
   /**
    * Decision Condition Builder
@@ -155,6 +158,60 @@ import type {
     return conditions;
   }
   
+  function buildTimingConditions(
+    assessment: TimingAssessment,
+  ): DecisionCondition[] {
+    if (!assessment.analysisRequired) {
+      return [];
+    }
+  
+    switch (assessment.timingType) {
+      case "executionTiming":
+        return [
+          {
+            key: "verifyImmediateExecutionReadiness",
+            description:
+              "지금 바로 실행하려는 질문이므로 자금, 역할, 일정과 실제 실행 준비가 갖춰졌는지 먼저 확인해야 한다.",
+            required: true,
+            satisfied: false,
+          },
+        ];
+  
+      case "waitingTiming":
+        return [
+          {
+            key: "defineWaitingCondition",
+            description:
+              "단순히 기다리는 것이 아니라 무엇이 충족될 때까지 기다릴 것인지 기준과 재검토 시점을 정해야 한다.",
+            required: true,
+            satisfied: false,
+          },
+        ];
+  
+      case "bestTiming":
+        return [
+          {
+            key: "identifyActionTimingWindow",
+            description:
+              "실행에 유리한 시기를 판단할 수 있도록 현재 준비 상태와 실제 행동 예정 기간을 구체적으로 확인해야 한다.",
+            required: true,
+            satisfied: false,
+          },
+        ];
+  
+      case "unknown":
+        return [
+          {
+            key: "clarifyTimingIntent",
+            description:
+              "지금 실행할 것인지, 기다릴 것인지, 가장 적합한 시기를 찾는 것인지 질문의 시기 목적을 명확히 해야 한다.",
+            required: true,
+            satisfied: false,
+          },
+        ];
+    }
+  }
+
   function buildLifeContextConditions(
     assessment: LifeContextAssessment,
   ): DecisionCondition[] {
@@ -285,6 +342,7 @@ import type {
     alignmentReason: string;
     lifeAssessment: LifeContextAssessment;
     compatibilityAssessment: CompatibilityAssessment;
+    timingAssessment: TimingAssessment;
   };
   
   export function buildDecisionConditions(
@@ -297,6 +355,9 @@ import type {
       ),
       ...buildLifeContextConditions(
         input.lifeAssessment,
+      ),
+      ...buildTimingConditions(
+        input.timingAssessment,
       ),
       ...buildCompatibilityConditions(
         input.compatibilityAssessment,
