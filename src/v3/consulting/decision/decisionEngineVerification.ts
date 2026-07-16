@@ -809,6 +809,25 @@ export type ReadinessConditionVerificationResult = {
   passed: boolean;
 };
 
+export type LifeContextConditionVerificationResult = {
+  lowConditions: DecisionCondition[];
+  financialPressureConditions: DecisionCondition[];
+  familyResponsibilityConditions: DecisionCondition[];
+  transitionDifficultyConditions: DecisionCondition[];
+  expansionRiskConditions: DecisionCondition[];
+  executionConstraintConditions: DecisionCondition[];
+
+  lowHasNoLifeContextCondition: boolean;
+
+  financialPressureDetected: boolean;
+  familyResponsibilityDetected: boolean;
+  transitionDifficultyDetected: boolean;
+  expansionRiskDetected: boolean;
+  executionConstraintDetected: boolean;
+
+  passed: boolean;
+};
+
 /**
  * Condition Builder Action Readiness 민감도 검증
  *
@@ -949,6 +968,190 @@ export function verifyReadinessConditionSensitivity(
     delayRequiredDetected,
     stopRequiredDetected,
     unknownDetected,
+
+    passed,
+  };
+}
+
+/**
+ * Condition Builder Life Context 민감도 검증
+ *
+ * 동일한 DecisionEngineInput과 다른 Assessment를 유지하고
+ * LifeContextAssessment만 변경하여
+ * 각 고위험 상태에 맞는 조건이 생성되는지 확인한다.
+ *
+ * low 상태에서는 Life Context 조건이 생성되지 않아야 하며,
+ * 각 high 상태에서는 대응하는 고유 조건이 생성되어야 한다.
+ */
+export function verifyLifeContextConditionSensitivity(
+  decisionInput: DecisionEngineInput,
+): LifeContextConditionVerificationResult {
+  const neutralCompatibilityAssessment: CompatibilityAssessment = {
+    analysisRequired: false,
+    counterpartExists: false,
+    counterpartRelation: "unknown",
+    identityProvided: false,
+    birthDataProvided: false,
+    evidenceLevel: "notRequired",
+    analysisScope: "none",
+    counterpartReadingRequired: false,
+    additionalCounterpartDataRequired: false,
+  };
+
+  const neutralTimingAssessment: TimingAssessment = {
+    analysisRequired: false,
+    timingType: "unknown",
+    evidenceLevel: "notRequired",
+    assessmentScope: "none",
+  };
+
+  const buildConditions = (
+    lifeAssessment: LifeContextAssessment,
+  ): DecisionCondition[] => {
+    return buildDecisionConditions({
+      decisionInput,
+      readiness: "ready",
+      alignmentReason:
+        "현재 국면과 질문 방향의 충돌을 먼저 해소해야 한다.",
+      lifeAssessment,
+      compatibilityAssessment:
+        neutralCompatibilityAssessment,
+      timingAssessment: neutralTimingAssessment,
+    });
+  };
+
+  const lowAssessment: LifeContextAssessment = {
+    executionConstraint: "low",
+    familyResponsibility: "low",
+    financialPressure: "low",
+    transitionDifficulty: "low",
+    expansionRisk: "low",
+  };
+
+  const financialPressureAssessment: LifeContextAssessment = {
+    ...lowAssessment,
+    financialPressure: "high",
+  };
+
+  const familyResponsibilityAssessment: LifeContextAssessment = {
+    ...lowAssessment,
+    familyResponsibility: "high",
+  };
+
+  const transitionDifficultyAssessment: LifeContextAssessment = {
+    ...lowAssessment,
+    transitionDifficulty: "high",
+  };
+
+  const expansionRiskAssessment: LifeContextAssessment = {
+    ...lowAssessment,
+    expansionRisk: "high",
+  };
+
+  const executionConstraintAssessment: LifeContextAssessment = {
+    ...lowAssessment,
+    executionConstraint: "high",
+  };
+
+  const lowConditions =
+    buildConditions(lowAssessment);
+
+  const financialPressureConditions =
+    buildConditions(
+      financialPressureAssessment,
+    );
+
+  const familyResponsibilityConditions =
+    buildConditions(
+      familyResponsibilityAssessment,
+    );
+
+  const transitionDifficultyConditions =
+    buildConditions(
+      transitionDifficultyAssessment,
+    );
+
+  const expansionRiskConditions =
+    buildConditions(
+      expansionRiskAssessment,
+    );
+
+  const executionConstraintConditions =
+    buildConditions(
+      executionConstraintAssessment,
+    );
+
+  const lifeContextConditionKeys =
+    new Set<DecisionCondition["key"]>([
+      "protectExistingCashFlow",
+      "protectFamilyResponsibility",
+      "useGradualTransition",
+      "limitExpansionScale",
+      "secureExecutionCapacity",
+    ]);
+
+  const lowHasNoLifeContextCondition =
+    !lowConditions.some((condition) =>
+      lifeContextConditionKeys.has(condition.key),
+    );
+
+  const financialPressureDetected =
+    financialPressureConditions.some(
+      (condition) =>
+        condition.key ===
+        "protectExistingCashFlow",
+    );
+
+  const familyResponsibilityDetected =
+    familyResponsibilityConditions.some(
+      (condition) =>
+        condition.key ===
+        "protectFamilyResponsibility",
+    );
+
+  const transitionDifficultyDetected =
+    transitionDifficultyConditions.some(
+      (condition) =>
+        condition.key ===
+        "useGradualTransition",
+    );
+
+  const expansionRiskDetected =
+    expansionRiskConditions.some(
+      (condition) =>
+        condition.key === "limitExpansionScale",
+    );
+
+  const executionConstraintDetected =
+    executionConstraintConditions.some(
+      (condition) =>
+        condition.key ===
+        "secureExecutionCapacity",
+    );
+
+  const passed =
+    lowHasNoLifeContextCondition &&
+    financialPressureDetected &&
+    familyResponsibilityDetected &&
+    transitionDifficultyDetected &&
+    expansionRiskDetected &&
+    executionConstraintDetected;
+
+  return {
+    lowConditions,
+    financialPressureConditions,
+    familyResponsibilityConditions,
+    transitionDifficultyConditions,
+    expansionRiskConditions,
+    executionConstraintConditions,
+
+    lowHasNoLifeContextCondition,
+
+    financialPressureDetected,
+    familyResponsibilityDetected,
+    transitionDifficultyDetected,
+    expansionRiskDetected,
+    executionConstraintDetected,
 
     passed,
   };
