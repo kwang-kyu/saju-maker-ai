@@ -111,6 +111,7 @@ export function buildMasterReaderEvidenceBundle(
         buildRepeatedPatternEvidence(
           facts.structureFacts,
         ),
+        structureFacts: facts.structureFacts,
     },
 
     lifePhaseInput,
