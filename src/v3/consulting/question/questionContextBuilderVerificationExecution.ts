@@ -2,6 +2,9 @@ import {
   readCapacity,
 } from "../../masterReader/readers/capacityReader";
 import {
+  readMoney,
+} from "../../masterReader/readers/moneyReader";
+import {
   buildMasterHumanSummary,
 } from "../../masterReader/readers/masterHumanSummaryBuilder";
 import {
@@ -120,7 +123,9 @@ function buildVerificationHumanContext():
   const capacity = readCapacity(
     VERIFICATION_STRUCTURE_FACTS,
   );
-
+  const money = readMoney(
+    VERIFICATION_STRUCTURE_FACTS,
+  );
   const profile: MasterProfile = {
     lifeDriver: {
       primary: {
@@ -169,6 +174,8 @@ function buildVerificationHumanContext():
     },
 
     capacity,
+
+    money,
   };
 
   const explanation =

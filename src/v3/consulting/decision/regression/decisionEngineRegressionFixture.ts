@@ -2,6 +2,9 @@ import {
   readCapacity,
 } from "../../../masterReader/readers/capacityReader";
 import {
+  readMoney,
+} from "../../../masterReader/readers/moneyReader";
+import {
   buildMasterHumanSummary,
 } from "../../../masterReader/readers/masterHumanSummaryBuilder";
 import {
@@ -157,6 +160,10 @@ const REGRESSION_STRUCTURE_FACTS: SajuStructureFact[] = [
 
 function buildRegressionMasterProfile(): MasterProfile {
   const capacity = readCapacity(
+    REGRESSION_STRUCTURE_FACTS,
+  );
+
+  const money = readMoney(
     REGRESSION_STRUCTURE_FACTS,
   );
 
@@ -329,6 +336,8 @@ function buildRegressionMasterProfile(): MasterProfile {
     },
 
     capacity,
+
+    money,
   };
 }
 
