@@ -80,8 +80,8 @@ import type {
   
   export type MoneyJudgement = {
     area: MoneyArea;
-  
-    level: MoneyLevel;
+
+    level: MoneyLevel | null;
   
     interpretation:
       MoneyAreaInterpretation | null;
