@@ -15,6 +15,6 @@ import {
   
   if (!result.passed) {
     throw new Error(
-      "Master profile capacity explanation verification failed.",
+      "Master profile explanation verification failed.",
     );
   }

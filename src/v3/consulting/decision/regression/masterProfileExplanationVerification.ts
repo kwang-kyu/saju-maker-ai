@@ -11,14 +11,24 @@ import {
       capacitySummaryIncludedInIdentitySummary:
         boolean;
   
-      capacityStrengthsIncluded:
+      capacityStrengthsIncluded: boolean;
+  
+      capacityRisksIncluded: boolean;
+  
+      capacityEvidenceIncluded: boolean;
+  
+      moneyExists: boolean;
+  
+      moneySummaryExists: boolean;
+  
+      moneySummaryIncludedInIdentitySummary:
         boolean;
   
-      capacityRisksIncluded:
-        boolean;
+      moneyStrengthsIncluded: boolean;
   
-      capacityEvidenceIncluded:
-        boolean;
+      moneyRisksIncluded: boolean;
+  
+      moneyEvidenceIncluded: boolean;
     };
   
     passed: boolean;
@@ -44,6 +54,9 @@ import {
   
     const capacity =
       explanation.capacity;
+  
+    const money =
+      explanation.money;
   
     const actual = {
       capacityExists:
@@ -73,6 +86,35 @@ import {
         includesEvery(
           explanation.coreEvidence,
           capacity.evidence,
+        ),
+  
+      moneyExists:
+        money !== undefined,
+  
+      moneySummaryExists:
+        money.summary.trim().length > 0,
+  
+      moneySummaryIncludedInIdentitySummary:
+        explanation.identitySummary.includes(
+          money.summary,
+        ),
+  
+      moneyStrengthsIncluded:
+        includesEvery(
+          explanation.integratedStrengths,
+          money.strengths,
+        ),
+  
+      moneyRisksIncluded:
+        includesEvery(
+          explanation.integratedRisks,
+          money.risks,
+        ),
+  
+      moneyEvidenceIncluded:
+        includesEvery(
+          explanation.coreEvidence,
+          money.evidence,
         ),
     };
   
