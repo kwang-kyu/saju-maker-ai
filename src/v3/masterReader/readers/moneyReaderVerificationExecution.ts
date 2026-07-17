@@ -2,7 +2,8 @@ import {
     verifyMoneyReader,
   } from "./moneyReaderVerification";
   
-  const result = verifyMoneyReader();
+  const result =
+    verifyMoneyReader();
   
   console.log(
     JSON.stringify(
