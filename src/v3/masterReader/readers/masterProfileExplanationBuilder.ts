@@ -1,5 +1,9 @@
 import type { MasterProfile } from "../types/masterProfile";
 import {
+  buildCapacityExplanation,
+  type CapacityResultExplanation,
+} from "./capacityExplanationBuilder";
+import {
   buildLifeDriverExplanation,
   type LifeDriverExplanation,
 } from "./lifeDriverExplanationBuilder";
@@ -23,6 +27,8 @@ export type MasterProfileExplanation = {
 
   repeatedPattern: RepeatedPatternResultExplanation;
 
+  capacity: CapacityResultExplanation;
+
   integratedStrengths: string[];
 
   integratedRisks: string[];
@@ -38,18 +44,21 @@ function buildIdentitySummary(params: {
   lifeDriver: LifeDriverExplanation;
   survivalStyle: SurvivalStyleResultExplanation;
   repeatedPattern: RepeatedPatternResultExplanation;
+  capacity: CapacityResultExplanation;
 }): string {
   const {
     lifeDriver,
     survivalStyle,
     repeatedPattern,
+    capacity,
   } = params;
 
   return [
     `이 사람은 ${lifeDriver.title}을 삶의 핵심 동력으로 삼아 움직입니다.`,
     `현실의 압박이나 위기에서는 ${survivalStyle.primary.title} 방식으로 자신을 지키고 상황을 돌파하려는 성향이 나타납니다.`,
     `이 과정이 반복되면 삶에서는 ${repeatedPattern.primary.title} 패턴이 형성될 가능성이 큽니다.`,
-    `따라서 이 사람을 이해하려면 무엇을 원하는지만 볼 것이 아니라, 원하는 것을 얻기 위해 어떤 생존 방식을 사용하고 그 결과 무엇을 반복하는지를 함께 봐야 합니다.`,
+    capacity.summary,
+    `따라서 이 사람을 이해하려면 무엇을 원하는지만 볼 것이 아니라, 원하는 것을 얻기 위해 어떤 생존 방식을 사용하고 무엇을 반복하며 실제로 어느 범위까지 감당할 수 있는지를 함께 봐야 합니다.`,
   ].join(" ");
 }
 
@@ -70,22 +79,30 @@ export function buildMasterProfileExplanation(
       profile.repeatedPattern,
     );
 
+  const capacity =
+    buildCapacityExplanation(
+      profile.capacity,
+    );
+
   const integratedStrengths = unique([
     ...lifeDriver.strengths,
     ...repeatedPattern.strengths,
     ...survivalStyle.recoveryMethods,
+    ...capacity.strengths,
   ]);
 
   const integratedRisks = unique([
     ...lifeDriver.cautions,
     ...repeatedPattern.risks,
     ...survivalStyle.prohibitedActions,
+    ...capacity.risks,
   ]);
 
   const coreEvidence = unique([
     ...lifeDriver.evidence,
     ...survivalStyle.primary.evidence,
     ...repeatedPattern.primary.evidence,
+    ...capacity.evidence,
   ]);
 
   return {
@@ -95,6 +112,7 @@ export function buildMasterProfileExplanation(
       lifeDriver,
       survivalStyle,
       repeatedPattern,
+      capacity,
     }),
 
     lifeDriver,
@@ -102,6 +120,8 @@ export function buildMasterProfileExplanation(
     survivalStyle,
 
     repeatedPattern,
+
+    capacity,
 
     integratedStrengths,
 
