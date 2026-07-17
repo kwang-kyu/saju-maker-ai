@@ -46,6 +46,18 @@ import type {
     exceptions: string[];
   };
   
+  export type MoneyAreaInterpretation = {
+    corePattern: string;
+  
+    strengthExpression: string;
+  
+    limitationPattern: string;
+  
+    suitableConditions: string[];
+  
+    cautionConditions: string[];
+  };
+  
   export type MoneyInterpretation = {
     corePattern: string;
   
@@ -71,7 +83,8 @@ import type {
   
     level: MoneyLevel;
   
-    interpretation: MoneyInterpretation | null;
+    interpretation:
+      MoneyAreaInterpretation | null;
   
     evidence: MoneyEvidence[];
   
@@ -98,4 +111,6 @@ import type {
     volatilityResponse: MoneyJudgement;
   
     lossRecovery: MoneyJudgement;
+  
+    interpretation: MoneyInterpretation | null;
   };
