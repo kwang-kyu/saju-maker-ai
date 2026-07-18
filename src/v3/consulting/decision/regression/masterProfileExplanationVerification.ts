@@ -29,6 +29,19 @@ import {
       moneyRisksIncluded: boolean;
   
       moneyEvidenceIncluded: boolean;
+  
+      careerExists: boolean;
+  
+      careerSummaryExists: boolean;
+  
+      careerSummaryIncludedInIdentitySummary:
+        boolean;
+  
+      careerStrengthsIncluded: boolean;
+  
+      careerRisksIncluded: boolean;
+  
+      careerEvidenceIncluded: boolean;
     };
   
     passed: boolean;
@@ -57,6 +70,9 @@ import {
   
     const money =
       explanation.money;
+  
+    const career =
+      explanation.career;
   
     const actual = {
       capacityExists:
@@ -115,6 +131,35 @@ import {
         includesEvery(
           explanation.coreEvidence,
           money.evidence,
+        ),
+  
+      careerExists:
+        career !== undefined,
+  
+      careerSummaryExists:
+        career.summary.trim().length > 0,
+  
+      careerSummaryIncludedInIdentitySummary:
+        explanation.identitySummary.includes(
+          career.summary,
+        ),
+  
+      careerStrengthsIncluded:
+        includesEvery(
+          explanation.integratedStrengths,
+          career.strengths,
+        ),
+  
+      careerRisksIncluded:
+        includesEvery(
+          explanation.integratedRisks,
+          career.risks,
+        ),
+  
+      careerEvidenceIncluded:
+        includesEvery(
+          explanation.coreEvidence,
+          career.evidence,
         ),
     };
   

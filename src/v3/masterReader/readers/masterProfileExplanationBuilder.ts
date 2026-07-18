@@ -6,6 +6,10 @@ import {
   type CapacityResultExplanation,
 } from "./capacityExplanationBuilder";
 import {
+  buildCareerExplanation,
+  type CareerResultExplanation,
+} from "./careerExplanationBuilder";
+import {
   buildLifeDriverExplanation,
   type LifeDriverExplanation,
 } from "./lifeDriverExplanationBuilder";
@@ -39,6 +43,8 @@ export type MasterProfileExplanation = {
 
   money: MoneyResultExplanation;
 
+  career: CareerResultExplanation;
+
   integratedStrengths: string[];
 
   integratedRisks: string[];
@@ -68,6 +74,8 @@ function buildIdentitySummary(params: {
   capacity: CapacityResultExplanation;
 
   money: MoneyResultExplanation;
+
+  career: CareerResultExplanation;
 }): string {
   const {
     lifeDriver,
@@ -75,6 +83,7 @@ function buildIdentitySummary(params: {
     repeatedPattern,
     capacity,
     money,
+    career,
   } = params;
 
   return [
@@ -88,7 +97,9 @@ function buildIdentitySummary(params: {
 
     money.summary,
 
-    `따라서 이 사람을 이해하려면 무엇을 원하는지만 볼 것이 아니라, 원하는 것을 얻기 위해 어떤 생존 방식을 사용하고 무엇을 반복하며 실제로 어느 범위까지 감당할 수 있는지, 재물을 어떤 방식으로 만들고 지키며 위험에 대응하는지를 함께 봐야 합니다.`,
+    career.summary,
+
+    `따라서 이 사람을 이해하려면 무엇을 원하는지만 볼 것이 아니라, 원하는 것을 얻기 위해 어떤 생존 방식을 사용하고 무엇을 반복하며 실제로 어느 범위까지 감당할 수 있는지, 재물을 어떤 방식으로 만들고 지키며 위험에 대응하는지, 어떤 역할과 업무 구조에서 전문성과 성과를 지속적으로 발전시키는지를 함께 봐야 합니다.`,
   ].join(" ");
 }
 
@@ -120,6 +131,11 @@ export function buildMasterProfileExplanation(
       profile.money,
     );
 
+  const career =
+    buildCareerExplanation(
+      profile.career,
+    );
+
   const integratedStrengths = unique([
     ...lifeDriver.strengths,
 
@@ -130,6 +146,8 @@ export function buildMasterProfileExplanation(
     ...capacity.strengths,
 
     ...money.strengths,
+
+    ...career.strengths,
   ]);
 
   const integratedRisks = unique([
@@ -142,6 +160,8 @@ export function buildMasterProfileExplanation(
     ...capacity.risks,
 
     ...money.risks,
+
+    ...career.risks,
   ]);
 
   const coreEvidence = unique([
@@ -154,6 +174,8 @@ export function buildMasterProfileExplanation(
     ...capacity.evidence,
 
     ...money.evidence,
+
+    ...career.evidence,
   ]);
 
   return {
@@ -171,6 +193,8 @@ export function buildMasterProfileExplanation(
         capacity,
 
         money,
+
+        career,
       }),
 
     lifeDriver,
@@ -182,6 +206,8 @@ export function buildMasterProfileExplanation(
     capacity,
 
     money,
+
+    career,
 
     integratedStrengths,
 

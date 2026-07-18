@@ -2,6 +2,9 @@ import {
   readCapacity,
 } from "../../../masterReader/readers/capacityReader";
 import {
+  readCareer,
+} from "../../../masterReader/readers/careerReader";
+import {
   readMoney,
 } from "../../../masterReader/readers/moneyReader";
 import {
@@ -164,6 +167,9 @@ function buildRegressionMasterProfile(): MasterProfile {
   );
 
   const money = readMoney(
+    REGRESSION_STRUCTURE_FACTS,
+  );
+  const career = readCareer(
     REGRESSION_STRUCTURE_FACTS,
   );
 
@@ -338,6 +344,8 @@ function buildRegressionMasterProfile(): MasterProfile {
     capacity,
 
     money,
+
+    career,
   };
 }
 

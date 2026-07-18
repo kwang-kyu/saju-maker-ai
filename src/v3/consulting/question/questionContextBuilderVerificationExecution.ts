@@ -2,6 +2,9 @@ import {
   readCapacity,
 } from "../../masterReader/readers/capacityReader";
 import {
+  readCareer,
+} from "../../masterReader/readers/careerReader";
+import {
   readMoney,
 } from "../../masterReader/readers/moneyReader";
 import {
@@ -126,6 +129,9 @@ function buildVerificationHumanContext():
   const money = readMoney(
     VERIFICATION_STRUCTURE_FACTS,
   );
+  const career = readCareer(
+    VERIFICATION_STRUCTURE_FACTS,
+  );
   const profile: MasterProfile = {
     lifeDriver: {
       primary: {
@@ -176,6 +182,8 @@ function buildVerificationHumanContext():
     capacity,
 
     money,
+
+    career,
   };
 
   const explanation =
