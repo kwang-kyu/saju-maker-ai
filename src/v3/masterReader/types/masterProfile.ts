@@ -25,6 +25,9 @@ import type {
 import type {
   BlessingResult,
 } from "./blessing";
+import type {
+  DestinyResult,
+} from "./destiny";
 
 export type MasterProfile = {
   lifeDriver: LifeDriverResult;
@@ -44,4 +47,6 @@ export type MasterProfile = {
   health: HealthResult;
 
   blessing: BlessingResult;
+
+  destiny: DestinyResult;
 };

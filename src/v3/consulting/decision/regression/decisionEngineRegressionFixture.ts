@@ -11,6 +11,9 @@ import {
   readBlessing,
 } from "../../../masterReader/readers/blessingReader";
 import {
+  readDestiny,
+} from "../../../masterReader/readers/destinyReader";
+import {
   readMoney,
 } from "../../../masterReader/readers/moneyReader";
 import {
@@ -194,6 +197,11 @@ function buildRegressionMasterProfile(): MasterProfile {
     REGRESSION_STRUCTURE_FACTS,
   );
 
+  const destiny =
+  readDestiny(
+    REGRESSION_STRUCTURE_FACTS,
+  );
+
   return {
     lifeDriver: {
       primary: {
@@ -373,6 +381,8 @@ function buildRegressionMasterProfile(): MasterProfile {
     health,
 
     blessing,
+
+    destiny,
   };
 }
 

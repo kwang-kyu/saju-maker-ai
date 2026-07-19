@@ -11,6 +11,9 @@ import {
   readBlessing,
 } from "../../masterReader/readers/blessingReader";
 import {
+  readDestiny,
+} from "../../masterReader/readers/destinyReader";
+import {
   readMoney,
 } from "../../masterReader/readers/moneyReader";
 import {
@@ -161,6 +164,10 @@ function buildVerificationHumanContext():
     readBlessing(
       VERIFICATION_STRUCTURE_FACTS,
     );
+    const destiny =
+    readDestiny(
+      VERIFICATION_STRUCTURE_FACTS,
+    );
   const profile: MasterProfile = {
     lifeDriver: {
       primary: {
@@ -219,6 +226,8 @@ function buildVerificationHumanContext():
     health,
 
     blessing,
+
+    destiny,
   };
 
   const explanation =

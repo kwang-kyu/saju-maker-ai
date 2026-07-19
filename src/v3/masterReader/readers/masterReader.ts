@@ -18,6 +18,9 @@ import {
   readCareer,
 } from "./careerReader";
 import {
+  readDestiny,
+} from "./destinyReader";
+import {
   readHealth,
 } from "./healthReader";
 import {
@@ -90,6 +93,11 @@ export function readMasterProfile(
       input.structureFacts,
     );
 
+  const destiny =
+    readDestiny(
+      input.structureFacts,
+    );
+
   if (
     !lifeDriver
     || !survivalStyle
@@ -100,6 +108,7 @@ export function readMasterProfile(
     || !relationship
     || !health
     || !blessing
+    || !destiny
   ) {
     return null;
   }
@@ -122,6 +131,8 @@ export function readMasterProfile(
     health,
 
     blessing,
+
+    destiny,
   };
 
   const explanation =
