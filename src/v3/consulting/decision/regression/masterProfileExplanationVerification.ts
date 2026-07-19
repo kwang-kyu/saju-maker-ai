@@ -83,6 +83,19 @@ import {
       blessingRisksIncluded: boolean;
   
       blessingEvidenceIncluded: boolean;
+
+      destinyExists: boolean;
+
+      destinySummaryExists: boolean;
+
+      destinySummaryIncludedInIdentitySummary:
+        boolean;
+
+      destinyStrengthsIncluded: boolean;
+
+      destinyRisksIncluded: boolean;
+
+      destinyEvidenceIncluded: boolean;
     };
   
     passed: boolean;
@@ -123,6 +136,9 @@ import {
   
     const blessing =
       explanation.blessing;
+
+    const destiny =
+      explanation.destiny;
   
     const actual = {
       capacityExists:
@@ -299,6 +315,35 @@ import {
         includesEvery(
           explanation.coreEvidence,
           blessing.evidence,
+        ),
+
+        destinyExists:
+        destiny !== undefined,
+
+      destinySummaryExists:
+        destiny.summary.trim().length > 0,
+
+      destinySummaryIncludedInIdentitySummary:
+        explanation.identitySummary.includes(
+          destiny.summary,
+        ),
+
+      destinyStrengthsIncluded:
+        includesEvery(
+          explanation.integratedStrengths,
+          destiny.strengths,
+        ),
+
+      destinyRisksIncluded:
+        includesEvery(
+          explanation.integratedRisks,
+          destiny.risks,
+        ),
+
+      destinyEvidenceIncluded:
+        includesEvery(
+          explanation.coreEvidence,
+          destiny.evidence,
         ),
     };
   
