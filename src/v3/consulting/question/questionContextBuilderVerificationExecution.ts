@@ -5,6 +5,9 @@ import {
   readCareer,
 } from "../../masterReader/readers/careerReader";
 import {
+  readHealth,
+} from "../../masterReader/readers/healthReader";
+import {
   readMoney,
 } from "../../masterReader/readers/moneyReader";
 import {
@@ -135,6 +138,10 @@ function buildVerificationHumanContext():
   const career = readCareer(
     VERIFICATION_STRUCTURE_FACTS,
   );
+  const health =
+  readHealth(
+    VERIFICATION_STRUCTURE_FACTS,
+  );
   const relationship =
   readRelationship(
     VERIFICATION_STRUCTURE_FACTS,
@@ -193,6 +200,8 @@ function buildVerificationHumanContext():
     career,
 
     relationship,
+
+    health,
   };
 
   const explanation =

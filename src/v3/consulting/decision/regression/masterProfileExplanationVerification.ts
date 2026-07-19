@@ -57,6 +57,18 @@ import {
   
       relationshipEvidenceIncluded:
         boolean;
+        healthExists: boolean;
+
+        healthSummaryExists: boolean;
+  
+        healthSummaryIncludedInIdentitySummary:
+          boolean;
+  
+        healthStrengthsIncluded: boolean;
+  
+        healthRisksIncluded: boolean;
+  
+        healthEvidenceIncluded: boolean;
     };
   
     passed: boolean;
@@ -91,6 +103,9 @@ import {
   
     const relationship =
       explanation.relationship;
+
+      const health =
+      explanation.health;
   
     const actual = {
       capacityExists:
@@ -209,6 +224,34 @@ import {
         includesEvery(
           explanation.coreEvidence,
           relationship.evidence,
+        ),
+        healthExists:
+        health !== undefined,
+
+      healthSummaryExists:
+        health.summary.trim().length > 0,
+
+      healthSummaryIncludedInIdentitySummary:
+        explanation.identitySummary.includes(
+          health.summary,
+        ),
+
+      healthStrengthsIncluded:
+        includesEvery(
+          explanation.integratedStrengths,
+          health.strengths,
+        ),
+
+      healthRisksIncluded:
+        includesEvery(
+          explanation.integratedRisks,
+          health.risks,
+        ),
+
+      healthEvidenceIncluded:
+        includesEvery(
+          explanation.coreEvidence,
+          health.evidence,
         ),
     };
   

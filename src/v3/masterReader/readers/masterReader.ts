@@ -15,8 +15,14 @@ import {
   readCareer,
 } from "./careerReader";
 import {
+  readHealth,
+} from "./healthReader";
+import {
   readLifeDriver,
 } from "./lifeDriverReader";
+import {
+  buildMasterHumanSummary,
+} from "./masterHumanSummaryBuilder";
 import {
   buildMasterProfileExplanation,
 } from "./masterProfileExplanationBuilder";
@@ -32,15 +38,14 @@ import {
 import {
   readSurvivalStyle,
 } from "./survivalStyleReader";
-import {
-  buildMasterHumanSummary,
-} from "./masterHumanSummaryBuilder";
 
 export function readMasterProfile(
   input: MasterReaderInput,
 ): MasterReaderResult | null {
   const lifeDriver =
-    readLifeDriver(input.lifeDriver);
+    readLifeDriver(
+      input.lifeDriver,
+    );
 
   const survivalStyle =
     readSurvivalStyle(
@@ -53,16 +58,27 @@ export function readMasterProfile(
     );
 
   const capacity =
-    readCapacity(input.structureFacts);
+    readCapacity(
+      input.structureFacts,
+    );
 
   const money =
-    readMoney(input.structureFacts);
+    readMoney(
+      input.structureFacts,
+    );
 
   const career =
-    readCareer(input.structureFacts);
+    readCareer(
+      input.structureFacts,
+    );
 
   const relationship =
     readRelationship(
+      input.structureFacts,
+    );
+
+  const health =
+    readHealth(
       input.structureFacts,
     );
 
@@ -74,6 +90,7 @@ export function readMasterProfile(
     || !money
     || !career
     || !relationship
+    || !health
   ) {
     return null;
   }
@@ -92,6 +109,8 @@ export function readMasterProfile(
     career,
 
     relationship,
+
+    health,
   };
 
   const explanation =
