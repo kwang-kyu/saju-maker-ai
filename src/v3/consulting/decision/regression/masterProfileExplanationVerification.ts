@@ -57,18 +57,32 @@ import {
   
       relationshipEvidenceIncluded:
         boolean;
-        healthExists: boolean;
-
-        healthSummaryExists: boolean;
   
-        healthSummaryIncludedInIdentitySummary:
-          boolean;
+      healthExists: boolean;
   
-        healthStrengthsIncluded: boolean;
+      healthSummaryExists: boolean;
   
-        healthRisksIncluded: boolean;
+      healthSummaryIncludedInIdentitySummary:
+        boolean;
   
-        healthEvidenceIncluded: boolean;
+      healthStrengthsIncluded: boolean;
+  
+      healthRisksIncluded: boolean;
+  
+      healthEvidenceIncluded: boolean;
+  
+      blessingExists: boolean;
+  
+      blessingSummaryExists: boolean;
+  
+      blessingSummaryIncludedInIdentitySummary:
+        boolean;
+  
+      blessingStrengthsIncluded: boolean;
+  
+      blessingRisksIncluded: boolean;
+  
+      blessingEvidenceIncluded: boolean;
     };
   
     passed: boolean;
@@ -103,9 +117,12 @@ import {
   
     const relationship =
       explanation.relationship;
-
-      const health =
+  
+    const health =
       explanation.health;
+  
+    const blessing =
+      explanation.blessing;
   
     const actual = {
       capacityExists:
@@ -225,33 +242,63 @@ import {
           explanation.coreEvidence,
           relationship.evidence,
         ),
-        healthExists:
+  
+      healthExists:
         health !== undefined,
-
+  
       healthSummaryExists:
         health.summary.trim().length > 0,
-
+  
       healthSummaryIncludedInIdentitySummary:
         explanation.identitySummary.includes(
           health.summary,
         ),
-
+  
       healthStrengthsIncluded:
         includesEvery(
           explanation.integratedStrengths,
           health.strengths,
         ),
-
+  
       healthRisksIncluded:
         includesEvery(
           explanation.integratedRisks,
           health.risks,
         ),
-
+  
       healthEvidenceIncluded:
         includesEvery(
           explanation.coreEvidence,
           health.evidence,
+        ),
+  
+      blessingExists:
+        blessing !== undefined,
+  
+      blessingSummaryExists:
+        blessing.summary.trim().length > 0,
+  
+      blessingSummaryIncludedInIdentitySummary:
+        explanation.identitySummary.includes(
+          blessing.summary,
+        ),
+  
+      blessingStrengthsIncluded:
+        includesEvery(
+          explanation.integratedStrengths,
+          blessing.strengths,
+        ),
+  
+      blessingRisksIncluded:
+        includesEvery(
+          explanation.integratedRisks,
+          blessing.risks,
+        ),
+  
+      blessingEvidenceIncluded:
+        includesEvery(
+          explanation.coreEvidence,
+          blessing.evidence,
         ),
     };
   

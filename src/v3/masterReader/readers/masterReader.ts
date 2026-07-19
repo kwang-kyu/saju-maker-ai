@@ -9,6 +9,9 @@ import type {
 } from "../types/masterReaderResult";
 
 import {
+  readBlessing,
+} from "./blessingReader";
+import {
   readCapacity,
 } from "./capacityReader";
 import {
@@ -82,6 +85,11 @@ export function readMasterProfile(
       input.structureFacts,
     );
 
+  const blessing =
+    readBlessing(
+      input.structureFacts,
+    );
+
   if (
     !lifeDriver
     || !survivalStyle
@@ -91,6 +99,7 @@ export function readMasterProfile(
     || !career
     || !relationship
     || !health
+    || !blessing
   ) {
     return null;
   }
@@ -111,6 +120,8 @@ export function readMasterProfile(
     relationship,
 
     health,
+
+    blessing,
   };
 
   const explanation =

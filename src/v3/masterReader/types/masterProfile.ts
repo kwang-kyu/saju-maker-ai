@@ -22,6 +22,9 @@ import type {
 import type {
   HealthResult,
 } from "./health";
+import type {
+  BlessingResult,
+} from "./blessing";
 
 export type MasterProfile = {
   lifeDriver: LifeDriverResult;
@@ -39,4 +42,6 @@ export type MasterProfile = {
   relationship: RelationshipResult;
 
   health: HealthResult;
+
+  blessing: BlessingResult;
 };

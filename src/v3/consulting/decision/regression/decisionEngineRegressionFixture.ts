@@ -8,6 +8,9 @@ import {
   readHealth,
 } from "../../../masterReader/readers/healthReader";
 import {
+  readBlessing,
+} from "../../../masterReader/readers/blessingReader";
+import {
   readMoney,
 } from "../../../masterReader/readers/moneyReader";
 import {
@@ -184,6 +187,10 @@ function buildRegressionMasterProfile(): MasterProfile {
   );
   const health =
   readHealth(
+    REGRESSION_STRUCTURE_FACTS,
+  );
+  const blessing =
+  readBlessing(
     REGRESSION_STRUCTURE_FACTS,
   );
 
@@ -364,6 +371,8 @@ function buildRegressionMasterProfile(): MasterProfile {
     relationship,
 
     health,
+
+    blessing,
   };
 }
 

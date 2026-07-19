@@ -8,6 +8,9 @@ import {
   readHealth,
 } from "../../masterReader/readers/healthReader";
 import {
+  readBlessing,
+} from "../../masterReader/readers/blessingReader";
+import {
   readMoney,
 } from "../../masterReader/readers/moneyReader";
 import {
@@ -129,23 +132,35 @@ const VERIFICATION_STRUCTURE_FACTS: SajuStructureFact[] = [
 
 function buildVerificationHumanContext():
   HumanDestinyContext {
-  const capacity = readCapacity(
-    VERIFICATION_STRUCTURE_FACTS,
-  );
-  const money = readMoney(
-    VERIFICATION_STRUCTURE_FACTS,
-  );
-  const career = readCareer(
-    VERIFICATION_STRUCTURE_FACTS,
-  );
-  const health =
-  readHealth(
-    VERIFICATION_STRUCTURE_FACTS,
-  );
+    const capacity =
+    readCapacity(
+      VERIFICATION_STRUCTURE_FACTS,
+    );
+
+  const money =
+    readMoney(
+      VERIFICATION_STRUCTURE_FACTS,
+    );
+
+  const career =
+    readCareer(
+      VERIFICATION_STRUCTURE_FACTS,
+    );
+
   const relationship =
-  readRelationship(
-    VERIFICATION_STRUCTURE_FACTS,
-  );
+    readRelationship(
+      VERIFICATION_STRUCTURE_FACTS,
+    );
+
+  const health =
+    readHealth(
+      VERIFICATION_STRUCTURE_FACTS,
+    );
+
+  const blessing =
+    readBlessing(
+      VERIFICATION_STRUCTURE_FACTS,
+    );
   const profile: MasterProfile = {
     lifeDriver: {
       primary: {
@@ -202,6 +217,8 @@ function buildVerificationHumanContext():
     relationship,
 
     health,
+
+    blessing,
   };
 
   const explanation =
