@@ -28,6 +28,7 @@ import type {
     | "rooting"
     | "tenGodStrength"
     | "fiveElementFlow"
+    | "usefulGod"
     | "structure"
     | "interaction"
     | "combination"
