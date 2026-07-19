@@ -56,6 +56,13 @@ export type DecisionEvidenceSource =
   | "repeatedPattern"
   | "lifeDriver"
   | "survivalStyle"
+  | "capacity"
+  | "money"
+  | "career"
+  | "relationship"
+  | "health"
+  | "blessing"
+  | "destiny"
   | "questionIntent"
   | "currentContext"
   | "lifeContext";
