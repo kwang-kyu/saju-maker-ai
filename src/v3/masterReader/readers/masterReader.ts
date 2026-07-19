@@ -24,6 +24,9 @@ import {
   readMoney,
 } from "./moneyReader";
 import {
+  readRelationship,
+} from "./relationshipReader";
+import {
   readRepeatedPattern,
 } from "./repeatedPatternReader";
 import {
@@ -58,6 +61,11 @@ export function readMasterProfile(
   const career =
     readCareer(input.structureFacts);
 
+  const relationship =
+    readRelationship(
+      input.structureFacts,
+    );
+
   if (
     !lifeDriver
     || !survivalStyle
@@ -65,6 +73,7 @@ export function readMasterProfile(
     || !capacity
     || !money
     || !career
+    || !relationship
   ) {
     return null;
   }
@@ -81,10 +90,14 @@ export function readMasterProfile(
     money,
 
     career,
+
+    relationship,
   };
 
   const explanation =
-    buildMasterProfileExplanation(profile);
+    buildMasterProfileExplanation(
+      profile,
+    );
 
   const humanSummary =
     buildMasterHumanSummary({

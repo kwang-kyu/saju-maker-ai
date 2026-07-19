@@ -16,6 +16,9 @@ import type {
 import type {
   CareerResult,
 } from "./career";
+import type {
+  RelationshipResult,
+} from "./relationship";
 
 export type MasterProfile = {
   lifeDriver: LifeDriverResult;
@@ -29,4 +32,6 @@ export type MasterProfile = {
   money: MoneyResult;
 
   career: CareerResult;
+
+  relationship: RelationshipResult;
 };

@@ -8,6 +8,9 @@ import {
   readMoney,
 } from "../../../masterReader/readers/moneyReader";
 import {
+  readRelationship,
+} from "../../../masterReader/readers/relationshipReader";
+import {
   buildMasterHumanSummary,
 } from "../../../masterReader/readers/masterHumanSummaryBuilder";
 import {
@@ -170,6 +173,10 @@ function buildRegressionMasterProfile(): MasterProfile {
     REGRESSION_STRUCTURE_FACTS,
   );
   const career = readCareer(
+    REGRESSION_STRUCTURE_FACTS,
+  );
+  const relationship =
+  readRelationship(
     REGRESSION_STRUCTURE_FACTS,
   );
 
@@ -346,6 +353,8 @@ function buildRegressionMasterProfile(): MasterProfile {
     money,
 
     career,
+
+    relationship,
   };
 }
 

@@ -18,6 +18,10 @@ import {
   type MoneyResultExplanation,
 } from "./moneyExplanationBuilder";
 import {
+  buildRelationshipExplanation,
+  type RelationshipResultExplanation,
+} from "./relationshipExplanationBuilder";
+import {
   buildRepeatedPatternExplanation,
   type RepeatedPatternResultExplanation,
 } from "./repeatedPatternExplanationBuilder";
@@ -44,6 +48,9 @@ export type MasterProfileExplanation = {
   money: MoneyResultExplanation;
 
   career: CareerResultExplanation;
+
+  relationship:
+    RelationshipResultExplanation;
 
   integratedStrengths: string[];
 
@@ -76,6 +83,9 @@ function buildIdentitySummary(params: {
   money: MoneyResultExplanation;
 
   career: CareerResultExplanation;
+
+  relationship:
+    RelationshipResultExplanation;
 }): string {
   const {
     lifeDriver,
@@ -84,6 +94,7 @@ function buildIdentitySummary(params: {
     capacity,
     money,
     career,
+    relationship,
   } = params;
 
   return [
@@ -99,7 +110,9 @@ function buildIdentitySummary(params: {
 
     career.summary,
 
-    `따라서 이 사람을 이해하려면 무엇을 원하는지만 볼 것이 아니라, 원하는 것을 얻기 위해 어떤 생존 방식을 사용하고 무엇을 반복하며 실제로 어느 범위까지 감당할 수 있는지, 재물을 어떤 방식으로 만들고 지키며 위험에 대응하는지, 어떤 역할과 업무 구조에서 전문성과 성과를 지속적으로 발전시키는지를 함께 봐야 합니다.`,
+    relationship.summary,
+
+    `따라서 이 사람을 이해하려면 무엇을 원하는지만 볼 것이 아니라, 원하는 것을 얻기 위해 어떤 생존 방식을 사용하고 무엇을 반복하며 실제로 어느 범위까지 감당할 수 있는지, 재물을 어떤 방식으로 만들고 지키며 위험에 대응하는지, 어떤 역할과 업무 구조에서 전문성과 성과를 발전시키는지, 사람과 어떻게 연결되고 친밀감·경계·갈등을 조정하는지를 함께 봐야 합니다.`,
   ].join(" ");
 }
 
@@ -136,6 +149,11 @@ export function buildMasterProfileExplanation(
       profile.career,
     );
 
+  const relationship =
+    buildRelationshipExplanation(
+      profile.relationship,
+    );
+
   const integratedStrengths = unique([
     ...lifeDriver.strengths,
 
@@ -148,6 +166,8 @@ export function buildMasterProfileExplanation(
     ...money.strengths,
 
     ...career.strengths,
+
+    ...relationship.strengths,
   ]);
 
   const integratedRisks = unique([
@@ -162,6 +182,8 @@ export function buildMasterProfileExplanation(
     ...money.risks,
 
     ...career.risks,
+
+    ...relationship.risks,
   ]);
 
   const coreEvidence = unique([
@@ -176,6 +198,8 @@ export function buildMasterProfileExplanation(
     ...money.evidence,
 
     ...career.evidence,
+
+    ...relationship.evidence,
   ]);
 
   return {
@@ -195,6 +219,8 @@ export function buildMasterProfileExplanation(
         money,
 
         career,
+
+        relationship,
       }),
 
     lifeDriver,
@@ -208,6 +234,8 @@ export function buildMasterProfileExplanation(
     money,
 
     career,
+
+    relationship,
 
     integratedStrengths,
 

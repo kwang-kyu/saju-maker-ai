@@ -42,6 +42,21 @@ import {
       careerRisksIncluded: boolean;
   
       careerEvidenceIncluded: boolean;
+  
+      relationshipExists: boolean;
+  
+      relationshipSummaryExists: boolean;
+  
+      relationshipSummaryIncludedInIdentitySummary:
+        boolean;
+  
+      relationshipStrengthsIncluded:
+        boolean;
+  
+      relationshipRisksIncluded: boolean;
+  
+      relationshipEvidenceIncluded:
+        boolean;
     };
   
     passed: boolean;
@@ -73,6 +88,9 @@ import {
   
     const career =
       explanation.career;
+  
+    const relationship =
+      explanation.relationship;
   
     const actual = {
       capacityExists:
@@ -161,12 +179,44 @@ import {
           explanation.coreEvidence,
           career.evidence,
         ),
+  
+      relationshipExists:
+        relationship !== undefined,
+  
+      relationshipSummaryExists:
+        relationship.summary
+          .trim()
+          .length > 0,
+  
+      relationshipSummaryIncludedInIdentitySummary:
+        explanation.identitySummary.includes(
+          relationship.summary,
+        ),
+  
+      relationshipStrengthsIncluded:
+        includesEvery(
+          explanation.integratedStrengths,
+          relationship.strengths,
+        ),
+  
+      relationshipRisksIncluded:
+        includesEvery(
+          explanation.integratedRisks,
+          relationship.risks,
+        ),
+  
+      relationshipEvidenceIncluded:
+        includesEvery(
+          explanation.coreEvidence,
+          relationship.evidence,
+        ),
     };
   
     return {
       actual,
   
       passed:
-        Object.values(actual).every(Boolean),
+        Object.values(actual)
+          .every(Boolean),
     };
   }
