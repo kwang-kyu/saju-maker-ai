@@ -7,6 +7,12 @@ import type {
   import type {
     CompatibilityAssessment,
   } from "./compatibilityAssessment";
+  import type {
+    ReaderDecisionAssessment,
+  } from "./readerDecisionAssessment";
+  import {
+    buildReaderDecisionRisks,
+  } from "./readerDecisionRiskBuilder";
 
   export function buildCompatibilityRisks(
     assessment: CompatibilityAssessment,
@@ -145,33 +151,72 @@ import type {
     return risks;
   }
 
-  export function buildDecisionRisks(params: {
-    decisionInput: DecisionEngineInput;
-    alignment: DecisionResult["contextAlignment"];
-    urgency: DecisionEngineInput["question"]["urgency"];
-    lifeAssessment: LifeContextAssessment;
-  compatibilityAssessment: CompatibilityAssessment;
-}): DecisionRisk[] {
-  const {
-    decisionInput,
-    alignment,
-    urgency,
-    lifeAssessment,
-    compatibilityAssessment,
-  } = params;
+  export type DecisionRiskBuilderInput = {
+    decisionInput:
+      DecisionEngineInput;
+  
+    alignment:
+      DecisionResult["contextAlignment"];
+  
+    urgency:
+      DecisionEngineInput["question"]["urgency"];
+  
+    lifeAssessment:
+      LifeContextAssessment;
+  
+    compatibilityAssessment:
+      CompatibilityAssessment;
+  };
+  
+  export function buildDecisionRisks(
+    params:
+      DecisionRiskBuilderInput,
+  ): DecisionRisk[] {
+    const {
+      decisionInput,
+      alignment,
+      urgency,
+      lifeAssessment,
+      compatibilityAssessment,
+    } = params;
+  
     return [
       ...buildRisks(
         alignment,
         urgency,
       ),
+  
       ...buildLifeContextRisks(
         lifeAssessment,
       ),
+  
       ...buildCompatibilityRisks(
         compatibilityAssessment,
       ),
+  
       ...buildRepeatedPatternRisks(
         decisionInput,
+      ),
+    ];
+  }
+  
+  export type ReaderAwareDecisionRiskBuilderInput =
+    DecisionRiskBuilderInput & {
+      readerAssessment:
+        ReaderDecisionAssessment;
+    };
+  
+  export function buildReaderAwareDecisionRisks(
+    input:
+      ReaderAwareDecisionRiskBuilderInput,
+  ): DecisionRisk[] {
+    return [
+      ...buildDecisionRisks(
+        input,
+      ),
+  
+      ...buildReaderDecisionRisks(
+        input.readerAssessment,
       ),
     ];
   }
