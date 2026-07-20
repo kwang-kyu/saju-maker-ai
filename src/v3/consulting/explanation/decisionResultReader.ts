@@ -12,14 +12,27 @@ import type {
   };
   
   export type DecisionExplanationCondition = {
+    key:
+      DecisionCondition["key"];
+
     description: string;
+
     required: boolean;
+
     satisfied: boolean;
   };
   
   export type DecisionExplanationRisk = {
+    key:
+      DecisionRisk["key"];
+
+    source:
+      DecisionRisk["source"];
+
     description: string;
-    severity: DecisionRisk["severity"];
+
+    severity:
+      DecisionRisk["severity"];
   };
   
   export type DecisionExplanationInput = {
@@ -65,20 +78,41 @@ import type {
   function mapConditions(
     conditions: DecisionCondition[],
   ): DecisionExplanationCondition[] {
-    return conditions.map((condition) => ({
-      description: condition.description,
-      required: condition.required,
-      satisfied: condition.satisfied,
-    }));
+    return conditions.map(
+      (condition) => ({
+        key:
+          condition.key,
+
+        description:
+          condition.description,
+
+        required:
+          condition.required,
+
+        satisfied:
+          condition.satisfied,
+      }),
+    );
   }
-  
+
   function mapRisks(
     risks: DecisionRisk[],
   ): DecisionExplanationRisk[] {
-    return risks.map((risk) => ({
-      description: risk.description,
-      severity: risk.severity,
-    }));
+    return risks.map(
+      (risk) => ({
+        key:
+          risk.key,
+
+        source:
+          risk.source,
+
+        description:
+          risk.description,
+
+        severity:
+          risk.severity,
+      }),
+    );
   }
   
   /**
