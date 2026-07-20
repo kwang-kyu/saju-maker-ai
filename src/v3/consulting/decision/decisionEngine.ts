@@ -17,7 +17,9 @@ import { buildDecisionEvidence } from "./evidenceBuilder";
 import {
   buildReaderAwareDecisionConditions,
 } from "./conditionBuilder";
-import { buildDecisionRisks } from "./riskBuilder";
+import {
+  buildReaderAwareDecisionRisks,
+} from "./riskBuilder";
 import {
   assessLifeContext,
 } from "./lifeContextAssessment";
@@ -140,12 +142,22 @@ const verdict =
       readerDecisionAssessment,
   });
 
-  const risks = buildDecisionRisks({
+  const risks =
+  buildReaderAwareDecisionRisks({
     decisionInput: input,
-    alignment: alignmentResult.alignment,
-    urgency: input.question.urgency,
+
+    alignment:
+      alignmentResult.alignment,
+
+    urgency:
+      input.question.urgency,
+
     lifeAssessment,
+
     compatibilityAssessment,
+
+    readerAssessment:
+      readerDecisionAssessment,
   });
   const coreDecision = buildCoreDecision(
     verdict,
