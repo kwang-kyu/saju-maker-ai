@@ -123,6 +123,15 @@ import {
         block.step === step,
     );
   }
+
+  function countOccurrences(
+    value: string,
+    target: string,
+  ): number {
+    return value
+      .split(target)
+      .length - 1;
+  }
   
   function buildCase(
     name: string,
@@ -281,6 +290,27 @@ import {
               .includes(
                 "판단 결과: wait",
               ),
+
+              payloadExcludesFinalDecisionFromOrder:
+              !payload
+                .explanationOrder
+                .some(
+                  (item) =>
+                    item.title
+                    === "최종 판단",
+                ),
+    
+            promptIncludesFinalDecisionOnce:
+              countOccurrences(
+                prompt.userPrompt,
+                "최종 판단",
+              ) === 1,
+    
+            promptIncludesCanonicalFinalDecision:
+              prompt.userPrompt
+                .includes(
+                  payload.finalDecision,
+                ),
   
           systemPromptForbidsVerdictChange:
             prompt.systemPrompt
@@ -348,6 +378,26 @@ import {
               .includes(
                 "사람의 구조가 판단에 미친 영향",
               ),
+              payloadExcludesFinalDecisionFromOrder:
+              !payload
+                .explanationOrder
+                .some(
+                  (item) =>
+                    item.title
+                    === "최종 판단",
+                ),
+    
+          promptIncludesFinalDecisionOnce:
+              countOccurrences(
+                prompt.userPrompt,
+                "최종 판단",
+              ) === 1,
+    
+          promptIncludesCanonicalFinalDecision:
+              prompt.userPrompt
+                .includes(
+                  payload.finalDecision,
+                ),
         };
       },
     );
