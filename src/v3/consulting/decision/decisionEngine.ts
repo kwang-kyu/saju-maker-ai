@@ -14,7 +14,9 @@ import {
 import { buildVerdictContext } from "./verdictContextBuilder";
 import { buildDirectionJudgement } from "./directionJudgementBuilder";
 import { buildDecisionEvidence } from "./evidenceBuilder";
-import { buildDecisionConditions } from "./conditionBuilder";
+import {
+  buildReaderAwareDecisionConditions,
+} from "./conditionBuilder";
 import { buildDecisionRisks } from "./riskBuilder";
 import {
   assessLifeContext,
@@ -118,13 +120,24 @@ const verdict =
     input,
     brain,
   );
-  const conditions = buildDecisionConditions({
+  const conditions =
+  buildReaderAwareDecisionConditions({
     decisionInput: input,
-    readiness: actionReadiness,
-    alignmentReason: alignmentResult.reason,
+
+    readiness:
+      actionReadiness,
+
+    alignmentReason:
+      alignmentResult.reason,
+
     lifeAssessment,
+
     compatibilityAssessment,
+
     timingAssessment,
+
+    readerAssessment:
+      readerDecisionAssessment,
   });
 
   const risks = buildDecisionRisks({
