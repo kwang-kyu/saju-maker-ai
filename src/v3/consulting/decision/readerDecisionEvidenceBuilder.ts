@@ -2,24 +2,13 @@ import type {
     MasterProfileExplanation,
   } from "../../masterReader/readers/masterProfileExplanationBuilder";
   import type {
-    QuestionTopic,
-  } from "../question/questionReader";
-  import type {
     DecisionEngineInput,
     DecisionEvidence,
-    DecisionEvidenceSource,
   } from "./decisionTypes";
-  
-  type ReaderEvidenceSource = Extract<
-    DecisionEvidenceSource,
-    | "capacity"
-    | "money"
-    | "career"
-    | "relationship"
-    | "health"
-    | "blessing"
-    | "destiny"
-  >;
+  import {
+    selectReaderDecisionSources,
+    type ReaderDecisionSource,
+  } from "./readerDecisionSelectionBuilder";
   
   type ReaderExplanation = {
     summary: string;
@@ -27,99 +16,9 @@ import type {
     evidence: string[];
   };
   
-  const TOPIC_READER_SOURCES: Record<
-    QuestionTopic,
-    ReaderEvidenceSource[]
-  > = {
-    business: [
-      "capacity",
-      "money",
-      "career",
-      "relationship",
-      "destiny",
-    ],
-  
-    money: [
-      "money",
-      "capacity",
-      "destiny",
-    ],
-  
-    job: [
-      "career",
-      "capacity",
-      "destiny",
-    ],
-  
-    realEstate: [
-      "money",
-      "capacity",
-      "career",
-      "destiny",
-    ],
-  
-    relationship: [
-      "relationship",
-      "capacity",
-      "destiny",
-    ],
-  
-    love: [
-      "relationship",
-      "blessing",
-      "destiny",
-    ],
-  
-    marriage: [
-      "relationship",
-      "capacity",
-      "destiny",
-    ],
-  
-    family: [
-      "relationship",
-      "health",
-      "destiny",
-    ],
-  
-    health: [
-      "health",
-      "capacity",
-    ],
-  
-    legal: [
-      "relationship",
-      "capacity",
-      "destiny",
-    ],
-  
-    lifeFlow: [
-      "blessing",
-      "destiny",
-      "capacity",
-    ],
-  
-    lifeDirection: [
-      "destiny",
-      "career",
-      "capacity",
-      "blessing",
-    ],
-  
-    general: [
-      "destiny",
-      "capacity",
-      "money",
-      "career",
-      "relationship",
-      "health",
-      "blessing",
-    ],
-  };
-  
   function getReaderExplanation(
     explanation: MasterProfileExplanation,
-    source: ReaderEvidenceSource,
+    source: ReaderDecisionSource,
   ): ReaderExplanation {
     switch (source) {
       case "capacity":
@@ -146,7 +45,7 @@ import type {
   }
   
   function buildSummaryEvidence(
-    source: ReaderEvidenceSource,
+    source: ReaderDecisionSource,
     explanation: ReaderExplanation,
   ): DecisionEvidence[] {
     const summary =
@@ -170,7 +69,7 @@ import type {
   }
   
   function buildCoreEvidence(
-    source: ReaderEvidenceSource,
+    source: ReaderDecisionSource,
     explanation: ReaderExplanation,
   ): DecisionEvidence[] {
     return explanation.evidence.flatMap(
@@ -203,7 +102,7 @@ import type {
   }
   
   function buildReaderEvidence(
-    source: ReaderEvidenceSource,
+    source: ReaderDecisionSource,
     explanation: MasterProfileExplanation,
   ): DecisionEvidence[] {
     const readerExplanation =
@@ -229,9 +128,9 @@ import type {
     input: DecisionEngineInput,
   ): DecisionEvidence[] {
     const sources =
-      TOPIC_READER_SOURCES[
-        input.question.topic
-      ];
+      selectReaderDecisionSources(
+        input.question.topic,
+      );
   
     const explanation =
       input.humanContext
