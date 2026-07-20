@@ -10,6 +10,12 @@ import type {
   import type {
     TimingAssessment,
   } from "./timingAssessment";
+  import type {
+    ReaderDecisionAssessment,
+  } from "./readerDecisionAssessment";
+  import {
+    buildReaderDecisionConditions,
+  } from "./readerDecisionConditionBuilder";
   
   /**
    * Decision Condition Builder
@@ -367,3 +373,24 @@ import type {
       ),
     ];
   }
+
+  export type ReaderAwareDecisionConditionBuilderInput =
+  DecisionConditionBuilderInput & {
+    readerAssessment:
+      ReaderDecisionAssessment;
+  };
+
+export function buildReaderAwareDecisionConditions(
+  input:
+    ReaderAwareDecisionConditionBuilderInput,
+): DecisionCondition[] {
+  return [
+    ...buildDecisionConditions(
+      input,
+    ),
+
+    ...buildReaderDecisionConditions(
+      input.readerAssessment,
+    ),
+  ];
+}
