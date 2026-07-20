@@ -32,8 +32,13 @@ export function buildDecisionExplanationPayload(
     confidence: plan.confidence,
 
     explanationOrder: plan.blocks
-      .filter((block) => block.required)
-      .map((block) => ({
+    .filter(
+      (block) =>
+        block.required
+        && block.step
+          !== "finalDecision",
+    )
+    .map((block) => ({
         title: block.title,
         content: block.content,
       })),
