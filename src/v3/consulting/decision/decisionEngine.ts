@@ -25,6 +25,12 @@ import {
 import {
   assessTiming,
 } from "./timingAssessment";
+import {
+  assessReaderDecision,
+} from "./readerDecisionAssessment";
+import {
+  applyReaderDecisionVerdictEffect,
+} from "./readerDecisionVerdictBuilder";
 
 /**
  * Decision Engine
@@ -73,6 +79,11 @@ export function runDecisionEngine(
     input.questionContext,
   );
 
+  const readerDecisionAssessment =
+  assessReaderDecision(
+    input,
+  );
+
   const verdictContext = buildVerdictContext({
     decisionInput: input,
     alignment: alignmentResult.alignment,
@@ -81,7 +92,22 @@ export function runDecisionEngine(
     lifeAssessment,
   });
   
-  const verdict = buildVerdict(verdictContext);
+  const baseVerdict =
+  buildVerdict(
+    verdictContext,
+  );
+
+const verdict =
+  applyReaderDecisionVerdictEffect({
+    verdict:
+      baseVerdict,
+
+    assessment:
+      readerDecisionAssessment,
+
+    urgency:
+      input.question.urgency,
+  });
 
   const directionJudgement = buildDirectionJudgement({
     verdict,
