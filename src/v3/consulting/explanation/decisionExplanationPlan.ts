@@ -1,9 +1,12 @@
 import type { DecisionExplanationInput } from "./decisionResultReader";
-
+import {
+  buildReaderDecisionExplanation,
+} from "./readerDecisionExplanationBuilder";
 export type ExplanationStep =
   | "directAnswer"
   | "humanContext"
   | "alignment"
+  | "readerDecisionEffect"
   | "evidence"
   | "conditions"
   | "risks"
@@ -41,6 +44,10 @@ export type DecisionExplanationPlan = {
 export function buildDecisionExplanationPlan(
   input: DecisionExplanationInput,
 ): DecisionExplanationPlan {
+  const readerDecisionExplanation =
+  buildReaderDecisionExplanation(
+    input,
+  );
   const blocks: ExplanationBlock[] = [
     {
       step: "directAnswer",
@@ -59,6 +66,22 @@ export function buildDecisionExplanationPlan(
       title: "현재 국면과 질문의 정합성",
       required: true,
       content: `${input.contextAlignment} / ${input.actionReadiness}`,
+    },
+    {
+      step:
+        "readerDecisionEffect",
+
+      title:
+        readerDecisionExplanation
+          .title,
+
+      required:
+        readerDecisionExplanation
+          .required,
+
+      content:
+        readerDecisionExplanation
+          .content,
     },
     {
       step: "evidence",
