@@ -21,8 +21,8 @@ import {
   buildReaderAwareDecisionRisks,
 } from "./riskBuilder";
 import {
-  assessLifeContext,
-} from "./lifeContextAssessment";
+  assessDecisionReality,
+} from "./decisionRealityAssessment";
 import {
   assessCompatibility,
 } from "./compatibilityAssessment";
@@ -69,8 +69,9 @@ export function runDecisionEngine(
   );
 
   const lifeAssessment =
-  assessLifeContext(
+  assessDecisionReality(
     input.lifeContext,
+    input.questionContext.reality,
   );
 
   const compatibilityAssessment =
