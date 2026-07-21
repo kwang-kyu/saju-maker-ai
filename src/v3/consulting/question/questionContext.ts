@@ -44,6 +44,48 @@ import type {
     subtype: string | null;
     description: string | null;
   };
+
+  export type QuestionRealityArea =
+  | "financial"
+  | "family"
+  | "work"
+  | "time"
+  | "health"
+  | "relationship";
+
+export type QuestionRealitySignal =
+  | "debtBurden"
+  | "livingCostPressure"
+  | "incomeInstability"
+  | "fixedCostPressure"
+  | "lossConcern"
+  | "familyResponsibility"
+  | "currentWorkResponsibility"
+  | "timeConstraint"
+  | "healthConstraint"
+  | "relationshipConstraint";
+
+export type QuestionRealityConstraint = {
+  area:
+    QuestionRealityArea;
+
+  signal:
+    QuestionRealitySignal;
+
+  description: string;
+
+  evidence: string[];
+
+  explicit: true;
+};
+
+export type QuestionRealityContext = {
+  constraints:
+    QuestionRealityConstraint[];
+
+  hasExplicitConstraints:
+    boolean;
+};
   
   export type QuestionAnalysisRequirements = {
     counterpartReadingRequired: boolean;
