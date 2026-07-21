@@ -53,7 +53,9 @@ import type {
         descriptionsExist: boolean;
   
         keysAreUnique: boolean;
-  
+
+        descriptionsAreUnique: boolean;
+
         keysMatchSources: boolean;
   
         summariesExist: boolean;
@@ -213,10 +215,30 @@ import type {
         (item) =>
           item.key,
       );
-  
+
     return (
       new Set(keys).size
         === keys.length
+    );
+  }
+
+  function hasUniqueDescriptions(
+    evidence: DecisionEvidence[],
+  ): boolean {
+    const descriptions =
+      evidence.map(
+        (item) =>
+          item.description
+            .trim()
+            .replace(
+              /\s+/g,
+              " ",
+            ),
+      );
+
+    return (
+      new Set(descriptions).size
+        === descriptions.length
     );
   }
   
@@ -287,11 +309,16 @@ import type {
               .length > 0,
         ),
   
-      keysAreUnique:
+        keysAreUnique:
         hasUniqueKeys(
           evidence,
         ),
-  
+
+      descriptionsAreUnique:
+        hasUniqueDescriptions(
+          evidence,
+        ),
+
       keysMatchSources:
         keysMatchSources(
           evidence,

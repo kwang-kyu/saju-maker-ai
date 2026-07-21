@@ -111,81 +111,11 @@ import type {
           weight: 4,
         },
         {
-          source: "money",
-          key: "money-evidence-1",
-          description:
-            "재물과 자원을 분산하여 관리하고 반복 수익을 축적하는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
-          source: "money",
-          key: "money-evidence-2",
-          description:
-            "내부 기반과 버팀력이 확인되어 책임과 위험을 장기간 유지할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "money",
-          key: "money-evidence-3",
-          description:
-            "환경적 지원과 내부 기반이 연결되어 시간을 두고 점진적으로 성과를 축적할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "money",
-          key: "money-evidence-4",
-          description:
-            "규칙과 역할 체계를 이해하며 조직 운영과 책임 조율을 수행할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "money",
-          key: "money-evidence-5",
-          description:
-            "자기 통제력과 실행력이 강해 책임을 맡고 외부 압력을 견디는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
           source: "career",
           key: "career-summary",
           description:
             "한 분야의 지식과 경험을 장기간 축적하여 대체하기 어려운 전문영역으로 성장하는 구조이다. 현실 성과·영업·자원 운영을 통해 결과를 만드는 역할에서 중심 강점이 살아난다. 직업 역할 방향, 업무 수행 방식, 전문성 성장력, 리더 역할 적합성, 성과 전환력, 경력 지속력에서 강한 직업 기반이 확인됩니다. 조직 적합성은 역할과 환경에 따라 발현 범위가 달라질 수 있습니다. 독립 업무 적합성은 현재 근거만으로 수준을 확정하지 않습니다.",
           weight: 4,
-        },
-        {
-          source: "career",
-          key: "career-evidence-1",
-          description:
-            "재물과 자원을 분산하여 관리하고 반복 수익을 축적하는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
-          source: "career",
-          key: "career-evidence-2",
-          description:
-            "규칙과 역할 체계를 이해하며 조직 운영과 책임 조율을 수행할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "career",
-          key: "career-evidence-3",
-          description:
-            "내부 기반과 버팀력이 확인되어 책임과 위험을 장기간 유지할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "career",
-          key: "career-evidence-4",
-          description:
-            "자기 통제력과 실행력이 강해 책임을 맡고 외부 압력을 견디는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
-          source: "career",
-          key: "career-evidence-5",
-          description:
-            "환경적 지원과 내부 기반이 연결되어 시간을 두고 점진적으로 성과를 축적할 수 있다.",
-          weight: 3,
         },
         {
           source: "relationship",
@@ -195,81 +125,11 @@ import type {
           weight: 4,
         },
         {
-          source: "relationship",
-          key: "relationship-evidence-1",
-          description:
-            "재물과 자원을 분산하여 관리하고 반복 수익을 축적하는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
-          source: "relationship",
-          key: "relationship-evidence-2",
-          description:
-            "규칙과 역할 체계를 이해하며 조직 운영과 책임 조율을 수행할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "relationship",
-          key: "relationship-evidence-3",
-          description:
-            "내부 기반과 버팀력이 확인되어 책임과 위험을 장기간 유지할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "relationship",
-          key: "relationship-evidence-4",
-          description:
-            "환경적 지원과 내부 기반이 연결되어 시간을 두고 점진적으로 성과를 축적할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "relationship",
-          key: "relationship-evidence-5",
-          description:
-            "자기 통제력과 실행력이 강해 책임을 맡고 외부 압력을 견디는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
           source: "destiny",
           key: "destiny-summary",
           description:
             "변화를 단절로 만들지 않고 기존 경험과 성과를 다음 기반에 연결하며 성장하는 구조이다. 이는 운명을 선고하거나 현재의 행동과 시기를 결정하는 판단이 아니라, 타고난 강점·반복 과제·선택·성장·기여가 장기적으로 연결되는 구조를 설명한 것입니다.",
           weight: 4,
-        },
-        {
-          source: "destiny",
-          key: "destiny-evidence-1",
-          description:
-            "자기 통제력과 실행력이 강해 책임을 맡고 외부 압력을 견디는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
-          source: "destiny",
-          key: "destiny-evidence-2",
-          description:
-            "재물과 자원을 분산하여 관리하고 반복 수익을 축적하는 힘이 확인된다.",
-          weight: 3,
-        },
-        {
-          source: "destiny",
-          key: "destiny-evidence-3",
-          description:
-            "규칙과 역할 체계를 이해하며 조직 운영과 책임 조율을 수행할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "destiny",
-          key: "destiny-evidence-4",
-          description:
-            "내부 기반과 버팀력이 확인되어 책임과 위험을 장기간 유지할 수 있다.",
-          weight: 3,
-        },
-        {
-          source: "destiny",
-          key: "destiny-evidence-5",
-          description:
-            "환경적 지원과 내부 기반이 연결되어 시간을 두고 점진적으로 성과를 축적할 수 있다.",
-          weight: 3,
         },
         {
           source: "questionIntent",
