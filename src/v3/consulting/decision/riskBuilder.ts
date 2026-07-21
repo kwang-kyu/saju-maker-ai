@@ -5,6 +5,9 @@ import type {
   } from "./decisionTypes";
   import type { LifeContextAssessment } from "./lifeContextAssessment";
   import type {
+    DecisionRealityAssessment,
+  } from "./decisionRealityAssessment";
+  import type {
     CompatibilityAssessment,
   } from "./compatibilityAssessment";
   import type {
@@ -35,17 +38,70 @@ import type {
   
     return [];
   }
-  export function buildLifeContextRisks(
-    assessment: LifeContextAssessment,
-  ): DecisionRisk[] {
+
+  type DecisionRiskLifeAssessment =
+  LifeContextAssessment & {
+    questionConstraints?:
+      DecisionRealityAssessment[
+        "questionConstraints"
+      ];
+  };
+
+function buildFinancialPressureRiskDescription(
+  assessment:
+    DecisionRiskLifeAssessment,
+): string {
+  const signals =
+    new Set(
+      assessment.questionConstraints
+        ?.map(
+          (constraint) =>
+            constraint.signal,
+        )
+      ?? [],
+    );
+
+  const hasDebtBurden =
+    signals.has(
+      "debtBurden",
+    );
+
+  const hasLivingCostPressure =
+    signals.has(
+      "livingCostPressure",
+    );
+
+  if (
+    hasDebtBurden
+    && hasLivingCostPressure
+  ) {
+    return "생활비와 대출 상환 부담이 함께 있는 상태에서 여유자금까지 투자하면, 손실이나 자금 회수 지연이 발생할 때 상환 일정과 기존 생활 기반이 동시에 흔들릴 수 있다.";
+  }
+
+  if (hasDebtBurden) {
+    return "대출 상환 부담이 있는 상태에서 추가 자금을 투자하면, 손실이나 자금 회수 지연이 발생할 때 상환 일정과 기존 자금 기반이 함께 흔들릴 수 있다.";
+  }
+
+  if (hasLivingCostPressure) {
+    return "생활비 부담이 있는 상태에서 추가 자금을 투자하면, 손실이나 자금 회수 지연이 발생할 때 기존 생활 기반을 유지하기 어려워질 수 있다.";
+  }
+
+  return "현재 재정 책임이 큰 상태이므로 예상보다 수익 발생이 늦어질 경우 기존 생활 기반과 현금흐름이 함께 흔들릴 수 있다.";
+}
+export function buildLifeContextRisks(
+  assessment:
+    DecisionRiskLifeAssessment,
+): DecisionRisk[] {
     const risks: DecisionRisk[] = [];
   
     if (assessment.financialPressure === "high") {
       risks.push({
         key: "lifeContextFinancialPressure",
         description:
-          "현재 재정 책임이 큰 상태이므로 예상보다 수익 발생이 늦어질 경우 기존 생활 기반과 현금흐름이 함께 흔들릴 수 있다.",
-        severity: "high",
+        buildFinancialPressureRiskDescription(
+          assessment,
+        ),
+         severity: "high",
         source: "lifeContext",
       });
     }
