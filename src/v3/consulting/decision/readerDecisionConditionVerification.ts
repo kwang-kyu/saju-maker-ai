@@ -12,25 +12,25 @@ import {
   import type {
     DecisionCondition,
   } from "./decisionTypes";
-  
+
   export type ReaderDecisionConditionVerificationResult = {
     cases: Array<{
       name: string;
-  
+
       conditions:
         DecisionCondition[];
-  
+
       checks: Record<
         string,
         boolean
       >;
-  
+
       passed: boolean;
     }>;
-  
+
     passed: boolean;
   };
-  
+
   function buildAssessmentItem(
     source:
       ReaderDecisionAssessmentItem["source"],
@@ -42,30 +42,34 @@ import {
     conflictExists: boolean,
     limitationDescriptions:
       string[],
+      conditionDescriptions:
+      string[],
   ): ReaderDecisionAssessmentItem {
     return {
       source,
-  
+
       area,
-  
+
       level,
-  
+
       confidence,
-  
+
       evidenceCount:
         conflictExists
           ? 1
           : 0,
-  
+
       counterEvidenceCount:
         limitationDescriptions.length,
-  
+
       conflictExists,
-  
+
       limitationDescriptions,
+
+      conditionDescriptions,
     };
   }
-  
+
   function buildAssessment(
     constraintLevel:
       ReaderDecisionConstraintLevel,
@@ -79,73 +83,73 @@ import {
         (item) =>
           item.level !== null,
       );
-  
+
     const strongItems =
       assessedItems.filter(
         (item) =>
           item.level === "strong",
       );
-  
+
     const limitedItems =
       assessedItems.filter(
         (item) =>
           item.level === "limited",
       );
-  
+
     const conflictedItems =
       assessedItems.filter(
         (item) =>
           item.conflictExists,
       );
-  
+
     return {
       items: limitations,
-  
+
       relevantJudgementCount:
         limitations.length,
-  
+
       assessedJudgementCount:
         assessedItems.length,
-  
+
       insufficientJudgementCount:
         limitations.length
         - assessedItems.length,
-  
+
       strongCount:
         strongItems.length,
-  
+
       limitedCount:
         limitedItems.length,
-  
+
       conflictedCount:
         conflictedItems.length,
-  
+
       highConfidenceStrongCount:
         strongItems.filter(
           (item) =>
             item.confidence === "high",
         ).length,
-  
+
       highConfidenceLimitedCount:
         limitedItems.filter(
           (item) =>
             item.confidence === "high",
         ).length,
-  
+
       highConfidenceConflictCount:
         conflictedItems.filter(
           (item) =>
             item.confidence === "high",
         ).length,
-  
+
       constraintLevel,
-  
+
       supportLevel,
-  
+
       limitations,
     };
   }
-  
+
   function buildCase(
     name: string,
     assessment:
@@ -159,25 +163,25 @@ import {
       buildReaderDecisionConditions(
         assessment,
       );
-  
+
     const checks =
       checksBuilder(
         conditions,
       );
-  
+
     return {
       name,
-  
+
       conditions,
-  
+
       checks,
-  
+
       passed:
         Object.values(checks)
           .every(Boolean),
     };
   }
-  
+
   function verifyHighConstraint():
     ReaderDecisionConditionVerificationResult["cases"][number] {
     const credibleLimitation =
@@ -188,10 +192,13 @@ import {
         "high",
         false,
         [
-          "위험 부담이 커질수록 유지력이 낮아질 수 있다.",
-        ],
-      );
-  
+            "위험 부담이 커질수록 유지력이 낮아질 수 있다.",
+          ],
+          [
+            "위험 감당 범위와 보완 수단을 실행 전에 확정해야 한다.",
+          ],
+        );
+
     const lowConfidenceLimitation =
       buildAssessmentItem(
         "money",
@@ -200,10 +207,13 @@ import {
         "low",
         false,
         [
-          "부채 감당 근거가 충분하지 않다.",
-        ],
-      );
-  
+            "부채 감당 근거가 충분하지 않다.",
+          ],
+          [
+            "부채 상환 범위와 현금흐름 기준을 먼저 확인해야 한다.",
+          ],
+        );
+
     const assessment =
       buildAssessment(
         "high",
@@ -213,23 +223,23 @@ import {
           lowConfidenceLimitation,
         ],
       );
-  
+
     return buildCase(
       "high-constraint-builds-credible-condition",
-  
+
       assessment,
-  
+
       (conditions) => ({
         oneConditionOnly:
           conditions.length === 1,
-  
+
         capacityRiskIncluded:
           conditions.some(
             (condition) =>
               condition.key
               === "readerDecisionCondition-capacity-risk",
           ),
-  
+
         lowConfidenceExcluded:
           !conditions.some(
             (condition) =>
@@ -237,23 +247,31 @@ import {
                 "money-debtHandling",
               ),
           ),
-  
-        limitationEvidenceIncluded:
+
+          personalizedConditionIncluded:
           conditions.some(
             (condition) =>
               condition.description.includes(
+                "위험 감당 범위와 보완 수단을 실행 전에 확정해야 한다.",
+              ),
+          ),
+
+        limitationEvidenceExcluded:
+          conditions.every(
+            (condition) =>
+              !condition.description.includes(
                 "위험 부담이 커질수록 유지력이 낮아질 수 있다.",
               ),
           ),
-  
-        capacityGuidanceIncluded:
-          conditions.some(
+
+        genericGuidanceExcluded:
+          conditions.every(
             (condition) =>
-              condition.description.includes(
+              !condition.description.includes(
                 "실제로 감당할 수 있는 책임, 규모, 시간과 보완 수단",
               ),
           ),
-  
+
         conditionRequired:
           conditions.every(
             (condition) =>
@@ -263,7 +281,7 @@ import {
       }),
     );
   }
-  
+
   function verifyConflictCondition():
     ReaderDecisionConditionVerificationResult["cases"][number] {
     const conflict =
@@ -274,10 +292,13 @@ import {
         "high",
         true,
         [
-          "협업 근거와 충돌 근거가 함께 확인된다.",
-        ],
-      );
-  
+            "협업 근거와 충돌 근거가 함께 확인된다.",
+          ],
+          [
+            "협업 전에 역할, 책임, 권한과 갈등 조정 기준을 합의해야 한다.",
+          ],
+        );
+
     const assessment =
       buildAssessment(
         "moderate",
@@ -286,42 +307,50 @@ import {
           conflict,
         ],
       );
-  
+
     return buildCase(
       "credible-conflict-builds-condition",
-  
+
       assessment,
-  
+
       (conditions) => ({
         oneConditionOnly:
           conditions.length === 1,
-  
+
         relationshipConditionIncluded:
           conditions.some(
             (condition) =>
               condition.key
               === "readerDecisionCondition-relationship-partnershipCooperation",
           ),
-  
-        conflictDescriptionIncluded:
+
+          personalizedConflictConditionIncluded:
           conditions.some(
             (condition) =>
               condition.description.includes(
+                "협업 전에 역할, 책임, 권한과 갈등 조정 기준을 합의해야 한다.",
+              ),
+          ),
+
+        conflictEvidenceExcluded:
+          conditions.every(
+            (condition) =>
+              !condition.description.includes(
                 "협업 근거와 충돌 근거가 함께 확인된다.",
               ),
           ),
-  
-        relationshipGuidanceIncluded:
-          conditions.some(
+
+        genericGuidanceExcluded:
+          conditions.every(
             (condition) =>
-              condition.description.includes(
-                "역할, 책임, 권한, 경계와 갈등 조정 기준",
+              !condition.description.includes(
+                "상대방과의 역할, 책임, 권한, 경계와 갈등 조정 기준",
               ),
           ),
       }),
     );
   }
-  
+
   function verifyDuplicatePrevention():
     ReaderDecisionConditionVerificationResult["cases"][number] {
     const first =
@@ -332,10 +361,13 @@ import {
         "high",
         false,
         [
-          "현금흐름 유지에 제한이 확인된다.",
-        ],
-      );
-  
+            "현금흐름 유지에 제한이 확인된다.",
+          ],
+          [
+            "실행 전 현금흐름과 고정비 한도를 수치로 확인해야 한다.",
+          ],
+        );
+
     const duplicate =
       buildAssessmentItem(
         "money",
@@ -344,10 +376,13 @@ import {
         "medium",
         false,
         [
-          "추가적인 현금흐름 제한이 확인된다.",
-        ],
-      );
-  
+            "추가적인 현금흐름 제한이 확인된다.",
+          ],
+          [
+            "추가 지출을 반영한 현금흐름 기준을 확인해야 한다.",
+          ],
+        );
+
     const assessment =
       buildAssessment(
         "moderate",
@@ -357,23 +392,85 @@ import {
           duplicate,
         ],
       );
-  
+
     return buildCase(
       "duplicate-reader-area-is-removed",
-  
+
       assessment,
-  
+
       (conditions) => ({
         oneConditionOnly:
           conditions.length === 1,
-  
+
         uniqueKey:
           conditions[0]?.key
           === "readerDecisionCondition-money-cashflowManagement",
+
+        firstPersonalizedConditionPreserved:
+        conditions[0]?.description
+        === "실행 전 현금흐름과 고정비 한도를 수치로 확인해야 한다.",
+
+      duplicateConditionExcluded:
+        !conditions[0]?.description.includes(
+          "추가 지출을 반영한 현금흐름 기준",
+        ),
       }),
     );
   }
-  
+
+  function verifyGuidanceFallback():
+  ReaderDecisionConditionVerificationResult["cases"][number] {
+  const limitationWithoutCondition =
+    buildAssessmentItem(
+      "health",
+      "recoveryCapacity",
+      "limited",
+      "high",
+      false,
+      [
+        "회복 여력이 제한될 수 있다.",
+      ],
+      [],
+    );
+
+  const assessment =
+    buildAssessment(
+      "moderate",
+      "none",
+      [
+        limitationWithoutCondition,
+      ],
+    );
+
+  return buildCase(
+    "missing-specific-condition-uses-guidance-fallback",
+
+    assessment,
+
+    (conditions) => ({
+      oneConditionOnly:
+        conditions.length === 1,
+
+      healthConditionIncluded:
+        conditions[0]?.key
+        === "readerDecisionCondition-health-recoveryCapacity",
+
+      genericGuidanceUsed:
+        conditions[0]?.description
+          .includes(
+            "업무량, 생활 리듬, 휴식과 회복 시간",
+          )
+        === true,
+
+      limitationEvidenceExcluded:
+        !conditions[0]?.description
+          .includes(
+            "회복 여력이 제한될 수 있다.",
+          ),
+    }),
+  );
+}
+
   function verifyInsufficientAssessment():
     ReaderDecisionConditionVerificationResult["cases"][number] {
     const assessment =
@@ -382,38 +479,38 @@ import {
         "insufficient",
         [],
       );
-  
+
     return buildCase(
       "insufficient-assessment-requires-evidence",
-  
+
       assessment,
-  
+
       (conditions) => ({
         oneConditionOnly:
           conditions.length === 1,
-  
+
         evidenceConditionIncluded:
           conditions[0]?.key
           === "confirmReaderDecisionEvidence",
-  
+
         evidenceDescriptionIncluded:
           conditions[0]?.description
             .includes(
               "감당력과 작동 방식의 근거가 충분하지 않으므로",
             )
           === true,
-  
+
         conditionRequired:
           conditions[0]?.required
           === true,
-  
+
         conditionUnsatisfied:
           conditions[0]?.satisfied
           === false,
       }),
     );
   }
-  
+
   function verifyNoConstraint():
     ReaderDecisionConditionVerificationResult["cases"][number] {
     const strongSupport =
@@ -424,8 +521,9 @@ import {
         "high",
         false,
         [],
+        [],
       );
-  
+
     const assessment =
       buildAssessment(
         "none",
@@ -434,36 +532,38 @@ import {
           strongSupport,
         ],
       );
-  
+
     return buildCase(
       "support-does-not-create-condition",
-  
+
       assessment,
-  
+
       (conditions) => ({
         noConditions:
           conditions.length === 0,
       }),
     );
   }
-  
+
   export function verifyReaderDecisionConditions():
     ReaderDecisionConditionVerificationResult {
     const cases = [
       verifyHighConstraint(),
-  
+
       verifyConflictCondition(),
-  
+
       verifyDuplicatePrevention(),
-  
+
+      verifyGuidanceFallback(),
+
       verifyInsufficientAssessment(),
-  
+
       verifyNoConstraint(),
     ];
-  
+
     return {
       cases,
-  
+
       passed:
         cases.every(
           (verificationCase) =>

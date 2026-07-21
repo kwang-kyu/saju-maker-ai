@@ -8,128 +8,130 @@ import type {
   import type {
     ReaderDecisionSource,
   } from "./readerDecisionSelectionBuilder";
-  
+
   export type ReaderDecisionLevel =
     | "limited"
     | "moderate"
     | "strong";
-  
+
   export type ReaderDecisionConfidence =
     | "low"
     | "medium"
     | "high";
-  
+
   export type ReaderDecisionConstraintLevel =
     | "none"
     | "moderate"
     | "high"
     | "insufficient";
-  
+
   export type ReaderDecisionSupportLevel =
     | "none"
     | "moderate"
     | "strong"
     | "insufficient";
-  
+
   export type ReaderDecisionAssessmentItem = {
     source: ReaderDecisionSource;
-  
+
     area: string;
-  
+
     level: ReaderDecisionLevel | null;
-  
+
     confidence:
       ReaderDecisionConfidence;
-  
+
     evidenceCount: number;
-  
+
     counterEvidenceCount: number;
-  
+
     conflictExists: boolean;
-  
+
     limitationDescriptions: string[];
+
+    conditionDescriptions: string[];
   };
-  
+
   export type ReaderDecisionAssessment = {
     items:
       ReaderDecisionAssessmentItem[];
-  
+
     relevantJudgementCount: number;
-  
+
     assessedJudgementCount: number;
-  
+
     insufficientJudgementCount: number;
-  
+
     strongCount: number;
-  
+
     limitedCount: number;
-  
+
     conflictedCount: number;
-  
+
     highConfidenceStrongCount: number;
-  
+
     highConfidenceLimitedCount: number;
-  
+
     highConfidenceConflictCount: number;
-  
+
     constraintLevel:
       ReaderDecisionConstraintLevel;
-  
+
     supportLevel:
       ReaderDecisionSupportLevel;
-  
+
     limitations:
       ReaderDecisionAssessmentItem[];
   };
-  
+
   type ReaderJudgementInput<
     Area extends string,
   > = {
     area: Area;
-  
+
     level: ReaderDecisionLevel | null;
-  
+
     confidence:
       ReaderDecisionConfidence;
-  
+
     evidence: ReadonlyArray<{
       description: string;
     }>;
-  
+
     counterEvidence: ReadonlyArray<{
       description: string;
     }>;
-  
+
     exceptionConditions:
       readonly string[];
   };
-  
+
   function uniqueTexts(
     values: readonly string[],
   ): string[] {
     const seen = new Set<string>();
     const result: string[] = [];
-  
+
     for (const value of values) {
       const normalized =
         value
           .replace(/\s+/g, " ")
           .trim();
-  
+
       if (
         !normalized
         || seen.has(normalized)
       ) {
         continue;
       }
-  
+
       seen.add(normalized);
       result.push(normalized);
     }
-  
+
     return result;
   }
-  
+
   function normalizeJudgement<
     Area extends string,
   >(
@@ -142,49 +144,59 @@ import type {
       && judgement
         .counterEvidence
         .length > 0;
-  
-    const limitationDescriptions =
+
+        const hasConstraint =
       judgement.level === "limited"
-      || conflictExists
-        ? uniqueTexts([
-            ...judgement
+      || conflictExists;
+
+    const limitationDescriptions =
+      hasConstraint
+        ? uniqueTexts(
+            judgement
               .counterEvidence
               .map(
                 (evidence) =>
                   evidence.description,
               ),
-  
-            ...judgement
-              .exceptionConditions,
-          ])
+          )
         : [];
-  
+
+    const conditionDescriptions =
+      hasConstraint
+        ? uniqueTexts(
+            judgement
+              .exceptionConditions,
+          )
+        : [];
+
     return {
       source,
-  
+
       area:
         judgement.area,
-  
+
       level:
         judgement.level,
-  
+
       confidence:
         judgement.confidence,
-  
+
       evidenceCount:
         judgement.evidence.length,
-  
+
       counterEvidenceCount:
         judgement
           .counterEvidence
           .length,
-  
+
       conflictExists,
-  
+
       limitationDescriptions,
+
+      conditionDescriptions,
     };
   }
-  
+
   function collectCapacityItems(
     input: DecisionEngineInput,
     selection:
@@ -195,7 +207,7 @@ import type {
         .identity
         .profile
         .capacity;
-  
+
     const judgements = [
       result.responsibility,
       result.money,
@@ -204,7 +216,7 @@ import type {
       result.risk,
       result.time,
     ];
-  
+
     return judgements
       .filter(
         (judgement) =>
@@ -220,7 +232,7 @@ import type {
           ),
       );
   }
-  
+
   function collectMoneyItems(
     input: DecisionEngineInput,
     selection:
@@ -231,7 +243,7 @@ import type {
         .identity
         .profile
         .money;
-  
+
     const judgements = [
       result.generation,
       result.repeatability,
@@ -242,7 +254,7 @@ import type {
       result.volatilityResponse,
       result.lossRecovery,
     ];
-  
+
     return judgements
       .filter(
         (judgement) =>
@@ -258,7 +270,7 @@ import type {
           ),
       );
   }
-  
+
   function collectCareerItems(
     input: DecisionEngineInput,
     selection:
@@ -269,7 +281,7 @@ import type {
         .identity
         .profile
         .career;
-  
+
     const judgements = [
       result.roleOrientation,
       result.workStyle,
@@ -280,7 +292,7 @@ import type {
       result.performanceConversion,
       result.careerContinuity,
     ];
-  
+
     return judgements
       .filter(
         (judgement) =>
@@ -296,7 +308,7 @@ import type {
           ),
       );
   }
-  
+
   function collectRelationshipItems(
     input: DecisionEngineInput,
     selection:
@@ -307,7 +319,7 @@ import type {
         .identity
         .profile
         .relationship;
-  
+
     const judgements = [
       result.connectionExpansion,
       result.intimacyMaintenance,
@@ -318,7 +330,7 @@ import type {
       result.partnershipCooperation,
       result.spouseBonding,
     ];
-  
+
     return judgements
       .filter(
         (judgement) =>
@@ -335,7 +347,7 @@ import type {
           ),
       );
   }
-  
+
   function collectHealthItems(
     input: DecisionEngineInput,
     selection:
@@ -346,7 +358,7 @@ import type {
         .identity
         .profile
         .health;
-  
+
     const judgements = [
       result.vitalityStability,
       result.stressRegulation,
@@ -357,7 +369,7 @@ import type {
       result.habitSelfManagement,
       result.imbalanceAdaptation,
     ];
-  
+
     return judgements
       .filter(
         (judgement) =>
@@ -373,7 +385,7 @@ import type {
           ),
       );
   }
-  
+
   function collectBlessingItems(
     input: DecisionEngineInput,
     selection:
@@ -384,7 +396,7 @@ import type {
         .identity
         .profile
         .blessing;
-  
+
     const judgements = [
       result.opportunityReception,
       result.benefactorConnection,
@@ -395,7 +407,7 @@ import type {
       result.blessingRetention,
       result.blessingCirculation,
     ];
-  
+
     return judgements
       .filter(
         (judgement) =>
@@ -411,7 +423,7 @@ import type {
           ),
       );
   }
-  
+
   function collectDestinyItems(
     input: DecisionEngineInput,
     selection:
@@ -422,7 +434,7 @@ import type {
         .identity
         .profile
         .destiny;
-  
+
     const judgements = [
       result.lifeDirection,
       result.coreLifeTask,
@@ -433,7 +445,7 @@ import type {
       result.contributionPattern,
       result.longTermCoherence,
     ];
-  
+
     return judgements
       .filter(
         (judgement) =>
@@ -449,7 +461,7 @@ import type {
           ),
       );
   }
-  
+
   function buildConstraintLevel(
     assessedJudgementCount: number,
     credibleLimitedCount: number,
@@ -459,7 +471,7 @@ import type {
     if (assessedJudgementCount === 0) {
       return "insufficient";
     }
-  
+
     if (
       highConfidenceLimitedCount >= 2
       || (
@@ -469,17 +481,17 @@ import type {
     ) {
       return "high";
     }
-  
+
     if (
       credibleLimitedCount >= 1
       || highConfidenceConflictCount >= 1
     ) {
       return "moderate";
     }
-  
+
     return "none";
   }
-  
+
   function buildSupportLevel(
     assessedJudgementCount: number,
     credibleStrongCount: number,
@@ -488,20 +500,20 @@ import type {
     if (assessedJudgementCount === 0) {
       return "insufficient";
     }
-  
+
     if (
       highConfidenceStrongCount >= 2
     ) {
       return "strong";
     }
-  
+
     if (credibleStrongCount >= 1) {
       return "moderate";
     }
-  
+
     return "none";
   }
-  
+
   export function assessReaderDecision(
     input: DecisionEngineInput,
   ): ReaderDecisionAssessment {
@@ -509,126 +521,126 @@ import type {
       selectReaderDecisionAreas(
         input.question.topic,
       );
-  
+
     const items = [
       ...collectCapacityItems(
         input,
         selection,
       ),
-  
+
       ...collectMoneyItems(
         input,
         selection,
       ),
-  
+
       ...collectCareerItems(
         input,
         selection,
       ),
-  
+
       ...collectRelationshipItems(
         input,
         selection,
       ),
-  
+
       ...collectHealthItems(
         input,
         selection,
       ),
-  
+
       ...collectBlessingItems(
         input,
         selection,
       ),
-  
+
       ...collectDestinyItems(
         input,
         selection,
       ),
     ];
-  
+
     const assessedItems =
       items.filter(
         (item) =>
           item.level !== null,
       );
-  
+
     const strongItems =
       assessedItems.filter(
         (item) =>
           item.level === "strong",
       );
-  
+
     const limitedItems =
       assessedItems.filter(
         (item) =>
           item.level === "limited",
       );
-  
+
     const conflictedItems =
       assessedItems.filter(
         (item) =>
           item.conflictExists,
       );
-  
+
     const credibleStrongCount =
       strongItems.filter(
         (item) =>
           item.confidence !== "low",
       ).length;
-  
+
     const credibleLimitedCount =
       limitedItems.filter(
         (item) =>
           item.confidence !== "low",
       ).length;
-  
+
     const highConfidenceStrongCount =
       strongItems.filter(
         (item) =>
           item.confidence === "high",
       ).length;
-  
+
     const highConfidenceLimitedCount =
       limitedItems.filter(
         (item) =>
           item.confidence === "high",
       ).length;
-  
+
     const highConfidenceConflictCount =
       conflictedItems.filter(
         (item) =>
           item.confidence === "high",
       ).length;
-  
+
     return {
       items,
-  
+
       relevantJudgementCount:
         items.length,
-  
+
       assessedJudgementCount:
         assessedItems.length,
-  
+
       insufficientJudgementCount:
         items.length
         - assessedItems.length,
-  
+
       strongCount:
         strongItems.length,
-  
+
       limitedCount:
         limitedItems.length,
-  
+
       conflictedCount:
         conflictedItems.length,
-  
+
       highConfidenceStrongCount,
-  
+
       highConfidenceLimitedCount,
-  
+
       highConfidenceConflictCount,
-  
+
       constraintLevel:
         buildConstraintLevel(
           assessedItems.length,
@@ -636,14 +648,14 @@ import type {
           highConfidenceLimitedCount,
           highConfidenceConflictCount,
         ),
-  
+
       supportLevel:
         buildSupportLevel(
           assessedItems.length,
           credibleStrongCount,
           highConfidenceStrongCount,
         ),
-  
+
       limitations:
         items.filter(
           (item) =>

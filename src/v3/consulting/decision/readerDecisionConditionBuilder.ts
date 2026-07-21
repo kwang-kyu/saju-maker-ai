@@ -44,25 +44,19 @@ import type {
     item:
       ReaderDecisionAssessmentItem,
   ): string {
-    const limitationDescription =
-      item.limitationDescriptions
+    const conditionDescription =
+      item.conditionDescriptions
         .map(normalizeDescription)
         .filter(Boolean)
         .join(" ");
   
-    const guidance =
-      READER_CONDITION_GUIDANCE[
-        item.source
-      ];
-  
-    if (!limitationDescription) {
-      return guidance;
+    if (conditionDescription) {
+      return conditionDescription;
     }
   
-    return [
-      limitationDescription,
-      guidance,
-    ].join(" ");
+    return READER_CONDITION_GUIDANCE[
+      item.source
+    ];
   }
   
   function buildLimitationConditions(
