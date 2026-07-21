@@ -439,16 +439,31 @@ function buildRegressionLifeContext(): HumanLifeContext {
   };
 }
 
-export function buildDecisionEngineRegressionInput(): DecisionEngineInput {
+export type DecisionEngineRegressionInputOptions = {
+  questionText?: string;
+
+  lifeContext?: Partial<
+    HumanLifeContext
+  >;
+};
+
+export function buildDecisionEngineRegressionInput(
+  options:
+    DecisionEngineRegressionInputOptions = {},
+): DecisionEngineInput {
   const humanContext =
     buildRegressionHumanContext();
 
-  const lifeContext =
-    buildRegressionLifeContext();
+  const lifeContext: HumanLifeContext = {
+    ...buildRegressionLifeContext(),
+
+    ...options.lifeContext,
+  };
 
   const question = readQuestion(
     humanContext,
-    BUSINESS_START_QUESTION,
+    options.questionText
+      ?? BUSINESS_START_QUESTION,
   );
 
   const questionContext =
