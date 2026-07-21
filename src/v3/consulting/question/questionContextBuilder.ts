@@ -1,11 +1,209 @@
 import type {
-    QuestionContext,
-    QuestionCounterpartRelation,
-  } from "./questionContext";
-  import type {
-    QuestionReaderResult,
-  } from "./questionReader";
-  
+  QuestionContext,
+  QuestionCounterpartRelation,
+  QuestionRealityConstraint,
+  QuestionRealityContext,
+} from "./questionContext";
+import type {
+  QuestionReaderResult,
+} from "./questionReader";
+
+  type QuestionRealitySignalRule = {
+    area:
+      QuestionRealityConstraint["area"];
+
+    signal:
+      QuestionRealityConstraint["signal"];
+
+    description: string;
+
+    expressions:
+      readonly string[];
+  };
+
+  const QUESTION_REALITY_SIGNAL_RULES:
+    readonly QuestionRealitySignalRule[] = [
+      {
+        area: "financial",
+        signal: "debtBurden",
+        description:
+          "대출·채무 또는 상환 부담이 질문에 명시되어 있다.",
+        expressions: [
+          "대출",
+          "빚",
+          "채무",
+          "상환 부담",
+          "원리금",
+        ],
+      },
+      {
+        area: "financial",
+        signal: "livingCostPressure",
+        description:
+          "생활비 또는 생계 유지 부담이 질문에 명시되어 있다.",
+        expressions: [
+          "생활비",
+          "생계비",
+          "생계 부담",
+          "먹고살",
+        ],
+      },
+      {
+        area: "financial",
+        signal: "incomeInstability",
+        description:
+          "수입·소득 또는 매출의 불안정이 질문에 명시되어 있다.",
+        expressions: [
+          "수입이 불안",
+          "소득이 불안",
+          "매출이 불안",
+          "수입이 없",
+          "소득이 없",
+          "수입 감소",
+          "소득 감소",
+          "매출 감소",
+        ],
+      },
+      {
+        area: "financial",
+        signal: "fixedCostPressure",
+        description:
+          "고정비 또는 정기 지출 부담이 질문에 명시되어 있다.",
+        expressions: [
+          "고정비",
+          "고정 지출",
+          "임대료 부담",
+          "월세 부담",
+        ],
+      },
+      {
+        area: "financial",
+        signal: "lossConcern",
+        description:
+          "자금 손실 또는 원금 훼손 우려가 질문에 명시되어 있다.",
+        expressions: [
+          "손실",
+          "손해",
+          "원금 손실",
+          "돈을 잃",
+          "자금을 잃",
+        ],
+      },
+      {
+        area: "family",
+        signal: "familyResponsibility",
+        description:
+          "가족 부양 또는 돌봄 책임이 질문에 명시되어 있다.",
+        expressions: [
+          "가족 부양",
+          "부양 책임",
+          "자녀 부담",
+          "돌봄 책임",
+        ],
+      },
+      {
+        area: "work",
+        signal: "currentWorkResponsibility",
+        description:
+          "현재 직업이나 본업의 책임이 질문에 명시되어 있다.",
+        expressions: [
+          "현재 직장",
+          "직장을 다니",
+          "재직 중",
+          "본업",
+          "현재 사업",
+        ],
+      },
+      {
+        area: "time",
+        signal: "timeConstraint",
+        description:
+          "실행에 사용할 수 있는 시간의 제약이 질문에 명시되어 있다.",
+        expressions: [
+          "시간이 없",
+          "시간 부족",
+          "시간을 내기 어렵",
+          "병행하기 어렵",
+        ],
+      },
+      {
+        area: "health",
+        signal: "healthConstraint",
+        description:
+          "건강·치료 또는 회복 제약이 질문에 명시되어 있다.",
+        expressions: [
+          "치료 중",
+          "수술 예정",
+          "회복 중",
+          "건강 문제",
+          "몸이 아",
+        ],
+      },
+      {
+        area: "relationship",
+        signal: "relationshipConstraint",
+        description:
+          "관계 갈등 또는 관계 책임이 질문에 명시되어 있다.",
+        expressions: [
+          "관계 갈등",
+          "가족 갈등",
+          "배우자 반대",
+          "파트너 갈등",
+        ],
+      },
+    ];
+
+  export function buildQuestionRealityContext(
+    question:
+      QuestionReaderResult,
+  ): QuestionRealityContext {
+    const constraints:
+      QuestionRealityConstraint[] = [];
+
+    for (
+      const rule
+      of QUESTION_REALITY_SIGNAL_RULES
+    ) {
+      const evidence =
+        rule.expressions.filter(
+          (expression) =>
+            question.normalizedQuestion
+              .includes(expression),
+        );
+
+      if (evidence.length === 0) {
+        continue;
+      }
+
+      const constraint:
+        QuestionRealityConstraint = {
+          area:
+            rule.area,
+
+          signal:
+            rule.signal,
+
+          description:
+            rule.description,
+
+          evidence,
+
+          explicit: true,
+        };
+
+      constraints.push(
+        constraint,
+      );
+    }
+
+    return {
+      constraints,
+
+      hasExplicitConstraints:
+        constraints.length > 0,
+    };
+  }
+
   function detectCounterpartRelation(
     question: string,
   ): QuestionCounterpartRelation {
@@ -16,7 +214,7 @@ import type {
     ) {
       return "spouse";
     }
-  
+
     if (
       question.includes("남자친구") ||
       question.includes("여자친구") ||
@@ -25,11 +223,11 @@ import type {
     ) {
       return "lover";
     }
-  
+
     if (question.includes("친구")) {
       return "friend";
     }
-  
+
     if (
       question.includes("아버지") ||
       question.includes("어머니") ||
@@ -37,7 +235,7 @@ import type {
     ) {
       return "parent";
     }
-  
+
     if (
       question.includes("아들") ||
       question.includes("딸") ||
@@ -46,7 +244,7 @@ import type {
     ) {
       return "child";
     }
-  
+
     if (
       question.includes("형제") ||
       question.includes("누나") ||
@@ -56,14 +254,14 @@ import type {
     ) {
       return "sibling";
     }
-  
+
     if (
       question.includes("직장동료") ||
       question.includes("동료")
     ) {
       return "coworker";
     }
-  
+
     if (
       question.includes("동업") ||
       question.includes("공동창업") ||
@@ -71,7 +269,7 @@ import type {
     ) {
       return "businessPartner";
     }
-  
+
     if (
       question.includes("상대") ||
       question.includes("사람") ||
@@ -79,7 +277,7 @@ import type {
     ) {
       return "other";
     }
-  
+
     return "unknown";
   }
 
@@ -89,104 +287,113 @@ import type {
     switch (topic) {
       case "business":
         return "business";
-  
+
       case "job":
         return "job";
-  
+
       case "money":
         return "investment";
-  
+
       case "realEstate":
         return "realEstate";
-  
+
       case "marriage":
         return "marriage";
-  
+
       case "relationship":
       case "love":
       case "family":
         return "relationship";
-  
+
       case "health":
         return "health";
-  
+
       case "legal":
         return "legal";
-  
+
       case "lifeFlow":
       case "lifeDirection":
         return "lifeDirection";
-  
+
       case "general":
         return "unknown";
     }
   }
-  
+
   export function buildQuestionContext(
     question:
       QuestionReaderResult,
   ): QuestionContext {
     const normalizedQuestion =
       question.normalizedQuestion;
-  
+
     const relation =
       detectCounterpartRelation(
         normalizedQuestion,
       );
-  
+
     const counterpartExists =
       relation !== "unknown" ||
       question.decisionTarget === "partner" ||
       question.decisionTarget === "marry" ||
       question.decisionTarget === "separate" ||
       question.decisionTarget === "reconcile";
-  
-    return {
-      question,
+
+      const reality =
+      buildQuestionRealityContext(
+        question,
+      );
+
+      const context = {
+        question,
+
+        reality,
       timingType:
         question.timingType,
       counterpart: {
         exists: counterpartExists,
         relation,
-  
+
         identityProvided: false,
         birthDataProvided: false,
       },
-  
+
       actionObject: {
         type:
           mapActionObjectType(
             question.topic,
           ),
-      
+
         subtype: null,
         description: null,
       },
-  
+
       comparisonTargets: [],
-  
+
       requirements: {
         counterpartReadingRequired:
           counterpartExists,
-  
+
         compatibilityAnalysisRequired:
           question.decisionTarget === "partner" ||
           question.decisionTarget === "marry",
-  
+
         timingAnalysisRequired:
           question.intent === "timing" ||
           question.urgency !== "unknown",
-  
+
         realityAssessmentRequired:
           question.topic === "business" ||
           question.topic === "money" ||
           question.topic === "job" ||
           question.topic === "realEstate" ||
           question.topic === "marriage",
-  
+
         comparisonAnalysisRequired:
           question.intent === "comparison" ||
           question.intent === "selection",
-      },
-    };
-  }
+        },
+      };
+
+      return context;
+    }
