@@ -5,6 +5,9 @@ import type {
   } from "./decisionTypes";
   import type { LifeContextAssessment } from "./lifeContextAssessment";
   import type {
+    DecisionRealityAssessment,
+  } from "./decisionRealityAssessment";
+  import type {
     CompatibilityAssessment,
   } from "./compatibilityAssessment";
   import type {
@@ -218,16 +221,69 @@ import type {
     }
   }
 
-  function buildLifeContextConditions(
-    assessment: LifeContextAssessment,
-  ): DecisionCondition[] {
+  type DecisionConditionLifeAssessment =
+  LifeContextAssessment & {
+    questionConstraints?:
+      DecisionRealityAssessment[
+        "questionConstraints"
+      ];
+  };
+
+function buildFinancialPressureConditionDescription(
+  assessment:
+    DecisionConditionLifeAssessment,
+): string {
+  const signals =
+    new Set(
+      assessment.questionConstraints
+        ?.map(
+          (constraint) =>
+            constraint.signal,
+        )
+      ?? [],
+    );
+
+  const hasDebtBurden =
+    signals.has(
+      "debtBurden",
+    );
+
+  const hasLivingCostPressure =
+    signals.has(
+      "livingCostPressure",
+    );
+
+  if (
+    hasDebtBurden
+    && hasLivingCostPressure
+  ) {
+    return "생활비와 대출 상환 재원을 투자금과 분리하고, 기존 생활비와 상환 의무를 훼손하지 않는 범위로 투자금과 손실 한도를 먼저 확정해야 한다.";
+  }
+
+  if (hasDebtBurden) {
+    return "대출 상환 재원을 투자금과 분리하고, 상환 의무를 유지할 수 있는 범위로 투자금과 손실 한도를 먼저 확정해야 한다.";
+  }
+
+  if (hasLivingCostPressure) {
+    return "필수 생활비를 투자금과 분리하고, 기존 생활 기반을 해치지 않는 범위로 투자금과 손실 한도를 먼저 확정해야 한다.";
+  }
+
+  return "현재 수입과 필수 지출을 보호할 수 있도록 실행 자금, 생활비와 감당 가능한 손실 한도를 먼저 분리해야 한다.";
+}
+
+function buildLifeContextConditions(
+  assessment:
+    DecisionConditionLifeAssessment,
+): DecisionCondition[] {
     const conditions: DecisionCondition[] = [];
   
     if (assessment.financialPressure === "high") {
       conditions.push({
         key: "protectExistingCashFlow",
         description:
-          "현재 수입과 필수 지출을 보호할 수 있도록 실행 자금, 생활비와 감당 가능한 손실 한도를 먼저 분리해야 한다.",
+        buildFinancialPressureConditionDescription(
+          assessment,
+        ),
         required: true,
         satisfied: false,
       });
