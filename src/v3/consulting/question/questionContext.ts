@@ -1,7 +1,7 @@
 import type {
     QuestionReaderResult,
   } from "./questionReader";
-  
+
   export type QuestionCounterpartRelation =
     | "spouse"
     | "partner"
@@ -14,17 +14,17 @@ import type {
     | "businessPartner"
     | "other"
     | "unknown";
-  
+
   export type QuestionCounterpartContext = {
     exists: boolean;
-  
+
     relation:
       QuestionCounterpartRelation;
-  
+
     identityProvided: boolean;
     birthDataProvided: boolean;
   };
-  
+
   export type QuestionActionObjectType =
     | "business"
     | "job"
@@ -37,10 +37,10 @@ import type {
     | "lifeDirection"
     | "other"
     | "unknown";
-  
+
   export type QuestionActionObject = {
     type: QuestionActionObjectType;
-  
+
     subtype: string | null;
     description: string | null;
   };
@@ -86,7 +86,7 @@ export type QuestionRealityContext = {
   hasExplicitConstraints:
     boolean;
 };
-  
+
   export type QuestionAnalysisRequirements = {
     counterpartReadingRequired: boolean;
     compatibilityAnalysisRequired: boolean;
@@ -94,22 +94,25 @@ export type QuestionRealityContext = {
     realityAssessmentRequired: boolean;
     comparisonAnalysisRequired: boolean;
   };
-  
+
   export type QuestionContext = {
     question:
       QuestionReaderResult;
-  
+
+    reality:
+      QuestionRealityContext;
+
     timingType:
       QuestionReaderResult["timingType"];
-  
+
     counterpart:
       QuestionCounterpartContext;
-  
+
     actionObject:
       QuestionActionObject;
-  
+
     comparisonTargets: string[];
-  
+
     requirements:
       QuestionAnalysisRequirements;
   };
