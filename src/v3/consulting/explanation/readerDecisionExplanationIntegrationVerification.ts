@@ -206,6 +206,13 @@ import {
               block.step
               === "readerDecisionEffect",
           );
+
+          const evidenceBlock =
+          plan.blocks.find(
+            (block) =>
+              block.step
+              === "evidence",
+          );
   
         const alignmentIndex =
           findPlanBlockIndex(
@@ -244,6 +251,27 @@ import {
             readerBlock?.content
               .includes(
                 "기다리는 판단",
+              )
+            === true,
+
+            evidenceIncludesReaderSummary:
+            evidenceBlock?.content
+              .includes(
+                "책임 감당력",
+              )
+            === true,
+
+          evidenceExcludesReaderSupportingDetail:
+            evidenceBlock?.content
+              .includes(
+                "자기 통제력과 실행력이 강해",
+              )
+            === false,
+
+          evidencePreservesRepeatedPattern:
+            evidenceBlock?.content
+              .includes(
+                "작게 시작하여 경험을 축적할수록",
               )
             === true,
   

@@ -2,6 +2,9 @@ import type { DecisionExplanationInput } from "./decisionResultReader";
 import {
   buildReaderDecisionExplanation,
 } from "./readerDecisionExplanationBuilder";
+import {
+  buildDecisionExplanationEvidence,
+} from "./decisionExplanationEvidenceBuilder";
 export type ExplanationStep =
   | "directAnswer"
   | "humanContext"
@@ -87,9 +90,10 @@ export function buildDecisionExplanationPlan(
       step: "evidence",
       title: "판단 근거",
       required: true,
-      content: input.evidence
-        .map((e) => e.description)
-        .join("\n"),
+      content:
+      buildDecisionExplanationEvidence(
+        input.evidence,
+      ),
     },
     {
       step: "conditions",
