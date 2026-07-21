@@ -213,6 +213,20 @@ import {
               block.step
               === "evidence",
           );
+
+        const conditionsBlock =
+          plan.blocks.find(
+            (block) =>
+              block.step
+              === "conditions",
+          );
+
+        const risksBlock =
+          plan.blocks.find(
+            (block) =>
+              block.step
+              === "risks",
+          );
   
         const alignmentIndex =
           findPlanBlockIndex(
@@ -253,6 +267,60 @@ import {
                 "기다리는 판단",
               )
             === true,
+
+            readerEffectExcludesConditionDetail:
+            readerBlock?.content
+              .includes(
+                "위험 감당 범위와 보완 수단을 먼저 확정해야 한다.",
+              )
+            === false,
+
+          readerEffectExcludesRiskDetail:
+            readerBlock?.content
+              .includes(
+                "감당 범위를 넘는 책임을 동시에 떠안으면 실행이 중단될 수 있다.",
+              )
+            === false,
+
+          conditionsBlockIncludesReaderCondition:
+            conditionsBlock?.content
+              .includes(
+                "위험 감당 범위와 보완 수단을 먼저 확정해야 한다.",
+              )
+            === true,
+
+          risksBlockIncludesReaderRisk:
+            risksBlock?.content
+              .includes(
+                "감당 범위를 넘는 책임을 동시에 떠안으면 실행이 중단될 수 있다.",
+              )
+            === true,
+
+          conditionKeepsRequirementRole:
+            conditionsBlock?.content
+              .includes(
+                "확정해야 한다.",
+              )
+            === true,
+
+          riskKeepsConsequenceRole:
+            risksBlock?.content
+              .includes(
+                "중단될 수 있다.",
+              )
+            === true,
+
+          promptIncludesReaderConditionOnce:
+            countOccurrences(
+              prompt.userPrompt,
+              "위험 감당 범위와 보완 수단을 먼저 확정해야 한다.",
+            ) === 1,
+
+          promptIncludesReaderRiskOnce:
+            countOccurrences(
+              prompt.userPrompt,
+              "감당 범위를 넘는 책임을 동시에 떠안으면 실행이 중단될 수 있다.",
+            ) === 1,
 
             evidenceIncludesReaderSummary:
             evidenceBlock?.content
