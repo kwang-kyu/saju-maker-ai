@@ -88,6 +88,75 @@ function buildFinancialPressureRiskDescription(
 
   return "현재 재정 책임이 큰 상태이므로 예상보다 수익 발생이 늦어질 경우 기존 생활 기반과 현금흐름이 함께 흔들릴 수 있다.";
 }
+function buildTransitionDifficultyRiskDescription(
+  assessment:
+    DecisionRiskLifeAssessment,
+): string {
+  const signals =
+    new Set(
+      assessment.questionConstraints
+        ?.map(
+          (constraint) =>
+            constraint.signal,
+        )
+      ?? [],
+    );
+
+  const hasIncomeInstability =
+    signals.has(
+      "incomeInstability",
+    );
+
+  const hasFamilyResponsibility =
+    signals.has(
+      "familyResponsibility",
+    );
+
+  const hasCurrentWorkResponsibility =
+    signals.has(
+      "currentWorkResponsibility",
+    );
+
+  const hasTimeConstraint =
+    signals.has(
+      "timeConstraint",
+    );
+
+  const hasTransitionDifficulty =
+    signals.has(
+      "transitionDifficulty",
+    );
+
+  if (
+    hasIncomeInstability
+    && hasFamilyResponsibility
+    && hasCurrentWorkResponsibility
+    && hasTimeConstraint
+    && hasTransitionDifficulty
+  ) {
+    return "현재 직장 책임과 인수인계를 마치지 않은 채 이직을 서두르면, 준비 시간이 부족한 상태에서 수입 공백과 업무 과부하가 겹쳐 가족 생활 기반까지 흔들릴 수 있다.";
+  }
+
+  if (
+    hasIncomeInstability
+    && hasFamilyResponsibility
+  ) {
+    return "수입이 불안정한 상태에서 현재 직장을 먼저 그만두면, 전환 기간의 수입 공백이 가족 부양 재원과 생활 안정성을 동시에 압박할 수 있다.";
+  }
+
+  if (
+    hasCurrentWorkResponsibility
+    && hasTimeConstraint
+  ) {
+    return "현재 직장 업무와 이직 준비를 제한된 시간 안에 동시에 추진하면, 업무 과부하와 준비 부족이 겹쳐 기존 업무와 새로운 선택 모두 중단될 수 있다.";
+  }
+
+  if (hasTransitionDifficulty) {
+    return "인수인계와 현재 업무 정리가 끝나기 전에 이직을 서두르면, 업무 공백과 미정리 책임이 남아 새로운 직장 적응까지 흔들릴 수 있다.";
+  }
+
+  return "기존 직업이나 수입 기반을 한 번에 정리하면 새로운 선택이 자리 잡기 전에 회복하기 어려운 공백이 생길 수 있다.";
+}
 export function buildLifeContextRisks(
   assessment:
     DecisionRiskLifeAssessment,
@@ -120,7 +189,9 @@ export function buildLifeContextRisks(
       risks.push({
         key: "lifeContextTransitionDifficulty",
         description:
-          "기존 직업이나 수입 기반을 한 번에 정리하면 새로운 선택이 자리 잡기 전에 회복하기 어려운 공백이 생길 수 있다.",
+          buildTransitionDifficultyRiskDescription(
+            assessment,
+          ),
         severity: "high",
         source: "lifeContext",
       });
