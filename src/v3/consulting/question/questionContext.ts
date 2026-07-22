@@ -53,7 +53,7 @@ import type {
   | "health"
   | "relationship";
 
-export type QuestionRealitySignal =
+  export type QuestionRealitySignal =
   | "debtBurden"
   | "livingCostPressure"
   | "incomeInstability"
@@ -62,6 +62,7 @@ export type QuestionRealitySignal =
   | "familyResponsibility"
   | "currentWorkResponsibility"
   | "timeConstraint"
+  | "transitionDifficulty"
   | "healthConstraint"
   | "relationshipConstraint";
 
