@@ -125,6 +125,11 @@ import type {
         scores.transitionDifficulty += 2;
         break;
 
+      case "transitionDifficulty":
+        scores.executionConstraint += 1;
+        scores.transitionDifficulty += 2;
+        break;
+
       case "timeConstraint":
         scores.executionConstraint += 2;
         scores.transitionDifficulty += 1;
