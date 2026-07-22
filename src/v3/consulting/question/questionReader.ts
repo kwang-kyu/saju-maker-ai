@@ -774,6 +774,20 @@ function buildDecisionQuestion(
   return decisionText[decisionTarget];
 }
 
+function resolveTopicByDecisionTarget(
+  keywordTopic: QuestionTopic,
+  decisionTarget: DecisionTarget,
+): QuestionTopic {
+  if (
+    decisionTarget === "changeJob"
+    || decisionTarget === "leaveJob"
+  ) {
+    return "job";
+  }
+
+  return keywordTopic;
+}
+
 function calculateConfidence(evidenceCount: number): number {
   if (evidenceCount >= 5) {
     return 0.95;
@@ -823,32 +837,42 @@ export function readQuestion(
   const topicMatch = findRule(
     normalizedQuestion,
     topicRules,
-    "general" as QuestionTopic,
+    "general",
   );
 
   const intentMatch = findRule(
     normalizedQuestion,
     intentRules,
-    "generalJudgement" as QuestionIntent,
+    "generalJudgement",
   );
 
   const motiveMatch = findRule(
     normalizedQuestion,
     motiveRules,
-    "unspecified" as QuestionMotive,
+    "unspecified",
   );
 
   const decisionMatch = findRule(
     normalizedQuestion,
     decisionRules,
-    "none" as DecisionTarget,
+    "none",
   );
 
-  const urgencyMatch = detectUrgency(normalizedQuestion);
+  const resolvedTopic =
+    resolveTopicByDecisionTarget(
+      topicMatch.result,
+      decisionMatch.result,
+    );
+
+  const urgencyMatch =
+    detectUrgency(
+      normalizedQuestion,
+    );
+
   const timingType =
-  detectTimingType(
-    normalizedQuestion,
-  );
+    detectTimingType(
+      normalizedQuestion,
+    );
 
   const evidence = Array.from(
     new Set([
@@ -864,17 +888,22 @@ export function readQuestion(
     originalQuestion: question.trim(),
     normalizedQuestion,
 
-    topic: topicMatch.result,
+    topic: resolvedTopic,
     intent: intentMatch.result,
     motive: motiveMatch.result,
     decisionTarget: decisionMatch.result,
     urgency: urgencyMatch.urgency,
     timingType,
-    asksWhat: buildAsksWhat(topicMatch.result, intentMatch.result),
-    asksWhy: buildAsksWhy(motiveMatch.result),
+    asksWhat: buildAsksWhat(
+      resolvedTopic,
+      intentMatch.result,
+    ),
+    asksWhy: buildAsksWhy(
+      motiveMatch.result,
+    ),
     decisionQuestion: buildDecisionQuestion(
       decisionMatch.result,
-      topicMatch.result,
+      resolvedTopic,
     ),
 
     evidence,
