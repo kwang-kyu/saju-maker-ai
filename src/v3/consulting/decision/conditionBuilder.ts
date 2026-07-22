@@ -271,6 +271,76 @@ function buildFinancialPressureConditionDescription(
   return "현재 수입과 필수 지출을 보호할 수 있도록 실행 자금, 생활비와 감당 가능한 손실 한도를 먼저 분리해야 한다.";
 }
 
+function buildTransitionDifficultyConditionDescription(
+  assessment:
+    DecisionConditionLifeAssessment,
+): string {
+  const signals =
+    new Set(
+      assessment.questionConstraints
+        ?.map(
+          (constraint) =>
+            constraint.signal,
+        )
+      ?? [],
+    );
+
+  const hasIncomeInstability =
+    signals.has(
+      "incomeInstability",
+    );
+
+  const hasFamilyResponsibility =
+    signals.has(
+      "familyResponsibility",
+    );
+
+  const hasCurrentWorkResponsibility =
+    signals.has(
+      "currentWorkResponsibility",
+    );
+
+  const hasTimeConstraint =
+    signals.has(
+      "timeConstraint",
+    );
+
+  const hasTransitionDifficulty =
+    signals.has(
+      "transitionDifficulty",
+    );
+
+  if (
+    hasIncomeInstability
+    && hasFamilyResponsibility
+    && hasCurrentWorkResponsibility
+    && hasTimeConstraint
+    && hasTransitionDifficulty
+  ) {
+    return "현재 직장 책임과 인수인계를 유지하면서 이직 준비 시간을 별도로 확보하고, 가족 부양 재원을 지킬 최소 수입 기준과 퇴사·전환 시점을 확정한 뒤 단계적으로 옮겨야 한다.";
+  }
+
+  if (
+    hasIncomeInstability
+    && hasFamilyResponsibility
+  ) {
+    return "가족 부양 재원을 유지할 최소 수입 기준과 전환 기간의 생활비를 먼저 확정하고, 수입 공백 없이 옮길 수 있는 단계적 이직 계획을 마련해야 한다.";
+  }
+
+  if (
+    hasCurrentWorkResponsibility
+    && hasTimeConstraint
+  ) {
+    return "현재 직장 책임을 유지한 채 이직 준비 시간을 별도로 확보하고, 본업과 준비 일정이 겹치지 않도록 단계별 전환 계획을 정해야 한다.";
+  }
+
+  if (hasTransitionDifficulty) {
+    return "인수인계 완료 기준과 실제 퇴사 가능일을 먼저 정하고, 현재 업무를 정리한 뒤 새로운 직업으로 옮기는 단계적 전환 계획을 마련해야 한다.";
+  }
+
+  return "기존 직업이나 수입 기반을 즉시 포기하지 말고 병행 검증과 단계적 전환 계획을 마련해야 한다.";
+}
+
 function buildLifeContextConditions(
   assessment:
     DecisionConditionLifeAssessment,
@@ -303,7 +373,9 @@ function buildLifeContextConditions(
       conditions.push({
         key: "useGradualTransition",
         description:
-          "기존 직업이나 수입 기반을 즉시 포기하지 말고 병행 검증과 단계적 전환 계획을 마련해야 한다.",
+          buildTransitionDifficultyConditionDescription(
+            assessment,
+          ),
         required: true,
         satisfied: false,
       });
