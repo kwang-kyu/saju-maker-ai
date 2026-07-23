@@ -48,7 +48,7 @@ import type {
 } from "../decisionTypes";
 
 const BUSINESS_START_QUESTION =
-  "지금 통닭집을 시작해도 될까요?";
+  "지금 통닭집을 시작하면 성공할까요?";
 
 const REGRESSION_STRUCTURE_FACTS: SajuStructureFact[] = [
   {

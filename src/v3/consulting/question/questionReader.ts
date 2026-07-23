@@ -330,18 +330,6 @@ const intentRules: readonly KeywordRule<QuestionIntent>[] = [
     ],
   },
   {
-    result: "prediction",
-    keywords: [
-      "될까",
-      "될까요",
-      "성공할까",
-      "잘될까",
-      "들어올까",
-      "생길까",
-      "만날까",
-    ],
-  },
-  {
     result: "possibility",
     keywords: [
       "해도 될까",
@@ -351,6 +339,18 @@ const intentRules: readonly KeywordRule<QuestionIntent>[] = [
       "괜찮을까",
       "할 수 있을까",
       "할수있을까",
+    ],
+  },
+  {
+    result: "prediction",
+    keywords: [
+      "될까",
+      "될까요",
+      "성공할까",
+      "잘될까",
+      "들어올까",
+      "생길까",
+      "만날까",
     ],
   },
 ];
