@@ -114,6 +114,23 @@ import type {
         scores.expansionRisk += 1;
         break;
 
+      case "essentialFundsExposure":
+        scores.financialPressure += 2;
+        scores.executionConstraint += 1;
+        scores.expansionRisk += 2;
+        break;
+
+      case "liquidityConstraint":
+        scores.executionConstraint += 2;
+        scores.financialPressure += 1;
+        scores.transitionDifficulty += 1;
+        break;
+
+      case "assetConcentration":
+        scores.expansionRisk += 2;
+        scores.financialPressure += 1;
+        break;
+
       case "familyResponsibility":
         scores.familyResponsibility += 2;
         scores.executionConstraint += 1;
