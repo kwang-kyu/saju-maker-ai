@@ -63,16 +63,18 @@ export function runDecisionEngine(
     alignmentResult.alignment,
   );
 
-  const actionReadiness = resolveActionReadiness(
-    alignmentResult.alignment,
-    input.question.urgency,
-  );
-
   const lifeAssessment =
-  assessDecisionReality(
-    input.lifeContext,
-    input.questionContext.reality,
-  );
+    assessDecisionReality(
+      input.lifeContext,
+      input.questionContext.reality,
+    );
+
+  const actionReadiness =
+    resolveActionReadiness(
+      alignmentResult.alignment,
+      input.question.urgency,
+      lifeAssessment,
+    );
 
   const compatibilityAssessment =
   assessCompatibility(
