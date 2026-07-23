@@ -144,6 +144,23 @@ const topicRules: readonly KeywordRule<QuestionTopic>[] = [
       "자금",
       "현금",
       "수익",
+      "재테크",
+      "주식",
+      "ETF",
+      "펀드",
+      "채권",
+      "코인",
+      "가상자산",
+      "가상화폐",
+      "암호화폐",
+      "예금",
+      "적금",
+      "퇴직금",
+      "연금",
+      "배당",
+      "외화",
+      "달러",
+      "원자재",
     ],
   },
   {
@@ -788,6 +805,26 @@ function resolveTopicByDecisionTarget(
   return keywordTopic;
 }
 
+function resolveDecisionTargetByTopic(
+  keywordDecisionTarget:
+    DecisionTarget,
+  topic:
+    QuestionTopic,
+): DecisionTarget {
+  if (
+    keywordDecisionTarget
+    !== "none"
+  ) {
+    return keywordDecisionTarget;
+  }
+
+  if (topic === "money") {
+    return "manageMoney";
+  }
+
+  return keywordDecisionTarget;
+}
+
 function calculateConfidence(evidenceCount: number): number {
   if (evidenceCount >= 5) {
     return 0.95;
@@ -864,6 +901,12 @@ export function readQuestion(
       decisionMatch.result,
     );
 
+  const resolvedDecisionTarget =
+    resolveDecisionTargetByTopic(
+      decisionMatch.result,
+      resolvedTopic,
+    );
+
   const urgencyMatch =
     detectUrgency(
       normalizedQuestion,
@@ -891,7 +934,8 @@ export function readQuestion(
     topic: resolvedTopic,
     intent: intentMatch.result,
     motive: motiveMatch.result,
-    decisionTarget: decisionMatch.result,
+    decisionTarget:
+      resolvedDecisionTarget,
     urgency: urgencyMatch.urgency,
     timingType,
     asksWhat: buildAsksWhat(
@@ -902,7 +946,7 @@ export function readQuestion(
       motiveMatch.result,
     ),
     decisionQuestion: buildDecisionQuestion(
-      decisionMatch.result,
+      resolvedDecisionTarget,
       resolvedTopic,
     ),
 

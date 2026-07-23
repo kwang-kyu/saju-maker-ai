@@ -1,4 +1,5 @@
 import type {
+    DecisionTarget,
     QuestionIntent,
   } from "../../question/questionReader";
   import {
@@ -16,6 +17,9 @@ import type {
 
     expectedIntent:
       QuestionIntent;
+
+    expectedDecisionTarget:
+      DecisionTarget;
   };
 
   export type MoneyQuestionRegressionCaseResult = {
@@ -33,21 +37,29 @@ import type {
       ReaderDecisionSource[];
 
     checks: {
-      topicIsMoney: boolean;
+      topicIsMoney:
+        boolean;
 
-      intentMatched: boolean;
+      intentMatched:
+        boolean;
 
-      decisionTargetIsInvest: boolean;
+      decisionTargetMatched:
+        boolean;
 
-      humanContextWasReadFirst: boolean;
+      humanContextWasReadFirst:
+        boolean;
 
-      questionContextWasBuilt: boolean;
+      questionContextWasBuilt:
+        boolean;
 
-      moneyReaderIsPrimary: boolean;
+      moneyReaderIsPrimary:
+        boolean;
 
-      capacityReaderIsIncluded: boolean;
+      capacityReaderIsIncluded:
+        boolean;
 
-      destinyReaderIsIncluded: boolean;
+      destinyReaderIsIncluded:
+        boolean;
 
       unrelatedReadersAreExcluded:
         boolean;
@@ -70,10 +82,13 @@ import type {
           "natural-investment-prediction",
 
         questionText:
-          "여유자금을 투자해도 될까요?",
+          "여유자금을 투자하면 수익이 생길까요?",
 
         expectedIntent:
           "prediction",
+
+        expectedDecisionTarget:
+          "invest",
       },
       {
         name:
@@ -84,6 +99,9 @@ import type {
 
         expectedIntent:
           "possibility",
+
+        expectedDecisionTarget:
+          "invest",
       },
       {
         name:
@@ -94,6 +112,9 @@ import type {
 
         expectedIntent:
           "method",
+
+        expectedDecisionTarget:
+          "invest",
       },
       {
         name:
@@ -104,6 +125,87 @@ import type {
 
         expectedIntent:
           "continuation",
+
+        expectedDecisionTarget:
+          "invest",
+      },
+      {
+        name:
+          "stock-investment-possibility",
+
+        questionText:
+          "주식에 투자해도 될까요?",
+
+        expectedIntent:
+          "possibility",
+
+        expectedDecisionTarget:
+          "invest",
+      },
+      {
+        name:
+          "etf-and-fund-comparison",
+
+        questionText:
+          "ETF와 펀드를 비교해서 둘 중 하나를 선택해야 할까요?",
+
+        expectedIntent:
+          "comparison",
+
+        expectedDecisionTarget:
+          "choose",
+      },
+      {
+        name:
+          "bond-investment-continuation",
+
+        questionText:
+          "채권 투자를 계속 유지해도 될까요?",
+
+        expectedIntent:
+          "continuation",
+
+        expectedDecisionTarget:
+          "invest",
+      },
+      {
+        name:
+          "crypto-investment-risk",
+
+        questionText:
+          "가상자산 투자는 손실 위험이 클까요?",
+
+        expectedIntent:
+          "risk",
+
+        expectedDecisionTarget:
+          "invest",
+      },
+      {
+        name:
+          "deposit-and-savings-comparison",
+
+        questionText:
+          "예금과 적금을 비교해서 둘 중 하나를 선택해야 할까요?",
+
+        expectedIntent:
+          "comparison",
+
+        expectedDecisionTarget:
+          "choose",
+      },
+      {
+        name:
+          "retirement-money-management-method",
+
+        questionText:
+          "퇴직금을 어떻게 운용해야 할까요?",
+
+        expectedIntent:
+          "method",
+
+        expectedDecisionTarget:
+          "manageMoney",
       },
     ];
 
@@ -131,17 +233,18 @@ import type {
         input.question.intent
         === fixture.expectedIntent,
 
-      decisionTargetIsInvest:
+      decisionTargetMatched:
         input.question.decisionTarget
-        === "invest",
+        === fixture.expectedDecisionTarget,
 
       humanContextWasReadFirst:
         input.question
           .humanContextReceived,
 
-          questionContextWasBuilt:
-      input.questionContext.question
-      === input.question,
+      questionContextWasBuilt:
+        input.questionContext.question
+        === input.question,
+
       moneyReaderIsPrimary:
         selectedReaderSources[0]
         === "money",
