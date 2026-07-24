@@ -229,6 +229,69 @@ import type {
       ];
   };
 
+function buildQuestionRealityConditions(
+  assessment:
+    DecisionConditionLifeAssessment,
+): DecisionCondition[] {
+  const signals =
+    new Set(
+      assessment.questionConstraints
+        ?.map(
+          (constraint) =>
+            constraint.signal,
+        )
+      ?? [],
+    );
+
+  const conditions:
+    DecisionCondition[] = [];
+
+  if (
+    signals.has(
+      "essentialFundsExposure",
+    )
+  ) {
+    conditions.push({
+      key: "protectEssentialFunds",
+      description:
+        "질문에서 투자 대상으로 명시된 필수자금을 투자금과 분리하고, 생활 유지에 필요한 금액을 제외한 뒤 투자 가능 금액과 손실 한도를 확정해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  if (
+    signals.has(
+      "liquidityConstraint",
+    )
+  ) {
+    conditions.push({
+      key:
+        "secureLiquidityBeforeInvestment",
+      description:
+        "투자 전에 중도 환매·매도 가능 시점과 예상 회수 기간을 확인하고, 회수 전까지 사용할 비상 현금 규모를 확보해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  if (
+    signals.has(
+      "assetConcentration",
+    )
+  ) {
+    conditions.push({
+      key: "limitAssetConcentration",
+      description:
+        "한 종목이나 한 자산에 적용할 최대 투자 비중과 분산 기준을 정한 뒤 그 범위 안에서 실행해야 한다.",
+      required: true,
+      satisfied: false,
+    });
+  }
+
+  return conditions;
+}
+
 function buildFinancialPressureConditionDescription(
   assessment:
     DecisionConditionLifeAssessment,
@@ -346,8 +409,63 @@ function buildLifeContextConditions(
     DecisionConditionLifeAssessment,
 ): DecisionCondition[] {
     const conditions: DecisionCondition[] = [];
+    const signals =
+      new Set(
+        assessment.questionConstraints
+          ?.map(
+            (constraint) =>
+              constraint.signal,
+          )
+        ?? [],
+      );
+
+    const hasEssentialFundsExposure =
+      signals.has(
+        "essentialFundsExposure",
+      );
+
+    const hasLiquidityConstraint =
+      signals.has(
+        "liquidityConstraint",
+      );
+
+    const hasAssetConcentration =
+      signals.has(
+        "assetConcentration",
+      );
+
+    const hasExistingFinancialReality =
+      signals.has(
+        "debtBurden",
+      )
+      || signals.has(
+        "livingCostPressure",
+      )
+      || signals.has(
+        "incomeInstability",
+      )
+      || signals.has(
+        "fixedCostPressure",
+      )
+      || signals.has(
+        "lossConcern",
+      );
+
+    const wealthConditionsCoverFinancialPressure =
+      hasEssentialFundsExposure
+      && hasLiquidityConstraint
+      && hasAssetConcentration
+      && !hasExistingFinancialReality;
+
+  const wealthConditionsCoverExpansionRisk =
+    hasEssentialFundsExposure
+    && hasAssetConcentration
+    && !hasExistingFinancialReality;
   
-    if (assessment.financialPressure === "high") {
+    if (
+      assessment.financialPressure === "high"
+      && !wealthConditionsCoverFinancialPressure
+    ) {
       conditions.push({
         key: "protectExistingCashFlow",
         description:
@@ -381,7 +499,10 @@ function buildLifeContextConditions(
       });
     }
   
-    if (assessment.expansionRisk === "high") {
+    if (
+      assessment.expansionRisk === "high"
+      && !wealthConditionsCoverExpansionRisk
+    ) {
       conditions.push({
         key: "limitExpansionScale",
         description:
@@ -482,11 +603,29 @@ function buildLifeContextConditions(
   export function buildDecisionConditions(
     input: DecisionConditionBuilderInput,
   ): DecisionCondition[] {
-    return [
-      ...buildReadinessConditions(
+    const questionRealityConditions =
+      buildQuestionRealityConditions(
+        input.lifeAssessment,
+      );
+
+    const readinessConditions =
+      buildReadinessConditions(
         input.readiness,
         input.alignmentReason,
-      ),
+      );
+
+    const nonDuplicatedReadinessConditions =
+      questionRealityConditions.length > 0
+        ? readinessConditions.filter(
+          (condition) =>
+            condition.key
+            !== "confirmExecutionConditions",
+        )
+        : readinessConditions;
+
+    return [
+      ...nonDuplicatedReadinessConditions,
+      ...questionRealityConditions,
       ...buildLifeContextConditions(
         input.lifeAssessment,
       ),
