@@ -16,6 +16,9 @@ import type {
   import {
     buildReaderDecisionRisks,
   } from "./readerDecisionRiskBuilder";
+  import type {
+    QuestionRealitySignal,
+  } from "../question/questionContext";
 
   export function buildCompatibilityRisks(
     assessment: CompatibilityAssessment,
@@ -47,6 +50,92 @@ import type {
       ];
   };
 
+function buildQuestionRealityRisks(
+  assessment:
+    DecisionRiskLifeAssessment,
+): DecisionRisk[] {
+  const signals =
+    new Set(
+      assessment.questionConstraints
+        ?.map(
+          (constraint) =>
+            constraint.signal,
+        )
+      ?? [],
+    );
+
+  const wealthSignals:
+    readonly QuestionRealitySignal[] = [
+      "essentialFundsExposure",
+      "liquidityConstraint",
+      "assetConcentration",
+    ];
+
+  const wealthSignalCount =
+    wealthSignals.filter(
+      (signal) =>
+        signals.has(signal),
+    ).length;
+
+  const severity:
+    DecisionRisk["severity"] =
+    wealthSignalCount >= 2
+      ? "high"
+      : "medium";
+
+  const risks:
+    DecisionRisk[] = [];
+
+  if (
+    signals.has(
+      "essentialFundsExposure",
+    )
+  ) {
+    risks.push({
+      key:
+        "essentialFundsLossExposure",
+      description:
+        "필수 생활자금·비상자금·노후자금이 투자 손실에 노출되면 손실 충격이 생활 기반에 직접 전이될 수 있다.",
+      severity,
+      source:
+        "lifeContext",
+    });
+  }
+
+  if (
+    signals.has(
+      "liquidityConstraint",
+    )
+  ) {
+    risks.push({
+      key:
+        "liquidityLockup",
+      description:
+        "환매·매도가 지연되면 필요한 시점에 자금을 회수하지 못해 긴급 지출 대응이 어려워질 수 있다.",
+      severity,
+      source:
+        "lifeContext",
+    });
+  }
+
+  if (
+    signals.has(
+      "assetConcentration",
+    )
+  ) {
+    risks.push({
+      key:
+        "concentratedAssetLoss",
+      description:
+        "단일 종목·단일 자산의 하락이 전체 자산 손실로 확대되면 분산되지 않은 손실 충격이 커질 수 있다.",
+      severity,
+      source:
+        "lifeContext",
+    });
+  }
+
+  return risks;
+}
 function buildFinancialPressureRiskDescription(
   assessment:
     DecisionRiskLifeAssessment,
@@ -162,8 +251,63 @@ export function buildLifeContextRisks(
     DecisionRiskLifeAssessment,
 ): DecisionRisk[] {
     const risks: DecisionRisk[] = [];
+    const signals =
+    new Set(
+      assessment.questionConstraints
+        ?.map(
+          (constraint) =>
+            constraint.signal,
+        )
+      ?? [],
+    );
+
+  const hasEssentialFundsExposure =
+    signals.has(
+      "essentialFundsExposure",
+    );
+
+  const hasLiquidityConstraint =
+    signals.has(
+      "liquidityConstraint",
+    );
+
+  const hasAssetConcentration =
+    signals.has(
+      "assetConcentration",
+    );
+
+  const hasExistingFinancialReality =
+    signals.has(
+      "debtBurden",
+    )
+    || signals.has(
+      "livingCostPressure",
+    )
+    || signals.has(
+      "incomeInstability",
+    )
+    || signals.has(
+      "fixedCostPressure",
+    )
+    || signals.has(
+      "lossConcern",
+    );
+
+  const wealthRisksCoverFinancialPressure =
+    hasEssentialFundsExposure
+    && hasLiquidityConstraint
+    && hasAssetConcentration
+    && !hasExistingFinancialReality;
+
+  const wealthRisksCoverExpansionRisk =
+    hasEssentialFundsExposure
+    && hasAssetConcentration
+    && !hasExistingFinancialReality;
   
-    if (assessment.financialPressure === "high") {
+    if (
+      assessment.financialPressure === "high"
+      && !wealthRisksCoverFinancialPressure
+    ) {
       risks.push({
         key: "lifeContextFinancialPressure",
         description:
@@ -197,7 +341,10 @@ export function buildLifeContextRisks(
       });
     }
   
-    if (assessment.expansionRisk === "high") {
+    if (
+      assessment.expansionRisk === "high"
+      && !wealthRisksCoverExpansionRisk
+    ) {
       risks.push({
         key: "lifeContextExpansionRisk",
         description:
@@ -312,7 +459,11 @@ export function buildLifeContextRisks(
         alignment,
         urgency,
       ),
-  
+
+      ...buildQuestionRealityRisks(
+        lifeAssessment,
+      ),
+
       ...buildLifeContextRisks(
         lifeAssessment,
       ),
