@@ -5,6 +5,10 @@ import type {
   import type {
     VerdictContext,
   } from "./verdictContextBuilder";
+
+  import type {
+    QuestionRealitySignal,
+  } from "../question/questionContext";
   
   export type DirectionJudgement = {
     recommendedDirection: string;
@@ -15,6 +19,121 @@ import type {
     verdict: DecisionVerdict;
     context: VerdictContext;
   };
+
+  function buildWealthRecommendedOpening(
+    verdict: DecisionVerdict,
+  ): string {
+    switch (verdict) {
+      case "recommended":
+        return "현재 선택은 실행하되";
+
+      case "conditionallyRecommended":
+        return "현재 선택은 조건을 갖춘 뒤 제한적으로 진행하며";
+      case "wait":
+        return "현재는 실행을 유보하고 재검토할 때";
+      case "notRecommended":
+        return "현재 선택은 진행하지 않고 다른 대안을 검토할 때";
+      case "insufficientEvidence":
+        return "현재 정보로 실행을 확정하지 말고 추가 확인 과정에서";
+    }
+  }
+  function buildWealthRealityDirection(
+    verdict: DecisionVerdict,
+    assessment:
+      VerdictContext["lifeAssessment"],
+  ): DirectionJudgement | null {
+    const signals =
+      new Set(
+        assessment.questionConstraints
+          .map(
+            (constraint) =>
+              constraint.signal,
+          ),
+      );
+    const wealthSignals:
+      readonly QuestionRealitySignal[] = [
+        "essentialFundsExposure",
+        "liquidityConstraint",
+        "assetConcentration",
+      ];
+    const hasWealthReality =
+      wealthSignals.some(
+        (signal) =>
+          signals.has(signal),
+      );
+    const hasExistingFinancialReality =
+      signals.has(
+        "debtBurden",
+      )
+      || signals.has(
+        "livingCostPressure",
+      )
+      || signals.has(
+        "incomeInstability",
+      )
+      || signals.has(
+        "fixedCostPressure",
+      )
+      || signals.has(
+        "lossConcern",
+      );
+    if (
+      !hasWealthReality
+      || hasExistingFinancialReality
+    ) {
+      return null;
+    }
+    const recommendedParts:
+      string[] = [];
+    const prohibitedParts:
+      string[] = [];
+    if (
+      signals.has(
+        "essentialFundsExposure",
+      )
+    ) {
+      recommendedParts.push(
+        "필수자금 보호 범위 안에서만 대안을 검토한다",
+      );
+      prohibitedParts.push(
+        "필수자금 직접 투입은 하지 않는다",
+      );
+    }
+    if (
+      signals.has(
+        "liquidityConstraint",
+      )
+    ) {
+      recommendedParts.push(
+        "환금성 우선 범위에서 회수 가능한 선택부터 검토한다",
+      );
+      prohibitedParts.push(
+        "회수 경로가 불분명한 상품·자산에는 자금을 넣지 않는다",
+      );
+    }
+    if (
+      signals.has(
+        "assetConcentration",
+      )
+    ) {
+      recommendedParts.push(
+        "자산별 분산 범위로 나누어 작은 단위부터 검토한다",
+      );
+      prohibitedParts.push(
+        "단일 종목·단일 자산 집중 방식으로 진행하지 않는다",
+      );
+    }
+    return {
+      recommendedDirection: [
+        buildWealthRecommendedOpening(
+          verdict,
+        ),
+        ...recommendedParts,
+      ].join(", "),
+      prohibitedDirection:
+        prohibitedParts.join(", "),
+    };
+  }
   
   function buildExpansionRiskDirection(
     verdict: DecisionVerdict,
@@ -303,7 +422,20 @@ import type {
     const {
       lifeAssessment,
     } = context;
-  
+
+    const wealthRealityDirection =
+      buildWealthRealityDirection(
+        verdict,
+        lifeAssessment,
+      );
+
+    if (
+      wealthRealityDirection
+      !== null
+    ) {
+      return wealthRealityDirection;
+    }
+
     if (lifeAssessment.expansionRisk === "high") {
       return buildExpansionRiskDirection(verdict);
     }
