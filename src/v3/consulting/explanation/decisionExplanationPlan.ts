@@ -5,6 +5,9 @@ import {
 import {
   buildDecisionExplanationEvidence,
 } from "./decisionExplanationEvidenceBuilder";
+import {
+  deduplicateExplanationLines,
+} from "./decisionExplanationTextDeduplicator";
 export type ExplanationStep =
   | "directAnswer"
   | "humanContext"
@@ -51,7 +54,39 @@ export function buildDecisionExplanationPlan(
   buildReaderDecisionExplanation(
     input,
   );
-  const blocks: ExplanationBlock[] = [
+
+const evidenceContent =
+  buildDecisionExplanationEvidence(
+    input.evidence,
+  );
+
+const evidenceLines =
+  deduplicateExplanationLines(
+    evidenceContent.split(/\r?\n/),
+  );
+
+const conditionLines =
+  deduplicateExplanationLines(
+    input.conditions.map(
+      (condition) =>
+        condition.description,
+    ),
+    evidenceLines,
+  );
+
+const riskLines =
+  deduplicateExplanationLines(
+    input.risks.map(
+      (risk) =>
+        risk.description,
+    ),
+    [
+      ...evidenceLines,
+      ...conditionLines,
+    ],
+  );
+
+const blocks: ExplanationBlock[] = [
     {
       step: "directAnswer",
       title: "결론",
@@ -89,27 +124,25 @@ export function buildDecisionExplanationPlan(
     {
       step: "evidence",
       title: "판단 근거",
-      required: true,
+      required: evidenceLines.length > 0,
       content:
-      buildDecisionExplanationEvidence(
-        input.evidence,
-      ),
+        evidenceLines.join("\n"),
     },
     {
       step: "conditions",
       title: "필수 조건",
-      required: input.conditions.length > 0,
-      content: input.conditions
-        .map((c) => c.description)
-        .join("\n"),
+      required:
+        conditionLines.length > 0,
+      content:
+        conditionLines.join("\n"),
     },
     {
       step: "risks",
       title: "주의할 위험",
-      required: input.risks.length > 0,
-      content: input.risks
-        .map((r) => r.description)
-        .join("\n"),
+      required:
+        riskLines.length > 0,
+      content:
+        riskLines.join("\n"),
     },
     {
       step: "recommendedDirection",
