@@ -351,6 +351,8 @@ const intentRules: readonly KeywordRule<QuestionIntent>[] = [
     keywords: [
       "해도 될까",
       "해도될까",
+      "도 될까",
+      "도될까",
       "가능",
       "맞을까",
       "괜찮을까",
@@ -521,7 +523,18 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   },
   {
     result: "invest",
-    keywords: ["투자", "매수", "분양받", "돈을 넣"],
+    keywords: [
+      "투자",
+      "매수",
+      "분양받",
+      "돈을 넣",
+      "주식에 넣",
+      "ETF에 넣",
+      "펀드에 넣",
+      "채권에 넣",
+      "코인에 넣",
+      "가상자산에 넣",
+    ],
   },
   {
     result: "move",
