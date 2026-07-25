@@ -124,6 +124,7 @@ const verdict =
   const evidence = buildDecisionEvidence(
     input,
     brain,
+    lifeAssessment,
   );
   const conditions =
   buildReaderAwareDecisionConditions({

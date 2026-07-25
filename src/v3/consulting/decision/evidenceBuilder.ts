@@ -8,6 +8,12 @@ import type {
 import {
   buildReaderDecisionEvidence,
 } from "./readerDecisionEvidenceBuilder";
+import {
+  buildDecisionRealityEvidence,
+} from "./decisionRealityEvidenceBuilder";
+import type {
+  DecisionRealityAssessment,
+} from "./decisionRealityAssessment";
 
 /**
  * Decision Evidence Builder
@@ -20,13 +26,20 @@ import {
 export function buildDecisionEvidence(
   input: DecisionEngineInput,
   brain: DecisionBrain,
+  realityAssessment:
+    DecisionRealityAssessment,
 ): DecisionEvidence[] {
   const readerEvidence =
-    buildReaderDecisionEvidence(
-      input,
-    );
+  buildReaderDecisionEvidence(
+    input,
+  );
 
-  return [
+const realityEvidence =
+  buildDecisionRealityEvidence(
+    realityAssessment,
+  );
+
+return [
     {
       source: "humanIdentity",
 
@@ -124,6 +137,8 @@ export function buildDecisionEvidence(
     ),
 
     ...readerEvidence,
+
+    ...realityEvidence,
 
     {
       source: "questionIntent",

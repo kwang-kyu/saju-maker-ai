@@ -27,6 +27,7 @@ import {
     questionText: string;
     actualSignals: QuestionRealitySignal[];
     actualAssessment: LifeContextAssessment;
+    actualRealityEvidenceKeys: string[];
     contextAlignment: string;
     actionReadiness: string;
     verdict: string;
@@ -34,6 +35,11 @@ import {
       topicIsMoney: boolean;
       expectedSignalsWereUsed: boolean;
       allRealityConstraintsStayExplicit: boolean;
+      realityEvidenceReachedDecisionResult: boolean;
+      realityEvidenceUsesCurrentContext: boolean;
+      realityEvidencePreservesExplicitFacts: boolean;
+      realityEvidenceHasNoDuplicateKeys: boolean;
+      realityEvidenceKeepsHighestWeight: boolean;
       highRealityExpectationMatched: boolean;
       singleSignalDidNotCreateHigh: boolean;
       humanContextWasUsed: boolean;
@@ -133,9 +139,32 @@ import {
     const result =
       runDecisionEngine(input);
 
-    const actualSignals =
-      assessment.questionConstraints.map(
+      const actualSignals =
+        assessment.questionConstraints.map(
         (constraint) => constraint.signal,
+      );
+
+    const actualRealityEvidence =
+      result.evidence.filter(
+        (evidence) =>
+          evidence.key.startsWith(
+            "reality-",
+          ),
+      );
+
+    const expectedRealityEvidenceKeys =
+      assessment.questionConstraints.map(
+        (constraint) =>
+          [
+            "reality",
+            constraint.area,
+            constraint.signal,
+          ].join("-"),
+      );
+
+    const actualRealityEvidenceKeys =
+      actualRealityEvidence.map(
+        (evidence) => evidence.key,
       );
 
     const actualAssessment: LifeContextAssessment = {
@@ -166,11 +195,73 @@ import {
             actualSignals.includes(signal),
         ),
 
-      allRealityConstraintsStayExplicit:
-        assessment.questionConstraints.every(
+        allRealityConstraintsStayExplicit:
+          assessment.questionConstraints.every(
           (constraint) =>
             constraint.explicit
             && constraint.evidence.length > 0,
+        ),
+
+      realityEvidenceReachedDecisionResult:
+        actualRealityEvidence.length
+        === expectedRealityEvidenceKeys.length
+        && expectedRealityEvidenceKeys.every(
+          (key) =>
+            actualRealityEvidenceKeys.includes(
+              key,
+            ),
+        ),
+
+      realityEvidenceUsesCurrentContext:
+        actualRealityEvidence.every(
+          (evidence) =>
+            evidence.source
+            === "currentContext",
+        ),
+
+      realityEvidencePreservesExplicitFacts:
+        assessment.questionConstraints.every(
+          (constraint) => {
+            const key =
+              [
+                "reality",
+                constraint.area,
+                constraint.signal,
+              ].join("-");
+
+            const decisionEvidence =
+              actualRealityEvidence.find(
+                (evidence) =>
+                  evidence.key === key,
+              );
+
+            return (
+              decisionEvidence !== undefined
+              && decisionEvidence.description
+                .includes(
+                  constraint.description,
+                )
+              && constraint.evidence.every(
+                (explicitExpression) =>
+                  decisionEvidence.description
+                    .includes(
+                      explicitExpression.trim(),
+                    ),
+              )
+            );
+          },
+        ),
+
+      realityEvidenceHasNoDuplicateKeys:
+        new Set(
+          actualRealityEvidenceKeys,
+        ).size
+        === actualRealityEvidenceKeys.length,
+
+      realityEvidenceKeepsHighestWeight:
+        actualRealityEvidence.every(
+          (evidence) =>
+            evidence.weight === 5,
         ),
 
       highRealityExpectationMatched:
@@ -213,6 +304,7 @@ import {
       questionText: fixture.questionText,
       actualSignals,
       actualAssessment,
+      actualRealityEvidenceKeys,
       contextAlignment:
         result.contextAlignment,
       actionReadiness:
