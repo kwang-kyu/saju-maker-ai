@@ -1,28 +1,28 @@
-import { runConsulting } from "../src/v3/consulting/consultingRunner";
-import { buildConsultingOpenAIRequest } from "../src/v3/consulting/openai/consultingOpenAIAdapter";
-import { readHumanDestinyContext } from "../src/v3/readers/humanDestinyContextReader";
-import { readHumanLifeContext } from "../src/v3/readers/humanLifeContextReader";
+import type {
+  V3ConsultingRequest,
+} from "../src/v3/consulting/v3ConsultingRequest";
+import {
+  runConsulting,
+} from "../src/v3/consulting/consultingRunner";
+import {
+  buildConsultingOpenAIRequest,
+} from "../src/v3/consulting/openai/consultingOpenAIAdapter";
+import {
+  readHumanDestinyContext,
+} from "../src/v3/readers/humanDestinyContextReader";
+import {
+  readHumanLifeContext,
+} from "../src/v3/readers/humanLifeContextReader";
 
-export async function buildV3ConsultingRequest(params: {
-  masterReaderInput:
-    Parameters<
-      typeof readHumanDestinyContext
-    >[0]["masterReaderInput"];
-
-  lifePhaseInput:
-    Parameters<
-      typeof readHumanDestinyContext
-    >[0]["lifePhaseInput"];
-
-  humanLifeContextInput:
-    Parameters<typeof readHumanLifeContext>[0];
-
-  question: string;
-}) {
+export async function buildV3ConsultingRequest(
+  params:
+    V3ConsultingRequest,
+) {
   const humanContext =
     readHumanDestinyContext({
       masterReaderInput:
         params.masterReaderInput,
+
       lifePhaseInput:
         params.lifePhaseInput,
     });
@@ -41,8 +41,11 @@ export async function buildV3ConsultingRequest(params: {
   const prompt =
     runConsulting({
       humanContext,
+
       lifeContext,
-      question: params.question,
+
+      question:
+        params.question,
     });
 
   return buildConsultingOpenAIRequest(
