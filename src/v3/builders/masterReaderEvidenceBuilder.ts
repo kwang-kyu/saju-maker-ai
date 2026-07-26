@@ -3,14 +3,6 @@ import type {
 } from "../masterReader/types/lifeDriverInput";
 
 import type {
-  PatternEvidence,
-} from "../masterReader/types/repeatedPattern";
-
-import type {
-  SurvivalEvidence,
-} from "../masterReader/types/survivalStyle";
-
-import type {
   MasterReaderEvidenceBundle,
 } from "../types/masterReaderEvidenceBundle";
 
@@ -24,20 +16,13 @@ import {
   buildHumanLifePhaseReaderInput,
 } from "./humanLifePhaseEvidenceBuilder";
 
-function toWeight(
-  strength: SajuEvidenceStrength,
-): number {
-  switch (strength) {
-    case "strong":
-      return 3;
+import {
+  buildRepeatedPatternEvidence,
+} from "./repeatedPatternEvidenceBuilder";
 
-    case "medium":
-      return 2;
-
-    case "weak":
-      return 1;
-  }
-}
+import {
+  buildSurvivalStyleEvidence,
+} from "./survivalStyleEvidenceBuilder";
 
 function toConfidence(
   strength: SajuEvidenceStrength,
@@ -89,36 +74,6 @@ function buildLifeDriverMeanings(
   );
 }
 
-function buildSurvivalEvidence(
-  structureFacts: SajuStructureFact[],
-): SurvivalEvidence[] {
-  return structureFacts.map(
-    (fact) => ({
-      source: fact.category,
-
-      description: fact.description,
-
-      weight:
-        toWeight(fact.strength),
-    }),
-  );
-}
-
-function buildRepeatedPatternEvidence(
-  structureFacts: SajuStructureFact[],
-): PatternEvidence[] {
-  return structureFacts.map(
-    (fact) => ({
-      source: fact.category,
-
-      description: fact.description,
-
-      weight:
-        toWeight(fact.strength),
-    }),
-  );
-}
-
 export function buildMasterReaderEvidenceBundle(
   params: {
     facts: SajuFacts;
@@ -143,13 +98,13 @@ export function buildMasterReaderEvidenceBundle(
       },
 
       survivalEvidence:
-        buildSurvivalEvidence(
-          facts.structureFacts,
+        buildSurvivalStyleEvidence(
+          facts,
         ),
 
       repeatedPatternEvidence:
         buildRepeatedPatternEvidence(
-          facts.structureFacts,
+          facts,
         ),
 
       structureFacts:
