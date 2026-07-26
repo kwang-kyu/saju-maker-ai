@@ -12,6 +12,9 @@ import type {
     SajuPillarPosition,
     SajuStructureFact,
   } from "../types/sajuFacts";
+  import type {
+    SajuLuckFlowFact,
+  } from "../types/luckFlowFact";
   import type { V3CalculatedSaju } from "./v3SajuCalculationBuilder";
   
   type ElementCount = {
@@ -256,31 +259,9 @@ import type {
     return facts;
   }
   
-  function calculateCurrentAge(
-    birthDate: string,
-  ): number {
-    const [year, month, day] = birthDate
-      .split("-")
-      .map(Number);
-  
-    const today = new Date();
-  
-    let age = today.getFullYear() - year;
-  
-    const birthdayHasPassed =
-      today.getMonth() + 1 > month ||
-      (today.getMonth() + 1 === month &&
-        today.getDate() >= day);
-  
-    if (!birthdayHasPassed) {
-      age -= 1;
-    }
-  
-    return Math.max(age, 0);
-  }
-  
   export function buildSajuFacts(
     calculated: V3CalculatedSaju,
+    luckFlow: SajuLuckFlowFact,
   ): SajuFacts {
     const pillars = buildPillars(calculated);
     const elementDistribution =
@@ -384,11 +365,6 @@ const tenGodStructure =
       interactionFacts: calculateSajuInteractions(
         pillars,
       ),
-      luckFlow: {
-        currentAge: calculateCurrentAge(
-          calculated.birthDate,
-        ),
-        descriptions: [],
-      },
+      luckFlow,
     };
   }

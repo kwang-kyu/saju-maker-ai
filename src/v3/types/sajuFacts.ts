@@ -1,3 +1,7 @@
+import type {
+  SajuLuckFlowFact,
+} from "./luckFlowFact";
+
 export type SajuPillarPosition =
   | "year"
   | "month"
@@ -133,16 +137,6 @@ export type SajuInteractionFact = {
   description: string;
 
   strength: SajuEvidenceStrength;
-};
-
-export type SajuLuckFlowFact = {
-  currentAge: number;
-
-  daeun?: string;
-
-  seun?: string;
-
-  descriptions: string[];
 };
 
 export type SajuFacts = {
