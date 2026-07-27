@@ -6,7 +6,8 @@ export type RepeatedPatternType =
   | "restartCycle"
   | "responsibilityOverload"
   | "lateBloom"
-  | "opportunityMiss";
+  | "opportunityMiss"
+  | "distributedAdaptation";
 
 export type PatternConfidence =
   | "low"
@@ -24,35 +25,52 @@ export type PatternEvidenceSource =
   | "interaction";
 
 export type PatternEvidence = {
-  source: PatternEvidenceSource;
-  description: string;
-  weight: number;
+  source:
+    PatternEvidenceSource;
+
+  description:
+    string;
+
+  weight:
+    number;
 };
 
 export type RepeatedPatternJudgement = {
-  pattern: RepeatedPatternType;
+  pattern:
+    RepeatedPatternType;
 
-  evidence: PatternEvidence[];
+  evidence:
+    PatternEvidence[];
 
-  counterEvidence: PatternEvidence[];
+  counterEvidence:
+    PatternEvidence[];
 
-  confidence: PatternConfidence;
+  confidence:
+    PatternConfidence;
 
-  exceptionConditions: string[];
+  exceptionConditions:
+    string[];
 };
 
 export type RepeatedPatternResult = {
-  primary: RepeatedPatternJudgement;
+  primary:
+    RepeatedPatternJudgement;
 
-  secondary: RepeatedPatternJudgement | null;
+  secondary:
+    RepeatedPatternJudgement | null;
 
-  repeatedBehaviors: string[];
+  repeatedBehaviors:
+    string[];
 
-  strengths: string[];
+  strengths:
+    string[];
 
-  risks: string[];
+  risks:
+    string[];
 
-  suppressed: RepeatedPatternJudgement[];
+  suppressed:
+    RepeatedPatternJudgement[];
 
-  conflicting: RepeatedPatternJudgement[];
+  conflicting:
+    RepeatedPatternJudgement[];
 };

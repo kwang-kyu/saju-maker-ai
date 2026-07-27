@@ -228,7 +228,33 @@ export const REPEATED_PATTERN_RULES:
       reason:
         "좋은 기회를 놓치거나 결정이 늦어지는 패턴이 반복된다.",
     },
-  ];
+
+  {
+    id:
+      "distributed-adaptation",
+
+    source:
+      "structure",
+
+    keywords: [
+      "중화",
+      "통근 기반이 없",
+      "십성이 분산",
+      "유연하게 대응",
+      "역할",
+      "선택 방향",
+      "분산",
+    ],
+
+    pattern:
+      "distributedAdaptation",
+
+    weight: 3,
+
+    reason:
+      "중화된 조절력은 있으나 통근 기반과 집중된 십성 축이 약해, 상황에 적응하면서 역할과 선택 방향이 분산되는 흐름이 반복될 수 있다.",
+  },
+];
 
 export type MatchedRepeatedPatternRule = {
   rule: RepeatedPatternRule;

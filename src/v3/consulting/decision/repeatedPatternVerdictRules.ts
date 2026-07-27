@@ -4,24 +4,24 @@ import type {
   import type {
     DecisionTarget,
   } from "../question/questionReader";
-  
+
   export type RepeatedPatternVerdictEffect =
     | "support"
     | "caution"
     | "block"
     | "neutral";
-  
+
   export type RepeatedPatternVerdictRuleResult = {
     effect: RepeatedPatternVerdictEffect;
     reason: string;
   };
-  
+
   type RepeatedPatternVerdictRule = {
     supportiveTargets: readonly DecisionTarget[];
     cautionTargets: readonly DecisionTarget[];
     blockedTargets: readonly DecisionTarget[];
   };
-  
+
   const repeatedPatternVerdictRules: Record<
     RepeatedPatternType,
     RepeatedPatternVerdictRule
@@ -42,7 +42,7 @@ import type {
         "invest",
       ],
     },
-  
+
     slowGrowthStable: {
       supportiveTargets: [
         "continue",
@@ -57,7 +57,7 @@ import type {
       ],
       blockedTargets: [],
     },
-  
+
     relationshipLoss: {
       supportiveTargets: [
         "wait",
@@ -72,7 +72,7 @@ import type {
       ],
       blockedTargets: [],
     },
-  
+
     wealthLeak: {
       supportiveTargets: [
         "wait",
@@ -88,7 +88,7 @@ import type {
         "invest",
       ],
     },
-  
+
     restartCycle: {
       supportiveTargets: [
         "continue",
@@ -103,7 +103,7 @@ import type {
       ],
       blockedTargets: [],
     },
-  
+
     responsibilityOverload: {
       supportiveTargets: [
         "wait",
@@ -118,7 +118,7 @@ import type {
       ],
       blockedTargets: [],
     },
-  
+
     lateBloom: {
       supportiveTargets: [
         "continue",
@@ -132,7 +132,7 @@ import type {
       ],
       blockedTargets: [],
     },
-  
+
     opportunityMiss: {
       supportiveTargets: [
         "start",
@@ -147,15 +147,31 @@ import type {
       ],
       blockedTargets: [],
     },
+    distributedAdaptation: {
+      supportiveTargets: [
+        "continue",
+        "choose",
+        "confirmDirection",
+        "manageMoney",
+      ],
+      cautionTargets: [
+        "start",
+        "changeJob",
+        "move",
+        "partner",
+        "invest",
+      ],
+      blockedTargets: [],
+    },
   };
-  
+
   export function evaluateRepeatedPatternVerdictRule(
     repeatedPattern: RepeatedPatternType,
     decisionTarget: DecisionTarget,
   ): RepeatedPatternVerdictRuleResult {
     const rule =
       repeatedPatternVerdictRules[repeatedPattern];
-  
+
     if (
       rule.blockedTargets.includes(
         decisionTarget,
@@ -168,7 +184,7 @@ import type {
           `${decisionTarget} 결정을 중단해야 한다.`,
       };
     }
-  
+
     if (
       rule.supportiveTargets.includes(
         decisionTarget,
@@ -181,7 +197,7 @@ import type {
           `${decisionTarget} 결정이 패턴 교정에 도움이 된다.`,
       };
     }
-  
+
     if (
       rule.cautionTargets.includes(
         decisionTarget,
@@ -194,7 +210,7 @@ import type {
           `${decisionTarget} 결정에서 다시 나타날 수 있다.`,
       };
     }
-  
+
     return {
       effect: "neutral",
       reason:

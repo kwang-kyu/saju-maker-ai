@@ -1,0 +1,422 @@
+.v3-consulting-app {
+    min-height: 100vh;
+    background:
+      radial-gradient(
+        circle at top left,
+        rgba(176, 134, 72, 0.14),
+        transparent 34rem
+      ),
+      linear-gradient(
+        180deg,
+        #f8f5ef 0%,
+        #f2ede3 100%
+      );
+    color: #26231f;
+    font-family:
+      Pretendard,
+      "Noto Sans KR",
+      system-ui,
+      sans-serif;
+  }
+
+  .v3-consulting-header {
+    border-bottom: 1px solid rgba(84, 69, 48, 0.16);
+    background: rgba(255, 253, 248, 0.88);
+    backdrop-filter: blur(14px);
+  }
+
+  .v3-consulting-header-inner {
+    width: min(1120px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 28px 0 24px;
+  }
+
+  .v3-consulting-eyebrow {
+    margin: 0 0 8px;
+    color: #8b6732;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .v3-consulting-title {
+    margin: 0;
+    color: #211d18;
+    font-family:
+      "Noto Serif KR",
+      Georgia,
+      serif;
+    font-size: clamp(30px, 5vw, 48px);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.16;
+  }
+
+  .v3-consulting-subtitle {
+    max-width: 720px;
+    margin: 14px 0 0;
+    color: #665f55;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .v3-consulting-main {
+    width: min(1120px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 36px 0 64px;
+  }
+
+  .v3-consulting-grid {
+    display: grid;
+    grid-template-columns:
+      minmax(0, 0.92fr)
+      minmax(0, 1.08fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .v3-consulting-panel {
+    overflow: hidden;
+    border: 1px solid rgba(84, 69, 48, 0.14);
+    border-radius: 24px;
+    background: rgba(255, 253, 248, 0.94);
+    box-shadow:
+      0 20px 60px rgba(60, 47, 31, 0.08);
+  }
+
+  .v3-consulting-form {
+    padding: 28px;
+  }
+
+  .v3-consulting-section + .v3-consulting-section {
+    margin-top: 30px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(84, 69, 48, 0.12);
+  }
+
+  .v3-consulting-section-heading {
+    margin-bottom: 18px;
+  }
+
+  .v3-consulting-section-number {
+    display: inline-flex;
+    width: 26px;
+    height: 26px;
+    margin-right: 9px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #2f4638;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    vertical-align: 2px;
+  }
+
+  .v3-consulting-section-title {
+    display: inline;
+    margin: 0;
+    color: #28231d;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .v3-consulting-section-description {
+    margin: 8px 0 0 35px;
+    color: #81786c;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .v3-consulting-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .v3-consulting-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .v3-consulting-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .v3-consulting-label {
+    color: #514a41;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .v3-consulting-input,
+  .v3-consulting-select,
+  .v3-consulting-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d8d0c4;
+    border-radius: 13px;
+    outline: none;
+    background: #fff;
+    color: #29251f;
+    font: inherit;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      background 160ms ease;
+  }
+
+  .v3-consulting-input,
+  .v3-consulting-select {
+    min-height: 48px;
+    padding: 0 14px;
+  }
+
+  .v3-consulting-textarea {
+    min-height: 132px;
+    padding: 14px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+
+  .v3-consulting-input:focus,
+  .v3-consulting-select:focus,
+  .v3-consulting-textarea:focus {
+    border-color: #92703d;
+    box-shadow: 0 0 0 4px rgba(146, 112, 61, 0.12);
+    background: #fffefa;
+  }
+
+  .v3-consulting-help {
+    margin: 0;
+    color: #8b8277;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .v3-consulting-submit {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 28px;
+    border: 0;
+    border-radius: 15px;
+    background:
+      linear-gradient(
+        135deg,
+        #263c31,
+        #46624f
+      );
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    box-shadow:
+      0 14px 28px rgba(38, 60, 49, 0.2);
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .v3-consulting-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      0 18px 34px rgba(38, 60, 49, 0.25);
+  }
+
+  .v3-consulting-submit:disabled {
+    cursor: wait;
+    opacity: 0.66;
+  }
+
+  .v3-consulting-result {
+    position: sticky;
+    top: 24px;
+    min-height: 620px;
+  }
+
+  .v3-consulting-result-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid rgba(84, 69, 48, 0.12);
+    background:
+      linear-gradient(
+        135deg,
+        rgba(47, 70, 56, 0.98),
+        rgba(69, 91, 75, 0.96)
+      );
+    color: #fff;
+  }
+
+  .v3-consulting-result-kicker {
+    margin: 0 0 6px;
+    color: #dbc89e;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  .v3-consulting-result-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .v3-consulting-result-body {
+    padding: 30px;
+  }
+
+  .v3-consulting-empty {
+    display: flex;
+    min-height: 480px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .v3-consulting-empty-inner {
+    max-width: 360px;
+  }
+
+  .v3-consulting-empty-symbol {
+    display: flex;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(139, 103, 50, 0.22);
+    border-radius: 999px;
+    background: #faf5e9;
+    color: #8b6732;
+    font-family:
+      "Noto Serif KR",
+      Georgia,
+      serif;
+    font-size: 30px;
+  }
+
+  .v3-consulting-empty-title {
+    margin: 0;
+    color: #383128;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .v3-consulting-empty-description {
+    margin: 12px 0 0;
+    color: #81786c;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .v3-consulting-answer {
+    margin: 0;
+    color: #39342d;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    word-break: keep-all;
+  }
+
+  .v3-consulting-error {
+    margin: 0;
+    padding: 16px 18px;
+    border: 1px solid #efc5be;
+    border-radius: 14px;
+    background: #fff3f1;
+    color: #a23d32;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .v3-consulting-loading {
+    display: flex;
+    min-height: 480px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #5f574e;
+    text-align: center;
+  }
+
+  .v3-consulting-spinner {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 18px;
+    border: 4px solid rgba(47, 70, 56, 0.14);
+    border-top-color: #2f4638;
+    border-radius: 999px;
+    animation:
+      v3-consulting-spin 800ms linear infinite;
+  }
+
+  .v3-consulting-loading-title {
+    margin: 0;
+    color: #373129;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .v3-consulting-loading-description {
+    margin: 9px 0 0;
+    color: #81786c;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  @keyframes v3-consulting-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .v3-consulting-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .v3-consulting-result {
+      position: static;
+      min-height: 0;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .v3-consulting-header-inner,
+    .v3-consulting-main {
+      width: min(100% - 24px, 1120px);
+    }
+
+    .v3-consulting-header-inner {
+      padding: 22px 0 20px;
+    }
+
+    .v3-consulting-main {
+      padding: 20px 0 40px;
+    }
+
+    .v3-consulting-form,
+    .v3-consulting-result-body {
+      padding: 20px;
+    }
+
+    .v3-consulting-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .v3-consulting-field--full {
+      grid-column: auto;
+    }
+
+    .v3-consulting-section-description {
+      margin-left: 0;
+    }
+  }

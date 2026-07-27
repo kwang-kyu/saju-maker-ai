@@ -483,6 +483,70 @@ import type {
     ];
   }
 
+  function buildDistributedAdaptationEvidence(
+    facts:
+      SajuFacts,
+  ): PatternEvidence[] {
+    const dayMasterFact =
+      findFactBySignalKind(
+        facts.structureFacts,
+        "dayMasterStrength",
+      );
+
+    const rootingFact =
+      findFactBySignalKind(
+        facts.structureFacts,
+        "rooting",
+      );
+
+    const tenGodFact =
+      findFactBySignalKind(
+        facts.structureFacts,
+        "tenGodDominance",
+      );
+
+    if (
+      dayMasterFact?.signal?.kind
+        !== "dayMasterStrength"
+      || rootingFact?.signal?.kind
+        !== "rooting"
+      || tenGodFact?.signal?.kind
+        !== "tenGodDominance"
+    ) {
+      return [];
+    }
+
+    if (
+      dayMasterFact.signal.type
+        !== "balanced"
+      || rootingFact.signal.rooted
+        !== false
+      || tenGodFact.signal.distributed
+        !== true
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        source:
+          "structure",
+
+        description:
+          "일간은 중화를 이루어 상황에 유연하게 대응할 수 있지만, " +
+          "통근 기반이 없고 십성이 분산되어 있어 역할과 관심, " +
+          "선택 방향이 여러 갈래로 분산되는 반복 구조이다.",
+
+        weight:
+          toCombinedWeight([
+            dayMasterFact.strength,
+            rootingFact.strength,
+            tenGodFact.strength,
+          ]),
+      },
+    ];
+  }
+
   export function buildRepeatedPatternEvidence(
     facts: SajuFacts,
   ): PatternEvidence[] {
@@ -520,6 +584,10 @@ import type {
       ),
 
       ...buildOpportunityMissEvidence(
+        facts,
+      ),
+
+      ...buildDistributedAdaptationEvidence(
         facts,
       ),
     ];
