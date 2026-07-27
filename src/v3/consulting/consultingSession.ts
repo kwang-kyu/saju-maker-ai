@@ -2,6 +2,9 @@ import type {
     SajuFactsPipelineResult,
   } from "../builders/sajuFactsPipelineBuilder";
   import type {
+    MasterReaderEvidenceBundle,
+  } from "../types/masterReaderEvidenceBundle";
+  import type {
     HumanDestinyContext,
   } from "../types/humanDestinyContext";
   import type {
@@ -155,11 +158,14 @@ import type {
     sajuInput:
       V3ConsultingSajuRequest;
   
-    sajuFacts:
-      SajuFactsPipelineResult;
-  
-    humanContext:
-      HumanDestinyContext;
+      sajuFacts:
+    SajuFactsPipelineResult;
+
+  readerEvidence:
+    MasterReaderEvidenceBundle;
+
+  humanContext:
+    HumanDestinyContext;
   
     lifeContextHistory:
       [
