@@ -23,8 +23,9 @@ import {
       boolean;
   };
 
-  function createSourceRequest():
+  export function createSourceRequest():
     V3ConsultingRequest {
+
     return {
       sajuInput: {
         name:
