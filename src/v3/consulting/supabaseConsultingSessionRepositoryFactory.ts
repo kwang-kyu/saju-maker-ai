@@ -6,6 +6,9 @@ import {
     GatewayConsultingSessionRepository,
   } from "./gatewayConsultingSessionRepository";
   import {
+    parseConsultingSessionOwnerId,
+  } from "./consultingSessionOwnerId";
+  import {
     SupabaseConsultingSessionPersistenceGateway,
   } from "./supabaseConsultingSessionPersistenceGateway";
 
@@ -18,6 +21,13 @@ import {
 
     SUPABASE_SERVICE_ROLE_KEY?:
       string;
+  };
+  export type CreateSupabaseConsultingSessionRepositoryInput = {
+    ownerId:
+      string;
+
+    environment?:
+      SupabaseServerEnvironment;
   };
 
   export class InvalidSupabaseServerEnvironmentError
@@ -166,10 +176,18 @@ import {
    * Secret 또는 service-role 키는 API 서버 환경에만 보관해야 한다.
    */
   export function createSupabaseConsultingSessionRepository(
-    environment:
-      SupabaseServerEnvironment =
-        process.env,
+    input:
+      CreateSupabaseConsultingSessionRepositoryInput,
   ): GatewayConsultingSessionRepository {
+    const environment =
+      input.environment
+      ?? process.env;
+
+    const ownerId =
+      parseConsultingSessionOwnerId(
+        input.ownerId,
+      );
+
     const url =
       validateSupabaseUrl(
         requireNonEmptyValue(
@@ -202,9 +220,11 @@ import {
         },
       );
 
-    const gateway =
+      const gateway =
       new SupabaseConsultingSessionPersistenceGateway({
         client,
+
+        ownerId,
       });
 
     return new GatewayConsultingSessionRepository(

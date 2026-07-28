@@ -2,6 +2,9 @@ import {
     GatewayConsultingSessionRepository,
   } from "./gatewayConsultingSessionRepository";
   import {
+    InvalidConsultingSessionOwnerIdError,
+  } from "./consultingSessionOwnerId";
+  import {
     InvalidSupabaseServerEnvironmentError,
     createSupabaseConsultingSessionRepository,
   } from "./supabaseConsultingSessionRepositoryFactory";
@@ -19,6 +22,9 @@ import {
     passed:
       boolean;
   };
+
+  const VERIFICATION_OWNER_ID =
+    "11111111-1111-4111-8111-111111111111";
 
   function captureError(
     action:
@@ -41,8 +47,13 @@ import {
       captureError(
         () =>
           createSupabaseConsultingSessionRepository({
-            SUPABASE_SECRET_KEY:
-              "verification-server-secret",
+            ownerId:
+              VERIFICATION_OWNER_ID,
+
+            environment: {
+              SUPABASE_SECRET_KEY:
+                "verification-server-secret",
+            },
           }),
       );
 
@@ -50,8 +61,13 @@ import {
       captureError(
         () =>
           createSupabaseConsultingSessionRepository({
-            SUPABASE_URL:
-              "https://verification.supabase.co",
+            ownerId:
+              VERIFICATION_OWNER_ID,
+
+            environment: {
+              SUPABASE_URL:
+                "https://verification.supabase.co",
+            },
           }),
       );
 
@@ -59,11 +75,16 @@ import {
       captureError(
         () =>
           createSupabaseConsultingSessionRepository({
-            SUPABASE_URL:
-              "not-a-url",
+            ownerId:
+              VERIFICATION_OWNER_ID,
 
-            SUPABASE_SECRET_KEY:
-              "verification-server-secret",
+            environment: {
+              SUPABASE_URL:
+                "not-a-url",
+
+              SUPABASE_SECRET_KEY:
+                "verification-server-secret",
+            },
           }),
       );
 
@@ -71,11 +92,16 @@ import {
       captureError(
         () =>
           createSupabaseConsultingSessionRepository({
-            SUPABASE_URL:
-              "http://verification.supabase.co",
+            ownerId:
+              VERIFICATION_OWNER_ID,
 
-            SUPABASE_SECRET_KEY:
-              "verification-server-secret",
+            environment: {
+              SUPABASE_URL:
+                "http://verification.supabase.co",
+
+              SUPABASE_SECRET_KEY:
+                "verification-server-secret",
+            },
           }),
       );
 
@@ -83,11 +109,16 @@ import {
       captureError(
         () =>
           createSupabaseConsultingSessionRepository({
-            SUPABASE_URL:
-              "https://verification.supabase.co",
+            ownerId:
+              VERIFICATION_OWNER_ID,
 
-            SUPABASE_SECRET_KEY:
-              "sb_publishable_verification",
+            environment: {
+              SUPABASE_URL:
+                "https://verification.supabase.co",
+
+              SUPABASE_SECRET_KEY:
+                "sb_publishable_verification",
+            },
           }),
       );
 
@@ -95,11 +126,16 @@ import {
       captureError(
         () =>
           createSupabaseConsultingSessionRepository({
-            SUPABASE_URL:
-              "https://verification.supabase.co",
+            ownerId:
+              VERIFICATION_OWNER_ID,
 
-            SUPABASE_SECRET_KEY:
-              "sb_anon_verification",
+            environment: {
+              SUPABASE_URL:
+                "https://verification.supabase.co",
+
+              SUPABASE_SECRET_KEY:
+                "sb_anon_verification",
+            },
           }),
       );
 
@@ -107,54 +143,113 @@ import {
       captureError(
         () =>
           createSupabaseConsultingSessionRepository({
-            SUPABASE_URL:
-              "https://verification.supabase.co",
+            ownerId:
+              VERIFICATION_OWNER_ID,
 
-            SUPABASE_SECRET_KEY:
-              "new-server-secret",
+            environment: {
+              SUPABASE_URL:
+                "https://verification.supabase.co",
 
-            SUPABASE_SERVICE_ROLE_KEY:
-              "different-legacy-secret",
+              SUPABASE_SECRET_KEY:
+                "new-server-secret",
+
+              SUPABASE_SERVICE_ROLE_KEY:
+                "different-legacy-secret",
+            },
+          }),
+      );
+
+    const invalidOwnerIdError =
+      captureError(
+        () =>
+          createSupabaseConsultingSessionRepository({
+            ownerId:
+              "not-a-valid-owner-id",
+
+            environment: {
+              SUPABASE_URL:
+                "https://verification.supabase.co",
+
+              SUPABASE_SECRET_KEY:
+                "verification-server-secret",
+            },
+          }),
+      );
+
+    const emptyOwnerIdError =
+      captureError(
+        () =>
+          createSupabaseConsultingSessionRepository({
+            ownerId:
+              "   ",
+
+            environment: {
+              SUPABASE_URL:
+                "https://verification.supabase.co",
+
+              SUPABASE_SECRET_KEY:
+                "verification-server-secret",
+            },
           }),
       );
 
     const secretRepository =
       createSupabaseConsultingSessionRepository({
-        SUPABASE_URL:
-          "https://verification.supabase.co/",
+        ownerId:
+          `  ${VERIFICATION_OWNER_ID.toUpperCase()}  `,
 
-        SUPABASE_SECRET_KEY:
-          "verification-server-secret",
+        environment: {
+          SUPABASE_URL:
+            "https://verification.supabase.co/",
+
+          SUPABASE_SECRET_KEY:
+            "verification-server-secret",
+        },
       });
 
     const legacyRepository =
       createSupabaseConsultingSessionRepository({
-        SUPABASE_URL:
-          "https://verification.supabase.co",
+        ownerId:
+          VERIFICATION_OWNER_ID,
 
-        SUPABASE_SERVICE_ROLE_KEY:
-          "verification-legacy-service-role-secret",
+        environment: {
+          SUPABASE_URL:
+            "https://verification.supabase.co",
+
+          SUPABASE_SERVICE_ROLE_KEY:
+            "verification-legacy-service-role-secret",
+        },
       });
 
     const sameKeysRepository =
       createSupabaseConsultingSessionRepository({
-        SUPABASE_URL:
-          "https://verification.supabase.co",
+        ownerId:
+          VERIFICATION_OWNER_ID,
 
-        SUPABASE_SECRET_KEY:
-          "same-server-secret",
+        environment: {
+          SUPABASE_URL:
+            "https://verification.supabase.co",
 
-        SUPABASE_SERVICE_ROLE_KEY:
-          "same-server-secret",
+          SUPABASE_SECRET_KEY:
+            "same-server-secret",
+
+          SUPABASE_SERVICE_ROLE_KEY:
+            "same-server-secret",
+        },
       });
 
     const localRepository =
       createSupabaseConsultingSessionRepository({
-        SUPABASE_URL:
-          "http://127.0.0.1:54321",
+        ownerId:
+          VERIFICATION_OWNER_ID,
 
-        SUPABASE_SECRET_KEY:
-          "local-server-secret",
+        environment: {
+          SUPABASE_URL:
+            "http://127.0.0.1:54321",
+
+          SUPABASE_SECRET_KEY:
+            "local-server-secret",
+        },
       });
 
     const secretGateway =
@@ -199,6 +294,14 @@ import {
         conflictingKeysError
         instanceof InvalidSupabaseServerEnvironmentError,
 
+      invalidOwnerIdIsRejected:
+        invalidOwnerIdError
+        instanceof InvalidConsultingSessionOwnerIdError,
+
+      emptyOwnerIdIsRejected:
+        emptyOwnerIdError
+        instanceof InvalidConsultingSessionOwnerIdError,
+
       secretKeyCreatesRepository:
         secretRepository
         instanceof GatewayConsultingSessionRepository,
@@ -206,6 +309,22 @@ import {
       secretKeyCreatesSupabaseGateway:
         secretGateway
         instanceof SupabaseConsultingSessionPersistenceGateway,
+
+      ownerIdIsDeliveredToGateway:
+        secretGateway
+        instanceof SupabaseConsultingSessionPersistenceGateway
+        && secretGateway
+          .ownerId
+          .value
+        === VERIFICATION_OWNER_ID,
+
+      ownerIdIsNormalizedBeforeGatewayCreation:
+        secretGateway
+        instanceof SupabaseConsultingSessionPersistenceGateway
+        && secretGateway
+          .ownerId
+          .toString()
+        === VERIFICATION_OWNER_ID,
 
       legacyServiceRoleKeyIsSupported:
         legacyRepository

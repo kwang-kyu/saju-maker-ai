@@ -11,6 +11,15 @@ import {
     V3_CONSULTING_SESSIONS_TABLE,
   } from "./supabaseConsultingSessionPersistenceGateway";
 
+  import {
+    parseConsultingSessionOwnerId,
+  } from "./consultingSessionOwnerId";
+
+  const VERIFICATION_OWNER_ID =
+    parseConsultingSessionOwnerId(
+      "11111111-1111-4111-8111-111111111111",
+    );
+
   export type SupabaseConsultingSessionPersistenceGatewayVerificationResult = {
     checks:
       Record<
@@ -160,13 +169,16 @@ import {
         },
       );
 
-    return new SupabaseConsultingSessionPersistenceGateway({
-      client,
+      return new SupabaseConsultingSessionPersistenceGateway({
+        client,
 
-      now:
-        () =>
-          "2026-07-28T12:00:00.000Z",
-    });
+        ownerId:
+          VERIFICATION_OWNER_ID,
+
+        now:
+          () =>
+            "2026-07-28T12:00:00.000Z",
+      });
   }
 
   function buildRow(
@@ -524,6 +536,14 @@ import {
           )
         === true,
 
+        findFiltersOwnerId:
+  findRequests[0]
+    ?.url
+    .includes(
+      `owner_id=eq.${VERIFICATION_OWNER_ID.value}`,
+    )
+  === true,
+
       selectedRowIsMapped:
         foundRow !== null
         && JSON.stringify(
@@ -553,12 +573,21 @@ import {
         )
         && insertBody.id
         === row.id
+        && insertBody.owner_id
+        === VERIFICATION_OWNER_ID.value
         && insertBody.schema_version
         === row.schemaVersion
         && insertBody.updated_at
         === row.updatedAt
         && insertBody.persisted_at
         === "2026-07-28T12:00:00.000Z",
+        duplicateLookupFiltersOwnerId:
+        duplicateRequests[1]
+         ?.url
+        .includes(
+        `owner_id=eq.${VERIFICATION_OWNER_ID.value}`,
+    )
+         === true,
 
       duplicatePerformsLookup:
         duplicateRequests
@@ -578,6 +607,14 @@ import {
           ?.method
         === "PATCH",
 
+        updateFiltersOwnerId:
+      updateRequest
+          ?.url
+         .includes(
+         `owner_id=eq.${VERIFICATION_OWNER_ID.value}`,
+    )
+  === true,
+
       updateUsesOptimisticCondition:
         updateRequest
           ?.url
@@ -592,6 +629,8 @@ import {
         )
         && updateBody.id
         === nextRow.id
+        && updateBody.owner_id
+        === VERIFICATION_OWNER_ID.value
         && updateBody.updated_at
         === nextRow.updatedAt,
 
@@ -599,7 +638,13 @@ import {
         updateResult
           .status
         === "updated",
-
+        notFoundLookupFiltersOwnerId:
+        notFoundRequests[1]
+          ?.url
+          .includes(
+            `owner_id=eq.${VERIFICATION_OWNER_ID.value}`,
+          )
+        === true,
       notFoundPerformsCurrentLookup:
         notFoundRequests
           .length
@@ -614,6 +659,14 @@ import {
         conflictRequests
           .length
         === 2,
+
+        conflictLookupFiltersOwnerId:
+      conflictRequests[1]
+        ?.url
+        .includes(
+      `owner_id=eq.${VERIFICATION_OWNER_ID.value}`,
+    )
+  === true,
 
       conflictResultIsMapped:
         conflictResult

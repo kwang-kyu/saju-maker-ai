@@ -9,6 +9,10 @@ import type {
     UpdateConsultingSessionPersistenceRowInput,
     UpdateConsultingSessionPersistenceRowResult,
   } from "./consultingSessionPersistenceGateway";
+  import type {
+    ConsultingSessionOwnerId,
+  } from "./consultingSessionOwnerId";
+
 
   export const V3_CONSULTING_SESSIONS_TABLE =
     "v3_consulting_sessions";
@@ -201,12 +205,17 @@ import type {
   function buildSupabaseRow(
     row:
       ConsultingSessionPersistenceRow,
+    ownerId:
+      ConsultingSessionOwnerId,
     persistedAt:
       string,
   ) {
     return {
       id:
         row.id,
+
+      owner_id:
+        ownerId.value,
 
       schema_version:
         row.schemaVersion,
@@ -227,6 +236,9 @@ import type {
     readonly client:
       SupabaseClient;
 
+    readonly ownerId:
+      ConsultingSessionOwnerId;
+
     readonly now:
       () => string;
 
@@ -235,12 +247,18 @@ import type {
         client:
           SupabaseClient;
 
+        ownerId:
+          ConsultingSessionOwnerId;
+
         now?:
           () => string;
       },
     ) {
       this.client =
         input.client;
+
+      this.ownerId =
+        input.ownerId;
 
       this.now =
         input.now
@@ -267,6 +285,10 @@ import type {
         .eq(
           "id",
           sessionId,
+        )
+        .eq(
+          "owner_id",
+          this.ownerId.value,
         )
         .maybeSingle();
 
@@ -313,6 +335,10 @@ import type {
           "id",
           sessionId,
         )
+        .eq(
+          "owner_id",
+          this.ownerId.value,
+        )
         .maybeSingle();
 
       if (
@@ -353,6 +379,7 @@ import type {
         .insert(
           buildSupabaseRow(
             row,
+            this.ownerId,
             this.now(),
           ),
         );
@@ -422,12 +449,17 @@ import type {
         .update(
           buildSupabaseRow(
             input.row,
+            this.ownerId,
             this.now(),
           ),
         )
         .eq(
           "id",
           input.row.id,
+        )
+        .eq(
+          "owner_id",
+          this.ownerId.value,
         )
         .eq(
           "updated_at",
