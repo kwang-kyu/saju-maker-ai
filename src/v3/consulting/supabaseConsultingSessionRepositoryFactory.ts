@@ -2,6 +2,10 @@ import {
     createClient,
   } from "@supabase/supabase-js";
 
+  import type {
+    SupabaseClient,
+  } from "@supabase/supabase-js";
+
   import {
     GatewayConsultingSessionRepository,
   } from "./gatewayConsultingSessionRepository";
@@ -169,25 +173,11 @@ import {
     return resolvedKey;
   }
 
-  /**
-   * 서버 전용 Supabase 세션 Repository를 만든다.
-   *
-   * VITE_SUPABASE_* 환경변수는 의도적으로 읽지 않는다.
-   * Secret 또는 service-role 키는 API 서버 환경에만 보관해야 한다.
-   */
-  export function createSupabaseConsultingSessionRepository(
-    input:
-      CreateSupabaseConsultingSessionRepositoryInput,
-  ): GatewayConsultingSessionRepository {
-    const environment =
-      input.environment
-      ?? process.env;
-
-    const ownerId =
-      parseConsultingSessionOwnerId(
-        input.ownerId,
-      );
-
+  export function createSupabaseConsultingSessionServerClient(
+    environment:
+      SupabaseServerEnvironment =
+        process.env,
+  ): SupabaseClient {
     const url =
       validateSupabaseUrl(
         requireNonEmptyValue(
@@ -202,23 +192,43 @@ import {
         environment,
       );
 
-    const client =
-      createClient(
-        url,
-        secretKey,
-        {
-          auth: {
-            autoRefreshToken:
-              false,
+    return createClient(
+      url,
+      secretKey,
+      {
+        auth: {
+          autoRefreshToken:
+            false,
 
-            detectSessionInUrl:
-              false,
+          detectSessionInUrl:
+            false,
 
-            persistSession:
-              false,
-          },
+          persistSession:
+            false,
         },
-      );
+      },
+    );
+  }
+
+  /**
+   * 서버 전용 Supabase 세션 Repository를 만든다.
+   *
+   * VITE_SUPABASE_* 환경변수는 의도적으로 읽지 않는다.
+   * Secret 또는 service-role 키는 API 서버 환경에만 보관해야 한다.
+   */
+  export function createSupabaseConsultingSessionRepository(
+    input:
+      CreateSupabaseConsultingSessionRepositoryInput,
+  ): GatewayConsultingSessionRepository {
+    const ownerId =
+  parseConsultingSessionOwnerId(
+    input.ownerId,
+  );
+
+const client =
+  createSupabaseConsultingSessionServerClient(
+    input.environment,
+  );
 
       const gateway =
       new SupabaseConsultingSessionPersistenceGateway({
