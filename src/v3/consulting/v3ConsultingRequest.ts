@@ -1,4 +1,4 @@
-﻿import type {
+import type {
     SajuFactsPipelineInput,
   } from "../builders/sajuFactsPipelineBuilder";
 
@@ -342,7 +342,7 @@
     return true;
   }
 
-  function isV3HumanLifeContextRequest(
+  export function isV3HumanLifeContextRequest(
     value: unknown,
   ): value is V3HumanLifeContextRequest {
     if (
