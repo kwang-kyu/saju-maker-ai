@@ -12,6 +12,13 @@ import type {
 import {
   createV3InitialConsultingSession,
 } from "../services/v3ConsultingSessionApiClient";
+import type {
+  V3InitialConsultingSessionResponse,
+} from "../services/v3ConsultingSessionApiClient";
+
+import {
+  V3ConsultingSessionConversation,
+} from "./V3ConsultingSessionConversation";
 
 import "./v3ConsultingApp.css";
 
@@ -197,9 +204,11 @@ import "./v3ConsultingApp.css";
     ] = useState("");
 
     const [
-      answer,
-      setAnswer,
-    ] = useState("");
+      initialSession,
+      setInitialSession,
+    ] = useState<V3InitialConsultingSessionResponse | null>(
+      null,
+    );
 
     const [
       errorMessage,
@@ -240,8 +249,8 @@ import "./v3ConsultingApp.css";
         true,
       );
 
-      setAnswer(
-        "",
+      setInitialSession(
+        null,
       );
 
       setErrorMessage(
@@ -299,9 +308,9 @@ import "./v3ConsultingApp.css";
             request,
           });
 
-        setAnswer(
-          session.assistantAnswer,
-        );
+          setInitialSession(
+            session,
+          );
       } catch (
         error
       ) {
@@ -865,17 +874,20 @@ import "./v3ConsultingApp.css";
                   </p>
                 ) : null}
 
-                {!isSubmitting
+{!isSubmitting
                 && !errorMessage
-                && answer ? (
-                  <p className="v3-consulting-answer">
-                    {answer}
-                  </p>
+                && initialSession
+                && accessToken ? (
+                  <V3ConsultingSessionConversation
+                    key={initialSession.sessionId}
+                    accessToken={accessToken}
+                    initialSession={initialSession}
+                  />
                 ) : null}
 
                 {!isSubmitting
                 && !errorMessage
-                && !answer ? (
+                && initialSession === null ? (
                   <div className="v3-consulting-empty">
                     <div className="v3-consulting-empty-inner">
                       <div
