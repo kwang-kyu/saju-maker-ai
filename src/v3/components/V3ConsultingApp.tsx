@@ -1,14 +1,19 @@
 import {
-    useState,
-    type FormEvent,
-  } from "react";
+  useState,
+  type FormEvent,
+} from "react";
 
-  import {
-    requestV3Consulting,
-    type V3ConsultingRequest,
-  } from "../services/v3ConsultingService";
+import {
+  useV3ConsultingAuth,
+} from "../hooks/useV3ConsultingAuth";
+import type {
+  V3ConsultingRequest,
+} from "../consulting/v3ConsultingRequest";
+import {
+  createV3InitialConsultingSession,
+} from "../services/v3ConsultingSessionApiClient";
 
-  import "./v3ConsultingApp.css";
+import "./v3ConsultingApp.css";
 
   type Gender =
     V3ConsultingRequest[
@@ -112,6 +117,16 @@ import {
   }
 
   export function V3ConsultingApp() {
+    const {
+      accessToken,
+      authenticated,
+      loading:
+        authLoading,
+      error:
+        authError,
+      signInWithKakao,
+      signOut,
+    } = useV3ConsultingAuth();
     const [
       name,
       setName,
@@ -202,7 +217,22 @@ import {
     ) {
       event.preventDefault();
 
-      if (isSubmitting) {
+      if (
+        isSubmitting
+        || authLoading
+      ) {
+        return;
+      }
+
+      if (
+        !authenticated
+        || accessToken
+        === null
+      ) {
+        setErrorMessage(
+          "카카오 로그인 후 천운문 상담을 시작해 주세요.",
+        );
+
         return;
       }
 
@@ -262,15 +292,19 @@ import {
         };
 
       try {
-        const consultingAnswer =
-          await requestV3Consulting(
+        const session =
+          await createV3InitialConsultingSession({
+            accessToken,
+
             request,
-          );
+          });
 
         setAnswer(
-          consultingAnswer,
+          session.assistantAnswer,
         );
-      } catch (error) {
+      } catch (
+        error
+      ) {
         setErrorMessage(
           readErrorMessage(
             error,
@@ -294,6 +328,65 @@ import {
             <h1 className="v3-consulting-title">
               사람을 먼저 읽는 천운문 상담
             </h1>
+
+            <div className="v3-consulting-auth">
+              {authLoading ? (
+                <p className="v3-consulting-help">
+                  로그인 상태를 확인하고 있습니다.
+                </p>
+              ) : authenticated ? (
+                <button
+                  className="v3-consulting-auth-button"
+                  type="button"
+                  onClick={() => {
+                    void signOut()
+                      .catch(
+                        (error) => {
+                          setErrorMessage(
+                            readErrorMessage(
+                              error,
+                            ),
+                          );
+                        },
+                      );
+                  }}
+                >
+                  로그아웃
+                </button>
+              ) : (
+                <button
+                  className="v3-consulting-auth-button"
+                  type="button"
+                  onClick={() => {
+                    void signInWithKakao(
+                      globalThis.location.href,
+                    )
+                      .catch(
+                        (error) => {
+                          setErrorMessage(
+                            readErrorMessage(
+                              error,
+                            ),
+                          );
+                        },
+                      );
+                  }}
+                >
+                  카카오로 로그인
+                </button>
+              )}
+
+              {authError ? (
+                <p
+                  className="v3-consulting-error"
+                  role="alert"
+                >
+                  {readErrorMessage(
+                    authError,
+                  )}
+                </p>
+              ) : null}
+            </div>
 
             <p className="v3-consulting-subtitle">
               생년월일시에서 사람의 구조와 현재 국면을 먼저
@@ -715,11 +808,19 @@ import {
                 <button
                   className="v3-consulting-submit"
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting
+                    || authLoading
+                    || !authenticated
+                  }
                 >
                   {isSubmitting
                     ? "사람의 구조와 질문을 읽는 중입니다"
-                    : "천운문 v3 상담 시작"}
+                    : authLoading
+                      ? "로그인 상태 확인 중"
+                      : authenticated
+                        ? "천운문 v3 상담 시작"
+                        : "카카오 로그인 후 상담 가능"}
                 </button>
               </form>
             </section>

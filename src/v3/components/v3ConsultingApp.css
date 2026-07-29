@@ -59,6 +59,46 @@
     color: #665f55;
     font-size: 16px;
     line-height: 1.75;
+    .v3-consulting-auth {
+      display: flex;
+      margin-top: 18px;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .v3-consulting-auth-button {
+      min-height: 42px;
+      padding: 0 18px;
+      border: 1px solid rgba(42, 35, 25, 0.14);
+      border-radius: 12px;
+      background: #fee500;
+      color: #191600;
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow:
+        0 8px 20px rgba(64, 51, 0, 0.12);
+      transition:
+        transform 160ms ease,
+        box-shadow 160ms ease;
+    }
+
+    .v3-consulting-auth-button:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 12px 24px rgba(64, 51, 0, 0.17);
+    }
+
+    .v3-consulting-auth .v3-consulting-help {
+      font-size: 13px;
+    }
+
+    .v3-consulting-auth .v3-consulting-error {
+      width: 100%;
+      box-sizing: border-box;
+    }
   }
 
   .v3-consulting-main {
@@ -231,7 +271,7 @@
   }
 
   .v3-consulting-submit:disabled {
-    cursor: wait;
+    cursor: not-allowed;
     opacity: 0.66;
   }
 
