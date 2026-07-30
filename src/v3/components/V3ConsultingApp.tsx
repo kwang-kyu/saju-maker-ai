@@ -68,6 +68,17 @@ import "./v3ConsultingApp.css";
     | "yes"
     | "no";
 
+    const V3_AUTH_CALLBACK_PATH =
+  "/v3-auth-callback";
+
+function buildV3AuthRedirectUrl():
+  string {
+  return new URL(
+    V3_AUTH_CALLBACK_PATH,
+    globalThis.location.origin,
+  ).toString();
+}
+
   function getTodayIsoDate():
     string {
     const now =
@@ -368,7 +379,7 @@ import "./v3ConsultingApp.css";
                   type="button"
                   onClick={() => {
                     void signInWithKakao(
-                      globalThis.location.href,
+                      buildV3AuthRedirectUrl()
                     )
                       .catch(
                         (error) => {

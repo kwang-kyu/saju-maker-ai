@@ -58,6 +58,57 @@ import {
         null,
     };
 
+    const V3_AUTH_CALLBACK_PATH =
+  "/v3-auth-callback";
+
+const V3_CONSULTING_LOCATION =
+  "/#v3";
+
+function normalizePathname(
+  pathname:
+    string,
+): string {
+  const normalizedPathname =
+    pathname
+      .trim()
+      .toLowerCase()
+      .replace(
+        /\/+$/,
+        "",
+      );
+
+  return normalizedPathname
+    || "/";
+}
+
+function completeV3AuthCallback(
+  session:
+    Session | null,
+): void {
+  const authenticated =
+    readAccessToken(
+      session,
+    )
+    !== null;
+
+  const isAuthCallback =
+    normalizePathname(
+      globalThis.location.pathname,
+    )
+    === V3_AUTH_CALLBACK_PATH;
+
+  if (
+    !authenticated
+    || !isAuthCallback
+  ) {
+    return;
+  }
+
+  globalThis.location.replace(
+    V3_CONSULTING_LOCATION,
+  );
+}
+
   function normalizeError(
     error:
       unknown,
@@ -186,6 +237,9 @@ import {
                 data.session,
               ),
             );
+            completeV3AuthCallback(
+                data.session,
+              );
           } catch (
             error
           ) {
@@ -362,6 +416,10 @@ import {
               ) {
                 return;
               }
+
+              completeV3AuthCallback(
+                session,
+              );
 
               setAuthState(
                 buildAuthenticatedState(
