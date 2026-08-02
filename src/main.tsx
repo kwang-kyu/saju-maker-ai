@@ -1,5 +1,7 @@
 ﻿import {
   StrictMode,
+  Suspense,
+  lazy,
 } from "react";
 
 import {
@@ -8,13 +10,35 @@ import {
 
 import "./index.css";
 
-import {
-  SajuMakerV2,
-} from "./v2/SajuMakerV2";
+const SajuMakerV2 =
+  lazy(
+    async () => {
+      const module =
+        await import(
+          "./v2/SajuMakerV2"
+        );
 
-import {
-  V3ConsultingApp,
-} from "./v3/components/V3ConsultingApp";
+      return {
+        default:
+          module.SajuMakerV2,
+      };
+    },
+  );
+
+const V3ConsultingApp =
+  lazy(
+    async () => {
+      const module =
+        await import(
+          "./v3/components/V3ConsultingApp"
+        );
+
+      return {
+        default:
+          module.V3ConsultingApp,
+      };
+    },
+  );
 
 const V3_CONSULTING_HASH =
   "#v3";
@@ -69,6 +93,8 @@ createRoot(
   )!,
 ).render(
   <StrictMode>
-    {application}
+    <Suspense fallback={null}>
+      {application}
+    </Suspense>
   </StrictMode>,
 );
