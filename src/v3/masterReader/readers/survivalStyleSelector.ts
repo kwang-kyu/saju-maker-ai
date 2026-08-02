@@ -14,7 +14,14 @@ export type SurvivalStyleSelection = {
   scoreGap: number;
 };
 
-const MINIMUM_PRIMARY_SCORE = 3;
+/**
+ * 규칙 가중치 2에 약한 단일 증거 배수 0.5가 적용된
+ * 점수 1을 유효한 최소 생존방식 근거로 인정한다.
+ *
+ * 점수가 0이면 매칭 증거가 전혀 없는 상태이므로
+ * 기존처럼 insufficient로 처리한다.
+ */
+const MINIMUM_PRIMARY_SCORE = 1;
 const CLEAR_PRIMARY_GAP = 3;
 const DISTRIBUTED_GAP = 1;
 

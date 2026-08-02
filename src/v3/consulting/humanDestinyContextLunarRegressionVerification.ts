@@ -174,9 +174,31 @@ import {
       boolean;
   };
 
-  export function verifyHumanDestinyContextLunarRegression():
-    HumanDestinyContextLunarRegressionVerificationResult {
-    const input = {
+  export type HumanDestinyContextLunarRegressionInput = {
+    name:
+      string;
+
+    birthDate:
+      string;
+
+    birthTime:
+      string;
+
+    gender:
+      "male" | "female";
+
+    calendarType:
+      "lunar";
+
+    referenceDate:
+      string;
+
+    luckStartMethod:
+      "minuteBased";
+  };
+
+  const DEFAULT_LUNAR_REGRESSION_INPUT:
+    HumanDestinyContextLunarRegressionInput = {
       name:
         "김광규",
 
@@ -187,17 +209,23 @@ import {
         "16:02",
 
       gender:
-        "male" as const,
+        "male",
 
       calendarType:
-        "lunar" as const,
+        "lunar",
 
       referenceDate:
         "2026-07-27",
 
       luckStartMethod:
-        "minuteBased" as const,
+        "minuteBased",
     };
+
+  export function verifyHumanDestinyContextLunarRegression(
+    input:
+      HumanDestinyContextLunarRegressionInput =
+        DEFAULT_LUNAR_REGRESSION_INPUT,
+  ): HumanDestinyContextLunarRegressionVerificationResult {
 
     const sajuFactsPipeline =
       buildSajuFactsPipeline(

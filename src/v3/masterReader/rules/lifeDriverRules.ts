@@ -477,9 +477,87 @@ matches: (signal, meanings) => {
       );
     },
   },
+  {
+    id: "wealth-distributed-ten-god",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "wealth",
+    weight: 3,
+    reason:
+      "십성의 작용이 한 방향으로 집중되지 않지만 재성 기능이 포함되어 있어 수익과 자산의 현실적 결과가 삶의 여러 동력 가운데 하나로 작동한다.",
+    matches: (signal) =>
+      signal.kind === "tenGodDominance" &&
+      signal.distributed &&
+      (
+        (signal.counts["정재"] ?? 0) +
+        (signal.counts["편재"] ?? 0)
+      ) > 0,
+  },
+  {
+    id: "knowledge-distributed-ten-god",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "knowledge",
+    weight: 3,
+    reason:
+      "십성의 작용이 여러 방향으로 분산되어 있으면서 인성 기능이 포함되어 있어 학습과 경험의 해석이 삶의 여러 동력 가운데 하나로 작동한다.",
+    matches: (signal) =>
+      signal.kind === "tenGodDominance" &&
+      signal.distributed &&
+      (
+        (signal.counts["정인"] ?? 0) +
+        (signal.counts["편인"] ?? 0)
+      ) > 0,
+  },
+  {
+    id: "creation-distributed-ten-god",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "creation",
+    weight: 3,
+    reason:
+      "십성의 작용이 여러 방향으로 분산되어 있으면서 식상 기능이 포함되어 있어 표현과 생산, 기획이 삶의 여러 동력 가운데 하나로 작동한다.",
+    matches: (signal) =>
+      signal.kind === "tenGodDominance" &&
+      signal.distributed &&
+      (
+        (signal.counts["식신"] ?? 0) +
+        (signal.counts["상관"] ?? 0)
+      ) > 0,
+  },
+  {
+    id: "leadership-distributed-ten-god",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "leadership",
+    weight: 3,
+    reason:
+      "십성의 작용이 여러 방향으로 분산되어 있으면서 관성 기능이 포함되어 있어 책임과 판단, 역할 수행이 삶의 여러 동력 가운데 하나로 작동한다.",
+    matches: (signal) =>
+      signal.kind === "tenGodDominance" &&
+      signal.distributed &&
+      (
+        (signal.counts["정관"] ?? 0) +
+        (signal.counts["편관"] ?? 0)
+      ) > 0,
+  },
+  {
+    id: "freedom-distributed-ten-god",
+    source: "tenGodStrength",
+    signalKind: "tenGodDominance",
+    driver: "freedom",
+    weight: 3,
+    reason:
+      "십성의 작용이 여러 방향으로 분산되어 있으면서 비겁 기능이 포함되어 있어 자율성과 자기 방식이 삶의 여러 동력 가운데 하나로 작동한다.",
+    matches: (signal) =>
+      signal.kind === "tenGodDominance" &&
+      signal.distributed &&
+      (
+        (signal.counts["비견"] ?? 0) +
+        (signal.counts["겁재"] ?? 0)
+      ) > 0,
+  },
 ];
-
-
 
 export type MatchedLifeDriverRule = {
   rule: LifeDriverRule;
