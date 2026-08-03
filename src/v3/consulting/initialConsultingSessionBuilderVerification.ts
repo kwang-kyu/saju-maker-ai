@@ -164,12 +164,18 @@ import {
           }),
       );
 
-    const clarificationQuestions =
+      const clarificationQuestions =
       session
         .pendingClarification
-        ?.questions
-        .join("\n")
-        ?? "";
+        ?.items
+        .map(
+          (item) =>
+            item.question,
+        )
+        .join(
+          "\n",
+        )
+      ?? "";
 
     const checks = {
       sessionIdIsPreserved:

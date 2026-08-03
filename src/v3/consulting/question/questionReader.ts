@@ -176,6 +176,23 @@ const topicRules: readonly KeywordRule<QuestionTopic>[] = [
       "공무원",
       "시험",
       "진로",
+      "연극",
+      "배우로",
+      "배우 활동",
+      "연기자",
+      "배역",
+      "연기",
+      "무대",
+      "공연",
+      "영화 출연",
+      "드라마 출연",
+      "유튜브",
+      "영상 제작",
+      "영상제작",
+      "콘텐츠 제작",
+      "콘텐츠제작",
+      "채널 운영",
+      "채널운영",
     ],
   },
   {
@@ -495,7 +512,22 @@ const motiveRules: readonly KeywordRule<QuestionMotive>[] = [
 const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   {
     result: "partner",
-    keywords: ["동업", "파트너", "공동창업", "같이 사업", "지분"],
+    keywords: [
+      "동업",
+      "파트너",
+      "공동창업",
+      "같이 사업",
+      "지분",
+      "같이 하",
+      "같이 해",
+      "함께 하",
+      "함께 해",
+      "같이 만들",
+      "함께 만들",
+      "협업",
+      "공동 제작",
+      "공동제작",
+    ],
   },
   {
     result: "changeJob",
@@ -578,7 +610,23 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   },
   {
     result: "choose",
-    keywords: ["선택", "둘 중", "둘중", "어느 쪽", "어느쪽"],
+    keywords: [
+      "선택",
+      "둘 중",
+      "둘중",
+      "어느 쪽",
+      "어느쪽",
+      "어떤 역할",
+      "무슨 역할",
+      "어떤 배역",
+      "무슨 배역",
+      "어느 역할",
+      "어느 배역",
+      "역할이 좋",
+      "배역이 좋",
+      "역할이 맞",
+      "배역이 맞",
+    ],
   },
   {
     result: "confirmDirection",
@@ -586,34 +634,152 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   },
 ];
 
-function normalizeQuestion(question: string): string {
-  return question.trim().replace(/\s+/g, " ").toLowerCase();
+function normalizeKoreanText(
+  value:
+    string,
+): string {
+  return value
+    .trim()
+    .replace(
+      /\s+/g,
+      " ",
+    )
+    .toLowerCase();
+}
+
+function normalizeQuestion(
+  question:
+    string,
+): string {
+  return normalizeKoreanText(
+    question,
+  );
+}
+
+function buildKoreanKeywordForms(
+  keyword:
+    string,
+): string[] {
+  const normalizedKeyword =
+    normalizeKoreanText(
+      keyword,
+    );
+
+  const forms =
+    new Set<string>([
+      normalizedKeyword,
+    ]);
+
+  if (
+    normalizedKeyword
+      .endsWith(
+        " 하",
+      )
+  ) {
+    const prefix =
+      normalizedKeyword
+        .slice(
+          0,
+          -1,
+        );
+
+    forms.add(
+      `${prefix}해`,
+    );
+  }
+
+  if (
+    normalizedKeyword
+      .endsWith(
+        "하다",
+      )
+  ) {
+    const prefix =
+      normalizedKeyword
+        .slice(
+          0,
+          -2,
+        );
+
+    forms.add(
+      `${prefix}하`,
+    );
+
+    forms.add(
+      `${prefix}해`,
+    );
+  }
+
+  return Array.from(
+    forms,
+  );
+}
+
+function matchesKoreanKeyword(
+  question:
+    string,
+  keyword:
+    string,
+): boolean {
+  return buildKoreanKeywordForms(
+    keyword,
+  ).some(
+    (keywordForm) =>
+      question.includes(
+        keywordForm,
+      ),
+  );
 }
 
 function findRule<T extends string>(
-  question: string,
-  rules: readonly KeywordRule<T>[],
-  fallback: T,
+  question:
+    string,
+  rules:
+    readonly KeywordRule<T>[],
+  fallback:
+    T,
 ): {
-  result: T;
-  evidence: string[];
-} {
-  for (const rule of rules) {
-    const matchedKeywords = rule.keywords.filter((keyword) =>
-      question.includes(keyword.toLowerCase()),
-    );
+  result:
+    T;
 
-    if (matchedKeywords.length > 0) {
-      return {
-        result: rule.result,
-        evidence: matchedKeywords,
-      };
+  evidence:
+    string[];
+} {
+  for (
+    const rule
+    of rules
+  ) {
+    const matchedKeywords =
+      rule.keywords.filter(
+        (keyword) =>
+          matchesKoreanKeyword(
+            question,
+            keyword,
+          ),
+      );
+
+    if (
+      matchedKeywords.length
+      === 0
+    ) {
+      continue;
     }
+
+    return {
+      result:
+        rule.result,
+
+      evidence:
+        matchedKeywords,
+    };
   }
 
   return {
-    result: fallback,
-    evidence: [],
+    result:
+      fallback,
+
+    evidence:
+      [],
   };
 }
 

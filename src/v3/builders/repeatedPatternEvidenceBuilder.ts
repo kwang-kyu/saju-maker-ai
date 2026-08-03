@@ -519,8 +519,8 @@ import type {
     if (
       dayMasterFact.signal.type
         !== "balanced"
-      || rootingFact.signal.rooted
-        !== false
+        || rootingFact.signal.rootingCount
+        > 1
       || tenGodFact.signal.distributed
         !== true
     ) {
@@ -532,10 +532,11 @@ import type {
         source:
           "structure",
 
-        description:
+          description:
           "일간은 중화를 이루어 상황에 유연하게 대응할 수 있지만, " +
-          "통근 기반이 없고 십성이 분산되어 있어 역할과 관심, " +
-          "선택 방향이 여러 갈래로 분산되는 반복 구조이다.",
+          "통근 기반이 없거나 전체 지지 중 하나에만 있어 제한적이고 " +
+          "십성이 분산되어 있어 역할과 관심, 선택 방향이 " +
+          "여러 갈래로 분산되는 반복 구조이다.",
 
         weight:
           toCombinedWeight([
