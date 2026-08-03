@@ -4,8 +4,22 @@ import type {
   } from "./decisionTypes";
   import type { LifeContextAssessment } from "./lifeContextAssessment";
   import type { CompatibilityAssessment } from "./compatibilityAssessment";
+  import {
+    buildCounterpartSajuCalculation,
+  } from "./counterpartSajuCalculationBuilder";
   import { buildDecisionRisks } from "./riskBuilder";
-  
+  const VERIFIED_COUNTERPART_SAJU =
+  buildCounterpartSajuCalculation({
+    birthDate:
+      "1967-04-10",
+
+    calendarType:
+      "solar",
+
+    gender:
+      "male",
+  });
+
   export type LifeContextRiskVerificationResult = {
     lowRisks: DecisionRisk[];
     financialPressureRisks: DecisionRisk[];
@@ -13,18 +27,18 @@ import type {
     transitionDifficultyRisks: DecisionRisk[];
     expansionRiskRisks: DecisionRisk[];
     executionConstraintRisks: DecisionRisk[];
-  
+
     lowHasNoLifeContextRisk: boolean;
-  
+
     financialPressureDetected: boolean;
     familyResponsibilityDetected: boolean;
     transitionDifficultyDetected: boolean;
     expansionRiskDetected: boolean;
     executionConstraintDetected: boolean;
-  
+
     passed: boolean;
   };
-  
+
   /**
    * Risk Builder Life Context 민감도 검증
    *
@@ -45,12 +59,20 @@ import type {
       counterpartRelation: "unknown",
       identityProvided: false,
       birthDataProvided: false,
+      counterpartSaju:
+      null,
+
+    zodiacProvided:
+      false,
+
+    zodiacAssessment:
+      null,
       evidenceLevel: "notRequired",
       analysisScope: "none",
       counterpartReadingRequired: false,
       additionalCounterpartDataRequired: false,
     };
-  
+
     const buildRisks = (
       lifeAssessment: LifeContextAssessment,
     ): DecisionRisk[] => {
@@ -63,7 +85,7 @@ import type {
           neutralCompatibilityAssessment,
       });
     };
-  
+
     const lowAssessment: LifeContextAssessment = {
       executionConstraint: "low",
       familyResponsibility: "low",
@@ -71,50 +93,50 @@ import type {
       transitionDifficulty: "low",
       expansionRisk: "low",
     };
-  
+
     const financialPressureAssessment: LifeContextAssessment = {
       ...lowAssessment,
       financialPressure: "high",
     };
-  
+
     const familyResponsibilityAssessment: LifeContextAssessment = {
       ...lowAssessment,
       familyResponsibility: "high",
     };
-  
+
     const transitionDifficultyAssessment: LifeContextAssessment = {
       ...lowAssessment,
       transitionDifficulty: "high",
     };
-  
+
     const expansionRiskAssessment: LifeContextAssessment = {
       ...lowAssessment,
       expansionRisk: "high",
     };
-  
+
     const executionConstraintAssessment: LifeContextAssessment = {
       ...lowAssessment,
       executionConstraint: "high",
     };
-  
+
     const lowRisks =
       buildRisks(lowAssessment);
-  
+
     const financialPressureRisks =
       buildRisks(financialPressureAssessment);
-  
+
     const familyResponsibilityRisks =
       buildRisks(familyResponsibilityAssessment);
-  
+
     const transitionDifficultyRisks =
       buildRisks(transitionDifficultyAssessment);
-  
+
     const expansionRiskRisks =
       buildRisks(expansionRiskAssessment);
-  
+
     const executionConstraintRisks =
       buildRisks(executionConstraintAssessment);
-  
+
     const lifeContextRiskKeys = new Set<string>([
       "lifeContextFinancialPressure",
       "lifeContextFamilyResponsibility",
@@ -122,12 +144,12 @@ import type {
       "lifeContextExpansionRisk",
       "lifeContextExecutionConstraint",
     ]);
-  
+
     const lowHasNoLifeContextRisk =
       !lowRisks.some((risk) =>
         lifeContextRiskKeys.has(risk.key),
       );
-  
+
     const hasExpectedLifeContextRisk = (
       risks: DecisionRisk[],
       key: string,
@@ -139,37 +161,37 @@ import type {
           risk.source === "lifeContext",
       );
     };
-  
+
     const financialPressureDetected =
       hasExpectedLifeContextRisk(
         financialPressureRisks,
         "lifeContextFinancialPressure",
       );
-  
+
     const familyResponsibilityDetected =
       hasExpectedLifeContextRisk(
         familyResponsibilityRisks,
         "lifeContextFamilyResponsibility",
       );
-  
+
     const transitionDifficultyDetected =
       hasExpectedLifeContextRisk(
         transitionDifficultyRisks,
         "lifeContextTransitionDifficulty",
       );
-  
+
     const expansionRiskDetected =
       hasExpectedLifeContextRisk(
         expansionRiskRisks,
         "lifeContextExpansionRisk",
       );
-  
+
     const executionConstraintDetected =
       hasExpectedLifeContextRisk(
         executionConstraintRisks,
         "lifeContextExecutionConstraint",
       );
-  
+
     const passed =
       lowHasNoLifeContextRisk &&
       financialPressureDetected &&
@@ -177,7 +199,7 @@ import type {
       transitionDifficultyDetected &&
       expansionRiskDetected &&
       executionConstraintDetected;
-  
+
     return {
       lowRisks,
       financialPressureRisks,
@@ -185,15 +207,15 @@ import type {
       transitionDifficultyRisks,
       expansionRiskRisks,
       executionConstraintRisks,
-  
+
       lowHasNoLifeContextRisk,
-  
+
       financialPressureDetected,
       familyResponsibilityDetected,
       transitionDifficultyDetected,
       expansionRiskDetected,
       executionConstraintDetected,
-  
+
       passed,
     };
   }
@@ -201,14 +223,14 @@ import type {
     notRequiredRisks: DecisionRisk[];
     counterpartMissingRisks: DecisionRisk[];
     counterpartPresentRisks: DecisionRisk[];
-  
+
     notRequiredHasNoCompatibilityRisk: boolean;
     counterpartMissingDetected: boolean;
     counterpartPresentHasNoCompatibilityRisk: boolean;
-  
+
     passed: boolean;
   };
-  
+
   /**
    * Risk Builder Compatibility 민감도 검증
    *
@@ -233,7 +255,7 @@ import type {
       transitionDifficulty: "low",
       expansionRisk: "low",
     };
-  
+
     const buildRisks = (
       compatibilityAssessment: CompatibilityAssessment,
     ): DecisionRisk[] => {
@@ -245,60 +267,84 @@ import type {
         compatibilityAssessment,
       });
     };
-  
+
     const notRequiredAssessment: CompatibilityAssessment = {
       analysisRequired: false,
       counterpartExists: false,
       counterpartRelation: "unknown",
       identityProvided: false,
       birthDataProvided: false,
+      counterpartSaju:
+      null,
+
+    zodiacProvided:
+      false,
+
+    zodiacAssessment:
+      null,
       evidenceLevel: "notRequired",
       analysisScope: "none",
       counterpartReadingRequired: false,
       additionalCounterpartDataRequired: false,
     };
-  
+
     const counterpartMissingAssessment: CompatibilityAssessment = {
       analysisRequired: true,
       counterpartExists: false,
       counterpartRelation: "unknown",
       identityProvided: false,
       birthDataProvided: false,
+      counterpartSaju:
+      null,
+
+    zodiacProvided:
+      false,
+
+    zodiacAssessment:
+      null,
       evidenceLevel: "insufficient",
       analysisScope: "relationshipContext",
       counterpartReadingRequired: true,
       additionalCounterpartDataRequired: true,
     };
-  
+
     const counterpartPresentAssessment: CompatibilityAssessment = {
       analysisRequired: true,
       counterpartExists: true,
       counterpartRelation: "businessPartner",
       identityProvided: true,
       birthDataProvided: true,
+      counterpartSaju:
+      VERIFIED_COUNTERPART_SAJU,
+
+    zodiacProvided:
+      false,
+
+    zodiacAssessment:
+      null,
       evidenceLevel: "sufficient",
       analysisScope: "fullCompatibility",
       counterpartReadingRequired: true,
       additionalCounterpartDataRequired: false,
     };
-  
+
     const notRequiredRisks =
       buildRisks(notRequiredAssessment);
-  
+
     const counterpartMissingRisks =
       buildRisks(counterpartMissingAssessment);
-  
+
     const counterpartPresentRisks =
       buildRisks(counterpartPresentAssessment);
-  
+
     const compatibilityRiskKey =
       "compatibilityCounterpartMissing";
-  
+
     const notRequiredHasNoCompatibilityRisk =
       !notRequiredRisks.some(
         (risk) => risk.key === compatibilityRiskKey,
       );
-  
+
     const counterpartMissingDetected =
       counterpartMissingRisks.some(
         (risk) =>
@@ -306,26 +352,26 @@ import type {
           risk.severity === "high" &&
           risk.source === "questionIntent",
       );
-  
+
     const counterpartPresentHasNoCompatibilityRisk =
       !counterpartPresentRisks.some(
         (risk) => risk.key === compatibilityRiskKey,
       );
-  
+
     const passed =
       notRequiredHasNoCompatibilityRisk &&
       counterpartMissingDetected &&
       counterpartPresentHasNoCompatibilityRisk;
-  
+
     return {
       notRequiredRisks,
       counterpartMissingRisks,
       counterpartPresentRisks,
-  
+
       notRequiredHasNoCompatibilityRisk,
       counterpartMissingDetected,
       counterpartPresentHasNoCompatibilityRisk,
-  
+
       passed,
     };
   }
@@ -334,14 +380,14 @@ import type {
     alignedRisks: DecisionRisk[];
     conflictedRisks: DecisionRisk[];
     stronglyConflictedRisks: DecisionRisk[];
-  
+
     alignedHasNoPhaseConflictRisk: boolean;
     conflictedDetected: boolean;
     stronglyConflictedDetected: boolean;
-  
+
     passed: boolean;
   };
-  
+
   /**
    * Risk Builder Context Alignment 민감도 검증
    *
@@ -364,19 +410,27 @@ import type {
       transitionDifficulty: "low",
       expansionRisk: "low",
     };
-  
+
     const neutralCompatibilityAssessment: CompatibilityAssessment = {
       analysisRequired: false,
       counterpartExists: false,
       counterpartRelation: "unknown",
       identityProvided: false,
       birthDataProvided: false,
+      counterpartSaju:
+      null,
+
+    zodiacProvided:
+      false,
+
+    zodiacAssessment:
+      null,
       evidenceLevel: "notRequired",
       analysisScope: "none",
       counterpartReadingRequired: false,
       additionalCounterpartDataRequired: false,
     };
-  
+
     const buildRisks = (
       alignment: Parameters<
         typeof buildDecisionRisks
@@ -391,24 +445,24 @@ import type {
           neutralCompatibilityAssessment,
       });
     };
-  
+
     const alignedRisks =
       buildRisks("aligned");
-  
+
     const conflictedRisks =
       buildRisks("conflicted");
-  
+
     const stronglyConflictedRisks =
       buildRisks("stronglyConflicted");
-  
+
     const phaseConflictRiskKey =
       "phaseConflict";
-  
+
     const alignedHasNoPhaseConflictRisk =
       !alignedRisks.some(
         (risk) => risk.key === phaseConflictRiskKey,
       );
-  
+
     const conflictedDetected =
       conflictedRisks.some(
         (risk) =>
@@ -416,7 +470,7 @@ import type {
           risk.severity === "medium" &&
           risk.source === "lifePhase",
       );
-  
+
     const stronglyConflictedDetected =
       stronglyConflictedRisks.some(
         (risk) =>
@@ -424,21 +478,21 @@ import type {
           risk.severity === "high" &&
           risk.source === "lifePhase",
       );
-  
+
     const passed =
       alignedHasNoPhaseConflictRisk &&
       conflictedDetected &&
       stronglyConflictedDetected;
-  
+
     return {
       alignedRisks,
       conflictedRisks,
       stronglyConflictedRisks,
-  
+
       alignedHasNoPhaseConflictRisk,
       conflictedDetected,
       stronglyConflictedDetected,
-  
+
       passed,
     };
   }
@@ -446,23 +500,23 @@ import type {
   export type UrgencyRiskVerificationResult = {
     unknownRisks: DecisionRisk[];
     immediateRisks: DecisionRisk[];
-  
+
     unknownHasNoUrgentDecisionRisk: boolean;
     immediateDetected: boolean;
-  
+
     passed: boolean;
   };
 
   export type RepeatedPatternRiskVerificationResult = {
     noRepeatedPatternRisks: DecisionRisk[];
     repeatedPatternRisks: DecisionRisk[];
-  
+
     noRepeatedPatternHasNoRepeatedPatternRisk: boolean;
     repeatedPatternDetected: boolean;
-  
+
     passed: boolean;
   };
-  
+
   /**
    * Risk Builder Urgency 민감도 검증
    *
@@ -484,19 +538,27 @@ import type {
       transitionDifficulty: "low",
       expansionRisk: "low",
     };
-  
+
     const neutralCompatibilityAssessment: CompatibilityAssessment = {
       analysisRequired: false,
       counterpartExists: false,
       counterpartRelation: "unknown",
       identityProvided: false,
       birthDataProvided: false,
+      counterpartSaju:
+      null,
+
+    zodiacProvided:
+      false,
+
+    zodiacAssessment:
+      null,
       evidenceLevel: "notRequired",
       analysisScope: "none",
       counterpartReadingRequired: false,
       additionalCounterpartDataRequired: false,
     };
-  
+
     const buildRisks = (
       urgency: DecisionEngineInput["question"]["urgency"],
     ): DecisionRisk[] => {
@@ -509,21 +571,21 @@ import type {
           neutralCompatibilityAssessment,
       });
     };
-  
+
     const unknownRisks =
       buildRisks("unknown");
-  
+
     const immediateRisks =
       buildRisks("immediate");
-  
+
     const urgentDecisionRiskKey =
       "urgentDecision";
-  
+
     const unknownHasNoUrgentDecisionRisk =
       !unknownRisks.some(
         (risk) => risk.key === urgentDecisionRiskKey,
       );
-  
+
     const immediateDetected =
       immediateRisks.some(
         (risk) =>
@@ -531,18 +593,18 @@ import type {
           risk.severity === "medium" &&
           risk.source === "repeatedPattern",
       );
-  
+
     const passed =
       unknownHasNoUrgentDecisionRisk &&
       immediateDetected;
-  
+
     return {
       unknownRisks,
       immediateRisks,
-  
+
       unknownHasNoUrgentDecisionRisk,
       immediateDetected,
-  
+
       passed,
     };
   }
@@ -570,22 +632,30 @@ export function verifyRepeatedPatternRiskSensitivity(
       transitionDifficulty: "low",
       expansionRisk: "low",
     };
-  
+
     const neutralCompatibilityAssessment: CompatibilityAssessment = {
       analysisRequired: false,
       counterpartExists: false,
       counterpartRelation: "unknown",
       identityProvided: false,
       birthDataProvided: false,
+      counterpartSaju:
+      null,
+
+    zodiacProvided:
+      false,
+
+    zodiacAssessment:
+      null,
       evidenceLevel: "notRequired",
       analysisScope: "none",
       counterpartReadingRequired: false,
       additionalCounterpartDataRequired: false,
     };
-  
+
     const repeatedPattern =
       decisionInput.humanContext.identity.profile.repeatedPattern;
-  
+
     const noRepeatedPatternInput: DecisionEngineInput = {
       ...decisionInput,
       humanContext: {
@@ -602,7 +672,7 @@ export function verifyRepeatedPatternRiskSensitivity(
         },
       },
     };
-  
+
     const buildRisks = (
       input: DecisionEngineInput,
     ): DecisionRisk[] => {
@@ -615,13 +685,13 @@ export function verifyRepeatedPatternRiskSensitivity(
           neutralCompatibilityAssessment,
       });
     };
-  
+
     const noRepeatedPatternRisks =
       buildRisks(noRepeatedPatternInput);
-  
+
     const repeatedPatternRisks =
       buildRisks(decisionInput);
-  
+
     const isRepeatedPatternRisk = (
       risk: DecisionRisk,
     ): boolean => {
@@ -630,20 +700,20 @@ export function verifyRepeatedPatternRiskSensitivity(
         risk.source === "repeatedPattern"
       );
     };
-  
+
     const expectedSeverity: DecisionRisk["severity"] =
       repeatedPattern.primary.confidence === "high"
         ? "high"
         : repeatedPattern.primary.confidence === "medium"
           ? "medium"
           : "low";
-  
+
     const noRepeatedPatternHasNoRepeatedPatternRisk =
       !noRepeatedPatternRisks.some(isRepeatedPatternRisk);
-  
+
     const generatedRepeatedPatternRisks =
       repeatedPatternRisks.filter(isRepeatedPatternRisk);
-  
+
     const repeatedPatternDetected =
       repeatedPattern.risks.length > 0 &&
       generatedRepeatedPatternRisks.length ===
@@ -654,18 +724,18 @@ export function verifyRepeatedPatternRiskSensitivity(
           risk.description === repeatedPattern.risks[index] &&
           risk.severity === expectedSeverity,
       );
-  
+
     const passed =
       noRepeatedPatternHasNoRepeatedPatternRisk &&
       repeatedPatternDetected;
-  
+
     return {
       noRepeatedPatternRisks,
       repeatedPatternRisks,
-  
+
       noRepeatedPatternHasNoRepeatedPatternRisk,
       repeatedPatternDetected,
-  
+
       passed,
     };
   }

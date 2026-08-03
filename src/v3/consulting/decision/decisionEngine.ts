@@ -1,4 +1,4 @@
-﻿import { analyzeContextAlignment } from "./contextAlignment";
+import { analyzeContextAlignment } from "./contextAlignment";
 import { buildDecisionBrain } from "./decisionBrain";
 import type {
   DecisionEngineInput,
@@ -26,6 +26,9 @@ import {
 import {
   assessCompatibility,
 } from "./compatibilityAssessment";
+import {
+  applyCompatibilityVerdictEffect,
+} from "./compatibilityVerdictBuilder";
 import {
   assessTiming,
 } from "./timingAssessment";
@@ -77,8 +80,10 @@ export function runDecisionEngine(
     );
 
   const compatibilityAssessment =
-  assessCompatibility(
+    assessCompatibility(
     input.questionContext,
+    input.selfYearGanZhi,
+    input.counterpartSaju,
   );
 
   const timingAssessment =
@@ -98,33 +103,44 @@ export function runDecisionEngine(
     confidence,
     lifeAssessment,
   });
-  
+
   const baseVerdict =
   buildVerdict(
     verdictContext,
   );
 
-const verdict =
-  applyReaderDecisionVerdictEffect({
-    verdict:
-      baseVerdict,
+  const readerAdjustedVerdict =
+    applyReaderDecisionVerdictEffect({
+      verdict:
+        baseVerdict,
 
-    assessment:
-      readerDecisionAssessment,
+      assessment:
+        readerDecisionAssessment,
 
-    urgency:
-      input.question.urgency,
-  });
+      urgency:
+        input.question.urgency,
+    });
+
+  const verdict =
+    applyCompatibilityVerdictEffect({
+      verdict:
+        readerAdjustedVerdict,
+
+      assessment:
+        compatibilityAssessment,
+    });
 
   const directionJudgement = buildDirectionJudgement({
     verdict,
     context: verdictContext,
   });
 
-  const evidence = buildDecisionEvidence(
+  const evidence =
+  buildDecisionEvidence(
     input,
     brain,
     lifeAssessment,
+    compatibilityAssessment,
   );
   const conditions =
   buildReaderAwareDecisionConditions({

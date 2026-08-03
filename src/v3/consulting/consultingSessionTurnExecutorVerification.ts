@@ -85,15 +85,15 @@ import {
         .lifeContextHistory
         .length;
 
-    const followUpQuestion =
-      "대출 잔액은 2억 원이고 월 상환액은 180만 원입니다. 월소득은 900만 원이며 두 달 뒤까지 상가 매수를 결정해야 합니다.";
+        const followUpQuestion =
+      "지금 새로운 사업을 시작해도 될까요?";
 
     const preparationInput = {
       session:
         initialSession,
 
-      kind:
-        "clarification" as const,
+        kind:
+        "followUp" as const,
 
       question:
         followUpQuestion,
@@ -246,6 +246,52 @@ import {
                 expectedAssistantAnswer,
           }),
       );
+
+      const incompleteCompatibilityQuestion =
+      "1967년 4월 10일 생과 동업은 어떤가요?";
+
+    let incompleteCompatibilityRequestCount =
+      0;
+
+    const clarificationSession =
+      await executeConsultingSessionTurn({
+        preparationInput: {
+          session:
+            initialSession,
+
+            kind:
+            "followUp",
+
+          question:
+            incompleteCompatibilityQuestion,
+
+          preparedAt:
+            "2026-07-28T08:15:00+09:00",
+        },
+
+        turnId:
+          "turn-executor-compatibility-clarification",
+
+        createdAt:
+          "2026-07-28T08:16:00+09:00",
+
+        requestAnswer:
+          async () => {
+            incompleteCompatibilityRequestCount +=
+              1;
+
+            return "호출되면 안 되는 정형화된 GPT 답변";
+          },
+      });
+
+    const clarificationTurn =
+      clarificationSession
+        .turns[
+          clarificationSession
+            .turns
+            .length
+          - 1
+        ];
 
     const checks = {
       openAIRequestIsSentExactlyOnce:
@@ -430,6 +476,61 @@ import {
 
       duplicateTurnIdIsRejected:
         duplicateTurnIdRejected,
+        insufficientCompatibilitySkipsOpenAI:
+        incompleteCompatibilityRequestCount
+        === 0,
+
+      insufficientCompatibilityKeepsVerdict:
+        clarificationTurn
+          .decisionResult
+          .verdict
+        === "insufficientEvidence",
+
+      clarificationAnswerUsesOriginalQuestion:
+        clarificationTurn
+          .assistantAnswer
+          .includes(
+            incompleteCompatibilityQuestion,
+          ),
+
+      providedBirthDateIsAcknowledged:
+        clarificationTurn
+          .assistantAnswer
+          .includes(
+            "말씀하신 생년월일은 확인했습니다.",
+          ),
+
+      missingBirthDetailsAreRequested:
+        clarificationTurn
+          .assistantAnswer
+          .includes(
+            "양력·음력 여부",
+          )
+        && clarificationTurn
+          .assistantAnswer
+          .includes(
+            "성별",
+          )
+        && clarificationTurn
+          .assistantAnswer
+          .includes(
+            "출생시간",
+          ),
+
+      genericGPTAnswerIsNotStored:
+        !clarificationTurn
+          .assistantAnswer
+          .includes(
+            "호출되면 안 되는 정형화된 GPT 답변",
+          ),
+
+      clarificationRemainsPending:
+        clarificationSession
+          .status
+        === "awaitingClarification"
+        && clarificationSession
+          .pendingClarification
+        !== null,
     };
 
     return {

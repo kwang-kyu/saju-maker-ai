@@ -2,6 +2,12 @@ import type {
   DecisionBrain,
 } from "./decisionBrain";
 import type {
+  CompatibilityAssessment,
+} from "./compatibilityAssessment";
+import {
+  buildCompatibilityEvidence,
+} from "./compatibilityEvidenceBuilder";
+import type {
   DecisionEngineInput,
   DecisionEvidence,
 } from "./decisionTypes";
@@ -27,16 +33,23 @@ export function buildDecisionEvidence(
   input: DecisionEngineInput,
   brain: DecisionBrain,
   realityAssessment:
-    DecisionRealityAssessment,
+  DecisionRealityAssessment,
+  compatibilityAssessment:
+  CompatibilityAssessment,
 ): DecisionEvidence[] {
   const readerEvidence =
   buildReaderDecisionEvidence(
     input,
   );
 
-const realityEvidence =
+  const realityEvidence =
   buildDecisionRealityEvidence(
     realityAssessment,
+  );
+
+const compatibilityEvidence =
+  buildCompatibilityEvidence(
+    compatibilityAssessment,
   );
 
 return [
@@ -140,7 +153,9 @@ return [
 
     ...realityEvidence,
 
-    {
+    ...compatibilityEvidence,
+
+{
       source: "questionIntent",
 
       key: "questionIntent",

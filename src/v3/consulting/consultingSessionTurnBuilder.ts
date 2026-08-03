@@ -2,6 +2,14 @@ import {
     readHumanLifeContext,
   } from "../readers/humanLifeContextReader";
 
+  import type {
+    HumanLifeContext,
+  } from "../types/humanLifeContext";
+
+  import type {
+    ConsultingClarificationFact,
+  } from "./consultingInput";
+
   import {
     buildConsultingClarification,
   } from "./consultingClarificationBuilder";
@@ -10,6 +18,8 @@ import {
     type ConsultingTurnRunResult,
   } from "./consultingRunner";
   import type {
+    ConsultingClarificationRequest,
+    ConsultingConfirmedField,
     ConsultingLifeContextRevision,
     ConsultingSession,
     ConsultingTurn,
@@ -18,6 +28,9 @@ import {
   import type {
     V3HumanLifeContextRequest,
   } from "./v3ConsultingRequest";
+  import type {
+    CounterpartSajuCalculation,
+  } from "./decision/counterpartSajuCalculationBuilder";
 
   export type ConsultingConversationHistoryEntry = {
     turnId:
@@ -52,8 +65,14 @@ import {
         "initial"
       >;
 
-    question:
+      question:
       string;
+
+      decisionQuestion:
+      string;
+
+    counterpartSaju:
+      CounterpartSajuCalculation | undefined;
 
     lifeContextRevision:
       number;
@@ -63,6 +82,9 @@ import {
 
     effectiveLifeContextInput:
       V3HumanLifeContextRequest;
+
+      effectiveLifeContext:
+    HumanLifeContext;
 
     newLifeContextRevision:
       ConsultingLifeContextRevision | null;
@@ -90,10 +112,26 @@ import {
         "initial"
       >;
 
-    question:
+      question:
       string;
 
-    preparedAt:
+    /**
+     * clarification 답변 조각 대신 Decision Engine이 다시 판단할
+     * 원래 결정 질문을 서버 내부에서 전달할 때만 사용한다.
+     */
+    decisionQuestion?:
+      string;
+
+    /**
+     * 같은 원래 판단에 연결된 검증 완료 사실만 전달한다.
+     */
+    clarificationFacts?:
+  readonly ConsultingClarificationFact[];
+
+counterpartSaju?:
+  CounterpartSajuCalculation;
+
+preparedAt:
       string;
 
     /**
@@ -113,6 +151,8 @@ import {
 
     description:
       string;
+      fields?:
+      readonly ConsultingConfirmedField[];
   };
 
   export type BuildConsultingSessionTurnInput = {
@@ -131,9 +171,19 @@ import {
     assistantAnswer:
       string;
 
-    confirmedFacts?:
+      confirmedFacts?:
       readonly ConsultingConfirmedFactInput[];
-  };
+
+    /**
+     * clarification 답변을 누적한 뒤에도 필수 필드가 남아 있을 때,
+     * 완료된 항목과 필드를 제거한 요청만 전달한다.
+     *
+     * 모든 필드가 완료된 경우에는 전달하지 않으며,
+     * Decision Engine의 새 결과를 그대로 사용한다.
+     */
+    pendingClarificationOverride?:
+      ConsultingClarificationRequest;
+    };
 
   const LIFE_CONTEXT_KEYS = [
     "maritalStatus",
@@ -329,6 +379,14 @@ import {
     const additions =
       input.confirmedFacts
       ?? [];
+      const decisionTurnId =
+      input.preparation.kind
+      === "clarification"
+        ? input.session
+            .pendingClarification
+            ?.decisionTurnId
+          ?? input.turnId
+        : input.turnId;
 
     return additions.map(
       (fact) => {
@@ -348,6 +406,13 @@ import {
 
           description:
             fact.description,
+
+            fields:
+            fact.fields
+              ? [...fact.fields]
+              : [],
+
+            decisionTurnId,
 
           sourceTurnId:
             input.turnId,
@@ -385,6 +450,15 @@ import {
     requireNonEmptyValue(
       input.question,
       "question",
+    );
+
+    const decisionQuestion =
+      input.decisionQuestion
+      ?? input.question;
+
+    requireNonEmptyValue(
+      decisionQuestion,
+      "decisionQuestion",
     );
 
     requireNonEmptyValue(
@@ -474,25 +548,38 @@ import {
             }
           : null;
 
-    const turnResult =
-      runConsultingTurn({
-        humanContext:
-          input.session
-            .humanContext,
+          const turnResult =
+          runConsultingTurn({
+            sajuFacts:
+              input.session
+                .sajuFacts,
 
-        lifeContext:
-          effectiveLifeContext,
+            readerEvidence:
+              input.session
+                .readerEvidence,
 
-        question:
-          input.question,
-      });
+            humanContext:
+              input.session
+                .humanContext,
 
-    if (
-      turnResult
-        .questionReaderResult
-        .originalQuestion
-      !== input.question
-    ) {
+            lifeContext:
+              effectiveLifeContext,
+
+              question:
+              decisionQuestion,
+
+            clarificationFacts:
+              input.clarificationFacts,
+              counterpartSaju:
+              input.counterpartSaju,
+          });
+
+          if (
+            turnResult
+              .questionReaderResult
+              .originalQuestion
+            !== decisionQuestion
+          ) {
       throw new Error(
         "Consulting turn execution does not match the source question.",
       );
@@ -514,15 +601,22 @@ import {
       kind:
         input.kind,
 
-      question:
+        question:
         input.question,
 
-      lifeContextRevision:
+        decisionQuestion,
+
+        counterpartSaju:
+          input.counterpartSaju,
+
+        lifeContextRevision:
         nextLifeContextRevision,
 
       lifeContextChanged,
 
       effectiveLifeContextInput,
+
+      effectiveLifeContext,
 
       newLifeContextRevision,
 
@@ -608,22 +702,31 @@ import {
       input.preparation
         .turnResult;
 
-    if (
-      turnResult
-        .questionReaderResult
-        .originalQuestion
-      !== input.preparation
-        .question
-    ) {
+        if (
+          turnResult
+            .questionReaderResult
+            .originalQuestion
+          !== input.preparation
+            .decisionQuestion
+        ) {
       throw new Error(
         "Prepared consulting result does not match the source question.",
       );
     }
 
-    const pendingClarification =
+    const clarificationDecisionTurnId =
+    input.preparation.kind
+    === "clarification"
+      ? input.session
+          .pendingClarification
+          ?.decisionTurnId
+        ?? input.turnId
+      : input.turnId;
+
+      const generatedClarification =
       buildConsultingClarification({
         decisionTurnId:
-          input.turnId,
+          clarificationDecisionTurnId,
 
         lifeContext:
           input.preparation
@@ -641,6 +744,32 @@ import {
           turnResult
             .decisionResult,
       });
+
+    if (
+      input.pendingClarificationOverride
+      && input.preparation.kind
+        !== "clarification"
+    ) {
+      throw new Error(
+        "Pending clarification override is only allowed for a clarification turn.",
+      );
+    }
+
+    if (
+      input.pendingClarificationOverride
+      && input
+        .pendingClarificationOverride
+        .decisionTurnId
+        !== clarificationDecisionTurnId
+    ) {
+      throw new Error(
+        "Pending clarification override belongs to a different decision turn.",
+      );
+    }
+
+    const pendingClarification =
+      input.pendingClarificationOverride
+      ?? generatedClarification;
 
     if (
       turnResult
@@ -669,11 +798,15 @@ import {
           input.preparation
             .kind,
 
-        question:
-          input.preparation
-            .question,
+            question:
+            input.preparation
+              .question,
 
-        lifeContextRevision:
+          decisionQuestion:
+            input.preparation
+              .decisionQuestion,
+
+          lifeContextRevision:
           input.preparation
             .lifeContextRevision,
 

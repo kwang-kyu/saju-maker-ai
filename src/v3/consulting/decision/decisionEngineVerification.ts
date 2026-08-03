@@ -12,7 +12,21 @@ import type {
 import { buildDecisionConditions } from "./conditionBuilder";
 import type { LifeContextAssessment } from "./lifeContextAssessment";
 import type { CompatibilityAssessment } from "./compatibilityAssessment";
+import {
+  buildCounterpartSajuCalculation,
+} from "./counterpartSajuCalculationBuilder";
 import type { TimingAssessment } from "./timingAssessment";
+const VERIFIED_COUNTERPART_SAJU =
+  buildCounterpartSajuCalculation({
+    birthDate:
+      "1967-04-10",
+
+    calendarType:
+      "solar",
+
+    gender:
+      "male",
+  });
 
 export type DecisionEngineVerificationResult = {
   question: string;
@@ -207,7 +221,7 @@ export function verifyDecisionEnginePhaseSensitivity(
         "현재는 활동 범위를 넓히고 새로운 기회를 실행으로 연결해야 하는 국면이다.",
     },
 
-    
+
   };
 
   const recoveryContext: HumanDestinyContext = {
@@ -735,7 +749,7 @@ const earlyCollapseQuestionContext =
     lifeContext,
     question: earlyCollapseQuestion,
     questionContext: earlyCollapseQuestionContext,
-  
+
   });
 
   const alignmentStayedSame =
@@ -870,6 +884,14 @@ export function verifyReadinessConditionSensitivity(
     counterpartRelation: "unknown",
     identityProvided: false,
     birthDataProvided: false,
+    counterpartSaju:
+    null,
+
+  zodiacProvided:
+    false,
+
+  zodiacAssessment:
+    null,
     evidenceLevel: "notRequired",
     analysisScope: "none",
     counterpartReadingRequired: false,
@@ -1007,6 +1029,14 @@ export function verifyLifeContextConditionSensitivity(
     counterpartRelation: "unknown",
     identityProvided: false,
     birthDataProvided: false,
+    counterpartSaju:
+    null,
+
+  zodiacProvided:
+    false,
+
+  zodiacAssessment:
+    null,
     evidenceLevel: "notRequired",
     analysisScope: "none",
     counterpartReadingRequired: false,
@@ -1220,6 +1250,14 @@ export function verifyCompatibilityConditionSensitivity(
     counterpartRelation: "unknown",
     identityProvided: false,
     birthDataProvided: false,
+    counterpartSaju:
+    null,
+
+  zodiacProvided:
+    false,
+
+  zodiacAssessment:
+    null,
     evidenceLevel: "notRequired",
     analysisScope: "none",
     counterpartReadingRequired: false,
@@ -1232,6 +1270,14 @@ export function verifyCompatibilityConditionSensitivity(
     counterpartRelation: "unknown",
     identityProvided: false,
     birthDataProvided: false,
+    counterpartSaju:
+    null,
+
+  zodiacProvided:
+    false,
+
+  zodiacAssessment:
+    null,
     evidenceLevel: "insufficient",
     analysisScope: "selfPatternOnly",
     counterpartReadingRequired: true,
@@ -1244,6 +1290,14 @@ export function verifyCompatibilityConditionSensitivity(
     counterpartRelation: "friend",
     identityProvided: true,
     birthDataProvided: false,
+    counterpartSaju:
+    null,
+
+  zodiacProvided:
+    false,
+
+  zodiacAssessment:
+    null,
     evidenceLevel: "partial",
     analysisScope: "counterpartIdentity",
     counterpartReadingRequired: true,
@@ -1256,6 +1310,14 @@ export function verifyCompatibilityConditionSensitivity(
     counterpartRelation: "friend",
     identityProvided: true,
     birthDataProvided: true,
+    counterpartSaju:
+    VERIFIED_COUNTERPART_SAJU,
+
+  zodiacProvided:
+    false,
+
+  zodiacAssessment:
+    null,
     evidenceLevel: "sufficient",
     analysisScope: "fullCompatibility",
     counterpartReadingRequired: true,

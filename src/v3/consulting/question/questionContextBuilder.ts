@@ -1,4 +1,7 @@
 import type {
+  ConsultingClarificationFact,
+} from "../consultingInput";
+import type {
   QuestionContext,
   QuestionCounterpartRelation,
   QuestionRealityConstraint,
@@ -394,42 +397,145 @@ import type {
     }
   }
 
+  function getClarificationFieldKeys(
+    clarificationFacts:
+      readonly ConsultingClarificationFact[],
+    itemKey:
+      string,
+  ): Set<string> {
+    return new Set(
+      clarificationFacts
+        .filter(
+          (fact) =>
+            fact.key
+            === itemKey,
+        )
+        .flatMap(
+          (fact) =>
+            fact.fields,
+        )
+        .filter(
+          (field) =>
+            field.value
+              .trim()
+              .length
+            > 0,
+        )
+        .map(
+          (field) =>
+            field.key,
+        ),
+    );
+  }
   export function buildQuestionContext(
     question:
       QuestionReaderResult,
+    clarificationFacts:
+      readonly ConsultingClarificationFact[] = [],
   ): QuestionContext {
     const normalizedQuestion =
-      question.normalizedQuestion;
+  question.normalizedQuestion;
 
-    const relation =
+const counterpartIdentityFieldKeys =
+  getClarificationFieldKeys(
+    clarificationFacts,
+    "counterpartIdentity",
+  );
+
+const counterpartBirthFieldKeys =
+  getClarificationFieldKeys(
+    clarificationFacts,
+    "counterpartBirthData",
+  );
+
+const identityProvided =
+  counterpartIdentityFieldKeys.has(
+    "relation",
+  )
+  && counterpartIdentityFieldKeys.has(
+    "currentStatus",
+  );
+
+const birthDataProvided =
+  counterpartBirthFieldKeys.has(
+    "birthDate",
+  )
+  && counterpartBirthFieldKeys.has(
+    "calendarType",
+  )
+  && counterpartBirthFieldKeys.has(
+    "gender",
+  );
+
+const zodiacProvided =
+  counterpartBirthFieldKeys.has(
+    "zodiacSign",
+  );
+
+const relation =
       detectCounterpartRelation(
         normalizedQuestion,
       );
 
-    const counterpartExists =
-      relation !== "unknown" ||
-      question.decisionTarget === "partner" ||
-      question.decisionTarget === "marry" ||
-      question.decisionTarget === "separate" ||
-      question.decisionTarget === "reconcile";
+      const counterpartExists =
+      relation !== "unknown"
+      || identityProvided
+      || birthDataProvided
+      || zodiacProvided
+      || question.decisionTarget
+        === "partner"
+      || question.decisionTarget
+        === "marry"
+      || question.decisionTarget
+        === "separate"
+      || question.decisionTarget
+        === "reconcile";
 
       const reality =
       buildQuestionRealityContext(
         question,
       );
 
-      const context = {
-        question,
+      const context:
+  QuestionContext = {
+    question,
 
-        reality,
+    clarificationFacts:
+      clarificationFacts.map(
+        (fact) => ({
+          key:
+            fact.key,
+
+          description:
+            fact.description,
+
+          fields:
+            fact.fields.map(
+              (field) => ({
+                key:
+                  field.key,
+
+                value:
+                  field.value,
+
+                evidence: [
+                  ...field.evidence,
+                ],
+              }),
+            ),
+        }),
+      ),
+
+    reality,
       timingType:
         question.timingType,
       counterpart: {
         exists: counterpartExists,
         relation,
 
-        identityProvided: false,
-        birthDataProvided: false,
+        identityProvided,
+        birthDataProvided,
+        zodiacProvided,
       },
 
       actionObject: {

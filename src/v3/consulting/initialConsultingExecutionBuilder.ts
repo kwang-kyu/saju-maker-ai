@@ -5,7 +5,7 @@ import {
   import {
     readHumanLifeContext,
   } from "../readers/humanLifeContextReader";
-  
+
   import {
     runConsultingTurn,
     type ConsultingTurnRunResult,
@@ -13,18 +13,21 @@ import {
   import type {
     V3ConsultingRequest,
   } from "./v3ConsultingRequest";
-  
+  import type {
+    QuestionReaderResult,
+  } from "./question/questionReader";
+
   export type InitialConsultingExecutionResult = {
     humanDestinyPipeline:
       HumanDestinyContextPipelineResult;
-  
+
     lifeContext:
       ReturnType<typeof readHumanLifeContext>;
-  
+
     turnResult:
       ConsultingTurnRunResult;
   };
-  
+
   function buildReferenceDate(
     referenceDateIso:
       string,
@@ -36,14 +39,14 @@ import {
     ] = referenceDateIso
       .split("-")
       .map(Number);
-  
+
     const referenceDate =
       new Date(
         year,
         month - 1,
         day,
       );
-  
+
     if (
       Number.isNaN(
         referenceDate.getTime(),
@@ -59,10 +62,10 @@ import {
         "referenceDate must use a valid YYYY-MM-DD format.",
       );
     }
-  
+
     return referenceDate;
   }
-  
+
   /**
    * 최초 상담 요청을 천운문 v3의 전체 판단 경로로 실행한다.
    *
@@ -76,23 +79,25 @@ import {
   export function buildInitialConsultingExecution(
     request:
       V3ConsultingRequest,
+    questionInterpretation?:
+      QuestionReaderResult,
   ): InitialConsultingExecutionResult {
     const humanDestinyPipeline =
       buildHumanDestinyContextPipeline(
         request.sajuInput,
       );
-  
+
     const lifeContext =
       readHumanLifeContext({
         ...request
           .humanLifeContextInput,
-  
+
         birthDate:
           humanDestinyPipeline
             .sajuFactsPipeline
             .calculatedSaju
             .solarDateIso,
-  
+
         referenceDate:
           buildReferenceDate(
             request
@@ -100,24 +105,34 @@ import {
               .referenceDate,
           ),
       });
-  
-    const turnResult =
+
+      const turnResult =
       runConsultingTurn({
+        sajuFacts:
+          humanDestinyPipeline
+            .sajuFactsPipeline,
+
+        readerEvidence:
+          humanDestinyPipeline
+            .evidenceBundle,
+
+            questionInterpretation,
+
         humanContext:
           humanDestinyPipeline
             .humanContext,
-  
+
         lifeContext,
-  
+
         question:
           request.question,
       });
-  
+
     return {
       humanDestinyPipeline,
-  
+
       lifeContext,
-  
+
       turnResult,
     };
   }

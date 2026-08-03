@@ -1,51 +1,74 @@
 import type {
-    QuestionReaderResult,
-  } from "./questionReader";
+  ConsultingClarificationFact,
+} from "../consultingInput";
 
-  export type QuestionCounterpartRelation =
-    | "spouse"
-    | "partner"
-    | "lover"
-    | "friend"
-    | "parent"
-    | "child"
-    | "sibling"
-    | "coworker"
-    | "businessPartner"
-    | "other"
-    | "unknown";
+import type {
+  QuestionReaderResult,
+} from "./questionReader";
 
-  export type QuestionCounterpartContext = {
-    exists: boolean;
+export type QuestionCounterpartRelation =
+  | "spouse"
+  | "partner"
+  | "lover"
+  | "friend"
+  | "parent"
+  | "child"
+  | "sibling"
+  | "coworker"
+  | "businessPartner"
+  | "other"
+  | "unknown";
 
-    relation:
-      QuestionCounterpartRelation;
+export type QuestionCounterpartContext = {
+  exists:
+    boolean;
 
-    identityProvided: boolean;
-    birthDataProvided: boolean;
-  };
+  relation:
+    QuestionCounterpartRelation;
 
-  export type QuestionActionObjectType =
-    | "business"
-    | "job"
-    | "investment"
-    | "realEstate"
-    | "marriage"
-    | "relationship"
-    | "health"
-    | "legal"
-    | "lifeDirection"
-    | "other"
-    | "unknown";
+    identityProvided:
+    boolean;
 
-  export type QuestionActionObject = {
-    type: QuestionActionObjectType;
+  /**
+   * 생년월일·양력/음력·성별이 모두 확인되어
+   * 상대방 원국 계산이 가능한 상태다.
+   */
+  birthDataProvided:
+    boolean;
 
-    subtype: string | null;
-    description: string | null;
-  };
+  /**
+   * 정식 출생정보는 없지만 상대방의 띠가 확인되어
+   * 띠 기준 간이 궁합이 가능한 상태다.
+   */
+  zodiacProvided:
+    boolean;
+};
 
-  export type QuestionRealityArea =
+export type QuestionActionObjectType =
+  | "business"
+  | "job"
+  | "investment"
+  | "realEstate"
+  | "marriage"
+  | "relationship"
+  | "health"
+  | "legal"
+  | "lifeDirection"
+  | "other"
+  | "unknown";
+
+export type QuestionActionObject = {
+  type:
+    QuestionActionObjectType;
+
+  subtype:
+    string | null;
+
+  description:
+    string | null;
+};
+
+export type QuestionRealityArea =
   | "financial"
   | "family"
   | "work"
@@ -53,7 +76,7 @@ import type {
   | "health"
   | "relationship";
 
-  export type QuestionRealitySignal =
+export type QuestionRealitySignal =
   | "debtBurden"
   | "livingCostPressure"
   | "incomeInstability"
@@ -76,11 +99,14 @@ export type QuestionRealityConstraint = {
   signal:
     QuestionRealitySignal;
 
-  description: string;
+  description:
+    string;
 
-  evidence: string[];
+  evidence:
+    string[];
 
-  explicit: true;
+  explicit:
+    true;
 };
 
 export type QuestionRealityContext = {
@@ -91,32 +117,51 @@ export type QuestionRealityContext = {
     boolean;
 };
 
-  export type QuestionAnalysisRequirements = {
-    counterpartReadingRequired: boolean;
-    compatibilityAnalysisRequired: boolean;
-    timingAnalysisRequired: boolean;
-    realityAssessmentRequired: boolean;
-    comparisonAnalysisRequired: boolean;
-  };
+export type QuestionAnalysisRequirements = {
+  counterpartReadingRequired:
+    boolean;
 
-  export type QuestionContext = {
-    question:
-      QuestionReaderResult;
+  compatibilityAnalysisRequired:
+    boolean;
 
-    reality:
-      QuestionRealityContext;
+  timingAnalysisRequired:
+    boolean;
 
-    timingType:
-      QuestionReaderResult["timingType"];
+  realityAssessmentRequired:
+    boolean;
 
-    counterpart:
-      QuestionCounterpartContext;
+  comparisonAnalysisRequired:
+    boolean;
+};
 
-    actionObject:
-      QuestionActionObject;
+export type QuestionContext = {
+  question:
+    QuestionReaderResult;
 
-    comparisonTargets: string[];
+  /**
+   * 연속 상담에서 사용자가 직접 답하고
+   * interpreter 검증을 통과한 사실만 담는다.
+   *
+   * 원문 질문을 변형하지 않고 엔진에 추가 현실을 전달한다.
+   */
+  clarificationFacts?:
+    readonly ConsultingClarificationFact[];
 
-    requirements:
-      QuestionAnalysisRequirements;
-  };
+  reality:
+    QuestionRealityContext;
+
+  timingType:
+    QuestionReaderResult["timingType"];
+
+  counterpart:
+    QuestionCounterpartContext;
+
+  actionObject:
+    QuestionActionObject;
+
+  comparisonTargets:
+    string[];
+
+  requirements:
+    QuestionAnalysisRequirements;
+};

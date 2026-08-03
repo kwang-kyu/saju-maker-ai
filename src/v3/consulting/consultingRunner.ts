@@ -29,6 +29,10 @@ import {
   buildConsultingPrompt,
 } from "./explanation/consultingPromptBuilder";
 
+import {
+  buildConsultingGroundingContext,
+} from "./explanation/consultingGroundingContextBuilder";
+
 /**
  * 질문 한 번이 천운문 v3의 전체 상담 판단 경로를
  * 통과한 구조화된 실행 결과다.
@@ -53,8 +57,11 @@ export type ConsultingTurnRunResult = {
   explanationPlan:
     ReturnType<typeof buildDecisionExplanationPlan>;
 
-  explanationPayload:
+    explanationPayload:
     ReturnType<typeof buildDecisionExplanationPayload>;
+
+  groundingContext:
+    ReturnType<typeof buildConsultingGroundingContext>;
 
   prompt:
     ReturnType<typeof buildConsultingPrompt>;
@@ -66,28 +73,88 @@ export type ConsultingTurnRunResult = {
  * 기존 사람 분석과 현재 현실은 입력으로 유지하지만,
  * 이전 GPT 답변을 근거로 새 판단을 만들지 않는다.
  */
+function resolveQuestionReaderResult(
+  input:
+    ConsultingInput,
+): ReturnType<typeof readQuestion> {
+  const questionInterpretation =
+    input.questionInterpretation;
+
+  if (!questionInterpretation) {
+    return readQuestion(
+      input.humanContext,
+      input.question,
+    );
+  }
+
+  const originalQuestion =
+    input.question.trim();
+
+  const interpretedOriginalQuestion =
+    questionInterpretation
+      .originalQuestion
+      .trim();
+
+  if (
+    originalQuestion.length
+    === 0
+  ) {
+    throw new Error(
+      "Consulting runner requires a non-empty question.",
+    );
+  }
+
+  if (
+    interpretedOriginalQuestion
+    !== originalQuestion
+  ) {
+    throw new Error(
+      "Question interpretation must belong to the current original question.",
+    );
+  }
+
+  if (
+    !questionInterpretation
+      .humanContextReceived
+  ) {
+    throw new Error(
+      "Question interpretation must confirm Human Destiny Context.",
+    );
+  }
+
+  return questionInterpretation;
+}
 export function runConsultingTurn(
   input:
     ConsultingInput,
 ): ConsultingTurnRunResult {
   const questionReaderResult =
-    readQuestion(
-      input.humanContext,
-      input.question,
-    );
+  resolveQuestionReaderResult(
+    input,
+  );
 
   const questionContext =
-    buildQuestionContext(
-      questionReaderResult,
-    );
+  buildQuestionContext(
+    questionReaderResult,
+    input.clarificationFacts,
+  );
 
   const decisionResult =
     runDecisionEngine({
       humanContext:
         input.humanContext,
 
-      lifeContext:
+        lifeContext:
         input.lifeContext,
+
+        selfYearGanZhi:
+        input
+          .sajuFacts
+          ?.calculatedSaju
+          .yearGanZhi,
+
+      counterpartSaju:
+        input.counterpartSaju,
 
       question:
         questionReaderResult,
@@ -100,9 +167,11 @@ export function runConsultingTurn(
       decisionResult,
     );
 
-  const explanationPlan =
+    const explanationPlan =
     buildDecisionExplanationPlan(
       explanation,
+      questionReaderResult
+        .originalQuestion,
     );
 
   const explanationPayload =
@@ -110,9 +179,15 @@ export function runConsultingTurn(
       explanationPlan,
     );
 
-  const prompt =
+    const groundingContext =
+    buildConsultingGroundingContext(
+      input,
+    );
+
+    const prompt =
     buildConsultingPrompt(
       explanationPayload,
+      groundingContext,
     );
 
   return {
@@ -127,6 +202,8 @@ export function runConsultingTurn(
     explanationPlan,
 
     explanationPayload,
+
+    groundingContext,
 
     prompt,
   };

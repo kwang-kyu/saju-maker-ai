@@ -10,7 +10,7 @@ import type {
   import type {
     HumanLifeContext,
   } from "../types/humanLifeContext";
-  
+
   import type {
     DecisionResult,
   } from "./decision/decisionTypes";
@@ -24,7 +24,7 @@ import type {
     V3ConsultingSajuRequest,
     V3HumanLifeContextRequest,
   } from "./v3ConsultingRequest";
-  
+
   /**
    * 연속 상담 세션의 현재 진행 상태다.
    *
@@ -36,7 +36,7 @@ import type {
     | "active"
     | "awaitingClarification"
     | "closed";
-  
+
   /**
    * 세션 안에서 질문이 들어온 맥락을 구분한다.
    */
@@ -44,7 +44,7 @@ import type {
     | "initial"
     | "followUp"
     | "clarification";
-  
+
   /**
    * 현재 현실 정보의 변경 이력이다.
    *
@@ -53,50 +53,70 @@ import type {
    */
   export type ConsultingLifeContextRevision = {
     revision: number;
-  
+
     sourceInput:
       V3HumanLifeContextRequest;
-  
+
     lifeContext:
       HumanLifeContext;
-  
+
     updatedAt:
       string;
   };
-  
+
   /**
    * 사용자와의 대화에서 명시적으로 확인된 현실 사실이다.
    *
    * Decision Evidence와 혼합하지 않으며,
    * 어떤 상담 턴에서 확인되었는지 추적한다.
    */
+  export type ConsultingConfirmedField = {
+    key: string;
+
+    value: string;
+
+    evidence: string[];
+  };
   export type ConsultingConfirmedFact = {
     key: string;
-  
+
     description: string;
-  
+
+    fields:
+    ConsultingConfirmedField[];
+
+    decisionTurnId: string;
+
     sourceTurnId: string;
-  
+
     confirmedAt: string;
   };
-  
-  /**
-   * insufficientEvidence 판정 이후
-   * 사용자에게 구체적으로 확인해야 하는 정보다.
-   *
-   * 일반적인 장문 답변으로 끝내지 않고,
-   * 실제로 부족한 현실 정보와 질문을 보존한다.
+
+    /**
+   * 부족한 정보와 그 정보를 확인할 질문을
+   * 하나의 항목으로 연결한다.
    */
-  export type ConsultingClarificationRequest = {
-    decisionTurnId: string;
-  
-    missingInformation:
-      [string, ...string[]];
-  
-    questions:
-      [string, ...string[]];
-  };
-  
+    export type ConsultingClarificationItem = {
+      key: string;
+
+      description: string;
+
+      question: string;
+    };
+
+    /**
+     * insufficientEvidence 판정 이후
+     * 사용자에게 확인해야 하는 구조화된 정보다.
+     */
+    export type ConsultingClarificationRequest = {
+      decisionTurnId: string;
+
+      items: [
+        ConsultingClarificationItem,
+        ...ConsultingClarificationItem[],
+      ];
+    };
+
   /**
    * 연속 상담의 질문 한 번과 그 처리 결과다.
    *
@@ -105,34 +125,49 @@ import type {
    */
   export type ConsultingTurn = {
     id: string;
-  
+
     sequence: number;
-  
+
     kind:
       ConsultingTurnKind;
-  
-    question:
-      string;
-  
-    lifeContextRevision:
-      number;
-  
+
+    /**
+ * 이번 턴에 사용자가 실제로 입력한 원문이다.
+ *
+ * clarification 턴에서는 추가정보 답변 조각이며,
+ * 일반 follow-up 턴에서는 판단 질문과 같다.
+ */
+question:
+string;
+
+/**
+* Decision Engine이 이 턴에서 실제로 판단한 질문이다.
+*
+* 기존 세션과 initial·follow-up 턴은 값이 없을 수 있으며,
+* 그 경우 question을 판단 질문으로 사용한다.
+*/
+decisionQuestion?:
+string;
+
+lifeContextRevision:
+number;
+
     questionReaderResult:
       QuestionReaderResult;
-  
+
     questionContext:
       QuestionContext;
-  
+
     decisionResult:
       DecisionResult;
-  
+
     assistantAnswer:
       string;
-  
+
     createdAt:
       string;
   };
-  
+
   /**
    * 천운문 v3 연속 상담 세션이다.
    *
@@ -145,19 +180,19 @@ import type {
    */
   export type ConsultingSession = {
     id: string;
-  
+
     status:
       ConsultingSessionStatus;
-  
+
     createdAt:
       string;
-  
+
     updatedAt:
       string;
-  
+
     sajuInput:
       V3ConsultingSajuRequest;
-  
+
       sajuFacts:
     SajuFactsPipelineResult;
 
@@ -166,22 +201,22 @@ import type {
 
   humanContext:
     HumanDestinyContext;
-  
+
     lifeContextHistory:
       [
         ConsultingLifeContextRevision,
         ...ConsultingLifeContextRevision[],
       ];
-  
+
     turns:
       [
         ConsultingTurn,
         ...ConsultingTurn[],
       ];
-  
+
     confirmedFacts:
       ConsultingConfirmedFact[];
-  
+
     pendingClarification:
       ConsultingClarificationRequest | null;
   };

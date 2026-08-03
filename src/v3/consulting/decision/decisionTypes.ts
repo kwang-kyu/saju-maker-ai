@@ -1,3 +1,6 @@
+import type {
+  CounterpartSajuCalculation,
+} from "./counterpartSajuCalculationBuilder";
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import type { HumanLifeContext } from "../../types/humanLifeContext";
 import type { QuestionReaderResult } from "../question/questionReader";
@@ -65,7 +68,8 @@ export type DecisionEvidenceSource =
   | "destiny"
   | "questionIntent"
   | "currentContext"
-  | "lifeContext";
+  | "lifeContext"
+  | "compatibility";
 
 /**
  * Decision Engine이 사용하는 개별 판단 근거다.
@@ -130,9 +134,27 @@ export type DecisionConflict = {
 export type DecisionEngineInput = {
   humanContext: HumanDestinyContext;
 
-  lifeContext: HumanLifeContext;
+  lifeContext:
+  HumanLifeContext;
 
-  question: QuestionReaderResult;
+/**
+ * Calculator가 확정한 본인의 연주 간지다.
+ *
+ * 띠 기준 간이 궁합에서 연지를 추출할 때만 사용하며,
+ * 질문이나 GPT가 새로 계산하지 않는다.
+ */
+selfYearGanZhi?:
+  string;
+
+/**
+ * 상대방 출생정보가 정식 완료 경로를 충족했을 때
+ * Calculator가 만든 상대방 원국 결과다.
+ */
+counterpartSaju?:
+  CounterpartSajuCalculation;
+
+question:
+  QuestionReaderResult;
 
   questionContext: QuestionContext;
 };
