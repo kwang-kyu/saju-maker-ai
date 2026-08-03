@@ -106,11 +106,11 @@ import {
     );
 
     const [
-      pendingClarification,
-      setPendingClarification,
-    ] = useState<V3ConsultingPendingClarification | null>(
-      initialSession.pendingClarification,
-    );
+        ,
+        setPendingClarification,
+      ] = useState<V3ConsultingPendingClarification | null>(
+        initialSession.pendingClarification,
+      );
 
     const [
       followUpQuestion,
@@ -254,38 +254,6 @@ import {
             ),
           )}
         </div>
-
-        {pendingClarification ? (
-          <section className="v3-consulting-clarification">
-            <h3>
-              판단을 위해 확인이 필요한 현실 정보
-            </h3>
-
-            <ul>
-              {pendingClarification
-                .missingInformation
-                .map(
-                  (information) => (
-                    <li key={information}>
-                      {information}
-                    </li>
-                  ),
-                )}
-            </ul>
-
-            <div className="v3-consulting-clarification-questions">
-              {pendingClarification
-                .questions
-                .map(
-                  (clarificationQuestion) => (
-                    <p key={clarificationQuestion}>
-                      {clarificationQuestion}
-                    </p>
-                  ),
-                )}
-            </div>
-          </section>
-        ) : null}
 
         {errorMessage ? (
           <p

@@ -154,6 +154,18 @@ import type {
       RequestInit,
   ) => Promise<Response>;
 
+  function fetchV3ConsultingSessionFromBrowser(
+    input:
+      RequestInfo | URL,
+    init?:
+      RequestInit,
+  ): Promise<Response> {
+    return globalThis.fetch(
+      input,
+      init,
+    );
+  }
+
   type ErrorResponseBody = {
     error:
       string;
@@ -659,7 +671,7 @@ import type {
       CreateV3InitialConsultingSessionInput,
     requestFetch:
       V3ConsultingSessionFetch =
-        globalThis.fetch,
+      fetchV3ConsultingSessionFromBrowser,
   ): Promise<V3InitialConsultingSessionResponse> {
     const responseBody =
       await requestJson({
@@ -686,7 +698,7 @@ import type {
       RequestV3ConsultingSessionTurnInput,
     requestFetch:
       V3ConsultingSessionFetch =
-        globalThis.fetch,
+      fetchV3ConsultingSessionFromBrowser,
   ): Promise<V3ConsultingSessionTurnResponse> {
     const responseBody =
       await requestJson({

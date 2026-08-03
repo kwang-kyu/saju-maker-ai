@@ -313,6 +313,43 @@ import type {
         );
       }
 
+      const errorRecord =
+  typeof error
+    === "object"
+  && error
+    !== null
+    ? error as Record<string, unknown>
+    : null;
+
+console.error(
+  "Authenticated initial consulting session failed.",
+  {
+    name:
+      error
+        instanceof Error
+        ? error.name
+        : "UnknownError",
+
+    message:
+      error
+        instanceof Error
+        ? error.message
+        : "A non-Error value was thrown.",
+
+    code:
+      typeof errorRecord?.code
+        === "string"
+        ? errorRecord.code
+        : null,
+
+    operation:
+      typeof errorRecord?.operation
+        === "string"
+        ? errorRecord.operation
+        : null,
+  },
+);
+
       return buildErrorResponse(
         500,
         "internalError",

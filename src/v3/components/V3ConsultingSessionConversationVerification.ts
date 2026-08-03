@@ -151,19 +151,19 @@ import {
           "추가 현실 정보 확인 중",
         ),
 
-      missingInformationIsRendered:
-        clarificationMarkup.includes(
+        internalMissingInformationIsNotRendered:
+        !clarificationMarkup.includes(
           "현재 고정 생활비",
         )
-        && clarificationMarkup.includes(
+        && !clarificationMarkup.includes(
           "창업에 사용할 자금의 성격",
         ),
 
-      clarificationQuestionsAreRendered:
-        clarificationMarkup.includes(
+      duplicateClarificationQuestionsAreNotRendered:
+        !clarificationMarkup.includes(
           "생활비를 제외하고 사용할 수 있는 여유자금은 얼마인가요?",
         )
-        && clarificationMarkup.includes(
+        && !clarificationMarkup.includes(
           "현재 직장을 유지한 채 준비할 수 있나요?",
         ),
 
