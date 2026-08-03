@@ -25,6 +25,9 @@ import {
   import type {
     SupabaseServerEnvironment,
   } from "./supabaseConsultingSessionRepositoryFactory";
+  import {
+    readQuestion,
+  } from "./question/questionReader";
 
   export type AuthenticatedPersistedConsultingSessionTurnServiceVerificationResult = {
     checks:
@@ -123,6 +126,12 @@ import {
     let executeTurnCallCount =
       0;
 
+      let interpretQuestionCallCount =
+      0;
+
+    const interpretedQuestions:
+      string[] = [];
+
     const dependencies:
       AuthenticatedPersistedConsultingSessionTurnDependencies = {
         async createRepository(
@@ -138,6 +147,24 @@ import {
 
           return repository;
         },
+        async interpretQuestion(
+            question:
+              string,
+          ) {
+            interpretQuestionCallCount +=
+              1;
+
+            interpretedQuestions.push(
+              question,
+            );
+
+            return readQuestion(
+              returnedSession
+                .humanContext,
+              question,
+            );
+          },
+
 
         async executeTurn(
           input:
@@ -250,6 +277,17 @@ import {
                 throw repositoryFailure;
               },
 
+              async interpretQuestion(
+                question:
+                  string,
+              ) {
+                return readQuestion(
+                  returnedSession
+                    .humanContext,
+                  question,
+                );
+              },
+
               async executeTurn() {
                 executeAfterRepositoryFailureCallCount +=
                   1;
@@ -306,12 +344,92 @@ import {
                 return repository;
               },
 
+              async interpretQuestion(
+                question:
+                  string,
+              ) {
+                return readQuestion(
+                  returnedSession
+                    .humanContext,
+                  question,
+                );
+              },
+
+
               async executeTurn() {
                 throw executeFailure;
               },
             },
           ),
       );
+      let clarificationInterpretQuestionCallCount =
+      0;
+
+    let clarificationExecuteInput:
+      ExecutePersistedConsultingSessionTurnInput
+      | undefined;
+
+    await executeAuthenticatedPersistedConsultingSessionTurn(
+      {
+        authorizationHeader:
+          "Bearer clarification-turn-token",
+
+        environment,
+
+        sessionId:
+          returnedSession.id,
+
+        preparationInput: {
+          kind:
+            "clarification",
+
+          question:
+            "1967년 4월 10일생이고 남성입니다.",
+
+          decisionQuestion:
+            request.question,
+
+          preparedAt:
+            "2026-07-29T04:50:00+09:00",
+        },
+
+        turnId:
+          "turn-clarification-003",
+
+        createdAt:
+          "2026-07-29T04:51:00+09:00",
+      },
+      {
+        async createRepository() {
+          return repository;
+        },
+
+        async interpretQuestion(
+          question:
+            string,
+        ) {
+          clarificationInterpretQuestionCallCount +=
+            1;
+
+          return readQuestion(
+            returnedSession
+              .humanContext,
+            question,
+          );
+        },
+
+        async executeTurn(
+          input:
+            ExecutePersistedConsultingSessionTurnInput,
+        ) {
+          clarificationExecuteInput =
+            input;
+
+          return returnedSession;
+        },
+      },
+    );
+
 
     const checks = {
       repositoryIsCreatedExactlyOnce:
@@ -321,6 +439,37 @@ import {
       persistedTurnIsExecutedExactlyOnce:
         executeTurnCallCount
         === 1,
+
+      questionInterpreterIsCalledExactlyOnce:
+        interpretQuestionCallCount
+        === 1,
+
+        clarificationAnswerIsNotReinterpreted:
+        clarificationInterpretQuestionCallCount
+        === 0,
+
+      clarificationIsDeliveredWithoutNewInterpretation:
+        clarificationExecuteInput
+          ?.preparationInput
+          .kind
+        === "clarification"
+        && clarificationExecuteInput
+          .preparationInput
+          .questionInterpretation
+        === undefined,
+
+      originalFollowUpQuestionIsInterpreted:
+        interpretedQuestions.length
+        === 1
+        && interpretedQuestions[0]
+        === "현재 조건에서 다음 선택은 무엇인가요?",
+
+      interpretedQuestionIsDeliveredToTurn:
+        executeInput
+          ?.preparationInput
+          .questionInterpretation
+          ?.originalQuestion
+        === "현재 조건에서 다음 선택은 무엇인가요?",
 
       authorizationHeaderIsPreserved:
         repositoryInput

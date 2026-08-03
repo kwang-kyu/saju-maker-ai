@@ -431,6 +431,10 @@ import {
           ?? decisionTurn
             .question,
 
+            questionInterpretation:
+            decisionTurn
+              .questionReaderResult,
+
             clarificationFacts,
 
             counterpartSaju,

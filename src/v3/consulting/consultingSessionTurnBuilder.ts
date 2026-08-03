@@ -31,6 +31,9 @@ import {
   import type {
     CounterpartSajuCalculation,
   } from "./decision/counterpartSajuCalculationBuilder";
+  import type {
+    QuestionReaderResult,
+  } from "./question/questionReader";
 
   export type ConsultingConversationHistoryEntry = {
     turnId:
@@ -114,6 +117,15 @@ import {
 
       question:
       string;
+
+          /**
+     * GPT 의미 해석기가 원문 질문의 의미만 구조화한 결과다.
+     *
+     * 사주 판단이나 결론을 포함하지 않으며,
+     * 값이 없으면 기존 내부 Reader를 사용한다.
+     */
+    questionInterpretation?:
+    QuestionReaderResult;
 
     /**
      * clarification 답변 조각 대신 Decision Engine이 다시 판단할
@@ -557,6 +569,10 @@ preparedAt:
             readerEvidence:
               input.session
                 .readerEvidence,
+
+                questionInterpretation:
+                input
+                .questionInterpretation,
 
             humanContext:
               input.session

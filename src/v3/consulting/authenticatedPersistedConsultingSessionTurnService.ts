@@ -22,6 +22,12 @@ import type {
   import type {
     SupabaseServerEnvironment,
   } from "./supabaseConsultingSessionRepositoryFactory";
+  import {
+    interpretQuestionSemantics,
+  } from "./question/questionSemanticInterpreter";
+  import type {
+    QuestionReaderResult,
+  } from "./question/questionReader";
 
   export type ExecuteAuthenticatedPersistedConsultingSessionTurnInput =
     Omit<
@@ -41,6 +47,11 @@ import type {
         CreateAuthenticatedSupabaseConsultingSessionRepositoryInput,
     ): Promise<ConsultingSessionRepository>;
 
+    interpretQuestion(
+      question:
+        string,
+    ): Promise<QuestionReaderResult>;
+
     executeTurn(
       input:
         ExecutePersistedConsultingSessionTurnInput,
@@ -55,6 +66,15 @@ import type {
       ) {
         return createAuthenticatedSupabaseConsultingSessionRepository(
           input,
+        );
+      },
+
+      interpretQuestion(
+        question:
+          string,
+      ) {
+        return interpretQuestionSemantics(
+          question,
         );
       },
 
@@ -89,9 +109,35 @@ import type {
           environment,
         });
 
+    const preparationInput =
+      turnInput
+        .preparationInput
+        .kind
+      === "clarification"
+      || turnInput
+        .preparationInput
+        .questionInterpretation
+        !== undefined
+        ? turnInput
+            .preparationInput
+        : {
+            ...turnInput
+              .preparationInput,
+
+            questionInterpretation:
+              await dependencies
+                .interpretQuestion(
+                  turnInput
+                    .preparationInput
+                    .question,
+                ),
+          };
+
     return dependencies
       .executeTurn({
         ...turnInput,
+
+        preparationInput,
 
         repository,
       });
