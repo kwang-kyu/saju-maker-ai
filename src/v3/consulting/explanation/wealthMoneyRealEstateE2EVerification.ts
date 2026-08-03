@@ -429,9 +429,11 @@ import {
         result,
       );
 
-    const plan =
+      const plan =
       buildDecisionExplanationPlan(
         explanationInput,
+        input.question
+          .originalQuestion,
       );
 
     const payload =
@@ -462,23 +464,29 @@ import {
         "risks",
       );
 
-    const payloadEvidence =
-      findPayloadContent(
-        payload,
-        "판단 근거",
-      );
+      const payloadEvidence =
+      evidenceBlock
+        ? findPayloadContent(
+            payload,
+            evidenceBlock.title,
+          )
+        : "";
 
-    const payloadConditions =
-      findPayloadContent(
-        payload,
-        "필수 조건",
-      );
+      const payloadConditions =
+      conditionsBlock
+        ? findPayloadContent(
+            payload,
+            conditionsBlock.title,
+          )
+        : "";
 
     const payloadRisks =
-      findPayloadContent(
-        payload,
-        "주의할 위험",
-      );
+      risksBlock
+        ? findPayloadContent(
+            payload,
+            risksBlock.title,
+          )
+        : "";
 
     const realitySignals =
       input.questionContext.reality.constraints

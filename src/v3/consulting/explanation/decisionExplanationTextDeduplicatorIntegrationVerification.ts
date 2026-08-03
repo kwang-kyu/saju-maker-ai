@@ -192,9 +192,10 @@ import {
     const input =
       buildIntegrationInput();
 
-    const plan =
+      const plan =
       buildDecisionExplanationPlan(
         input,
+        "새로운 사업을 지금 시작해도 될까요?",
       );
 
     const payload =
@@ -279,11 +280,8 @@ import {
         )?.required
         === true,
 
-      payloadIncludesConditionOnce:
-        payload.explanationOrder.filter(
-          (item) =>
-            item.title === "필수 조건",
-        )
+        payloadIncludesConditionOnce:
+        payload.explanationOrder
           .reduce(
             (count, item) =>
               count
@@ -296,10 +294,7 @@ import {
         === 1,
 
       payloadIncludesSimilarRiskOnce:
-        payload.explanationOrder.filter(
-          (item) =>
-            item.title === "주의할 위험",
-        )
+        payload.explanationOrder
           .reduce(
             (count, item) =>
               count
