@@ -42,13 +42,22 @@ import type {
 
   export async function verifyAuthenticatedInitialConsultingSessionService():
     Promise<AuthenticatedInitialConsultingSessionServiceVerificationResult> {
-    const request =
-      createSourceRequest();
+        const request = {
+            ...createSourceRequest(),
+
+            question:
+              "지금 새로운 사업을 시작해도 될까요?",
+          };
 
     const execution =
       buildInitialConsultingExecution(
         request,
       );
+
+      const interpretedQuestion =
+      execution
+        .turnResult
+        .questionReaderResult;
 
     const authorizationHeader =
       "Bearer initial-session-access-token";
@@ -126,6 +135,18 @@ import type {
 
     let executionCallCount =
       0;
+
+      let interpretQuestionCallCount =
+      0;
+
+    const interpretedQuestions:
+      string[] = [];
+
+    const deliveredQuestionInterpretations:
+      Array<
+        typeof interpretedQuestion
+        | undefined
+      > = [];
 
     let answerCallCount =
       0;
@@ -207,8 +228,22 @@ import type {
             return "2026-07-29T06:00:00.000Z";
           },
 
+          async interpretQuestion(
+            question,
+          ) {
+            interpretQuestionCallCount +=
+              1;
+
+            interpretedQuestions.push(
+              question,
+            );
+
+            return interpretedQuestion;
+          },
+
           buildExecution(
             sourceRequest,
+            questionInterpretation,
           ) {
             executionCallCount +=
               1;
@@ -222,6 +257,10 @@ import type {
             deliveredRequests.push(
               sourceRequest,
             );
+
+            deliveredQuestionInterpretations.push(
+                questionInterpretation,
+              );
 
             return execution;
           },
@@ -316,6 +355,10 @@ import type {
             return "unused-turn";
           },
 
+          async interpretQuestion() {
+            return interpretedQuestion;
+          },
+
           now() {
             return "2026-07-29T06:01:00.000Z";
           },
@@ -401,6 +444,10 @@ import type {
             return "2026-07-29T06:02:00.000Z";
           },
 
+          async interpretQuestion() {
+            return interpretedQuestion;
+          },
+
           buildExecution() {
             return execution;
           },
@@ -467,6 +514,10 @@ import type {
             return "2026-07-29T06:03:00.000Z";
           },
 
+          async interpretQuestion() {
+            return interpretedQuestion;
+          },
+
           buildExecution() {
             return execution;
           },
@@ -511,6 +562,10 @@ import type {
 
               now() {
                 return "2026-07-29T06:04:00.000Z";
+              },
+
+              async interpretQuestion() {
+                return interpretedQuestion;
               },
 
               buildExecution() {
@@ -564,6 +619,20 @@ import type {
         deliveredRepositoryInput
           ?.environment
         === environment,
+
+        questionInterpreterIsCalledExactlyOnce:
+        interpretQuestionCallCount
+        === 1,
+
+      originalQuestionIsInterpreted:
+        interpretedQuestions.length
+        === 1
+        && interpretedQuestions[0]
+        === request.question,
+
+      interpretedQuestionIsDeliveredToExecution:
+        deliveredQuestionInterpretations[0]
+        === interpretedQuestion,
 
       executionIsBuiltExactlyOnce:
         executionCallCount

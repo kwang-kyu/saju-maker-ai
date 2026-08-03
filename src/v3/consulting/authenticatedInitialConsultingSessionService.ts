@@ -17,6 +17,12 @@ import {
   import {
     buildInitialConsultingExecution,
   } from "./initialConsultingExecutionBuilder";
+  import {
+    interpretQuestionSemantics,
+  } from "./question/questionSemanticInterpreter";
+  import type {
+    QuestionReaderResult,
+  } from "./question/questionReader";
   import type {
     InitialConsultingExecutionResult,
   } from "./initialConsultingExecutionBuilder";
@@ -35,6 +41,12 @@ import {
   import type {
     V3ConsultingRequest,
   } from "./v3ConsultingRequest";
+  import {
+    buildConsultingClarificationAnswer,
+  } from "./consultingClarificationAnswerBuilder";
+  import {
+    buildConsultingClarification,
+  } from "./consultingClarificationBuilder";
 
   export type CreateAuthenticatedInitialConsultingSessionInput = {
     authorizationHeader:
@@ -67,10 +79,17 @@ import {
     now():
       string;
 
+      interpretQuestion(
+      question:
+      string,
+    ): Promise<QuestionReaderResult>;
+
     buildExecution(
-      request:
-        V3ConsultingRequest,
-    ): InitialConsultingExecutionResult;
+        request:
+          V3ConsultingRequest,
+        questionInterpretation?:
+          QuestionReaderResult,
+      ): InitialConsultingExecutionResult;
 
     requestAnswer(
       execution:
@@ -159,11 +178,21 @@ import {
           .toISOString();
       },
 
+      interpretQuestion(
+        question,
+      ) {
+        return interpretQuestionSemantics(
+          question,
+        );
+      },
+
       buildExecution(
         request,
+        questionInterpretation,
       ) {
         return buildInitialConsultingExecution(
           request,
+          questionInterpretation,
         );
       },
 
@@ -269,17 +298,55 @@ import {
         dependencies.now(),
       );
 
+      const questionInterpretation =
+      await dependencies
+        .interpretQuestion(
+          input.request
+            .question,
+        );
+
     const execution =
       dependencies
         .buildExecution(
           input.request,
+          questionInterpretation,
         );
 
-    const assistantAnswer =
-      await dependencies
-        .requestAnswer(
-          execution,
-        );
+        const clarification =
+        buildConsultingClarification({
+          decisionTurnId:
+            initialTurnId,
+
+          lifeContext:
+            execution
+              .lifeContext,
+
+          questionContext:
+            execution
+              .turnResult
+              .questionContext,
+
+          decisionResult:
+            execution
+              .turnResult
+              .decisionResult,
+        });
+
+      const assistantAnswer =
+        clarification
+          ? buildConsultingClarificationAnswer({
+              originalQuestion:
+                execution
+                  .turnResult
+                  .questionReaderResult
+                  .originalQuestion,
+
+              clarification,
+            })
+          : await dependencies
+              .requestAnswer(
+                execution,
+              );
 
     const session =
       dependencies
