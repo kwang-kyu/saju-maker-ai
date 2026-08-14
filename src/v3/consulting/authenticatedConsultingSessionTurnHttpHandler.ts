@@ -278,6 +278,12 @@ import type {
         );
       }
 
+      console.error(
+        "Unexpected authenticated consulting session turn error.",
+        error,
+      );
+
+
       return buildErrorResponse(
         500,
         "internalError",

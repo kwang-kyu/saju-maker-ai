@@ -272,6 +272,277 @@ import {
           }),
       );
 
+    const regressionUserResponse =
+      "현재 관계는 원만한 지인이고 특별한 갈등은 없습니다. 상대방은 1967년 음력 4월 10일생 여성이고 양띠입니다.";
+
+    const regressionResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            CLARIFICATION,
+
+          response:
+            regressionUserResponse,
+        },
+        async () =>
+          JSON.stringify({
+            matches: [
+              {
+                key:
+                  "counterpartBirthData",
+
+                description:
+                  "상대방은 1967년 음력 4월 10일생 여성이며 양띠이다.",
+
+                fields: [
+                  {
+                    key:
+                      "birthDate",
+
+                    value:
+                      "1967년 음력 4월 10일생",
+
+                    evidence: [
+                      "1967년 음력 4월 10일생",
+                    ],
+                  },
+                  {
+                    key:
+                      "calendarType",
+
+                    value:
+                      "음력",
+
+                    evidence: [
+                      "음력",
+                    ],
+                  },
+                  {
+                    key:
+                      "gender",
+
+                    value:
+                      "여성",
+
+                    evidence: [
+                      "여성",
+                    ],
+                  },
+                  {
+                    key:
+                      "zodiacSign",
+
+                    value:
+                      "양띠",
+
+                    evidence: [
+                      "양띠",
+                    ],
+                  },
+                ],
+
+                confidence:
+                  0.95,
+              },
+            ],
+          }),
+      );
+
+    const regressionFact =
+      regressionResult
+        .confirmedFacts[0];
+
+    const regressionFields =
+      new Map(
+        regressionFact
+          ?.fields
+          .map(
+            (field) => [
+              field.key,
+              field.value,
+            ],
+          )
+        ?? [],
+      );
+
+    const incompleteBirthDateResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            CLARIFICATION,
+
+          response:
+            "상대방은 1967년 4월생 여성입니다.",
+        },
+        async () =>
+          JSON.stringify({
+            matches: [
+              {
+                key:
+                  "counterpartBirthData",
+
+                description:
+                  "상대방은 1967년 4월생 여성이다.",
+
+                fields: [
+                  {
+                    key:
+                      "birthDate",
+
+                    value:
+                      "1967년 4월",
+
+                    evidence: [
+                      "1967년 4월",
+                    ],
+                  },
+                  {
+                    key:
+                      "gender",
+
+                    value:
+                      "여성",
+
+                    evidence: [
+                      "여성",
+                    ],
+                  },
+                ],
+
+                confidence:
+                  0.95,
+              },
+            ],
+          }),
+      );
+
+    const invalidBirthDateResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            CLARIFICATION,
+
+          response:
+            "상대방은 1967-02-30생입니다.",
+        },
+        async () =>
+          JSON.stringify({
+            matches: [
+              {
+                key:
+                  "counterpartBirthData",
+
+                description:
+                  "상대방 생년월일은 1967-02-30이다.",
+
+                fields: [
+                  {
+                    key:
+                      "birthDate",
+
+                    value:
+                      "1967-02-30",
+
+                    evidence: [
+                      "1967-02-30",
+                    ],
+                  },
+                ],
+
+                confidence:
+                  0.95,
+              },
+            ],
+          }),
+      );
+
+    const invalidOptionalFieldResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            CLARIFICATION,
+
+          response:
+            "상대방은 1967년 4월 10일생 여성이고 용말띠입니다.",
+        },
+        async () =>
+          JSON.stringify({
+            matches: [
+              {
+                key:
+                  "counterpartBirthData",
+
+                description:
+                  "상대방은 1967년 4월 10일생 여성이다.",
+
+                fields: [
+                  {
+                    key:
+                      "birthDate",
+
+                    value:
+                      "1967년 4월 10일",
+
+                    evidence: [
+                      "1967년 4월 10일",
+                    ],
+                  },
+                  {
+                    key:
+                      "gender",
+
+                    value:
+                      "여성",
+
+                    evidence: [
+                      "여성",
+                    ],
+                  },
+                  {
+                    key:
+                      "zodiacSign",
+
+                    value:
+                      "용말띠",
+
+                    evidence: [
+                      "용말띠",
+                    ],
+                  },
+                ],
+
+                confidence:
+                  0.95,
+              },
+            ],
+          }),
+      );
+
+    const invalidOptionalFieldError =
+      await captureError(
+        () =>
+          Promise.resolve(
+            invalidOptionalFieldResult,
+          ),
+      );
+
+    const invalidOptionalFieldFact =
+      invalidOptionalFieldResult
+        .confirmedFacts[0];
+
+    const invalidOptionalFieldValues =
+      new Map(
+        invalidOptionalFieldFact
+          ?.fields
+          .map(
+            (field) => [
+              field.key,
+              field.value,
+            ],
+          )
+        ?? [],
+      );
+
     const checks = {
       clearResponseResolvesOnlyMatchingItem:
         clearFinancialResult
@@ -329,6 +600,73 @@ import {
         === 0
         && lowConfidenceResult
           .hasUnresolvedResponse,
+
+      koreanLunarBirthDateNormalizesToIso:
+        regressionFields.get(
+          "birthDate",
+        )
+        === "1967-04-10",
+
+      calendarTypeNormalizesToLunar:
+        regressionFields.get(
+          "calendarType",
+        )
+        === "lunar",
+
+      femaleNormalizesToFemale:
+        regressionFields.get(
+          "gender",
+        )
+        === "female",
+
+      sheepZodiacNormalizesToYang:
+        regressionFields.get(
+          "zodiacSign",
+        )
+        === "양띠",
+
+      regressionResponseIsResolved:
+        !regressionResult
+          .hasUnresolvedResponse
+        && regressionResult
+          .confirmedFacts
+          .length
+        === 1,
+
+      incompleteBirthMonthDoesNotConfirmBirthDate:
+        incompleteBirthDateResult
+          .confirmedFacts[0]
+          ?.fields
+          .some(
+            (field) =>
+              field.key
+              === "birthDate",
+          )
+        === false,
+
+      invalidDateDoesNotReachConfirmedFacts:
+        invalidBirthDateResult
+          .confirmedFacts
+          .length
+        === 0
+        && invalidBirthDateResult
+          .hasUnresolvedResponse,
+
+      invalidOptionalFieldDoesNotRejectInterpreter:
+        invalidOptionalFieldError
+        === null,
+
+      invalidOptionalFieldDoesNotConfirmZodiacSign:
+        invalidOptionalFieldValues.has(
+          "zodiacSign",
+        )
+        === false,
+
+      invalidOptionalFieldKeepsValidBirthDate:
+        invalidOptionalFieldValues.get(
+          "birthDate",
+        )
+        === "1967-04-10",
     };
 
     return {
