@@ -202,20 +202,80 @@ import type {
       input.questionContext
         .requirements
         .compatibilityAnalysisRequired
-      && !input.questionContext
-        .counterpart
-        .birthDataProvided
     ) {
-      registerMissingInformation({
-        key:
-          "counterpartBirthData",
+      const counterpartFacts =
+        question.counterpartFacts;
 
-        description:
-          "궁합 판단에 필요한 상대방의 출생정보가 확인되지 않았다.",
+      const missingCounterpartFields:
+        string[] = [];
 
-        question:
-          "상대방의 생년월일, 양력·음력 여부, 성별과 가능한 경우 출생시간을 알려주세요.",
-      });
+      if (
+        question.analysisScope
+        === "zodiac"
+      ) {
+        if (
+          !counterpartFacts.zodiac
+        ) {
+          missingCounterpartFields.push(
+            "띠",
+          );
+        }
+      } else {
+        if (
+          !counterpartFacts.birthDate
+        ) {
+          missingCounterpartFields.push(
+            "생년월일",
+          );
+        }
+
+        if (
+          !counterpartFacts.calendarType
+        ) {
+          missingCounterpartFields.push(
+            "양력·음력 여부",
+          );
+        }
+
+        if (
+          !counterpartFacts.gender
+        ) {
+          missingCounterpartFields.push(
+            "성별",
+          );
+        }
+
+        if (
+          question.analysisScope
+          === "fullSaju"
+          && !counterpartFacts.birthTime
+        ) {
+          missingCounterpartFields.push(
+            "출생시간",
+          );
+        }
+      }
+
+      if (
+        missingCounterpartFields.length
+        > 0
+      ) {
+        const missingFieldText =
+          missingCounterpartFields.join(
+            ", ",
+          );
+
+        registerMissingInformation({
+          key:
+            "counterpartBirthData",
+
+          description:
+            `궁합 판단에 필요한 상대방의 ${missingFieldText} 정보가 확인되지 않았다.`,
+
+          question:
+            `이미 알려주신 정보는 다시 적지 않아도 됩니다. 상대방의 ${missingFieldText}만 알려주세요.`,
+        });
+      }
     }
 
     if (

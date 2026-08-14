@@ -1,4 +1,4 @@
-import { analyzeContextAlignment } from "./contextAlignment";
+﻿import { analyzeContextAlignment } from "./contextAlignment";
 import { buildDecisionBrain } from "./decisionBrain";
 import type {
   DecisionEngineInput,
@@ -128,6 +128,8 @@ export function runDecisionEngine(
 
       assessment:
         compatibilityAssessment,
+        requestedAnalysisScope:
+        input.question.analysisScope,
     });
 
   const directionJudgement = buildDirectionJudgement({

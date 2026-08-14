@@ -119,6 +119,54 @@ import {
         },
       });
 
+      const compatibilityRequest:
+      V3ConsultingRequest = {
+        ...request,
+
+        question:
+          "1967년 4월 10일 양띠 여성과 동업은 어떨까요?",
+      };
+
+    const compatibilityExecution =
+      buildInitialConsultingExecution(
+        compatibilityRequest,
+      );
+
+    const compatibilityClarification =
+      buildConsultingClarification({
+        decisionTurnId:
+          "turn-compatibility-001",
+
+        lifeContext:
+          compatibilityExecution
+            .lifeContext,
+
+        questionContext:
+          compatibilityExecution
+            .turnResult
+            .questionContext,
+
+        decisionResult: {
+          ...compatibilityExecution
+            .turnResult
+            .decisionResult,
+
+          verdict:
+            "insufficientEvidence",
+        },
+      });
+
+    const counterpartBirthDataQuestion =
+      compatibilityClarification
+        ?.items
+        .find(
+          (item) =>
+            item.key
+            === "counterpartBirthData",
+        )
+        ?.question
+      ?? "";
+
       const missingInformation =
       clarification
         ?.items
@@ -251,6 +299,46 @@ import {
           !== null
           && clarification.items.length
           > 0,
+
+          compatibilityFactsArePreserved:
+          compatibilityExecution
+            .turnResult
+            .questionReaderResult
+            .counterpartFacts
+            .birthDate
+          === "1967-04-10"
+          && compatibilityExecution
+            .turnResult
+            .questionReaderResult
+            .counterpartFacts
+            .gender
+          === "female"
+          && compatibilityExecution
+            .turnResult
+            .questionReaderResult
+            .counterpartFacts
+            .zodiac
+          === "양띠",
+
+        onlyMissingCalendarTypeIsRequested:
+          counterpartBirthDataQuestion
+            .includes(
+              "양력·음력 여부",
+            ),
+
+        providedCounterpartFactsAreNotRequestedAgain:
+          !counterpartBirthDataQuestion
+            .includes(
+              "생년월일",
+            )
+          && !counterpartBirthDataQuestion
+            .includes(
+              "성별",
+            )
+          && !counterpartBirthDataQuestion
+            .includes(
+              "출생시간",
+            ),
 
       nonInsufficientVerdictAsksNothing:
         nonInsufficientClarification

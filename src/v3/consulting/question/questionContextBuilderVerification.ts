@@ -21,6 +21,18 @@ import type {
         typeof readQuestion
       >["decisionTarget"];
 
+      analysisMode?: ReturnType<
+      typeof readQuestion
+    >["analysisMode"];
+
+    analysisScope?: ReturnType<
+      typeof readQuestion
+    >["analysisScope"];
+
+    counterpartFacts?: ReturnType<
+      typeof readQuestion
+    >["counterpartFacts"];
+
       counterpartExists: boolean;
       compatibilityAnalysisRequired: boolean;
       timingAnalysisRequired: boolean;
@@ -40,6 +52,18 @@ import type {
       decisionTarget: ReturnType<
         typeof readQuestion
       >["decisionTarget"];
+
+      analysisMode?: ReturnType<
+      typeof readQuestion
+    >["analysisMode"];
+
+    analysisScope?: ReturnType<
+      typeof readQuestion
+    >["analysisScope"];
+
+    counterpartFacts?: ReturnType<
+      typeof readQuestion
+    >["counterpartFacts"];
 
       counterpartExists: boolean;
       compatibilityAnalysisRequired: boolean;
@@ -261,8 +285,8 @@ import type {
         id:
           "business-partner-evaluation-with-birth-date",
 
-        question:
-          "1967년 4월 10일 생과 동업은 어떤가요?",
+          question:
+          "1967년 4월 10일 양띠 여성과 동업은 어떨까요?",
 
         expected: {
           topic:
@@ -270,6 +294,38 @@ import type {
 
           decisionTarget:
             "partner",
+
+            analysisMode:
+            "compatibility",
+
+          analysisScope:
+            "birthDate",
+
+          counterpartFacts: {
+            birthDate:
+              "1967-04-10",
+
+            birthTime:
+              null,
+
+            calendarType:
+              null,
+
+            gender:
+              "female",
+
+            zodiac:
+              "양띠",
+
+            relationship:
+              null,
+
+            evidence: [
+              "1967년 4월 10일",
+              "양띠",
+              "여성",
+            ],
+          },
 
           counterpartExists:
             true,
@@ -308,6 +364,42 @@ import type {
 
           decisionTarget:
             question.decisionTarget,
+
+            ...(
+              verificationCase
+                .expected
+                .analysisMode
+              !== undefined
+                ? {
+                    analysisMode:
+                      question.analysisMode,
+                  }
+                : {}
+            ),
+
+            ...(
+              verificationCase
+                .expected
+                .analysisScope
+              !== undefined
+                ? {
+                    analysisScope:
+                      question.analysisScope,
+                  }
+                : {}
+            ),
+
+            ...(
+              verificationCase
+                .expected
+                .counterpartFacts
+              !== undefined
+                ? {
+                    counterpartFacts:
+                      question.counterpartFacts,
+                  }
+                : {}
+            ),
 
           counterpartExists:
             context.counterpart.exists,

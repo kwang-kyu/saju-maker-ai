@@ -18,6 +18,12 @@ import type {
     sufficientEvidencePreservesVerdict:
       boolean;
 
+    supportiveZodiacRecommends:
+      boolean;
+
+    conflictedZodiacDoesNotRecommend:
+      boolean;
+
     passed:
       boolean;
   };
@@ -42,7 +48,7 @@ import type {
       birthDataProvided:
         false,
         counterpartSaju:
-        null,
+  null,
 
       zodiacProvided:
         false,
@@ -75,6 +81,8 @@ import type {
 
         assessment:
           buildAssessment({}),
+          requestedAnalysisScope:
+          "general",
       });
 
     const missingCounterpartVerdict =
@@ -99,6 +107,8 @@ import type {
             additionalCounterpartDataRequired:
               true,
           }),
+          requestedAnalysisScope:
+          "general",
       });
 
     const missingBirthDataVerdict =
@@ -108,6 +118,7 @@ import type {
 
         assessment:
           buildAssessment({
+
             analysisRequired:
               true,
 
@@ -132,6 +143,8 @@ import type {
             additionalCounterpartDataRequired:
               true,
           }),
+          requestedAnalysisScope:
+          "general",
       });
 
     const sufficientEvidenceVerdict =
@@ -168,6 +181,126 @@ import type {
             additionalCounterpartDataRequired:
               false,
           }),
+          requestedAnalysisScope:
+          "general",
+      });
+
+      const supportiveZodiacVerdict =
+      applyCompatibilityVerdictEffect({
+        verdict:
+          "notRecommended",
+
+        assessment:
+          buildAssessment({
+            analysisRequired:
+              true,
+
+            counterpartExists:
+              true,
+
+            zodiacProvided:
+              true,
+
+            zodiacAssessment: {
+              available:
+                true,
+
+              selfBranch:
+                "午",
+
+              counterpartBranch:
+                "未",
+
+              selfZodiac:
+                "말띠",
+
+              counterpartZodiac:
+                "양띠",
+
+              relation:
+                "sixHarmony",
+
+              level:
+                "supportive",
+
+              calculationBasis:
+                "yearBranchPair",
+
+              analysisScope:
+                "zodiacOnly",
+            },
+
+            evidenceLevel:
+              "partial",
+
+            analysisScope:
+              "zodiacCompatibility",
+
+            additionalCounterpartDataRequired:
+              false,
+          }),
+
+        requestedAnalysisScope:
+          "zodiac",
+      });
+
+    const conflictedZodiacVerdict =
+      applyCompatibilityVerdictEffect({
+        verdict:
+          "recommended",
+
+        assessment:
+          buildAssessment({
+            analysisRequired:
+              true,
+
+            counterpartExists:
+              true,
+
+            zodiacProvided:
+              true,
+
+            zodiacAssessment: {
+              available:
+                true,
+
+              selfBranch:
+                "午",
+
+              counterpartBranch:
+                "子",
+
+              selfZodiac:
+                "말띠",
+
+              counterpartZodiac:
+                "쥐띠",
+
+              relation:
+                "clash",
+
+              level:
+                "conflicted",
+
+              calculationBasis:
+                "yearBranchPair",
+
+              analysisScope:
+                "zodiacOnly",
+            },
+
+            evidenceLevel:
+              "partial",
+
+            analysisScope:
+              "zodiacCompatibility",
+
+            additionalCounterpartDataRequired:
+              false,
+          }),
+
+        requestedAnalysisScope:
+          "zodiac",
       });
 
     const notRequiredPreservesVerdict =
@@ -186,6 +319,14 @@ import type {
       sufficientEvidenceVerdict
         === "conditionallyRecommended";
 
+        const supportiveZodiacRecommends =
+        supportiveZodiacVerdict
+        === "recommended";
+
+      const conflictedZodiacDoesNotRecommend =
+        conflictedZodiacVerdict
+        === "notRecommended";
+
     return {
       notRequiredPreservesVerdict,
 
@@ -195,10 +336,16 @@ import type {
 
       sufficientEvidencePreservesVerdict,
 
+      supportiveZodiacRecommends,
+
+      conflictedZodiacDoesNotRecommend,
+
       passed:
         notRequiredPreservesVerdict
         && missingCounterpartStopsVerdict
         && missingBirthDataStopsVerdict
-        && sufficientEvidencePreservesVerdict,
+        && sufficientEvidencePreservesVerdict
+        && supportiveZodiacRecommends
+        && conflictedZodiacDoesNotRecommend,
     };
   }

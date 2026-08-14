@@ -2,6 +2,7 @@ import type {
     AuthenticatedConsultingSessionTurnRequest,
   } from "../consulting/authenticatedConsultingSessionTurnRequest";
   import type {
+    ConsultingClarificationItem,
     ConsultingSessionStatus,
     ConsultingTurnKind,
   } from "../consulting/consultingSession";
@@ -13,11 +14,10 @@ import type {
     decisionTurnId:
       string;
 
-    missingInformation:
-      [string, ...string[]];
-
-    questions:
-      [string, ...string[]];
+    items: [
+      ConsultingClarificationItem,
+      ...ConsultingClarificationItem[],
+    ];
   };
 
   export type V3InitialConsultingSessionResponse = {
@@ -243,18 +243,27 @@ import type {
     );
   }
 
-  function isNonEmptyStringTuple(
+  function isClarificationItem(
     value:
       unknown,
-  ): value is [string, ...string[]] {
-    return (
-      Array.isArray(
+  ): value is ConsultingClarificationItem {
+    if (
+      !isObjectRecord(
         value,
       )
-      && value.length
-      > 0
-      && value.every(
-        isNonEmptyString,
+    ) {
+      return false;
+    }
+
+    return (
+      isNonEmptyString(
+        value.key,
+      )
+      && isNonEmptyString(
+        value.description,
+      )
+      && isNonEmptyString(
+        value.question,
       )
     );
   }
@@ -277,11 +286,13 @@ import type {
       || !isNonEmptyString(
         value.decisionTurnId,
       )
-      || !isNonEmptyStringTuple(
-        value.missingInformation,
+      || !Array.isArray(
+        value.items,
       )
-      || !isNonEmptyStringTuple(
-        value.questions,
+      || value.items.length
+      === 0
+      || !value.items.every(
+        isClarificationItem,
       )
     ) {
       throw new V3ConsultingSessionApiError({
@@ -297,11 +308,12 @@ import type {
       decisionTurnId:
         value.decisionTurnId,
 
-      missingInformation:
-        value.missingInformation,
-
-      questions:
-        value.questions,
+      items: [
+        value.items[0],
+        ...value.items.slice(
+          1,
+        ),
+      ],
     };
   }
 

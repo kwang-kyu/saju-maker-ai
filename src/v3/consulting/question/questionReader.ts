@@ -67,6 +67,40 @@ export type QuestionTimingType =
   | "executionTiming"
   | "waitingTiming"
   | "unknown";
+  export type QuestionAnalysisMode =
+  | "decision"
+  | "compatibility"
+  | "selection"
+  | "interpretation";
+
+export type QuestionAnalysisScope =
+  | "general"
+  | "zodiac"
+  | "birthDate"
+  | "fullSaju";
+
+export type QuestionCounterpartFacts = {
+  birthDate:
+    string | null;
+
+  birthTime:
+    string | null;
+
+  calendarType:
+    "solar" | "lunar" | null;
+
+  gender:
+    "male" | "female" | null;
+
+  zodiac:
+    string | null;
+
+  relationship:
+    string | null;
+
+  evidence:
+    string[];
+};
 export type QuestionReaderResult = {
   originalQuestion: string;
   normalizedQuestion: string;
@@ -77,6 +111,15 @@ export type QuestionReaderResult = {
   decisionTarget: DecisionTarget;
   urgency: QuestionUrgency;
   timingType: QuestionTimingType;
+
+  analysisMode:
+    QuestionAnalysisMode;
+
+  analysisScope:
+    QuestionAnalysisScope;
+
+  counterpartFacts:
+    QuestionCounterpartFacts;
 
   asksWhat: string;
   asksWhy: string;
@@ -1024,6 +1067,210 @@ function calculateConfidence(evidenceCount: number): number {
   return 0.35;
 }
 
+function detectQuestionAnalysisMode(
+  question:
+    string,
+  intent:
+    QuestionIntent,
+  decisionTarget:
+    DecisionTarget,
+): QuestionAnalysisMode {
+  if (
+    /궁합|잘\s*맞|어울리|합이\s*맞/.test(
+      question,
+    )
+    || decisionTarget
+      === "partner"
+  ) {
+    return "compatibility";
+  }
+
+  if (
+    intent
+      === "selection"
+    || intent
+      === "comparison"
+    || decisionTarget
+      === "choose"
+  ) {
+    return "selection";
+  }
+
+  if (
+    intent
+      === "reason"
+    || intent
+      === "prediction"
+    || (
+      decisionTarget
+        === "none"
+      && /만약|어떤\s*역할|무슨\s*역할|왜|이유/.test(
+        question,
+      )
+    )
+  ) {
+    return "interpretation";
+  }
+
+  return "decision";
+}
+
+function extractQuestionCounterpartFacts(
+  question:
+    string,
+): QuestionCounterpartFacts {
+  const dateMatch =
+    question.match(
+      /(\d{4})\s*(?:년|[.\-/])\s*(\d{1,2})\s*(?:월|[.\-/])\s*(\d{1,2})\s*일?/,
+    );
+
+  const timeMatch =
+    question.match(
+      /(?:오전|오후)?\s*(\d{1,2})\s*(?::|시)\s*(\d{1,2})?\s*분?/,
+    );
+
+  const zodiacMatch =
+    question.match(
+      /(쥐|소|호랑이|토끼|용|뱀|말|양|원숭이|닭|개|돼지)띠/,
+    );
+
+  const genderMatch =
+    question.match(
+      /여성|여자|남성|남자/,
+    );
+
+  const calendarMatch =
+    question.match(
+      /음력|양력/,
+    );
+
+  const relationshipMatch =
+    question.match(
+      /친구|배우자|남편|아내|연인|애인|가족|직원|동업자|파트너|이\s*사람|그\s*사람/,
+    );
+
+  const evidence = [
+    dateMatch?.[0],
+    timeMatch?.[0],
+    zodiacMatch?.[0],
+    genderMatch?.[0],
+    calendarMatch?.[0],
+    relationshipMatch?.[0],
+  ].filter(
+    (
+      value,
+    ): value is string =>
+      Boolean(
+        value,
+      ),
+  );
+
+  const birthDate =
+    dateMatch
+      ? [
+          dateMatch[1],
+          dateMatch[2]
+            .padStart(
+              2,
+              "0",
+            ),
+          dateMatch[3]
+            .padStart(
+              2,
+              "0",
+            ),
+        ].join(
+          "-",
+        )
+      : null;
+
+  const birthTime =
+    timeMatch
+      ? [
+          timeMatch[1]
+            .padStart(
+              2,
+              "0",
+            ),
+          (
+            timeMatch[2]
+            ?? "00"
+          ).padStart(
+            2,
+            "0",
+          ),
+        ].join(
+          ":",
+        )
+      : null;
+
+  return {
+    birthDate,
+
+    birthTime,
+
+    calendarType:
+      calendarMatch?.[0]
+      === "음력"
+        ? "lunar"
+        : calendarMatch?.[0]
+          === "양력"
+          ? "solar"
+          : null,
+
+    gender:
+      genderMatch
+      && /여성|여자/.test(
+        genderMatch[0],
+      )
+        ? "female"
+        : genderMatch
+          ? "male"
+          : null,
+
+    zodiac:
+      zodiacMatch?.[0]
+      ?? null,
+
+    relationship:
+      relationshipMatch?.[0]
+      ?? null,
+
+    evidence,
+  };
+}
+
+function detectQuestionAnalysisScope(
+  question:
+    string,
+  counterpartFacts:
+    QuestionCounterpartFacts,
+): QuestionAnalysisScope {
+  if (
+    counterpartFacts.zodiac
+    && /띠\s*궁합|궁합.*띠|띠만/.test(
+      question,
+    )
+  ) {
+    return "zodiac";
+  }
+
+  if (
+    counterpartFacts.birthDate
+    && counterpartFacts.birthTime
+  ) {
+    return "fullSaju";
+  }
+
+  if (
+    counterpartFacts.birthDate
+  ) {
+    return "birthDate";
+  }
+
+  return "general";
+}
+
 /**
  * Question Reader는 질문만 단독으로 읽지 않는다.
  *
@@ -1096,6 +1343,24 @@ export function readQuestion(
       normalizedQuestion,
     );
 
+    const counterpartFacts =
+    extractQuestionCounterpartFacts(
+      normalizedQuestion,
+    );
+
+  const analysisMode =
+    detectQuestionAnalysisMode(
+      normalizedQuestion,
+      intentMatch.result,
+      resolvedDecisionTarget,
+    );
+
+  const analysisScope =
+    detectQuestionAnalysisScope(
+      normalizedQuestion,
+      counterpartFacts,
+    );
+
   const evidence = Array.from(
     new Set([
       ...topicMatch.evidence,
@@ -1115,9 +1380,14 @@ export function readQuestion(
     motive: motiveMatch.result,
     decisionTarget:
       resolvedDecisionTarget,
-    urgency: urgencyMatch.urgency,
-    timingType,
-    asksWhat: buildAsksWhat(
+      urgency: urgencyMatch.urgency,
+      timingType,
+
+      analysisMode,
+      analysisScope,
+      counterpartFacts,
+
+      asksWhat: buildAsksWhat(
       resolvedTopic,
       intentMatch.result,
     ),

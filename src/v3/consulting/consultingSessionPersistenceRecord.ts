@@ -82,22 +82,6 @@ import type {
     );
   }
 
-  function isNonEmptyStringArray(
-    value:
-      unknown,
-  ): value is [string, ...string[]] {
-    return (
-      Array.isArray(
-        value,
-      )
-      && value.length
-      > 0
-      && value.every(
-        isNonEmptyString,
-      )
-    );
-  }
-
   function isStructuredObject(
     value:
       unknown,
@@ -195,6 +179,34 @@ import type {
     );
   }
 
+  function isConsultingConfirmedField(
+    value:
+      unknown,
+  ): boolean {
+    if (
+      !isObjectRecord(
+        value,
+      )
+    ) {
+      return false;
+    }
+
+    return (
+      isNonEmptyString(
+        value.key,
+      )
+      && isNonEmptyString(
+        value.value,
+      )
+      && Array.isArray(
+        value.evidence,
+      )
+      && value.evidence.every(
+        isNonEmptyString,
+      )
+    );
+  }
+
   function isConsultingConfirmedFact(
     value:
       unknown,
@@ -214,11 +226,45 @@ import type {
       && isNonEmptyString(
         value.description,
       )
+      && Array.isArray(
+        value.fields,
+      )
+      && value.fields.every(
+        isConsultingConfirmedField,
+      )
+      && isNonEmptyString(
+        value.decisionTurnId,
+      )
       && isNonEmptyString(
         value.sourceTurnId,
       )
       && isNonEmptyString(
         value.confirmedAt,
+      )
+    );
+  }
+
+  function isConsultingClarificationItem(
+    value:
+      unknown,
+  ): boolean {
+    if (
+      !isObjectRecord(
+        value,
+      )
+    ) {
+      return false;
+    }
+
+    return (
+      isNonEmptyString(
+        value.key,
+      )
+      && isNonEmptyString(
+        value.description,
+      )
+      && isNonEmptyString(
+        value.question,
       )
     );
   }
@@ -239,11 +285,13 @@ import type {
       isNonEmptyString(
         value.decisionTurnId,
       )
-      && isNonEmptyStringArray(
-        value.missingInformation,
+      && Array.isArray(
+        value.items,
       )
-      && isNonEmptyStringArray(
-        value.questions,
+      && value.items.length
+      > 0
+      && value.items.every(
+        isConsultingClarificationItem,
       )
     );
   }
@@ -330,12 +378,15 @@ import type {
         ),
       );
 
-    return facts.every(
-      (fact) =>
-        turnIds.has(
-          fact.sourceTurnId,
-        ),
-    );
+      return facts.every(
+        (fact) =>
+          turnIds.has(
+            fact.decisionTurnId,
+          )
+          && turnIds.has(
+            fact.sourceTurnId,
+          ),
+      );
   }
 
   function pendingClarificationUsesExistingTurn(

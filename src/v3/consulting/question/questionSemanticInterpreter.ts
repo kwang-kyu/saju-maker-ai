@@ -3,6 +3,9 @@ import OpenAI from "openai";
 import type {
   DecisionTarget,
   QuestionIntent,
+  QuestionAnalysisMode,
+  QuestionAnalysisScope,
+  QuestionCounterpartFacts,
   QuestionMotive,
   QuestionReaderResult,
   QuestionTimingType,
@@ -94,6 +97,21 @@ const QUESTION_TIMING_TYPES:
     "waitingTiming",
     "unknown",
   ];
+  const QUESTION_ANALYSIS_MODES:
+  readonly QuestionAnalysisMode[] = [
+    "decision",
+    "compatibility",
+    "selection",
+    "interpretation",
+  ];
+
+const QUESTION_ANALYSIS_SCOPES:
+  readonly QuestionAnalysisScope[] = [
+    "general",
+    "zodiac",
+    "birthDate",
+    "fullSaju",
+  ];
 
 type QuestionSemanticInterpretationResponse = {
   topic:
@@ -113,6 +131,15 @@ type QuestionSemanticInterpretationResponse = {
 
   timingType:
     QuestionTimingType;
+
+    analysisMode:
+    QuestionAnalysisMode;
+
+  analysisScope:
+    QuestionAnalysisScope;
+
+  counterpartFacts:
+    QuestionCounterpartFacts;
 
   asksWhat:
     string;
@@ -231,6 +258,151 @@ function requireEnumValue<
 
   return value as TValue;
 }
+
+function requireNullableString(
+    value:
+      unknown,
+    field:
+      string,
+  ): string | null {
+    if (
+      value
+      === null
+    ) {
+      return null;
+    }
+
+    return requireNonEmptyString(
+      value,
+      field,
+    );
+  }
+
+  function requireNullableEnumValue<
+    TValue extends string,
+  >(
+    value:
+      unknown,
+    allowedValues:
+      readonly TValue[],
+    field:
+      string,
+  ): TValue | null {
+    if (
+      value
+      === null
+    ) {
+      return null;
+    }
+
+    return requireEnumValue(
+      value,
+      allowedValues,
+      field,
+    );
+  }
+
+  function requireCounterpartFacts(
+    value:
+      unknown,
+  ): QuestionCounterpartFacts {
+    if (
+      typeof value
+      !== "object"
+      || value
+      === null
+      || Array.isArray(
+        value,
+      )
+    ) {
+      throw new InvalidQuestionSemanticInterpretationError(
+        "counterpartFacts",
+        "counterpartFacts must be an object.",
+      );
+    }
+
+    const record =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      !Array.isArray(
+        record.evidence,
+      )
+    ) {
+      throw new InvalidQuestionSemanticInterpretationError(
+        "counterpartFacts.evidence",
+        "counterpartFacts.evidence must be an array.",
+      );
+    }
+
+    const evidence =
+      record.evidence.map(
+        (
+          item,
+          index,
+        ) =>
+          requireNonEmptyString(
+            item,
+            `counterpartFacts.evidence[${index}]`,
+          ),
+      );
+
+    return {
+      birthDate:
+        requireNullableString(
+          record.birthDate,
+          "counterpartFacts.birthDate",
+        ),
+
+      birthTime:
+        requireNullableString(
+          record.birthTime,
+          "counterpartFacts.birthTime",
+        ),
+
+      calendarType:
+        requireNullableEnumValue(
+          record.calendarType,
+          [
+            "solar",
+            "lunar",
+          ] as const,
+          "counterpartFacts.calendarType",
+        ),
+
+      gender:
+        requireNullableEnumValue(
+          record.gender,
+          [
+            "male",
+            "female",
+          ] as const,
+          "counterpartFacts.gender",
+        ),
+
+      zodiac:
+        requireNullableString(
+          record.zodiac,
+          "counterpartFacts.zodiac",
+        ),
+
+      relationship:
+        requireNullableString(
+          record.relationship,
+          "counterpartFacts.relationship",
+        ),
+
+      evidence:
+        Array.from(
+          new Set(
+            evidence,
+          ),
+        ),
+    };
+  }
 
 function requireEvidence(
   value:
@@ -393,6 +565,24 @@ function parseQuestionSemanticInterpretation(
         QUESTION_TIMING_TYPES,
         "timingType",
       ),
+      analysisMode:
+      requireEnumValue(
+        record.analysisMode,
+        QUESTION_ANALYSIS_MODES,
+        "analysisMode",
+      ),
+
+    analysisScope:
+      requireEnumValue(
+        record.analysisScope,
+        QUESTION_ANALYSIS_SCOPES,
+        "analysisScope",
+      ),
+
+    counterpartFacts:
+      requireCounterpartFacts(
+        record.counterpartFacts,
+      ),
 
     asksWhat:
       requireNonEmptyString(
@@ -500,7 +690,31 @@ export async function interpretQuestionSemantics(
 - 둘 이상의 대안을 견주는 질문만 comparison으로 해석한다.
 - 적합성 질문에 실행 시기나 기다림 판단을 임의로 추가하지 않는다.
 - 원문에 명시되지 않은 긴급성과 마감 시점을 만들지 않는다.
+분석 모드 원칙
 
+- 실행 여부나 시기를 결정하는 질문은 analysisMode를 decision으로 분류한다.
+- 두 사람의 궁합, 협업 적합성, 관계 적합성을 묻는 질문은 compatibility로 분류한다.
+- 여러 대상이나 역할 중 적합한 것을 묻는 질문은 selection으로 분류한다.
+- 가상 상황의 의미, 이유, 성향에 맞는 역할이나 서사를 묻는 질문은 interpretation으로 분류한다.
+- 새로운 질문 유형이 나타나더라도 문장 전체의 목적에 따라 위 네 가지 모드 중 하나를 선택한다.
+
+분석 범위 원칙
+
+- 사용자가 띠 궁합만 요구하면 analysisScope를 zodiac으로 분류한다.
+- 상대방 생년월일만 명시되었으면 birthDate로 분류한다.
+- 상대방 생년월일과 출생시간이 모두 명시되었거나 전체 사주 궁합을 명시적으로 요구하면 fullSaju로 분류한다.
+- 그 외에는 general로 분류한다.
+- 사용자가 요구한 범위보다 더 많은 정보를 임의로 요구하지 않는다.
+
+원문 사실 보존 원칙
+
+- counterpartFacts에는 질문에 명시된 상대방 정보만 기록한다.
+- 상대방의 생년월일은 YYYY-MM-DD, 출생시간은 HH:mm 형식으로 정규화한다.
+- 음력은 lunar, 양력은 solar, 여성은 female, 남성은 male로 기록한다.
+- 띠, 관계, 성별, 생년월일, 출생시간, 음양력이 원문에 있으면 절대 누락하지 않는다.
+- 원문에 없는 값은 추측하지 말고 null로 기록한다.
+- counterpartFacts.evidence에는 각 사실의 근거가 된 원문 표현만 넣는다.
+- 이미 원문에 명시된 정보를 누락하여 뒤 단계에서 다시 질문하게 만들지 않는다.
 분류값은 제공된 JSON Schema 값만 사용한다.
 evidence에는 판단에 사용한 원문 표현만 넣는다.
 asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다.
@@ -588,6 +802,106 @@ asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다
                   QUESTION_TIMING_TYPES,
               },
 
+              analysisMode: {
+                type:
+                  "string",
+
+                enum:
+                  QUESTION_ANALYSIS_MODES,
+              },
+
+              analysisScope: {
+                type:
+                  "string",
+
+                enum:
+                  QUESTION_ANALYSIS_SCOPES,
+              },
+
+              counterpartFacts: {
+                type:
+                  "object",
+
+                additionalProperties:
+                  false,
+
+                properties: {
+                  birthDate: {
+                    type: [
+                      "string",
+                      "null",
+                    ],
+                  },
+
+                  birthTime: {
+                    type: [
+                      "string",
+                      "null",
+                    ],
+                  },
+
+                  calendarType: {
+                    type: [
+                      "string",
+                      "null",
+                    ],
+
+                    enum: [
+                      "solar",
+                      "lunar",
+                      null,
+                    ],
+                  },
+
+                  gender: {
+                    type: [
+                      "string",
+                      "null",
+                    ],
+
+                    enum: [
+                      "male",
+                      "female",
+                      null,
+                    ],
+                  },
+
+                  zodiac: {
+                    type: [
+                      "string",
+                      "null",
+                    ],
+                  },
+
+                  relationship: {
+                    type: [
+                      "string",
+                      "null",
+                    ],
+                  },
+
+                  evidence: {
+                    type:
+                      "array",
+
+                    items: {
+                      type:
+                        "string",
+                    },
+                  },
+                },
+
+                required: [
+                  "birthDate",
+                  "birthTime",
+                  "calendarType",
+                  "gender",
+                  "zodiac",
+                  "relationship",
+                  "evidence",
+                ],
+              },
+
               asksWhat: {
                 type:
                   "string",
@@ -635,6 +949,9 @@ asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다
               "decisionTarget",
               "urgency",
               "timingType",
+              "analysisMode",
+              "analysisScope",
+              "counterpartFacts",
               "asksWhat",
               "asksWhy",
               "decisionQuestion",

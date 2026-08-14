@@ -69,6 +69,25 @@ import type {
         noDataContext,
       );
 
+      const directZodiacQuestion =
+      readQuestion(
+        regressionInput
+          .humanContext,
+        "양띠 여성과 띠 궁합만 봐주세요.",
+      );
+
+    const directZodiacContext =
+      buildQuestionContext(
+        directZodiacQuestion,
+        [],
+      );
+
+    const directZodiacAssessment =
+      assessCompatibility(
+        directZodiacContext,
+        "甲午",
+      );
+
     const zodiacFact =
       buildBirthDataFact([
         {
@@ -179,6 +198,51 @@ import type {
       );
 
     const checks = {
+        originalQuestionZodiacIsPreserved:
+        directZodiacQuestion
+          .counterpartFacts
+          .zodiac
+        === "양띠"
+        && directZodiacQuestion
+          .counterpartFacts
+          .gender
+        === "female"
+        && directZodiacQuestion
+          .analysisMode
+        === "compatibility"
+        && directZodiacQuestion
+          .analysisScope
+        === "zodiac",
+
+      originalQuestionZodiacIsCalculatedDirectly:
+        directZodiacAssessment
+          .zodiacAssessment
+          ?.available
+        === true
+        && directZodiacAssessment
+          .zodiacAssessment
+          .selfBranch
+        === "午"
+        && directZodiacAssessment
+          .zodiacAssessment
+          .counterpartBranch
+        === "未"
+        && directZodiacAssessment
+          .zodiacAssessment
+          .relation
+        === "sixHarmony"
+        && directZodiacAssessment
+          .zodiacAssessment
+          .level
+        === "supportive",
+
+      zodiacOnlyQuestionDoesNotRequestFullBirthData:
+        directZodiacAssessment
+          .analysisScope
+        === "zodiacCompatibility"
+        && directZodiacAssessment
+          .additionalCounterpartDataRequired
+        === false,
       fixtureRequiresCompatibilityAnalysis:
         noDataAssessment
           .analysisRequired

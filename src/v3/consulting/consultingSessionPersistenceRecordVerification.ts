@@ -242,58 +242,188 @@ import {
           }),
       );
 
-    const unknownConfirmedFactTurnRejected =
-      actionThrowsInvalidRecordError(
-        () =>
-          deserializeConsultingSession({
-            ...record,
+      const validConfirmedFact = {
+        key:
+          "loanBalance",
 
-            session: {
-              ...session,
+        description:
+          "대출 잔액 2억 원",
 
-              confirmedFacts: [
-                {
-                  key:
-                    "loanBalance",
+        fields: [
+          {
+            key:
+              "loanBalance",
 
-                  description:
-                    "대출 잔액 2억 원",
+            value:
+              "200000000",
 
-                  sourceTurnId:
-                    "unknown-turn",
+            evidence: [
+              "대출 잔액은 2억 원입니다.",
+            ],
+          },
+        ],
 
-                  confirmedAt:
-                    "2026-07-28T10:32:00+09:00",
-                },
-              ],
-            },
-          }),
-      );
+        decisionTurnId:
+          firstTurn.id,
 
-    const unknownClarificationTurnRejected =
-      actionThrowsInvalidRecordError(
-        () =>
-          deserializeConsultingSession({
-            ...record,
+        sourceTurnId:
+          firstTurn.id,
 
-            session: {
-              ...session,
+        confirmedAt:
+          "2026-07-28T10:32:00+09:00",
+      };
 
-              pendingClarification: {
-                decisionTurnId:
-                  "unknown-turn",
+      const unknownConfirmedFactSourceTurnRejected =
+        actionThrowsInvalidRecordError(
+          () =>
+            deserializeConsultingSession({
+              ...record,
 
-                missingInformation: [
-                  "실제 자금",
-                ],
+              session: {
+                ...session,
 
-                questions: [
-                  "사용 가능한 자금은 얼마입니까?",
+                confirmedFacts: [
+                  {
+                    ...validConfirmedFact,
+
+                    sourceTurnId:
+                      "unknown-turn",
+                  },
                 ],
               },
-            },
-          }),
-      );
+            }),
+        );
+
+      const unknownConfirmedFactDecisionTurnRejected =
+        actionThrowsInvalidRecordError(
+          () =>
+            deserializeConsultingSession({
+              ...record,
+
+              session: {
+                ...session,
+
+                confirmedFacts: [
+                  {
+                    ...validConfirmedFact,
+
+                    decisionTurnId:
+                      "unknown-turn",
+                  },
+                ],
+              },
+            }),
+        );
+
+      const invalidConfirmedFactFieldRejected =
+        actionThrowsInvalidRecordError(
+          () =>
+            deserializeConsultingSession({
+              ...record,
+
+              session: {
+                ...session,
+
+                confirmedFacts: [
+                  {
+                    ...validConfirmedFact,
+
+                    fields: [
+                      {
+                        key:
+                          "loanBalance",
+
+                        value:
+                          "200000000",
+
+                        evidence: [
+                          " ",
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            }),
+        );
+
+        const validClarificationItem = {
+            key:
+              "availableFunds",
+
+            description:
+              "실제 사용 가능한 자금",
+
+            question:
+              "실제로 사용할 수 있는 자금은 얼마입니까?",
+          };
+
+          const unknownClarificationTurnRejected =
+            actionThrowsInvalidRecordError(
+              () =>
+                deserializeConsultingSession({
+                  ...record,
+
+                  session: {
+                    ...session,
+
+                    pendingClarification: {
+                      decisionTurnId:
+                        "unknown-turn",
+
+                      items: [
+                        validClarificationItem,
+                      ],
+                    },
+                  },
+                }),
+            );
+
+          const emptyClarificationItemsRejected =
+            actionThrowsInvalidRecordError(
+              () =>
+                deserializeConsultingSession({
+                  ...record,
+
+                  session: {
+                    ...session,
+
+                    pendingClarification: {
+                      decisionTurnId:
+                        firstTurn.id,
+
+                      items:
+                        [],
+                    },
+                  },
+                }),
+            );
+
+          const invalidClarificationItemRejected =
+            actionThrowsInvalidRecordError(
+              () =>
+                deserializeConsultingSession({
+                  ...record,
+
+                  session: {
+                    ...session,
+
+                    pendingClarification: {
+                      decisionTurnId:
+                        firstTurn.id,
+
+                      items: [
+                        {
+                          ...validClarificationItem,
+
+                          question:
+                            " ",
+                        },
+                      ],
+                    },
+                  },
+                }),
+            );
 
     const emptyAssistantAnswerRejected =
       actionThrowsInvalidRecordError(
@@ -381,11 +511,23 @@ import {
       unknownLifeContextRevisionIsRejected:
         unknownLifeContextRevisionRejected,
 
-      unknownConfirmedFactTurnIsRejected:
-        unknownConfirmedFactTurnRejected,
+        unknownConfirmedFactSourceTurnIsRejected:
+        unknownConfirmedFactSourceTurnRejected,
+
+      unknownConfirmedFactDecisionTurnIsRejected:
+        unknownConfirmedFactDecisionTurnRejected,
+
+      invalidConfirmedFactFieldIsRejected:
+        invalidConfirmedFactFieldRejected,
 
       unknownClarificationTurnIsRejected:
         unknownClarificationTurnRejected,
+
+        emptyClarificationItemsAreRejected:
+        emptyClarificationItemsRejected,
+
+      invalidClarificationItemIsRejected:
+        invalidClarificationItemRejected,
 
       emptyAssistantAnswerIsRejected:
         emptyAssistantAnswerRejected,

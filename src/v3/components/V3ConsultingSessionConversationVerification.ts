@@ -79,15 +79,28 @@ import {
           decisionTurnId:
             initialSession.initialTurnId,
 
-          missingInformation: [
-            "현재 고정 생활비",
-            "창업에 사용할 자금의 성격",
-          ],
+            items: [
+                {
+                  key:
+                    "monthlyLivingCost",
 
-          questions: [
-            "생활비를 제외하고 사용할 수 있는 여유자금은 얼마인가요?",
-            "현재 직장을 유지한 채 준비할 수 있나요?",
-          ],
+                  description:
+                    "현재 고정 생활비",
+
+                  question:
+                    "생활비를 제외하고 사용할 수 있는 여유자금은 얼마인가요?",
+                },
+                {
+                  key:
+                    "businessFunds",
+
+                  description:
+                    "창업에 사용할 자금의 성격",
+
+                  question:
+                    "현재 직장을 유지한 채 준비할 수 있나요?",
+                },
+              ],
         },
       };
 

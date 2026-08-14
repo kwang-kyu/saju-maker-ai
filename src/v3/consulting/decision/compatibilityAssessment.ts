@@ -239,12 +239,16 @@ export function assessCompatibility(
       && counterpartSaju
         !== undefined;
 
-  const counterpartZodiac =
-    getClarificationFieldValue(
-      questionContext,
-      "counterpartBirthData",
-      "zodiacSign",
-    );
+        const counterpartZodiac =
+        questionContext
+          .question
+          .counterpartFacts
+          .zodiac
+        ?? getClarificationFieldValue(
+          questionContext,
+          "counterpartBirthData",
+          "zodiacSign",
+        );
 
   const zodiacAssessment =
     counterpartZodiac

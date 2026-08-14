@@ -173,7 +173,7 @@ import type {
       sessionId:
         "browser-session-001",
 
-      status:
+        status:
         "active",
 
       createdAt:
@@ -243,7 +243,7 @@ import type {
         initialResult.sessionId,
 
       status:
-        "active",
+        "awaitingClarification",
 
       updatedAt:
         "2026-07-29T07:05:00.000Z",
@@ -268,8 +268,23 @@ import type {
           "2026-07-29T07:05:00.000Z",
       },
 
-      pendingClarification:
-        null,
+      pendingClarification: {
+        decisionTurnId:
+          "browser-turn-002",
+
+        items: [
+          {
+            key:
+              "counterpartBirthTime",
+
+            description:
+              "상대방 출생시간",
+
+            question:
+              "상대방의 출생시간을 알고 계신가요?",
+          },
+        ],
+      },
     };
 
     const turnRequests:
@@ -538,6 +553,32 @@ import type {
       followUpAnswerIsReturned:
         turnResult.turn.assistantAnswer
         === turnResponseBody.turn.assistantAnswer,
+
+        followUpClarificationStatusIsReturned:
+  turnResult.status
+  === "awaitingClarification",
+
+followUpClarificationItemsAreReturned:
+  turnResult.pendingClarification
+    ?.decisionTurnId
+  === turnResponseBody
+    .pendingClarification
+    .decisionTurnId
+  && turnResult
+    .pendingClarification
+    .items[0]
+    .key
+  === "counterpartBirthTime"
+  && turnResult
+    .pendingClarification
+    .items[0]
+    .description
+  === "상대방 출생시간"
+  && turnResult
+    .pendingClarification
+    .items[0]
+    .question
+  === "상대방의 출생시간을 알고 계신가요?",
 
       emptyAccessTokenUsesTypedError:
         emptyTokenError

@@ -456,21 +456,41 @@ const identityProvided =
     "currentStatus",
   );
 
-const birthDataProvided =
-  counterpartBirthFieldKeys.has(
-    "birthDate",
+  const birthDataProvided =
+  (
+    counterpartBirthFieldKeys.has(
+      "birthDate",
+    )
+    && counterpartBirthFieldKeys.has(
+      "calendarType",
+    )
+    && counterpartBirthFieldKeys.has(
+      "gender",
+    )
   )
-  && counterpartBirthFieldKeys.has(
-    "calendarType",
-  )
-  && counterpartBirthFieldKeys.has(
-    "gender",
+  || (
+    question
+      .counterpartFacts
+      .birthDate
+    !== null
+    && question
+      .counterpartFacts
+      .calendarType
+    !== null
+    && question
+      .counterpartFacts
+      .gender
+    !== null
   );
 
 const zodiacProvided =
   counterpartBirthFieldKeys.has(
     "zodiacSign",
-  );
+  )
+  || question
+    .counterpartFacts
+    .zodiac
+  !== null;
 
 const relation =
       detectCounterpartRelation(
@@ -554,10 +574,13 @@ const relation =
         counterpartReadingRequired:
           counterpartExists,
 
-        compatibilityAnalysisRequired:
-          question.decisionTarget === "partner" ||
-          question.decisionTarget === "marry",
-
+          compatibilityAnalysisRequired:
+          question.analysisMode
+            === "compatibility"
+          || question.decisionTarget
+            === "partner"
+          || question.decisionTarget
+            === "marry",
         timingAnalysisRequired:
           question.intent === "timing" ||
           question.urgency !== "unknown",

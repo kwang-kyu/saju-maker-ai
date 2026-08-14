@@ -29,3 +29,6 @@ dist-ssr
 .env.local
 .env.development.local
 .env.*
+
+# Supabase CLI temporary files
+supabase/.temp/
