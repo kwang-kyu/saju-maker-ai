@@ -15,7 +15,10 @@ import type {
     missingBirthDataStopsVerdict:
       boolean;
 
-    sufficientEvidencePreservesVerdict:
+    missingFullAssessmentStopsVerdict:
+      boolean;
+
+    mixedFullCompatibilityPreservesVerdict:
       boolean;
 
     supportiveZodiacRecommends:
@@ -67,6 +70,9 @@ import type {
 
       additionalCounterpartDataRequired:
         false,
+
+      fullCompatibilityAssessment:
+        null,
 
       ...input,
     };
@@ -147,7 +153,7 @@ import type {
           "general",
       });
 
-    const sufficientEvidenceVerdict =
+    const sufficientEvidenceWithoutAssessmentVerdict =
       applyCompatibilityVerdictEffect({
         verdict:
           "conditionallyRecommended",
@@ -180,6 +186,140 @@ import type {
 
             additionalCounterpartDataRequired:
               false,
+          }),
+          requestedAnalysisScope:
+          "general",
+      });
+
+    const mixedFullCompatibilityVerdict =
+      applyCompatibilityVerdictEffect({
+        verdict:
+          "conditionallyRecommended",
+
+        assessment:
+          buildAssessment({
+            analysisRequired:
+              true,
+
+            counterpartExists:
+              true,
+
+            counterpartRelation:
+              "businessPartner",
+
+            identityProvided:
+              true,
+
+            birthDataProvided:
+              true,
+
+            evidenceLevel:
+              "sufficient",
+
+            analysisScope:
+              "fullCompatibility",
+
+            counterpartReadingRequired:
+              true,
+
+            additionalCounterpartDataRequired:
+              false,
+
+            fullCompatibilityAssessment: {
+              available:
+                true,
+
+              precision:
+                "dateOnly",
+
+              calculationBasis:
+                "crossPillarComparison",
+
+              analysisScope:
+                "fullCompatibility",
+
+              counterpartSource: {
+                birthDate:
+                  "1967-04-10",
+
+                birthTime:
+                  null,
+
+                calendarType:
+                  "solar",
+
+                gender:
+                  "male",
+              },
+
+              comparedSelfPillars:
+                [],
+
+              comparedCounterpartPillars:
+                [],
+
+              selfDayMaster:
+                "甲",
+
+              counterpartDayMaster:
+                "丁",
+
+              dayMasterElementRelation:
+                "selfGeneratesCounterpart",
+
+              selfElementDistribution:
+                null,
+
+              counterpartElementDistribution:
+                null,
+
+              complementaryElements:
+                [],
+
+              sharedDominantElements:
+                [],
+
+              overConcentrationSignals:
+                [],
+
+              interactionFacts:
+                [],
+
+              interactionCounts: {
+                combination:
+                  0,
+
+                clash:
+                  0,
+
+                punishment:
+                  0,
+
+                break:
+                  0,
+
+                harm:
+                  0,
+              },
+
+              supportiveSignals:
+                [],
+
+              cautionSignals:
+                [],
+
+              supportScore:
+                1,
+
+              cautionScore:
+                0,
+
+              overallLevel:
+                "mixed",
+
+              limitations:
+                [],
+            },
           }),
           requestedAnalysisScope:
           "general",
@@ -315,8 +455,12 @@ import type {
       missingBirthDataVerdict
         === "insufficientEvidence";
 
-    const sufficientEvidencePreservesVerdict =
-      sufficientEvidenceVerdict
+    const missingFullAssessmentStopsVerdict =
+      sufficientEvidenceWithoutAssessmentVerdict
+        === "insufficientEvidence";
+
+    const mixedFullCompatibilityPreservesVerdict =
+      mixedFullCompatibilityVerdict
         === "conditionallyRecommended";
 
         const supportiveZodiacRecommends =
@@ -334,7 +478,9 @@ import type {
 
       missingBirthDataStopsVerdict,
 
-      sufficientEvidencePreservesVerdict,
+      missingFullAssessmentStopsVerdict,
+
+      mixedFullCompatibilityPreservesVerdict,
 
       supportiveZodiacRecommends,
 
@@ -344,7 +490,8 @@ import type {
         notRequiredPreservesVerdict
         && missingCounterpartStopsVerdict
         && missingBirthDataStopsVerdict
-        && sufficientEvidencePreservesVerdict
+        && missingFullAssessmentStopsVerdict
+        && mixedFullCompatibilityPreservesVerdict
         && supportiveZodiacRecommends
         && conflictedZodiacDoesNotRecommend,
     };

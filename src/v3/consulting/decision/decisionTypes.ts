@@ -1,6 +1,9 @@
 import type {
   CounterpartSajuCalculation,
 } from "./counterpartSajuCalculationBuilder";
+import type {
+  SajuFacts,
+} from "../../types/sajuFacts";
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import type { HumanLifeContext } from "../../types/humanLifeContext";
 import type { QuestionReaderResult } from "../question/questionReader";
@@ -152,6 +155,24 @@ selfYearGanZhi?:
  */
 counterpartSaju?:
   CounterpartSajuCalculation;
+
+/**
+ * Calculator가 확정한 본인 SajuFacts다.
+ *
+ * fullCompatibility 근거를 만들 때 우선 사용하며,
+ * 질문이나 GPT가 새로 계산하지 않는다.
+ */
+selfSajuFacts?:
+  SajuFacts;
+
+/**
+ * Calculator가 확정한 본인 원국 결과다.
+ *
+ * 기존 호출부 호환을 위해 유지하며,
+ * fullCompatibility는 selfSajuFacts를 우선한다.
+ */
+selfSajuCalculation?:
+  CounterpartSajuCalculation["calculated"];
 
 question:
   QuestionReaderResult;

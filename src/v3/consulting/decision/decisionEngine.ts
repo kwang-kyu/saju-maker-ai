@@ -84,6 +84,7 @@ export function runDecisionEngine(
     input.questionContext,
     input.selfYearGanZhi,
     input.counterpartSaju,
+    input.selfSajuFacts,
   );
 
   const timingAssessment =

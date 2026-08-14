@@ -19,6 +19,100 @@ import type {
       QuestionAnalysisScope;
   };
 
+  function applyPositiveCompatibilityVerdictShift(
+    verdict:
+      DecisionVerdict,
+  ): DecisionVerdict {
+    switch (
+      verdict
+    ) {
+      case "recommended":
+        return "recommended";
+
+      case "conditionallyRecommended":
+        return "recommended";
+
+      case "wait":
+        return "conditionallyRecommended";
+
+      case "notRecommended":
+        return "conditionallyRecommended";
+
+      case "insufficientEvidence":
+        return "insufficientEvidence";
+    }
+  }
+
+  function applyCautionCompatibilityVerdictShift(
+    verdict:
+      DecisionVerdict,
+  ): DecisionVerdict {
+    switch (
+      verdict
+    ) {
+      case "recommended":
+        return "conditionallyRecommended";
+
+      case "conditionallyRecommended":
+        return "wait";
+
+      case "wait":
+        return "wait";
+
+      case "notRecommended":
+        return "notRecommended";
+
+      case "insufficientEvidence":
+        return "insufficientEvidence";
+    }
+  }
+
+  function applyFullCompatibilityVerdictEffect(
+    verdict:
+      DecisionVerdict,
+    assessment:
+      CompatibilityAssessment,
+  ): DecisionVerdict {
+    const fullCompatibilityAssessment =
+      assessment
+        .fullCompatibilityAssessment;
+
+    if (
+      assessment.analysisScope
+      !== "fullCompatibility"
+    ) {
+      return verdict;
+    }
+
+    if (
+      !fullCompatibilityAssessment
+      ?.available
+    ) {
+      return "insufficientEvidence";
+    }
+
+    switch (
+      fullCompatibilityAssessment
+        .overallLevel
+    ) {
+      case "supportive":
+        return applyPositiveCompatibilityVerdictShift(
+          verdict,
+        );
+
+      case "caution":
+        return applyCautionCompatibilityVerdictShift(
+          verdict,
+        );
+
+      case "mixed":
+        return verdict;
+
+      default:
+        return verdict;
+    }
+  }
+
   /**
    * 궁합 질문에 실제 비교 자료가 부족하면
    * 다른 개인 판독 근거가 궁합 결론을 대신 만들지 못하도록 한다.
@@ -85,5 +179,8 @@ import type {
       return "insufficientEvidence";
     }
 
-    return verdict;
+    return applyFullCompatibilityVerdictEffect(
+      verdict,
+      assessment,
+    );
   }

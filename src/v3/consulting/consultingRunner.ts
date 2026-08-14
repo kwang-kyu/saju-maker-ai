@@ -156,6 +156,16 @@ export function runConsultingTurn(
       counterpartSaju:
         input.counterpartSaju,
 
+      selfSajuFacts:
+        input
+          .sajuFacts
+          ?.facts,
+
+      selfSajuCalculation:
+        input
+          .sajuFacts
+          ?.calculatedSaju,
+
       question:
         questionReaderResult,
 

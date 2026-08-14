@@ -1,109 +1,640 @@
 import type {
-    CompatibilityAssessment,
-  } from "./compatibilityAssessment";
-  import type {
-    DecisionEvidence,
-  } from "./decisionTypes";
-  import type {
+
+  CompatibilityAssessment,
+
+} from "./compatibilityAssessment";
+
+import type {
+
+  FullCompatibilityAssessment,
+
+  FullCompatibilityOverallLevel,
+
+} from "./fullCompatibilityAssessment";
+
+import type {
+
+  DecisionEvidence,
+
+} from "./decisionTypes";
+
+import type {
+
+  ZodiacCompatibilityLevel,
+
+} from "./zodiacCompatibilityAssessment";
+
+
+
+function resolveZodiacEvidenceWeight(
+
+  level:
+
     ZodiacCompatibilityLevel,
-  } from "./zodiacCompatibilityAssessment";
 
-  function resolveEvidenceWeight(
-    level:
-      ZodiacCompatibilityLevel,
-  ): number {
-    switch (
-      level
-    ) {
-      case "supportive":
-      case "conflicted":
-        return 4;
+): number {
 
-      case "similar":
-      case "caution":
-        return 3;
+  switch (
 
-      case "neutral":
-        return 2;
+    level
 
-      case "unknown":
-        return 1;
-    }
+  ) {
+
+    case "supportive":
+
+    case "conflicted":
+
+      return 4;
+
+
+
+    case "similar":
+
+    case "caution":
+
+      return 3;
+
+
+
+    case "neutral":
+
+      return 2;
+
+
+
+    case "unknown":
+
+      return 1;
+
   }
 
-  /**
-   * 계산된 띠 관계를 해석 문장이 아닌 구조화된 사실값으로 전달한다.
-   *
-   * 최종 자연어 설명은 이 값과 원국·현재 국면·관계 현실을
-   * 함께 받은 Explanation GPT가 작성한다.
-   */
-  export function buildCompatibilityEvidence(
-    assessment:
-      CompatibilityAssessment,
-  ): DecisionEvidence[] {
-    const zodiacAssessment =
+}
+
+
+
+function resolveFullCompatibilityEvidenceWeight(
+
+  assessment:
+
+    FullCompatibilityAssessment,
+
+): number {
+
+  switch (
+
+    assessment.overallLevel
+
+  ) {
+
+    case "supportive":
+
+    case "caution":
+
+      return 5;
+
+
+
+    case "mixed":
+
+      return 4;
+
+
+
+    default:
+
+      return 4;
+
+  }
+
+}
+
+
+
+function buildZodiacCompatibilityEvidence(
+
+  assessment:
+
+    CompatibilityAssessment,
+
+): DecisionEvidence[] {
+
+  const zodiacAssessment =
+
+    assessment
+
+      .zodiacAssessment;
+
+
+
+  if (
+
+    !assessment.analysisRequired
+
+    || assessment.analysisScope
+
+      !== "zodiacCompatibility"
+
+    || zodiacAssessment
+
+      === null
+
+    || !zodiacAssessment.available
+
+  ) {
+
+    return [];
+
+  }
+
+
+
+  return [
+
+    {
+
+      source:
+
+        "compatibility",
+
+
+
+      key:
+
+        `zodiacCompatibility-${zodiacAssessment.relation}`,
+
+
+
+      description:
+
+        JSON.stringify({
+
+          calculationBasis:
+
+            zodiacAssessment
+
+              .calculationBasis,
+
+
+
+          analysisScope:
+
+            zodiacAssessment
+
+              .analysisScope,
+
+
+
+          selfBranch:
+
+            zodiacAssessment
+
+              .selfBranch,
+
+
+
+          selfZodiac:
+
+            zodiacAssessment
+
+              .selfZodiac,
+
+
+
+          counterpartBranch:
+
+            zodiacAssessment
+
+              .counterpartBranch,
+
+
+
+          counterpartZodiac:
+
+            zodiacAssessment
+
+              .counterpartZodiac,
+
+
+
+          relation:
+
+            zodiacAssessment
+
+              .relation,
+
+
+
+          level:
+
+            zodiacAssessment
+
+              .level,
+
+        }),
+
+
+
+      weight:
+
+        resolveZodiacEvidenceWeight(
+
+          zodiacAssessment
+
+            .level,
+
+        ),
+
+    },
+
+  ];
+
+}
+
+
+
+function serializeFullCompatibilityAssessment(
+
+  assessment:
+
+    FullCompatibilityAssessment,
+
+): Record<string, unknown> {
+
+  return {
+
+    calculationBasis:
+
       assessment
-        .zodiacAssessment;
+
+        .calculationBasis,
+
+
+
+    analysisScope:
+
+      assessment
+
+        .analysisScope,
+
+
+
+    precision:
+
+      assessment
+
+        .precision,
+
+
+
+    counterpartSource:
+
+      assessment
+
+        .counterpartSource,
+
+
+
+    comparedSelfPillars:
+
+      assessment
+
+        .comparedSelfPillars,
+
+
+
+    comparedCounterpartPillars:
+
+      assessment
+
+        .comparedCounterpartPillars,
+
+
+
+    selfDayMaster:
+
+      assessment
+
+        .selfDayMaster,
+
+
+
+    counterpartDayMaster:
+
+      assessment
+
+        .counterpartDayMaster,
+
+
+
+    dayMasterElementRelation:
+
+      assessment
+
+        .dayMasterElementRelation,
+
+
+
+    selfElementDistribution:
+
+      assessment
+
+        .selfElementDistribution,
+
+
+
+    counterpartElementDistribution:
+
+      assessment
+
+        .counterpartElementDistribution,
+
+
+
+    complementaryElements:
+
+      assessment
+
+        .complementaryElements,
+
+
+
+    sharedDominantElements:
+
+      assessment
+
+        .sharedDominantElements,
+
+
+
+    overConcentrationSignals:
+
+      assessment
+
+        .overConcentrationSignals,
+
+
+
+    interactionFacts:
+
+      assessment
+
+        .interactionFacts,
+
+
+
+    interactionCounts:
+
+      assessment
+
+        .interactionCounts,
+
+
+
+    supportiveSignals:
+
+      assessment
+
+        .supportiveSignals,
+
+
+
+    cautionSignals:
+
+      assessment
+
+        .cautionSignals,
+
+
+
+    supportScore:
+
+      assessment
+
+        .supportScore,
+
+
+
+    cautionScore:
+
+      assessment
+
+        .cautionScore,
+
+
+
+    overallLevel:
+
+      assessment
+
+        .overallLevel,
+
+
+
+    limitations:
+
+      assessment
+
+        .limitations,
+
+  };
+
+}
+
+
+
+function buildFullCompatibilityEvidence(
+
+  assessment:
+
+    CompatibilityAssessment,
+
+): DecisionEvidence[] {
+
+  const fullCompatibilityAssessment =
+
+    assessment
+
+      .fullCompatibilityAssessment;
+
+
+
+  if (
+
+    !assessment.analysisRequired
+
+    || assessment.analysisScope
+
+      !== "fullCompatibility"
+
+    || !assessment.birthDataProvided
+
+    || !fullCompatibilityAssessment
+
+      ?.available
+
+  ) {
+
+    return [];
+
+  }
+
+
+
+  return [
+
+    {
+
+      source:
+
+        "compatibility",
+
+
+
+      key:
+
+        "fullCompatibility-crossPillarComparison",
+
+
+
+      description:
+
+        JSON.stringify(
+
+          serializeFullCompatibilityAssessment(
+
+            fullCompatibilityAssessment,
+
+          ),
+
+        ),
+
+
+
+      weight:
+
+        resolveFullCompatibilityEvidenceWeight(
+
+          fullCompatibilityAssessment,
+
+        ),
+
+    },
+
+  ];
+
+}
+
+
+
+/**
+
+ * 계산된 궁합 관계를 해석 문장이 아닌 구조화된 사실값으로 전달한다.
+
+ *
+
+ * 최종 자연어 설명은 이 값과 원국·현재 국면·관계 현실을
+
+ * 함께 받은 Explanation GPT가 작성한다.
+
+ */
+
+export function buildCompatibilityEvidence(
+
+  assessment:
+
+    CompatibilityAssessment,
+
+): DecisionEvidence[] {
+
+  return [
+
+    ...buildZodiacCompatibilityEvidence(
+
+      assessment,
+
+    ),
+
+    ...buildFullCompatibilityEvidence(
+
+      assessment,
+
+    ),
+
+  ];
+
+}
+
+
+
+export function extractFullCompatibilityOverallLevelFromEvidence(
+
+  evidence:
+
+    DecisionEvidence[],
+
+): FullCompatibilityOverallLevel | null {
+
+  for (
+
+    const item
+
+    of evidence
+
+  ) {
 
     if (
-      !assessment.analysisRequired
-      || assessment.analysisScope
-        !== "zodiacCompatibility"
-      || zodiacAssessment
-        === null
-      || !zodiacAssessment.available
+
+      item.source
+
+      !== "compatibility"
+
+      || item.key
+
+      !== "fullCompatibility-crossPillarComparison"
+
     ) {
-      return [];
+
+      continue;
+
     }
 
-    return [
-      {
-        source:
-          "compatibility",
 
-        key:
-          `zodiacCompatibility-${zodiacAssessment.relation}`,
 
-        description:
-          JSON.stringify({
-            calculationBasis:
-              zodiacAssessment
-                .calculationBasis,
+    try {
 
-            analysisScope:
-              zodiacAssessment
-                .analysisScope,
+      const payload =
 
-            selfBranch:
-              zodiacAssessment
-                .selfBranch,
+        JSON.parse(
 
-            selfZodiac:
-              zodiacAssessment
-                .selfZodiac,
+          item.description,
 
-            counterpartBranch:
-              zodiacAssessment
-                .counterpartBranch,
+        ) as {
 
-            counterpartZodiac:
-              zodiacAssessment
-                .counterpartZodiac,
+          overallLevel?:
 
-            relation:
-              zodiacAssessment
-                .relation,
+            FullCompatibilityOverallLevel | null;
 
-            level:
-              zodiacAssessment
-                .level,
-          }),
+        };
 
-        weight:
-          resolveEvidenceWeight(
-            zodiacAssessment
-              .level,
-          ),
-      },
-    ];
+
+
+      return (
+
+        payload.overallLevel
+
+        ?? null
+
+      );
+
+    } catch {
+
+      return null;
+
+    }
+
   }
+
+
+
+  return null;
+}

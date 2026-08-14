@@ -12,6 +12,15 @@ import type {
 import type {
   CounterpartSajuCalculation,
 } from "./counterpartSajuCalculationBuilder";
+import type {
+  SajuFacts,
+} from "../../types/sajuFacts";
+import {
+  assessFullCompatibility,
+} from "./fullCompatibilityAssessment";
+import type {
+  FullCompatibilityAssessment,
+} from "./fullCompatibilityAssessment";
 
 export type CompatibilityEvidenceLevel =
   | "notRequired"
@@ -63,6 +72,9 @@ export type CompatibilityAssessment = {
 
   additionalCounterpartDataRequired:
     boolean;
+
+  fullCompatibilityAssessment?:
+    FullCompatibilityAssessment | null;
 };
 
 function getClarificationFieldValue(
@@ -216,6 +228,8 @@ export function assessCompatibility(
     string,
   counterpartSaju?:
     CounterpartSajuCalculation,
+  selfSajuFacts?:
+    SajuFacts,
 ): CompatibilityAssessment {
   const analysisRequired =
     questionContext
@@ -263,6 +277,16 @@ export function assessCompatibility(
     zodiacAssessment
       ?.available
     === true;
+
+  const fullCompatibilityAssessment =
+    birthDataProvided
+    && counterpartSaju
+    && selfSajuFacts
+      ? assessFullCompatibility({
+          selfSajuFacts,
+          counterpartSaju,
+        })
+      : null;
 
   return {
     analysisRequired,
@@ -313,5 +337,7 @@ export function assessCompatibility(
       analysisRequired
       && !birthDataProvided
       && !zodiacProvided,
+
+    fullCompatibilityAssessment,
   };
 }

@@ -280,6 +280,15 @@ export function buildConsultingPrompt(
 - 질문과 관계없는 준비사항이나 일반적인 조언을 기계적으로 나열하지 않는다.
 - 제목, 문단 수, 설명 순서는 질문 성격에 맞게 자유롭게 구성한다.
 - 정해진 후속 질문이나 반복되는 확인 질문을 만들지 않는다.
+
+궁합 근거 사용 원칙
+
+- 질문별 판단 근거에 full compatibility evidence가 있으면 해당 상대와의 궁합에 직접 답한다.
+- 일반적인 동업 조언이나 관계 일반론으로 궁합 질문을 대체하지 않는다.
+- evidence에 포함된 supportiveSignals와 cautionSignals 근거를 각각 설명한다.
+- 상대방 출생시간이 없거나 limitations에 시주 제외가 명시되면 시주 궁합을 말하지 않는다.
+- evidence에 없는 합·충·형·파·해와 오행 관계를 새로 만들지 않는다.
+- 엔진 verdict와 overallLevel을 변경하거나 뒤집지 않는다.
 `.trim();
 
   const explanationSections =

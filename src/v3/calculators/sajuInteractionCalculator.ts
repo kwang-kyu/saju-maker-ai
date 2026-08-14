@@ -12,6 +12,59 @@ import type {
   
     strength: SajuInteractionFact["strength"];
   };
+
+  const CROSS_PERSON_STEM_NORMALIZATION:
+    Record<string, string> = {
+      甲: "갑",
+      乙: "을",
+      丙: "병",
+      丁: "정",
+      戊: "무",
+      己: "기",
+      庚: "경",
+      辛: "신",
+      壬: "임",
+      癸: "계",
+    };
+
+  const CROSS_PERSON_BRANCH_NORMALIZATION:
+    Record<string, string> = {
+      子: "자",
+      丑: "축",
+      寅: "인",
+      卯: "묘",
+      辰: "진",
+      巳: "사",
+      午: "오",
+      未: "미",
+      申: "신",
+      酉: "유",
+      戌: "술",
+      亥: "해",
+    };
+
+  function normalizeCrossPersonPillar(
+    pillar:
+      SajuPillarFact,
+  ): SajuPillarFact {
+    const heavenlyStem =
+      CROSS_PERSON_STEM_NORMALIZATION[
+        pillar.heavenlyStem
+      ]
+      ?? pillar.heavenlyStem;
+
+    const earthlyBranch =
+      CROSS_PERSON_BRANCH_NORMALIZATION[
+        pillar.earthlyBranch
+      ]
+      ?? pillar.earthlyBranch;
+
+    return {
+      ...pillar,
+      heavenlyStem,
+      earthlyBranch,
+    };
+  }
   
   const heavenlyStemCombinationRules: InteractionRule[] = [
     {
@@ -271,48 +324,99 @@ import type {
     );
   }
   
-  function getPillarLabel(
-    pillar: SajuPillarFact,
+  type ComparePillarsOptions = {
+    firstOwner?:
+      string;
+
+    secondOwner?:
+      string;
+  };
+
+  function getPillarPositionLabel(
+    position:
+      SajuPillarFact["position"],
+    useCrossPersonLabel:
+      boolean,
   ): string {
-    switch (pillar.position) {
+    switch (position) {
       case "year":
-        return "년주";
-  
+        return useCrossPersonLabel
+          ? "연주"
+          : "년주";
+
       case "month":
         return "월주";
-  
+
       case "day":
         return "일주";
-  
+
       case "time":
         return "시주";
     }
+  }
+
+  function getPillarLabel(
+    pillar:
+      SajuPillarFact,
+    ownerLabel?:
+      string,
+  ): string {
+    const positionLabel =
+      getPillarPositionLabel(
+        pillar.position,
+        ownerLabel
+          !== undefined,
+      );
+
+    if (
+      ownerLabel
+    ) {
+      return `${ownerLabel} ${positionLabel}`;
+    }
+
+    return positionLabel;
   }
   
   function buildFact(params: {
     rule: InteractionRule;
     firstPillar: SajuPillarFact;
     secondPillar: SajuPillarFact;
+    firstOwner?: string;
+    secondOwner?: string;
   }): SajuInteractionFact {
     const {
       rule,
       firstPillar,
       secondPillar,
+      firstOwner,
+      secondOwner,
     } = params;
+
+    const firstLabel =
+      getPillarLabel(
+        firstPillar,
+        firstOwner,
+      );
+
+    const secondLabel =
+      getPillarLabel(
+        secondPillar,
+        secondOwner,
+      );
   
     return {
       type: rule.type,
   
       targets: [
-        `${getPillarLabel(firstPillar)} ${firstPillar.ganZhi}`,
-        `${getPillarLabel(secondPillar)} ${secondPillar.ganZhi}`,
+        `${firstLabel} ${firstPillar.ganZhi}`,
+        `${secondLabel} ${secondPillar.ganZhi}`,
       ],
   
       description:
         `${rule.description} ` +
         `해당 위치는 ` +
-        `${getPillarLabel(firstPillar)}와 ` +
-        `${getPillarLabel(secondPillar)}이다.`,
+        `${firstLabel}와 ` +
+        `${secondLabel}이다.`,
   
       strength: rule.strength,
     };
@@ -324,6 +428,8 @@ import type {
     secondValue: string;
     firstPillar: SajuPillarFact;
     secondPillar: SajuPillarFact;
+    firstOwner?: string;
+    secondOwner?: string;
   }): SajuInteractionFact[] {
     const {
       rules,
@@ -331,6 +437,8 @@ import type {
       secondValue,
       firstPillar,
       secondPillar,
+      firstOwner,
+      secondOwner,
     } = params;
   
     return rules
@@ -346,13 +454,16 @@ import type {
           rule,
           firstPillar,
           secondPillar,
+          firstOwner,
+          secondOwner,
         }),
       );
   }
   
-  function comparePillars(
+  export function comparePillars(
     firstPillar: SajuPillarFact,
     secondPillar: SajuPillarFact,
+    options?: ComparePillarsOptions,
   ): SajuInteractionFact[] {
     const heavenlyStemFacts = findRules({
       rules: heavenlyStemCombinationRules,
@@ -360,6 +471,10 @@ import type {
       secondValue: secondPillar.heavenlyStem,
       firstPillar,
       secondPillar,
+      firstOwner:
+        options?.firstOwner,
+      secondOwner:
+        options?.secondOwner,
     });
   
     const branchRules = [
@@ -376,6 +491,10 @@ import type {
       secondValue: secondPillar.earthlyBranch,
       firstPillar,
       secondPillar,
+      firstOwner:
+        options?.firstOwner,
+      secondOwner:
+        options?.secondOwner,
     });
   
     return [
@@ -384,6 +503,42 @@ import type {
     ];
   }
   
+  export function calculateCrossPersonSajuInteractions(
+    selfPillars: SajuPillarFact[],
+    counterpartPillars: SajuPillarFact[],
+  ): SajuInteractionFact[] {
+    const interactionFacts: SajuInteractionFact[] = [];
+
+    for (
+      const selfPillar
+      of selfPillars
+    ) {
+      for (
+        const counterpartPillar
+        of counterpartPillars
+      ) {
+        interactionFacts.push(
+          ...comparePillars(
+            normalizeCrossPersonPillar(
+              selfPillar,
+            ),
+            normalizeCrossPersonPillar(
+              counterpartPillar,
+            ),
+            {
+              firstOwner:
+                "본인",
+              secondOwner:
+                "상대방",
+            },
+          ),
+        );
+      }
+    }
+
+    return interactionFacts;
+  }
+
   export function calculateSajuInteractions(
     pillars: SajuPillarFact[],
   ): SajuInteractionFact[] {
