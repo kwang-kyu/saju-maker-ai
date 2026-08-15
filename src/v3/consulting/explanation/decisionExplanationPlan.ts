@@ -62,6 +62,10 @@ export type DecisionExplanationPlan = {
   blocks:
     ExplanationBlock[];
 
+  explanationKind?:
+    "roleRecommendation"
+    | "decision";
+
   engineDecisionLocked:
     true;
 
@@ -159,6 +163,190 @@ function translateActionReadiness(
   );
 }
 
+function buildRoleRecommendationExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+): ExplanationBlock[] {
+  const assessment =
+    input
+      .roleRecommendationAssessment;
+
+  if (
+    !assessment
+    || !assessment.available
+  ) {
+    return [];
+  }
+
+  const [
+    primary,
+    secondary,
+    tertiary,
+  ] = assessment.candidates;
+
+  const roleEvidenceLines =
+    input
+      .evidence
+      .filter(
+        (item) =>
+          item.source
+          === "roleRecommendation",
+      )
+      .map(
+        (item) =>
+          item.description,
+      );
+
+  const avoidedRolePatterns =
+    assessment
+      .avoidedRolePatterns;
+
+  const blocks:
+    ExplanationBlock[] = [
+    {
+      step:
+        "directAnswer",
+
+      title:
+        "성격 한 줄 제목",
+
+      required:
+        true,
+
+      content:
+        input.reason,
+    },
+    {
+      step:
+        "humanContext",
+
+      title:
+        "가장 어울리는 대표 배역",
+
+      required:
+        true,
+
+      content:
+        [
+          primary.title,
+          primary.archetype,
+          primary.characterDescription,
+          primary.whyItFits,
+        ].join("\n"),
+    },
+    {
+      step:
+        "alignment",
+
+      title:
+        "추가 배역 1",
+
+      required:
+        true,
+
+      content:
+        [
+          secondary.title,
+          secondary.archetype,
+          secondary.whyItFits,
+          secondary.performanceStyle,
+        ].join("\n"),
+    },
+    {
+      step:
+        "readerDecisionEffect",
+
+      title:
+        "추가 배역 2",
+
+      required:
+        true,
+
+      content:
+        [
+          tertiary.title,
+          tertiary.archetype,
+          tertiary.whyItFits,
+          tertiary.performanceStyle,
+        ].join("\n"),
+    },
+    {
+      step:
+        "evidence",
+
+      title:
+        "배역별 사주·Reader 근거",
+
+      required:
+        true,
+
+      content:
+        roleEvidenceLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "recommendedDirection",
+
+      title:
+        "대사·표정·움직임·장면에서의 표현 방식",
+
+      required:
+        true,
+
+      content:
+        [
+          primary.performanceStyle,
+          primary.strongScenes,
+          secondary.strongScenes,
+          tertiary.strongScenes,
+        ].join("\n"),
+    },
+  ];
+
+  if (
+    avoidedRolePatterns
+      .length
+    > 0
+  ) {
+    blocks.push(
+      {
+        step:
+          "prohibitedDirection",
+
+        title:
+          "잘 살리지 못할 가능성이 있는 역할 유형",
+
+        required:
+          true,
+
+        content:
+          avoidedRolePatterns
+            .join("\n"),
+      },
+    );
+  }
+
+  blocks.push(
+    {
+      step:
+        "finalDecision",
+
+      title:
+        "최종 추천",
+
+      required:
+        true,
+
+      content:
+        input.finalDecisionSentence,
+    },
+  );
+
+  return blocks;
+}
+
 /**
  * Decision Explanation Plan
  *
@@ -179,6 +367,46 @@ export function buildDecisionExplanationPlan(
     requireOriginalQuestion(
       originalQuestion,
     );
+
+  if (
+    input
+      .roleRecommendationAssessment
+      ?.available
+  ) {
+    return {
+      originalQuestion:
+        normalizedQuestion,
+
+      topic:
+        input.topic,
+
+      intent:
+        input.intent,
+
+      decisionTarget:
+        input.decisionTarget,
+
+      verdict:
+        input.verdict,
+
+      confidence:
+        input.confidence,
+
+      blocks:
+        buildRoleRecommendationExplanationBlocks(
+          input,
+        ),
+
+      explanationKind:
+        "roleRecommendation",
+
+      engineDecisionLocked:
+        true,
+
+      gptMayRejudge:
+        false,
+    };
+  }
 
   const readerDecisionExplanation =
     buildReaderDecisionExplanation(

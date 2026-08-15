@@ -10,6 +10,9 @@ import type {
 import type {
   QuestionReaderResult,
 } from "./questionReader";
+import {
+  isRoleRecommendationQuestion,
+} from "./roleRecommendationQuestionDetector";
 
   type QuestionRealitySignalRule = {
     area:
@@ -594,7 +597,17 @@ const relation =
 
         comparisonAnalysisRequired:
           question.intent === "comparison" ||
-          question.intent === "selection",
+          (
+            question.intent === "selection"
+            && !isRoleRecommendationQuestion(
+              question.normalizedQuestion,
+            )
+          ),
+
+        roleRecommendationAnalysisRequired:
+          isRoleRecommendationQuestion(
+            question.normalizedQuestion,
+          ),
         },
       };
 

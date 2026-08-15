@@ -94,12 +94,12 @@ import {
           "job",
 
         expectedDecisionTarget:
-          "choose",
+          "none",
 
         expectedPromptPhrases: [
           "연극을 한다면 어떤 역할이 좋을까요?",
           "상담 영역: 직업과 활동 방향",
-          "결정할 대상: 가장 적합한 대상을 선택",
+          "결정할 대상: 성격에 맞는 역할·배역 해석",
         ],
       },
       {
@@ -420,8 +420,12 @@ import {
       allDecisionTargetsAreSupported:
         caseResults.every(
           (result) =>
-            result.actualDecisionTarget
-            !== "none",
+            result
+              .actualDecisionTarget
+            !== "none"
+            || result
+              .id
+            === "theater-role-selection",
         ),
 
       allCasesPassed:

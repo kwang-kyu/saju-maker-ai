@@ -110,6 +110,12 @@ const INTENT_KOREAN_LABELS:
 
     risk:
       "위험과 주의점 판단",
+
+    reason:
+      "이유와 성향 해석",
+
+    method:
+      "방법과 접근 판단",
   };
 
 const DECISION_TARGET_KOREAN_LABELS:
@@ -167,7 +173,11 @@ const DECISION_TARGET_KOREAN_LABELS:
 
     none:
       "질문에 포함된 선택을 판단",
+
+    confirmDirection:
+      "앞으로의 방향을 정할지 판단",
   };
+
 
 function translateValue(
   value:
@@ -219,11 +229,36 @@ export function buildConsultingPrompt(
     );
 
   const decisionTargetLabel =
-    translateValue(
-      payload.decisionTarget,
-      DECISION_TARGET_KOREAN_LABELS,
-      "질문에 포함된 선택을 판단",
-    );
+    payload.explanationKind
+    === "roleRecommendation"
+      ? "성격에 맞는 역할·배역 해석"
+      : translateValue(
+        payload.decisionTarget,
+        DECISION_TARGET_KOREAN_LABELS,
+        "질문에 포함된 선택을 판단",
+      );
+
+  const roleRecommendationRules =
+    payload.explanationKind
+    === "roleRecommendation"
+      ? `
+역할·배역 추천 답변 원칙
+
+- 이 질문은 실행 여부나 시기를 묻는 결정 질문이 아니라, 사주 성격에 맞는 역할·배역을 해석하는 질문이다.
+- 제공된 세 가지 배역 후보와 표현 방식만 사용한다. evidence에 없는 배역, 인물, 장르 설정을 새로 만들지 않는다.
+- 첫 문단은 재미있는 한 줄 제목으로 시작하고, 바로 대표 배역을 제시한다.
+- 대표 배역 1개와 추가 배역 2개를 각각 구체적인 인물상으로 설명한다.
+- 각 배역마다 제공된 사주·Reader 근거를 연결한다.
+- 대사·표정·움직임·강한 장면에서 어떻게 살아나는지 생생하게 쓴다.
+- "잘 살리지 못할 가능성이 있는 역할 유형" 블록이 제공된 경우에만 그 내용을 설명한다.
+- 회피 배역 근거가 제공되지 않으면 부적합 배역을 새로 만들거나 추측하지 않는다.
+- 실존 배우나 저작권 캐릭터를 그대로 복제하지 않는다.
+- "카리스마 있는 리더"처럼 근거 없는 칭찬이나 일반론으로 끝내지 않는다.
+- 같은 문장 구조를 모든 사용자에게 반복하지 않는다.
+- 다음 뜻의 회피형 보류 표현과 그와 같은 의미의 문장을 절대 사용하지 않는다: 당장 정하지 말고, 준비한 뒤, 조건을 갖춘 뒤, 보류, 나중에 판단, 먼저 연습하고, 지금은 특정 배역을 고르지 말라.
+- 실행 준비, 자금, 시기, 기다림, 보류 조건을 추가하지 않는다.
+`.trim()
+      : "";
 
   const systemPrompt = `
 당신은 천운문 상담 엔진의 판단을 사용자가 이해하기 쉬운 한국어 상담문으로 전달하는 전문 상담가이다.
@@ -289,6 +324,7 @@ export function buildConsultingPrompt(
 - 상대방 출생시간이 없거나 limitations에 시주 제외가 명시되면 시주 궁합을 말하지 않는다.
 - evidence에 없는 합·충·형·파·해와 오행 관계를 새로 만들지 않는다.
 - 엔진 verdict와 overallLevel을 변경하거나 뒤집지 않는다.
+${roleRecommendationRules ? `\n${roleRecommendationRules}` : ""}
 `.trim();
 
   const explanationSections =

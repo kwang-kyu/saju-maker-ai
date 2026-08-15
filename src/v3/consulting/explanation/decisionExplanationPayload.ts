@@ -43,6 +43,9 @@ export type DecisionExplanationPayload = {
 
   finalDecision:
     string;
+
+  explanationKind?:
+    DecisionExplanationPlan["explanationKind"];
 };
 
 export function buildDecisionExplanationPayload(
@@ -105,5 +108,8 @@ export function buildDecisionExplanationPayload(
           === "finalDecision",
       )?.content
       ?? "",
+
+    explanationKind:
+      plan.explanationKind,
   };
 }

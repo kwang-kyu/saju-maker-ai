@@ -2,6 +2,9 @@ import type {
     DecisionEngineInput,
     DecisionResult,
   } from "./decisionTypes";
+  import type {
+    RoleRecommendationAssessment,
+  } from "./roleRecommendationAssessment";
   
   export type DecisionResultBuilderInput = {
     decisionInput: DecisionEngineInput;
@@ -24,6 +27,12 @@ import type {
       DecisionResult["recommendedDirection"];
     prohibitedDirection:
       DecisionResult["prohibitedDirection"];
+
+    finalDecisionSentence?:
+      DecisionResult["finalDecisionSentence"];
+
+    roleRecommendationAssessment?:
+      RoleRecommendationAssessment | null;
   };
   
   function hasContextConflict(
@@ -59,6 +68,9 @@ import type {
       currentPhaseDescription,
       recommendedDirection,
       prohibitedDirection,
+      roleRecommendationAssessment,
+      finalDecisionSentence:
+        inputFinalDecisionSentence,
     } = input;
   
     const conflictExists =
@@ -96,12 +108,18 @@ import type {
       recommendedDirection,
       prohibitedDirection,
   
-      finalDecisionSentence: [
-        coreDecision,
-        recommendedDirection,
-      ].join(" "),
+      finalDecisionSentence:
+        inputFinalDecisionSentence
+        ?? [
+          coreDecision,
+          recommendedDirection,
+        ].join(" "),
   
       humanContextUsed: true,
       questionContextUsed: true,
+
+      roleRecommendationAssessment:
+        roleRecommendationAssessment
+        ?? null,
     };
   }

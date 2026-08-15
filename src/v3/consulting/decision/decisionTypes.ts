@@ -8,6 +8,9 @@ import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import type { HumanLifeContext } from "../../types/humanLifeContext";
 import type { QuestionReaderResult } from "../question/questionReader";
 import type { QuestionContext } from "../question/questionContext";
+import type {
+  RoleRecommendationAssessment,
+} from "./roleRecommendationAssessment";
 
 /**
  * Decision Engine이 내릴 수 있는 최종 판단이다.
@@ -72,7 +75,8 @@ export type DecisionEvidenceSource =
   | "questionIntent"
   | "currentContext"
   | "lifeContext"
-  | "compatibility";
+  | "compatibility"
+  | "roleRecommendation";
 
 /**
  * Decision Engine이 사용하는 개별 판단 근거다.
@@ -213,4 +217,7 @@ export type DecisionResult = {
 
   humanContextUsed: true;
   questionContextUsed: true;
+
+  roleRecommendationAssessment?:
+    RoleRecommendationAssessment | null;
 };

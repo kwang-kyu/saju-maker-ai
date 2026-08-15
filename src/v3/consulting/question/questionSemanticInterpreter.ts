@@ -12,6 +12,9 @@ import type {
   QuestionTopic,
   QuestionUrgency,
 } from "./questionReader";
+import {
+  applyRoleRecommendationNormalization,
+} from "./roleRecommendationQuestionDetector";
 
 const QUESTION_TOPICS:
   readonly QuestionTopic[] = [
@@ -696,6 +699,8 @@ export async function interpretQuestionSemantics(
 - 두 사람의 궁합, 협업 적합성, 관계 적합성을 묻는 질문은 compatibility로 분류한다.
 - 여러 대상이나 역할 중 적합한 것을 묻는 질문은 selection으로 분류한다.
 - 가상 상황의 의미, 이유, 성향에 맞는 역할이나 서사를 묻는 질문은 interpretation으로 분류한다.
+- 연극·영화·드라마·배역·캐릭터·인물상 중 어떤 역할이 어울리는지 묻는 질문은 execution 여부가 아니라 interpretation으로 분류하고 decisionTarget은 none, motive는 selfUnderstanding으로 분류한다.
+- 그 역할을 맡아도 될지, 배우를 시작해도 될지, 언제 연기를 시작할지 묻는 질문은 decision 또는 timing으로 분류한다.
 - 새로운 질문 유형이 나타나더라도 문장 전체의 목적에 따라 위 네 가지 모드 중 하나를 선택한다.
 
 분석 범위 원칙
@@ -969,7 +974,7 @@ asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다
       ?? "",
     );
 
-  return {
+  return applyRoleRecommendationNormalization({
     originalQuestion,
 
     normalizedQuestion,
@@ -977,6 +982,6 @@ asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다
     ...interpretation,
 
     humanContextReceived:
-      true,
-  };
+      true as const,
+  });
 }

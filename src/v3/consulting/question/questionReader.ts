@@ -1,4 +1,8 @@
 import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+import {
+  applyRoleRecommendationNormalization,
+  isRoleRecommendationQuestion,
+} from "./roleRecommendationQuestionDetector";
 
 export type QuestionTopic =
   | "business"
@@ -1067,6 +1071,126 @@ function calculateConfidence(evidenceCount: number): number {
   return 0.35;
 }
 
+const RELATIONSHIP_COUNTERPART_PATTERN =
+  /(?:이|그)\s*(?:사람|남자|여자)|상대(?:방)?|우리\s*둘|둘이|서로|(?:현재|지금|내|제|그|이)\s*(?:연인|애인|배우자|남편|아내|동업자|파트너)|(?:연인|애인|배우자|남편|아내|동업자|파트너)\s*(?:와|과|랑|하고|와는|과는)/;
+
+const COUNTERPART_CONTEXT_EXCLUSION_PATTERN =
+  /(?:어떤\s*(?:남자|여자)|(?:배우자|연인)\s*유형|이상형|(?:나에게|내게)\s*어울리는\s*배우자|(?:남자|여자)에게\s*(?:어울|맞))/;
+
+const COMPATIBILITY_EXPLICIT_PATTERN =
+  /궁합|합이\s*맞/;
+
+const INTERPERSONAL_FIT_PATTERN =
+  /잘\s*맞|어울/;
+
+const SELF_FIT_EXCLUSION_PATTERN =
+  /(?:나에게|내게)\s*(?:어울|맞)|(?:나|내).*(?:직업|사업|투자\s*방식|투자|취미|성격|연애).*(?:맞|어울)|(?:직업|사업|투자|취미|집|부동산).*(?:나|내).*(?:맞|어울)|이\s*(?:직업|집).*(?:나|내).*(?:맞|어울)/;
+
+const EXPLICIT_EXECUTION_DECISION_TARGETS:
+  readonly DecisionTarget[] = [
+    "separate",
+    "continue",
+    "stop",
+  ];
+
+function hasRelationshipCounterpartContext(
+  question:
+    string,
+): boolean {
+  if (
+    COUNTERPART_CONTEXT_EXCLUSION_PATTERN.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  return RELATIONSHIP_COUNTERPART_PATTERN.test(
+    question,
+  );
+}
+
+function isExplicitExecutionDecision(
+  question:
+    string,
+  intent:
+    QuestionIntent,
+  decisionTarget:
+    DecisionTarget,
+): boolean {
+  if (
+    intent
+      === "termination"
+    || intent
+      === "continuation"
+  ) {
+    return true;
+  }
+
+  if (
+    EXPLICIT_EXECUTION_DECISION_TARGETS.includes(
+      decisionTarget,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    decisionTarget
+      === "marry"
+    && /(?:해야|해야\s*할|해야\s*되)/.test(
+      question,
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isCompatibilityAnalysisQuestion(
+  question:
+    string,
+  decisionTarget:
+    DecisionTarget,
+): boolean {
+  if (
+    SELF_FIT_EXCLUSION_PATTERN.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    decisionTarget
+      === "partner"
+  ) {
+    return true;
+  }
+
+  if (
+    COMPATIBILITY_EXPLICIT_PATTERN.test(
+      question,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    hasRelationshipCounterpartContext(
+      question,
+    )
+    && INTERPERSONAL_FIT_PATTERN.test(
+      question,
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function detectQuestionAnalysisMode(
   question:
     string,
@@ -1076,11 +1200,23 @@ function detectQuestionAnalysisMode(
     DecisionTarget,
 ): QuestionAnalysisMode {
   if (
-    /궁합|잘\s*맞|어울리|합이\s*맞/.test(
+    isRoleRecommendationQuestion(
       question,
     )
-    || decisionTarget
-      === "partner"
+  ) {
+    return "interpretation";
+  }
+
+  if (
+    !isExplicitExecutionDecision(
+      question,
+      intent,
+      decisionTarget,
+    )
+    && isCompatibilityAnalysisQuestion(
+      question,
+      decisionTarget,
+    )
   ) {
     return "compatibility";
   }
@@ -1371,7 +1507,7 @@ export function readQuestion(
     ]),
   );
 
-  return {
+  return applyRoleRecommendationNormalization({
     originalQuestion: question.trim(),
     normalizedQuestion,
 
@@ -1403,5 +1539,5 @@ export function readQuestion(
     confidence: calculateConfidence(evidence.length),
 
     humanContextReceived: true,
-  };
+  });
 }

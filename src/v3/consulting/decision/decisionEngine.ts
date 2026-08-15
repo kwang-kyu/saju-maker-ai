@@ -38,6 +38,9 @@ import {
 import {
   applyReaderDecisionVerdictEffect,
 } from "./readerDecisionVerdictBuilder";
+import {
+  buildRoleRecommendationDecisionResult,
+} from "./roleRecommendationDecisionBuilder";
 
 /**
  * Decision Engine
@@ -51,6 +54,17 @@ import {
 export function runDecisionEngine(
   input: DecisionEngineInput,
 ): DecisionResult {
+  if (
+    input
+      .questionContext
+      .requirements
+      .roleRecommendationAnalysisRequired
+  ) {
+    return buildRoleRecommendationDecisionResult(
+      input,
+    );
+  }
+
   const brain = buildDecisionBrain(
     input.humanContext,
     input.question,

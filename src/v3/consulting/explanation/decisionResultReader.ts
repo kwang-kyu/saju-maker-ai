@@ -60,6 +60,9 @@ import type {
     prohibitedDirection: string;
   
     finalDecisionSentence: string;
+
+    roleRecommendationAssessment?:
+      DecisionResult["roleRecommendationAssessment"];
   
     engineDecisionLocked: true;
     gptMayRejudge: false;
@@ -155,6 +158,10 @@ import type {
       prohibitedDirection: result.prohibitedDirection,
   
       finalDecisionSentence: result.finalDecisionSentence,
+
+      roleRecommendationAssessment:
+        result.roleRecommendationAssessment
+        ?? null,
   
       engineDecisionLocked: true,
       gptMayRejudge: false,

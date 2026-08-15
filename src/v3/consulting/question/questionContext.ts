@@ -132,6 +132,9 @@ export type QuestionAnalysisRequirements = {
 
   comparisonAnalysisRequired:
     boolean;
+
+  roleRecommendationAnalysisRequired:
+    boolean;
 };
 
 export type QuestionContext = {

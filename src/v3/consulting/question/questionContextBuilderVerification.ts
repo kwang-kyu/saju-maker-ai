@@ -37,6 +37,7 @@ import type {
       compatibilityAnalysisRequired: boolean;
       timingAnalysisRequired: boolean;
       comparisonAnalysisRequired: boolean;
+      roleRecommendationAnalysisRequired?: boolean;
     };
   };
 
@@ -239,7 +240,10 @@ import type {
             "job",
 
           decisionTarget:
-            "choose",
+            "none",
+
+          analysisMode:
+            "interpretation",
 
           counterpartExists:
             false,
@@ -252,6 +256,9 @@ import type {
 
           comparisonAnalysisRequired:
             false,
+
+          roleRecommendationAnalysisRequired:
+            true,
         },
       },
       {
@@ -415,6 +422,20 @@ import type {
           comparisonAnalysisRequired:
             context.requirements
               .comparisonAnalysisRequired,
+
+          ...(
+            verificationCase
+              .expected
+              .roleRecommendationAnalysisRequired
+            !== undefined
+              ? {
+                  roleRecommendationAnalysisRequired:
+                    context
+                      .requirements
+                      .roleRecommendationAnalysisRequired,
+                }
+              : {}
+          ),
         };
 
         return {
