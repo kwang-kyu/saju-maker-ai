@@ -19,6 +19,13 @@ import type {
 import {
   V3ConsultingSessionConversation,
 } from "./V3ConsultingSessionConversation";
+import {
+  normalizeHasActiveBusinessForRequest,
+  resolveHasActiveBusinessOnOccupationChange,
+  resolveNullableBooleanFromSelection,
+  SEPARATE_BUSINESS_QUESTION_LABEL,
+  shouldShowSeparateBusinessQuestion,
+} from "./occupationBusinessInputResolver";
 
 import "./v3ConsultingApp.css";
 
@@ -104,21 +111,6 @@ function buildV3AuthRedirectUrl():
       );
 
     return `${year}-${month}-${day}`;
-  }
-
-  function resolveNullableBoolean(
-    value:
-      BooleanSelection,
-  ): boolean | null {
-    if (value === "yes") {
-      return true;
-    }
-
-    if (value === "no") {
-      return false;
-    }
-
-    return null;
   }
 
   function readErrorMessage(
@@ -293,14 +285,15 @@ function buildV3AuthRedirectUrl():
             maritalStatus,
 
             hasChildren:
-              resolveNullableBoolean(
+              resolveNullableBooleanFromSelection(
                 hasChildren,
               ),
 
             occupationStatus,
 
             hasActiveBusiness:
-              resolveNullableBoolean(
+              normalizeHasActiveBusinessForRequest(
+                occupationStatus,
                 hasActiveBusiness,
               ),
 
@@ -666,18 +659,29 @@ function buildV3AuthRedirectUrl():
                         className="v3-consulting-label"
                         htmlFor="v3-occupation-status"
                       >
-                        직업 상태
+                        현재 주된 활동
                       </label>
 
                       <select
                         id="v3-occupation-status"
                         className="v3-consulting-select"
                         value={occupationStatus}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          const nextOccupationStatus =
+                            event.target.value as OccupationStatus;
+
                           setOccupationStatus(
-                            event.target.value as OccupationStatus,
-                          )
-                        }
+                            nextOccupationStatus,
+                          );
+
+                          setHasActiveBusiness(
+                            resolveHasActiveBusinessOnOccupationChange(
+                              nextOccupationStatus,
+                              occupationStatus,
+                              hasActiveBusiness,
+                            ),
+                          );
+                        }}
                       >
                         <option value="unknown">
                           선택 안 함
@@ -709,37 +713,41 @@ function buildV3AuthRedirectUrl():
                       </select>
                     </div>
 
-                    <div className="v3-consulting-field">
-                      <label
-                        className="v3-consulting-label"
-                        htmlFor="v3-active-business"
-                      >
-                        현재 운영 사업
-                      </label>
+                    {shouldShowSeparateBusinessQuestion(
+                      occupationStatus,
+                    ) ? (
+                      <div className="v3-consulting-field">
+                        <label
+                          className="v3-consulting-label"
+                          htmlFor="v3-active-business"
+                        >
+                          {SEPARATE_BUSINESS_QUESTION_LABEL}
+                        </label>
 
-                      <select
-                        id="v3-active-business"
-                        className="v3-consulting-select"
-                        value={hasActiveBusiness}
-                        onChange={(event) =>
-                          setHasActiveBusiness(
-                            event.target.value as BooleanSelection,
-                          )
-                        }
-                      >
-                        <option value="unknown">
-                          선택 안 함
-                        </option>
+                        <select
+                          id="v3-active-business"
+                          className="v3-consulting-select"
+                          value={hasActiveBusiness}
+                          onChange={(event) =>
+                            setHasActiveBusiness(
+                              event.target.value as BooleanSelection,
+                            )
+                          }
+                        >
+                          <option value="unknown">
+                            선택 안 함
+                          </option>
 
-                        <option value="yes">
-                          있음
-                        </option>
+                          <option value="yes">
+                            있음
+                          </option>
 
-                        <option value="no">
-                          없음
-                        </option>
-                      </select>
-                    </div>
+                          <option value="no">
+                            없음
+                          </option>
+                        </select>
+                      </div>
+                    ) : null}
 
                     <div className="v3-consulting-field v3-consulting-field--full">
                       <label
