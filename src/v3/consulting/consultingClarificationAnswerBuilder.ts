@@ -43,33 +43,39 @@ import type {
     );
   }
 
-  function buildClarificationQuestions(
+  function buildCurrentClarificationQuestion(
     input:
       ConsultingClarificationAnswerBuilderInput,
     originalQuestion:
       string,
-  ): string[] {
+  ): string {
+    const currentItem =
+      input
+        .clarification
+        .items[0];
+
+    if (
+      !currentItem
+    ) {
+      throw new Error(
+        "At least one clarification question is required.",
+      );
+    }
+
     const birthDateProvided =
       containsKoreanBirthDate(
         originalQuestion,
       );
 
-    return input
-      .clarification
-      .items
-      .map(
-        (item) => {
-          if (
-            birthDateProvided
-            && item.key
-            === "counterpartBirthData"
-          ) {
-            return "말씀하신 생년월일은 확인했습니다. 상대방의 양력·음력 여부, 성별과 가능한 경우 출생시간을 알려주세요.";
-          }
+    if (
+      birthDateProvided
+      && currentItem.key
+      === "counterpartBirthData"
+    ) {
+      return "말씀하신 생년월일은 확인했습니다. 상대방의 양력·음력 여부, 성별과 가능한 경우 출생시간을 알려주세요.";
+    }
 
-          return item.question;
-        },
-      );
+    return currentItem.question;
   }
 
   /**
@@ -86,31 +92,15 @@ import type {
         "originalQuestion",
       );
 
-    const questions =
-      buildClarificationQuestions(
+    const currentQuestion =
+      buildCurrentClarificationQuestion(
         input,
         originalQuestion,
       );
 
-    if (
-      questions.length
-      === 0
-    ) {
-      throw new Error(
-        "At least one clarification question is required.",
-      );
-    }
-
-    const numberedQuestions =
-      questions.map(
-        (question, index) =>
-          `${index + 1}. ${question}`,
-      );
-
     return [
       `“${originalQuestion}”에 대해서는 지금 확인된 정보만으로 결론을 확정하지 않겠습니다.`,
-      "정확한 판단을 위해 아래 내용을 먼저 알려주세요.",
-      ...numberedQuestions,
+      currentQuestion,
     ].join(
       "\n\n",
     );
