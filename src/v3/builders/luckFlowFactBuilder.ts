@@ -1,10 +1,14 @@
-import {
+﻿import {
     getTenGodByStem,
   } from "../../data/tenGodService";
 
   import type {
     V3CurrentDaeun,
     V3CurrentSeun,
+    V3TargetIlun,
+    V3TargetPeriodLuckFlow,
+    V3WolunSegment,
+    V3YearGanZhiSegment,
     V3LuckFlowCalculationResult,
   } from "../types/luckFlowCalculation";
 
@@ -13,6 +17,10 @@ import {
     SajuCurrentSeunFact,
     SajuLuckFlowFact,
     SajuLuckFlowTenGod,
+    SajuTargetIlunFact,
+    SajuTargetPeriodLuckFlowFact,
+    SajuWolunSegmentFact,
+    SajuYearGanZhiSegmentFact,
   } from "../types/luckFlowFact";
 
   import type {
@@ -366,5 +374,192 @@ import {
           input.dayMaster,
           calculation.currentSeun,
         ),
+    };
+  }
+
+  function buildWolunSegmentFact(
+    dayMaster:
+      string,
+    segment:
+      V3WolunSegment,
+  ): SajuWolunSegmentFact {
+    return {
+      targetYear:
+        segment.targetYear,
+
+      targetMonth:
+        segment.targetMonth,
+
+      ganZhi:
+        segment.ganZhi,
+
+      heavenlyStem:
+        segment.heavenlyStem,
+
+      earthlyBranch:
+        segment.earthlyBranch,
+
+      tenGod:
+        resolveTenGod(
+          dayMaster,
+          segment.heavenlyStem,
+          "wolunSegment",
+        ),
+
+      element:
+        resolveStemElement(
+          segment.heavenlyStem,
+          "wolunSegment",
+        ),
+
+      startDate:
+        segment.startDate,
+
+      endDate:
+        segment.endDate,
+
+      jieQiBoundary:
+        segment.jieQiBoundary,
+    };
+  }
+
+  function buildTargetIlunFact(
+    dayMaster:
+      string,
+    ilun:
+      V3TargetIlun,
+  ): SajuTargetIlunFact {
+    return {
+      targetDate:
+        ilun.targetDate,
+
+      ganZhi:
+        ilun.ganZhi,
+
+      heavenlyStem:
+        ilun.heavenlyStem,
+
+      earthlyBranch:
+        ilun.earthlyBranch,
+
+      tenGod:
+        resolveTenGod(
+          dayMaster,
+          ilun.heavenlyStem,
+          "targetIlun",
+        ),
+
+      element:
+        resolveStemElement(
+          ilun.heavenlyStem,
+          "targetIlun",
+        ),
+    };
+  }
+
+  function buildYearSegmentFact(
+    dayMaster:
+      string,
+    segment:
+      V3YearGanZhiSegment,
+  ): SajuYearGanZhiSegmentFact {
+    return {
+      ganZhi:
+        segment.ganZhi,
+
+      heavenlyStem:
+        segment.heavenlyStem,
+
+      earthlyBranch:
+        segment.earthlyBranch,
+
+      tenGod:
+        resolveTenGod(
+          dayMaster,
+          segment.heavenlyStem,
+          "yearSegment",
+        ),
+
+      element:
+        resolveStemElement(
+          segment.heavenlyStem,
+          "yearSegment",
+        ),
+
+      startDate:
+        segment.startDate,
+
+      endDate:
+        segment.endDate,
+
+      jieQiBoundary:
+        segment.jieQiBoundary,
+    };
+  }
+
+  export type SajuTargetPeriodLuckFlowFactBuilderInput = {
+    dayMaster: string;
+
+    calculation:
+      V3TargetPeriodLuckFlow;
+  };
+
+  export function buildSajuTargetPeriodLuckFlowFact(
+    input:
+      SajuTargetPeriodLuckFlowFactBuilderInput,
+  ): SajuTargetPeriodLuckFlowFact {
+    const { calculation } = input;
+
+    return {
+      targetStartDate:
+        calculation.targetStartDate,
+
+      targetEndDate:
+        calculation.targetEndDate,
+
+      currentDaeun:
+        calculation.currentDaeun
+          ? buildCurrentDaeunFact(
+              input.dayMaster,
+              calculation.currentDaeun,
+            )
+          : null,
+
+      targetSeun:
+        buildCurrentSeunFact(
+          input.dayMaster,
+          calculation.targetSeun,
+        ),
+
+      yearSegments:
+        calculation.yearSegments.map(
+          (segment) =>
+            buildYearSegmentFact(
+              input.dayMaster,
+              segment,
+            ),
+        ),
+
+      wolunSegments:
+        calculation.wolunSegments.map(
+          (segment) =>
+            buildWolunSegmentFact(
+              input.dayMaster,
+              segment,
+            ),
+        ),
+
+      targetIlun:
+        calculation.targetIlun
+          ? buildTargetIlunFact(
+              input.dayMaster,
+              calculation.targetIlun,
+            )
+          : null,
+
+      limitations:
+        [
+          ...calculation.limitations,
+        ],
     };
   }

@@ -1,4 +1,4 @@
-import {
+﻿import {
   buildDecisionEngineRegressionInput,
 } from "../decision/regression/decisionEngineRegressionFixture";
 import {
@@ -816,6 +816,69 @@ const DECISION_PATH_PRESERVATION_CASES:
 
         decisionTarget:
           "marry",
+
+        analysisMode:
+          "decision",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "지금 부동산을 사는 게 맞을까요?",
+
+      expected: {
+        topic:
+          "realEstate",
+
+        intent:
+          "possibility",
+
+        decisionTarget:
+          "buy",
+
+        analysisMode:
+          "decision",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "지금 주식에 투자해도 될까요?",
+
+      expected: {
+        topic:
+          "money",
+
+        intent:
+          "possibility",
+
+        decisionTarget:
+          "invest",
+
+        analysisMode:
+          "decision",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "지금 아파트를 팔아야 할까요?",
+
+      expected: {
+        topic:
+          "realEstate",
+
+        intent:
+          "generalJudgement",
+
+        decisionTarget:
+          "sell",
 
         analysisMode:
           "decision",

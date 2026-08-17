@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   DecisionExplanationInput,
 } from "./decisionResultReader";
 
@@ -64,6 +64,7 @@ export type DecisionExplanationPlan = {
 
   explanationKind?:
     "roleRecommendation"
+    | "lifeFlowInterpretation"
     | "decision";
 
   engineDecisionLocked:
@@ -347,6 +348,178 @@ function buildRoleRecommendationExplanationBlocks(
   return blocks;
 }
 
+function buildLifeFlowInterpretationExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+): ExplanationBlock[] {
+  const assessment =
+    input
+      .lifeFlowInterpretationAssessment;
+
+  if (
+    !assessment
+    || !assessment.available
+    || !assessment.target
+  ) {
+    return [];
+  }
+
+  const target =
+    assessment.target;
+
+  const periodLabel =
+    target.scope === "overall"
+      ? "총운·전체 운"
+      : target.scope === "year"
+        ? `${target.targetYear}년 연운`
+        : target.scope === "halfYear"
+          ? `${target.targetYear}년 ${target.half === "first" ? "상반기" : "하반기"} 운`
+          : target.scope === "month"
+            ? `${target.targetYear}년 ${target.targetMonth}월 월운`
+            : `${target.startDate} 일운`;
+
+  const daeunSeunLines =
+    input
+      .evidence
+      .filter(
+        (item) =>
+          item.source
+          === "lifePhase"
+          || item.source
+          === "blessing"
+          || item.source
+          === "capacity",
+      )
+      .map(
+        (item) =>
+          item.description,
+      );
+
+  const supportiveLines =
+    assessment
+      .supportiveSignals;
+
+  const tensionLines =
+    assessment
+      .tensionSignals;
+
+  const segmentLines =
+    assessment
+      .periodSegments
+      .map(
+        (segment) =>
+          segment.theme,
+      );
+
+  return [
+    {
+      step:
+        "directAnswer",
+
+      title:
+        "질문한 기간",
+
+      required:
+        true,
+
+      content:
+        [
+          periodLabel,
+          ...target.evidence,
+        ].join("\n"),
+    },
+    {
+      step:
+        "humanContext",
+
+      title:
+        "전체 흐름의 핵심 한 줄",
+
+      required:
+        true,
+
+      content:
+        assessment.overallTheme,
+    },
+    {
+      step:
+        "alignment",
+
+      title:
+        "대운·세운 근거",
+
+      required:
+        true,
+
+      content:
+        daeunSeunLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "readerDecisionEffect",
+
+      title:
+        "월운·일운 근거",
+
+      required:
+        segmentLines.length
+        > 0,
+
+      content:
+        segmentLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "evidence",
+
+      title:
+        "유리하게 나타나는 부분",
+
+      required:
+        supportiveLines.length
+        > 0,
+
+      content:
+        supportiveLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "recommendedDirection",
+
+      title:
+        "주의할 흐름",
+
+      required:
+        tensionLines.length
+        > 0,
+
+      content:
+        tensionLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "finalDecision",
+
+      title:
+        "최종 요약",
+
+      required:
+        true,
+
+      content:
+        input.finalDecisionSentence,
+    },
+  ];
+}
+
 /**
  * Decision Explanation Plan
  *
@@ -399,6 +572,46 @@ export function buildDecisionExplanationPlan(
 
       explanationKind:
         "roleRecommendation",
+
+      engineDecisionLocked:
+        true,
+
+      gptMayRejudge:
+        false,
+    };
+  }
+
+  if (
+    input
+      .lifeFlowInterpretationAssessment
+      ?.available
+  ) {
+    return {
+      originalQuestion:
+        normalizedQuestion,
+
+      topic:
+        input.topic,
+
+      intent:
+        input.intent,
+
+      decisionTarget:
+        input.decisionTarget,
+
+      verdict:
+        input.verdict,
+
+      confidence:
+        input.confidence,
+
+      blocks:
+        buildLifeFlowInterpretationExplanationBlocks(
+          input,
+        ),
+
+      explanationKind:
+        "lifeFlowInterpretation",
 
       engineDecisionLocked:
         true,

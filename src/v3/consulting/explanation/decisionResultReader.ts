@@ -1,16 +1,16 @@
-import type {
+﻿import type {
     DecisionCondition,
     DecisionEvidence,
     DecisionResult,
     DecisionRisk,
   } from "../decision/decisionTypes";
-  
+
   export type DecisionExplanationEvidence = {
     source: DecisionEvidence["source"];
     description: string;
     importance: "core" | "supporting";
   };
-  
+
   export type DecisionExplanationCondition = {
     key:
       DecisionCondition["key"];
@@ -21,7 +21,7 @@ import type {
 
     satisfied: boolean;
   };
-  
+
   export type DecisionExplanationRisk = {
     key:
       DecisionRisk["key"];
@@ -34,40 +34,43 @@ import type {
     severity:
       DecisionRisk["severity"];
   };
-  
+
   export type DecisionExplanationInput = {
     verdict: DecisionResult["verdict"];
     confidence: DecisionResult["confidence"];
-  
+
     topic: DecisionResult["topic"];
     intent: DecisionResult["intent"];
     decisionTarget: DecisionResult["decisionTarget"];
-  
+
     contextAlignment: DecisionResult["contextAlignment"];
     actionReadiness: DecisionResult["actionReadiness"];
-  
+
     directAnswer: string;
     reason: string;
-  
+
     evidence: DecisionExplanationEvidence[];
     conditions: DecisionExplanationCondition[];
     risks: DecisionExplanationRisk[];
-  
+
     conflictExists: boolean;
     conflictDescription: string;
-  
+
     recommendedDirection: string;
     prohibitedDirection: string;
-  
+
     finalDecisionSentence: string;
 
     roleRecommendationAssessment?:
       DecisionResult["roleRecommendationAssessment"];
-  
+
+    lifeFlowInterpretationAssessment?:
+      DecisionResult["lifeFlowInterpretationAssessment"];
+
     engineDecisionLocked: true;
     gptMayRejudge: false;
   };
-  
+
   function mapEvidence(
     evidence: DecisionEvidence[],
   ): DecisionExplanationEvidence[] {
@@ -77,7 +80,7 @@ import type {
       importance: item.weight >= 4 ? "core" : "supporting",
     }));
   }
-  
+
   function mapConditions(
     conditions: DecisionCondition[],
   ): DecisionExplanationCondition[] {
@@ -117,7 +120,7 @@ import type {
       }),
     );
   }
-  
+
   /**
    * Decision Result Reader
    *
@@ -136,33 +139,37 @@ import type {
     return {
       verdict: result.verdict,
       confidence: result.confidence,
-  
+
       topic: result.topic,
       intent: result.intent,
       decisionTarget: result.decisionTarget,
-  
+
       contextAlignment: result.contextAlignment,
       actionReadiness: result.actionReadiness,
-  
+
       directAnswer: result.coreDecision,
       reason: result.decisionReason,
-  
+
       evidence: mapEvidence(result.evidence),
       conditions: mapConditions(result.conditions),
       risks: mapRisks(result.risks),
-  
+
       conflictExists: result.conflict.exists,
       conflictDescription: result.conflict.description,
-  
+
       recommendedDirection: result.recommendedDirection,
       prohibitedDirection: result.prohibitedDirection,
-  
+
       finalDecisionSentence: result.finalDecisionSentence,
 
       roleRecommendationAssessment:
         result.roleRecommendationAssessment
         ?? null,
-  
+
+      lifeFlowInterpretationAssessment:
+        result.lifeFlowInterpretationAssessment
+        ?? null,
+
       engineDecisionLocked: true,
       gptMayRejudge: false,
     };

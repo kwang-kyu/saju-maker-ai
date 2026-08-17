@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ConsultingInput,
 } from "./consultingInput";
 
@@ -12,6 +12,9 @@ import {
 import {
   runDecisionEngine,
 } from "./decision/decisionEngine";
+import {
+  buildTargetPeriodLuckFlowForQuestion,
+} from "./decision/targetPeriodLuckFlowBuilder";
 
 import {
   readDecisionResult,
@@ -139,6 +142,18 @@ export function runConsultingTurn(
     input.clarificationFacts,
   );
 
+  const targetPeriodBuildResult =
+    input.sajuFacts
+      ? buildTargetPeriodLuckFlowForQuestion({
+          sajuFacts:
+            input.sajuFacts,
+
+          normalizedQuestion:
+            questionReaderResult
+              .normalizedQuestion,
+        })
+      : null;
+
   const decisionResult =
     runDecisionEngine({
       humanContext:
@@ -170,6 +185,15 @@ export function runConsultingTurn(
         questionReaderResult,
 
       questionContext,
+
+      lifeFlowTarget:
+        targetPeriodBuildResult
+          ?.target,
+
+      targetPeriodLuckFlow:
+        targetPeriodBuildResult
+          ?.fact
+          ?? undefined,
     });
 
   const explanation =

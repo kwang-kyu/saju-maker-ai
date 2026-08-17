@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CounterpartSajuCalculation,
 } from "./counterpartSajuCalculationBuilder";
 import type {
@@ -11,6 +11,15 @@ import type { QuestionContext } from "../question/questionContext";
 import type {
   RoleRecommendationAssessment,
 } from "./roleRecommendationAssessment";
+import type {
+  LifeFlowInterpretationAssessment,
+} from "./lifeFlowInterpretationAssessment";
+import type {
+  LifeFlowTarget,
+} from "../question/lifeFlowTarget";
+import type {
+  SajuTargetPeriodLuckFlowFact,
+} from "../../types/luckFlowFact";
 
 /**
  * Decision Engine이 내릴 수 있는 최종 판단이다.
@@ -22,7 +31,8 @@ export type DecisionVerdict =
   | "conditionallyRecommended"
   | "wait"
   | "notRecommended"
-  | "insufficientEvidence";
+  | "insufficientEvidence"
+  | "interpreted";
 
 /**
  * 판단의 확실성이다.
@@ -182,6 +192,12 @@ question:
   QuestionReaderResult;
 
   questionContext: QuestionContext;
+
+  lifeFlowTarget?:
+    LifeFlowTarget;
+
+  targetPeriodLuckFlow?:
+    SajuTargetPeriodLuckFlowFact;
 };
 
 /**
@@ -220,4 +236,7 @@ export type DecisionResult = {
 
   roleRecommendationAssessment?:
     RoleRecommendationAssessment | null;
+
+  lifeFlowInterpretationAssessment?:
+    LifeFlowInterpretationAssessment | null;
 };

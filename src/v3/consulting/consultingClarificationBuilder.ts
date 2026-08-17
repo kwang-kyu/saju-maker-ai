@@ -1,4 +1,4 @@
-import type {
+﻿import type {
     HumanLifeContext,
   } from "../types/humanLifeContext";
 
@@ -139,12 +139,16 @@ import type {
       input.questionContext.question;
 
     if (
-      question.decisionTarget
-      === "none"
-      || input.questionContext
-        .actionObject
-        .type
-        === "unknown"
+      (
+        question.decisionTarget
+        === "none"
+        || input.questionContext
+          .actionObject
+          .type
+          === "unknown"
+      )
+      && question.analysisMode
+        !== "interpretation"
     ) {
       registerMissingInformation({
         key:
@@ -155,6 +159,28 @@ import type {
 
         question:
           "이번 상담에서 실제로 결정하려는 행동이나 선택지는 무엇인가요?",
+      });
+    }
+
+    if (
+      input.questionContext
+        .requirements
+        .lifeFlowInterpretationAnalysisRequired
+      && input.decisionResult
+        .lifeFlowInterpretationAssessment
+        ?.target
+        ?.ambiguity
+        ?.needsClarification
+    ) {
+      registerMissingInformation({
+        key:
+          "lifeFlowTargetPeriod",
+
+        description:
+          "운세 해석에 필요한 대상 연도 또는 기간이 확인되지 않았다.",
+
+        question:
+          "어느 연도 또는 기간의 운을 보고 싶으신가요?",
       });
     }
 
@@ -470,7 +496,29 @@ import type {
       }
 
       case "lifeFlow":
-      case "lifeDirection":
+      case "lifeDirection": {
+        if (
+          input.questionContext
+            .requirements
+            .lifeFlowInterpretationAnalysisRequired
+        ) {
+          break;
+        }
+
+        registerMissingInformation({
+          key:
+            "desiredOutcome",
+
+          description:
+            "현재 바꾸려는 현실과 원하는 결과가 구체적으로 확인되지 않았다.",
+
+          question:
+            "지금 가장 바꾸고 싶은 현실, 고려 중인 선택지, 원하는 결과를 각각 알려주세요.",
+        });
+
+        break;
+      }
+
       case "general": {
         registerMissingInformation({
           key:
@@ -488,6 +536,14 @@ import type {
     }
 
     if (
+      input.questionContext
+        .requirements
+        .lifeFlowInterpretationAnalysisRequired
+      && question.analysisMode
+        === "interpretation"
+    ) {
+      // interpretation 운세 질문은 decisionDeadline clarification을 요구하지 않는다.
+    } else if (
       question.urgency
       === "unknown"
     ) {

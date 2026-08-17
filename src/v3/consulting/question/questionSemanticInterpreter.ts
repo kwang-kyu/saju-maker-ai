@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+﻿import OpenAI from "openai";
 
 import type {
   DecisionTarget,
@@ -15,6 +15,9 @@ import type {
 import {
   applyRoleRecommendationNormalization,
 } from "./roleRecommendationQuestionDetector";
+import {
+  applyLifeFlowInterpretationNormalization,
+} from "./lifeFlowInterpretationQuestionDetector";
 
 const QUESTION_TOPICS:
   readonly QuestionTopic[] = [
@@ -974,7 +977,8 @@ asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다
       ?? "",
     );
 
-  return applyRoleRecommendationNormalization({
+  return applyLifeFlowInterpretationNormalization(
+    applyRoleRecommendationNormalization({
     originalQuestion,
 
     normalizedQuestion,
@@ -983,5 +987,6 @@ asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다
 
     humanContextReceived:
       true as const,
-  });
+  }),
+  );
 }

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ConsultingClarificationFact,
 } from "../consultingInput";
 import type {
@@ -13,6 +13,9 @@ import type {
 import {
   isRoleRecommendationQuestion,
 } from "./roleRecommendationQuestionDetector";
+import {
+  isLifeFlowInterpretationQuestion,
+} from "./lifeFlowInterpretationQuestionDetector";
 
   type QuestionRealitySignalRule = {
     area:
@@ -607,6 +610,12 @@ const relation =
         roleRecommendationAnalysisRequired:
           isRoleRecommendationQuestion(
             question.normalizedQuestion,
+          ),
+
+        lifeFlowInterpretationAnalysisRequired:
+          isLifeFlowInterpretationQuestion(
+            question.normalizedQuestion,
+            question.decisionTarget,
           ),
         },
       };

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   DecisionExplanationPayload,
 } from "./decisionExplanationPayload";
 import type {
@@ -32,6 +32,9 @@ const VERDICT_KOREAN_LABELS:
 
     insufficientEvidence:
       "현재 정보만으로는 결론을 확정하기 어렵습니다.",
+
+    interpreted:
+      "계산된 운 흐름을 해석했습니다.",
   };
 
 const CONFIDENCE_KOREAN_LABELS:
@@ -232,6 +235,9 @@ export function buildConsultingPrompt(
     payload.explanationKind
     === "roleRecommendation"
       ? "성격에 맞는 역할·배역 해석"
+      : payload.explanationKind
+        === "lifeFlowInterpretation"
+        ? "요청 기간의 운·운세 해석"
       : translateValue(
         payload.decisionTarget,
         DECISION_TARGET_KOREAN_LABELS,
@@ -257,6 +263,24 @@ export function buildConsultingPrompt(
 - 같은 문장 구조를 모든 사용자에게 반복하지 않는다.
 - 다음 뜻의 회피형 보류 표현과 그와 같은 의미의 문장을 절대 사용하지 않는다: 당장 정하지 말고, 준비한 뒤, 조건을 갖춘 뒤, 보류, 나중에 판단, 먼저 연습하고, 지금은 특정 배역을 고르지 말라.
 - 실행 준비, 자금, 시기, 기다림, 보류 조건을 추가하지 않는다.
+`.trim()
+      : "";
+
+  const lifeFlowInterpretationRules =
+    payload.explanationKind
+    === "lifeFlowInterpretation"
+      ? `
+총운·기간운 해석 답변 원칙
+
+- 이 질문은 행동 결정이나 선택지 확정을 묻는 질문이 아니라, 요청한 기간의 운 흐름을 해석하는 질문이다.
+- 제공된 Evidence와 계산된 대운·세운·월운·일운 Fact만 설명한다.
+- 계산되지 않은 사건, 날짜, 재물 유입, 합격, 사고, 연애 성사 등을 예측하지 않는다.
+- "실제로 결정하려는 행동은 무엇인가요?"처럼 행동·선택지를 되묻지 않는다.
+- "당장 결정하지 말고", "준비한 뒤", "보류", "기다려라" 같은 결정 회피 표현을 사용하지 않는다.
+- 추상적 위로나 일반 운세 문구로 채우지 않는다.
+- 총운·연운·월운·일운을 구분해서 설명한다.
+- 연도가 명시되지 않은 월 질문에 적용된 연도가 Evidence에 있으면 답변에 명시한다.
+- 절기 경계로 월주·연주가 바뀌는 경우 Evidence의 구간 설명을 반영한다.
 `.trim()
       : "";
 
@@ -325,6 +349,7 @@ export function buildConsultingPrompt(
 - evidence에 없는 합·충·형·파·해와 오행 관계를 새로 만들지 않는다.
 - 엔진 verdict와 overallLevel을 변경하거나 뒤집지 않는다.
 ${roleRecommendationRules ? `\n${roleRecommendationRules}` : ""}
+${lifeFlowInterpretationRules ? `\n${lifeFlowInterpretationRules}` : ""}
 `.trim();
 
   const explanationSections =

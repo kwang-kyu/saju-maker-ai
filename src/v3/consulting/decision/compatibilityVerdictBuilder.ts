@@ -1,4 +1,4 @@
-import type {
+﻿import type {
     QuestionAnalysisScope,
   } from "../question/questionReader";
   import type {
@@ -40,6 +40,9 @@ import type {
 
       case "insufficientEvidence":
         return "insufficientEvidence";
+
+      case "interpreted":
+        return "interpreted";
     }
   }
 
@@ -64,6 +67,9 @@ import type {
 
       case "insufficientEvidence":
         return "insufficientEvidence";
+
+      case "interpreted":
+        return "interpreted";
     }
   }
 

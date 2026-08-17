@@ -1,28 +1,31 @@
-import type {
+﻿import type {
     DecisionEngineInput,
     DecisionResult,
   } from "./decisionTypes";
   import type {
     RoleRecommendationAssessment,
   } from "./roleRecommendationAssessment";
-  
+  import type {
+    LifeFlowInterpretationAssessment,
+  } from "./lifeFlowInterpretationAssessment";
+
   export type DecisionResultBuilderInput = {
     decisionInput: DecisionEngineInput;
-  
+
     verdict: DecisionResult["verdict"];
     confidence: DecisionResult["confidence"];
     contextAlignment: DecisionResult["contextAlignment"];
     actionReadiness: DecisionResult["actionReadiness"];
-  
+
     coreDecision: DecisionResult["coreDecision"];
     decisionReason: DecisionResult["decisionReason"];
-  
+
     evidence: DecisionResult["evidence"];
     conditions: DecisionResult["conditions"];
     risks: DecisionResult["risks"];
-  
+
     currentPhaseDescription: string;
-  
+
     recommendedDirection:
       DecisionResult["recommendedDirection"];
     prohibitedDirection:
@@ -33,8 +36,11 @@ import type {
 
     roleRecommendationAssessment?:
       RoleRecommendationAssessment | null;
+
+    lifeFlowInterpretationAssessment?:
+      LifeFlowInterpretationAssessment | null;
   };
-  
+
   function hasContextConflict(
     alignment: DecisionResult["contextAlignment"],
   ): boolean {
@@ -43,7 +49,7 @@ import type {
       alignment === "stronglyConflicted"
     );
   }
-  
+
   /**
    * Decision Engine에서 확정된 판단 결과를
    * 최종 DecisionResult 형식으로 조립한다.
@@ -69,32 +75,33 @@ import type {
       recommendedDirection,
       prohibitedDirection,
       roleRecommendationAssessment,
+      lifeFlowInterpretationAssessment,
       finalDecisionSentence:
         inputFinalDecisionSentence,
     } = input;
-  
+
     const conflictExists =
       hasContextConflict(contextAlignment);
-  
+
     return {
       verdict,
       confidence,
-  
+
       contextAlignment,
       actionReadiness,
-  
+
       decisionTarget:
         decisionInput.question.decisionTarget,
       topic: decisionInput.question.topic,
       intent: decisionInput.question.intent,
-  
+
       coreDecision,
       decisionReason,
-  
+
       evidence,
       conditions,
       risks,
-  
+
       conflict: {
         exists: conflictExists,
         description: conflictExists
@@ -104,22 +111,26 @@ import type {
         questionSide:
           decisionInput.question.decisionQuestion,
       },
-  
+
       recommendedDirection,
       prohibitedDirection,
-  
+
       finalDecisionSentence:
         inputFinalDecisionSentence
         ?? [
           coreDecision,
           recommendedDirection,
         ].join(" "),
-  
+
       humanContextUsed: true,
       questionContextUsed: true,
 
       roleRecommendationAssessment:
         roleRecommendationAssessment
+        ?? null,
+
+      lifeFlowInterpretationAssessment:
+        lifeFlowInterpretationAssessment
         ?? null,
     };
   }

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
     SajuFiveElement,
   } from "./sajuFacts";
 
@@ -66,6 +66,86 @@ import type {
     tenGod: SajuLuckFlowTenGod;
 
     element: SajuFiveElement;
+  };
+
+  export type SajuWolunSegmentFact = {
+    targetYear: number;
+
+    targetMonth: number;
+
+    ganZhi: string;
+
+    heavenlyStem: string;
+
+    earthlyBranch: string;
+
+    tenGod: SajuLuckFlowTenGod;
+
+    element: SajuFiveElement;
+
+    startDate: string;
+
+    endDate: string;
+
+    jieQiBoundary: {
+      name: string;
+
+      date: string;
+    } | null;
+  };
+
+  export type SajuTargetIlunFact = {
+    targetDate: string;
+
+    ganZhi: string;
+
+    heavenlyStem: string;
+
+    earthlyBranch: string;
+
+    tenGod: SajuLuckFlowTenGod;
+
+    element: SajuFiveElement;
+  };
+
+  export type SajuYearGanZhiSegmentFact = {
+    ganZhi: string;
+
+    heavenlyStem: string;
+
+    earthlyBranch: string;
+
+    tenGod: SajuLuckFlowTenGod;
+
+    element: SajuFiveElement;
+
+    startDate: string;
+
+    endDate: string;
+
+    jieQiBoundary: {
+      name: string;
+
+      date: string;
+    } | null;
+  };
+
+  export type SajuTargetPeriodLuckFlowFact = {
+    targetStartDate: string;
+
+    targetEndDate: string;
+
+    currentDaeun: SajuCurrentDaeunFact | null;
+
+    targetSeun: SajuCurrentSeunFact;
+
+    yearSegments: SajuYearGanZhiSegmentFact[];
+
+    wolunSegments: SajuWolunSegmentFact[];
+
+    targetIlun: SajuTargetIlunFact | null;
+
+    limitations: string[];
   };
 
   export type SajuLuckFlowFact = {

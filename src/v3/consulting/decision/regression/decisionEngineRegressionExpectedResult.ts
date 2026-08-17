@@ -1,25 +1,25 @@
-import type {
+﻿import type {
     DecisionResult,
   } from "../decisionTypes";
-  
+
   export const BUSINESS_START_EXPECTED_RESULT:
     DecisionResult = {
     verdict: "conditionallyRecommended",
     confidence: "high",
-  
+
     contextAlignment: "stronglyAligned",
     actionReadiness: "readyWithConditions",
-  
+
     decisionTarget: "start",
     topic: "business",
     intent: "prediction",
-  
+
     coreDecision:
-      "지금 시작할 것인가: 조건을 갖춘 뒤 진행하는 것이 맞다.",
-  
+    "지금 시작하는 방향 자체는 가능하지만, 질문한 결과로 이어지려면 필요한 조건과 변수의 영향을 함께 봐야 한다.",
+
     decisionReason:
       "현재 인생 국면은 '성장 국면'이다. 현재는 새로운 기회를 실행으로 연결하되, 검증된 범위 안에서 단계적으로 확장해야 하는 국면이다. 질문에서 실제로 결정하려는 것은 '지금 시작할 것인가'이다. 현재 국면은 확장과 성장을 요구하며, 질문 속 선택도 새로운 행동과 확대를 향하고 있어 서로 강하게 맞는다.",
-  
+
       evidence: [
         {
           source: "humanIdentity",
@@ -139,7 +139,7 @@ import type {
           weight: 3,
         },
       ],
-  
+
     conditions: [
       {
         key: "confirmExecutionConditions",
@@ -163,7 +163,7 @@ import type {
         satisfied: false,
       },
     ],
-  
+
     risks: [
       {
         key: "urgentDecision",
@@ -187,7 +187,7 @@ import type {
         source: "repeatedPattern",
       },
     ],
-  
+
     conflict: {
       exists: false,
       description:
@@ -197,16 +197,16 @@ import type {
       questionSide:
         "지금 시작할 것인가",
     },
-  
+
     recommendedDirection:
       "필수 조건과 위험 관리 기준을 먼저 갖춘 뒤 제한적으로 진행한다.",
-  
+
     prohibitedDirection:
       "필수 조건을 충족하지 않은 채 바로 실행하지 않는다.",
-  
-    finalDecisionSentence:
-      "지금 시작할 것인가: 조건을 갖춘 뒤 진행하는 것이 맞다. 필수 조건과 위험 관리 기준을 먼저 갖춘 뒤 제한적으로 진행한다.",
-  
+
+      finalDecisionSentence:
+      "지금 시작하는 방향 자체는 가능하지만, 질문한 결과로 이어지려면 필요한 조건과 변수의 영향을 함께 봐야 한다. 필수 조건과 위험 관리 기준을 먼저 갖춘 뒤 제한적으로 진행한다.",
+
     humanContextUsed: true,
     questionContextUsed: true,
   };

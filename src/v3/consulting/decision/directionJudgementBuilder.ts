@@ -1,7 +1,7 @@
-import type {
+﻿import type {
     DecisionVerdict,
   } from "./decisionTypes";
-  
+
   import type {
     VerdictContext,
   } from "./verdictContextBuilder";
@@ -9,15 +9,29 @@ import type {
   import type {
     QuestionRealitySignal,
   } from "../question/questionContext";
-  
+
+  import type {
+    DecisionTarget,
+    QuestionIntent,
+  } from "../question/questionReader";
+
   export type DirectionJudgement = {
     recommendedDirection: string;
     prohibitedDirection: string;
   };
-  
+
   export type DirectionJudgementBuilderInput = {
-    verdict: DecisionVerdict;
-    context: VerdictContext;
+    verdict:
+      DecisionVerdict;
+
+    context:
+      VerdictContext;
+
+    intent:
+      QuestionIntent;
+
+    decisionTarget:
+      DecisionTarget;
   };
 
   function buildWealthRecommendedOpening(
@@ -35,6 +49,9 @@ import type {
         return "현재 선택은 진행하지 않고 다른 대안을 검토할 때";
       case "insufficientEvidence":
         return "현재 정보로 실행을 확정하지 말고 추가 확인 과정에서";
+
+      case "interpreted":
+        return "현재 운 흐름을 해석할 때";
     }
   }
   function buildWealthRealityDirection(
@@ -134,7 +151,7 @@ import type {
         prohibitedParts.join(", "),
     };
   }
-  
+
   function buildExpansionRiskDirection(
     verdict: DecisionVerdict,
   ): DirectionJudgement {
@@ -146,7 +163,7 @@ import type {
           prohibitedDirection:
             "초기 검증 없이 대출·고정비·인력·운영 규모를 한꺼번에 확대하지 않는다.",
         };
-  
+
       case "conditionallyRecommended":
         return {
           recommendedDirection:
@@ -154,7 +171,7 @@ import type {
           prohibitedDirection:
             "필수 조건을 갖추지 않은 상태에서 자금과 운영 규모를 먼저 늘리지 않는다.",
         };
-  
+
       case "wait":
         return {
           recommendedDirection:
@@ -162,7 +179,7 @@ import type {
           prohibitedDirection:
             "조급함을 이유로 새로운 고정비나 장기적인 재정 부담을 추가하지 않는다.",
         };
-  
+
       case "notRecommended":
         return {
           recommendedDirection:
@@ -170,7 +187,7 @@ import type {
           prohibitedDirection:
             "현재 감당 범위를 넘는 투자와 확장을 억지로 추진하지 않는다.",
         };
-  
+
       case "insufficientEvidence":
         return {
           recommendedDirection:
@@ -178,9 +195,17 @@ import type {
           prohibitedDirection:
             "확장 위험을 확인하지 않은 상태에서 계약이나 자금 집행을 확정하지 않는다.",
         };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "해석된 운 흐름을 참고하되, 실행 여부는 별도의 결정 질문으로 판단한다.",
+          prohibitedDirection:
+            "운 해석 결과만으로 즉각적인 행동 결정을 확정하지 않는다.",
+        };
     }
   }
-  
+
   function buildFinancialPressureDirection(
     verdict: DecisionVerdict,
   ): DirectionJudgement {
@@ -192,7 +217,7 @@ import type {
           prohibitedDirection:
             "생활자금과 실행자금을 구분하지 않은 채 보유 자금을 한 번에 투입하지 않는다.",
         };
-  
+
       case "conditionallyRecommended":
         return {
           recommendedDirection:
@@ -200,7 +225,7 @@ import type {
           prohibitedDirection:
             "재정 안전장치 없이 대출이나 고정비를 먼저 발생시키지 않는다.",
         };
-  
+
       case "wait":
         return {
           recommendedDirection:
@@ -208,7 +233,7 @@ import type {
           prohibitedDirection:
             "현재 재정 부담을 새로운 투자나 차입으로 해결하려 하지 않는다.",
         };
-  
+
       case "notRecommended":
         return {
           recommendedDirection:
@@ -216,7 +241,7 @@ import type {
           prohibitedDirection:
             "손실을 만회하려는 목적으로 추가 자금을 투입하지 않는다.",
         };
-  
+
       case "insufficientEvidence":
         return {
           recommendedDirection:
@@ -224,9 +249,17 @@ import type {
           prohibitedDirection:
             "실제 현금흐름을 확인하지 않은 상태에서 비용이 발생하는 결정을 확정하지 않는다.",
         };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "해석된 운 흐름을 참고하되, 실행 여부는 별도의 결정 질문으로 판단한다.",
+          prohibitedDirection:
+            "운 해석 결과만으로 즉각적인 행동 결정을 확정하지 않는다.",
+        };
     }
   }
-  
+
   function buildTransitionDifficultyDirection(
     verdict: DecisionVerdict,
   ): DirectionJudgement {
@@ -238,7 +271,7 @@ import type {
           prohibitedDirection:
             "기존 기반을 먼저 끊고 새로운 선택에 전부 의존하는 방식으로 전환하지 않는다.",
         };
-  
+
       case "conditionallyRecommended":
         return {
           recommendedDirection:
@@ -246,7 +279,7 @@ import type {
           prohibitedDirection:
             "준비 기간 없이 직업·사업·생활 기반을 동시에 변경하지 않는다.",
         };
-  
+
       case "wait":
         return {
           recommendedDirection:
@@ -254,7 +287,7 @@ import type {
           prohibitedDirection:
             "불안이나 피로를 벗어나기 위해 기존 기반을 충동적으로 포기하지 않는다.",
         };
-  
+
       case "notRecommended":
         return {
           recommendedDirection:
@@ -262,7 +295,7 @@ import type {
           prohibitedDirection:
             "현실적인 이행 경로가 없는 상태에서 전면 전환을 추진하지 않는다.",
         };
-  
+
       case "insufficientEvidence":
         return {
           recommendedDirection:
@@ -270,9 +303,17 @@ import type {
           prohibitedDirection:
             "전환 공백에 대한 대비 없이 현재 기반을 먼저 정리하지 않는다.",
         };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "해석된 운 흐름을 참고하되, 실행 여부는 별도의 결정 질문으로 판단한다.",
+          prohibitedDirection:
+            "운 해석 결과만으로 즉각적인 행동 결정을 확정하지 않는다.",
+        };
     }
   }
-  
+
   function buildExecutionConstraintDirection(
     verdict: DecisionVerdict,
   ): DirectionJudgement {
@@ -284,7 +325,7 @@ import type {
           prohibitedDirection:
             "여러 과제를 동시에 시작하거나 모든 책임을 혼자 맡지 않는다.",
         };
-  
+
       case "conditionallyRecommended":
         return {
           recommendedDirection:
@@ -292,7 +333,7 @@ import type {
           prohibitedDirection:
             "시간과 역할을 확보하지 않은 상태에서 실행 항목을 계속 늘리지 않는다.",
         };
-  
+
       case "wait":
         return {
           recommendedDirection:
@@ -300,7 +341,7 @@ import type {
           prohibitedDirection:
             "실행 여력이 없는 상태에서 의지만으로 일정을 밀어붙이지 않는다.",
         };
-  
+
       case "notRecommended":
         return {
           recommendedDirection:
@@ -308,7 +349,7 @@ import type {
           prohibitedDirection:
             "감당할 수 없는 역할을 추가로 떠안지 않는다.",
         };
-  
+
       case "insufficientEvidence":
         return {
           recommendedDirection:
@@ -316,9 +357,17 @@ import type {
           prohibitedDirection:
             "실행 주체와 일정이 불분명한 상태에서 결정을 확정하지 않는다.",
         };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "해석된 운 흐름을 참고하되, 실행 여부는 별도의 결정 질문으로 판단한다.",
+          prohibitedDirection:
+            "운 해석 결과만으로 즉각적인 행동 결정을 확정하지 않는다.",
+        };
     }
   }
-  
+
   function buildFamilyResponsibilityDirection(
     verdict: DecisionVerdict,
   ): DirectionJudgement {
@@ -330,7 +379,7 @@ import type {
           prohibitedDirection:
             "가족의 생활 안정과 돌봄 책임을 훼손하는 방식으로 추진하지 않는다.",
         };
-  
+
       case "conditionallyRecommended":
         return {
           recommendedDirection:
@@ -338,7 +387,7 @@ import type {
           prohibitedDirection:
             "가족 책임에 대한 합의 없이 장기간의 소득 공백이나 생활 변화를 만들지 않는다.",
         };
-  
+
       case "wait":
         return {
           recommendedDirection:
@@ -346,7 +395,7 @@ import type {
           prohibitedDirection:
             "현재 책임을 방치하거나 가족에게 부담을 일방적으로 이전하지 않는다.",
         };
-  
+
       case "notRecommended":
         return {
           recommendedDirection:
@@ -354,7 +403,7 @@ import type {
           prohibitedDirection:
             "가족 책임과 직접 충돌하는 선택을 억지로 추진하지 않는다.",
         };
-  
+
       case "insufficientEvidence":
         return {
           recommendedDirection:
@@ -362,9 +411,99 @@ import type {
           prohibitedDirection:
             "가족에게 미칠 영향을 확인하지 않은 상태에서 결정을 확정하지 않는다.",
         };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "해석된 운 흐름을 참고하되, 실행 여부는 별도의 결정 질문으로 판단한다.",
+          prohibitedDirection:
+            "운 해석 결과만으로 즉각적인 행동 결정을 확정하지 않는다.",
+        };
     }
   }
-  
+
+  function isNonExecutionPrediction(
+    intent:
+      QuestionIntent,
+    decisionTarget:
+      DecisionTarget,
+  ): boolean {
+    if (
+      intent
+      !== "prediction"
+    ) {
+      return false;
+    }
+
+    return (
+      decisionTarget
+      === "manageMoney"
+      || decisionTarget
+        === "none"
+    );
+  }
+
+  function buildPredictionDirection(
+    verdict:
+      DecisionVerdict,
+  ): DirectionJudgement {
+    switch (verdict) {
+      case "recommended":
+        return {
+          recommendedDirection:
+            "질문한 결과가 이어질 가능성을 뒷받침하는 근거를 중심으로 흐름을 확인한다.",
+
+          prohibitedDirection:
+            "가능성이 있다는 이유만으로 실제 성사 시점이나 결과를 확정하지 않는다.",
+        };
+
+      case "conditionallyRecommended":
+        return {
+          recommendedDirection:
+            "질문한 결과의 가능성은 열어 두되, 함께 확인된 조건과 변수가 실제 흐름에 어떻게 작용하는지 본다.",
+
+          prohibitedDirection:
+            "조건과 변수를 무시한 채 결과가 이미 확정된 것으로 단정하지 않는다.",
+        };
+
+      case "wait":
+        return {
+          recommendedDirection:
+            "현재는 결과의 즉각적인 성사보다 시기 지연과 흐름의 변동 가능성을 함께 본다.",
+
+          prohibitedDirection:
+            "현재 흐름만으로 가까운 시점의 성사를 확정해서 말하지 않는다.",
+        };
+
+      case "notRecommended":
+        return {
+          recommendedDirection:
+            "현재 흐름에서는 질문한 결과가 이어지기 어려운 근거와 방해 요인을 중심으로 본다.",
+
+          prohibitedDirection:
+            "현재 근거와 반대되는 낙관적인 결과를 임의로 확정하지 않는다.",
+        };
+
+      case "insufficientEvidence":
+        return {
+          recommendedDirection:
+            "현재 확인된 근거 범위에서 가능성과 한계를 구분하고, 확인되지 않은 부분은 열어 둔다.",
+
+          prohibitedDirection:
+            "근거가 부족한 상태에서 결과의 성사 여부나 시점을 확정하지 않는다.",
+        };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "해석된 운 흐름에서 질문한 결과와 관련된 변화와 조건을 중심으로 설명한다.",
+
+          prohibitedDirection:
+            "운 흐름만으로 실제 사건의 발생이나 성사를 확정하지 않는다.",
+        };
+    }
+  }
+
   function buildVerdictDirection(
     verdict: DecisionVerdict,
   ): DirectionJudgement {
@@ -376,7 +515,7 @@ import type {
           prohibitedDirection:
             "근거 없이 규모를 확대하거나 준비되지 않은 상태에서 속도를 높이지 않는다.",
         };
-  
+
       case "conditionallyRecommended":
         return {
           recommendedDirection:
@@ -384,7 +523,7 @@ import type {
           prohibitedDirection:
             "필수 조건을 충족하지 않은 채 바로 실행하지 않는다.",
         };
-  
+
       case "wait":
         return {
           recommendedDirection:
@@ -392,7 +531,7 @@ import type {
           prohibitedDirection:
             "불안과 조급함만으로 결정을 밀어붙이지 않는다.",
         };
-  
+
       case "notRecommended":
         return {
           recommendedDirection:
@@ -400,7 +539,7 @@ import type {
           prohibitedDirection:
             "현재 사람의 구조와 국면에 충돌하는 선택을 억지로 추진하지 않는다.",
         };
-  
+
       case "insufficientEvidence":
         return {
           recommendedDirection:
@@ -408,17 +547,38 @@ import type {
           prohibitedDirection:
             "판단 근거가 부족한 상태에서 확정적인 결정을 내리지 않는다.",
         };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "해석된 운 흐름을 참고하되, 실행 여부는 별도의 결정 질문으로 판단한다.",
+          prohibitedDirection:
+            "운 해석 결과만으로 즉각적인 행동 결정을 확정하지 않는다.",
+        };
     }
   }
-  
+
   export function buildDirectionJudgement(
     input: DirectionJudgementBuilderInput,
   ): DirectionJudgement {
     const {
       verdict,
       context,
+      intent,
+      decisionTarget,
     } = input;
-  
+
+    if (
+      isNonExecutionPrediction(
+        intent,
+        decisionTarget,
+      )
+    ) {
+      return buildPredictionDirection(
+        verdict,
+      );
+    }
+
     const {
       lifeAssessment,
     } = context;
@@ -439,22 +599,22 @@ import type {
     if (lifeAssessment.expansionRisk === "high") {
       return buildExpansionRiskDirection(verdict);
     }
-  
+
     if (lifeAssessment.financialPressure === "high") {
       return buildFinancialPressureDirection(verdict);
     }
-  
+
     if (lifeAssessment.transitionDifficulty === "high") {
       return buildTransitionDifficultyDirection(verdict);
     }
-  
+
     if (lifeAssessment.executionConstraint === "high") {
       return buildExecutionConstraintDirection(verdict);
     }
-  
+
     if (lifeAssessment.familyResponsibility === "high") {
       return buildFamilyResponsibilityDirection(verdict);
     }
-  
+
     return buildVerdictDirection(verdict);
   }

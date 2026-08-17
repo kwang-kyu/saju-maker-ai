@@ -41,6 +41,9 @@ import {
 import {
   buildRoleRecommendationDecisionResult,
 } from "./roleRecommendationDecisionBuilder";
+import {
+  buildLifeFlowInterpretationDecisionResult,
+} from "./lifeFlowInterpretationDecisionBuilder";
 
 /**
  * Decision Engine
@@ -61,6 +64,17 @@ export function runDecisionEngine(
       .roleRecommendationAnalysisRequired
   ) {
     return buildRoleRecommendationDecisionResult(
+      input,
+    );
+  }
+
+  if (
+    input
+      .questionContext
+      .requirements
+      .lifeFlowInterpretationAnalysisRequired
+  ) {
+    return buildLifeFlowInterpretationDecisionResult(
       input,
     );
   }
@@ -147,10 +161,18 @@ export function runDecisionEngine(
         input.question.analysisScope,
     });
 
-  const directionJudgement = buildDirectionJudgement({
-    verdict,
-    context: verdictContext,
-  });
+    const directionJudgement = buildDirectionJudgement({
+      verdict,
+
+      context:
+        verdictContext,
+
+      intent:
+        input.question.intent,
+
+      decisionTarget:
+        input.question.decisionTarget,
+    });
 
   const evidence =
   buildDecisionEvidence(
@@ -199,8 +221,17 @@ export function runDecisionEngine(
   const coreDecision = buildCoreDecision(
     verdict,
     input.question.decisionQuestion,
-  );
+    {
+      originalQuestion:
+        input.question.originalQuestion,
 
+      intent:
+        input.question.intent,
+
+      decisionTarget:
+        input.question.decisionTarget,
+    },
+  );
   return buildDecisionResult({
     decisionInput: input,
 

@@ -1,8 +1,12 @@
-import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+﻿import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import {
   applyRoleRecommendationNormalization,
   isRoleRecommendationQuestion,
 } from "./roleRecommendationQuestionDetector";
+import {
+  applyLifeFlowInterpretationNormalization,
+  isLifeFlowInterpretationQuestion,
+} from "./lifeFlowInterpretationQuestionDetector";
 
 export type QuestionTopic =
   | "business"
@@ -51,6 +55,7 @@ export type DecisionTarget =
   | "wait"
   | "choose"
   | "invest"
+  | "buy"
   | "sell"
   | "move"
   | "partner"
@@ -597,24 +602,49 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
     keywords: ["재회", "화해", "다시 만나", "관계 회복"],
   },
   {
-    result: "sell",
-    keywords: ["매도", "팔아야", "처분"],
-  },
-  {
-    result: "invest",
-    keywords: [
-      "투자",
-      "매수",
-      "분양받",
-      "돈을 넣",
-      "주식에 넣",
-      "ETF에 넣",
-      "펀드에 넣",
-      "채권에 넣",
-      "코인에 넣",
-      "가상자산에 넣",
-    ],
-  },
+      result: "buy",
+      keywords: [
+        "부동산을 사",
+        "아파트를 사",
+        "건물을 사",
+        "상가를 사",
+        "토지를 사",
+        "땅을 사",
+        "주택을 사",
+        "집을 사",
+        "부동산 매입",
+        "아파트 매입",
+        "건물 매입",
+        "상가 매입",
+        "토지 매입",
+        "주택 매입",
+        "부동산 구입",
+        "아파트 구입",
+        "건물 구입",
+        "상가 구입",
+        "토지 구입",
+        "주택 구입",
+        "분양받",
+      ],
+    },
+    {
+      result: "sell",
+      keywords: ["매도", "팔아야", "처분"],
+    },
+    {
+      result: "invest",
+      keywords: [
+        "투자",
+        "매수",
+        "돈을 넣",
+        "주식에 넣",
+        "ETF에 넣",
+        "펀드에 넣",
+        "채권에 넣",
+        "코인에 넣",
+        "가상자산에 넣",
+      ],
+    },
   {
     result: "move",
     keywords: ["이사", "이전", "옮겨야", "자리 이동"],
@@ -998,7 +1028,8 @@ function buildDecisionQuestion(
     stop: "현재 진행 중인 일을 중단할 것인가",
     wait: "지금 움직이지 않고 기다릴 것인가",
     choose: "여러 선택지 중 무엇을 선택할 것인가",
-    invest: "자금이나 자산을 투입할 것인가",
+    invest: "자금이나 자산을 투자할 것인가",
+    buy: "부동산이나 자산을 매입할 것인가",
     sell: "보유한 자산을 매도하거나 정리할 것인가",
     move: "현재 위치나 환경을 옮길 것인가",
     partner: "다른 사람과 함께할 것인가",
@@ -1202,6 +1233,15 @@ function detectQuestionAnalysisMode(
   if (
     isRoleRecommendationQuestion(
       question,
+    )
+  ) {
+    return "interpretation";
+  }
+
+  if (
+    isLifeFlowInterpretationQuestion(
+      question,
+      decisionTarget,
     )
   ) {
     return "interpretation";
@@ -1507,7 +1547,8 @@ export function readQuestion(
     ]),
   );
 
-  return applyRoleRecommendationNormalization({
+  return applyLifeFlowInterpretationNormalization(
+    applyRoleRecommendationNormalization({
     originalQuestion: question.trim(),
     normalizedQuestion,
 
@@ -1539,5 +1580,6 @@ export function readQuestion(
     confidence: calculateConfidence(evidence.length),
 
     humanContextReceived: true,
-  });
+  }),
+  );
 }

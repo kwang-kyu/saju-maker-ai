@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ConsultingClarificationFact,
 } from "../consultingInput";
 
@@ -134,6 +134,9 @@ export type QuestionAnalysisRequirements = {
     boolean;
 
   roleRecommendationAnalysisRequired:
+    boolean;
+
+  lifeFlowInterpretationAnalysisRequired:
     boolean;
 };
 
