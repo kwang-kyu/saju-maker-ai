@@ -1,4 +1,4 @@
-﻿import { analyzeContextAlignment } from "./contextAlignment";
+import { analyzeContextAlignment } from "./contextAlignment";
 import { buildDecisionBrain } from "./decisionBrain";
 import type {
   DecisionEngineInput,
@@ -116,9 +116,23 @@ export function runDecisionEngine(
   );
 
   const timingAssessment =
-  assessTiming(
-    input.questionContext,
-  );
+  assessTiming({
+    questionContext:
+      input.questionContext,
+
+    humanContext:
+      input.humanContext,
+
+    selfSajuFacts:
+      input.selfSajuFacts
+      ?? null,
+
+    lifeFlowTarget:
+      input.lifeFlowTarget,
+
+    targetPeriodLuckFlow:
+      input.targetPeriodLuckFlow,
+  });
 
   const readerDecisionAssessment =
   assessReaderDecision(

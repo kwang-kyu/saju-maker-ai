@@ -1,4 +1,4 @@
-﻿import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+import type { HumanDestinyContext } from "../../types/humanDestinyContext";
 import {
   applyRoleRecommendationNormalization,
   isRoleRecommendationQuestion,
@@ -936,10 +936,9 @@ function detectTimingType(
   question: string,
 ): QuestionTimingType {
   if (
-    question.includes("기다려") ||
-    question.includes("미뤄") ||
-    question.includes("보류") ||
-    question.includes("언제까지 기다")
+    /기다(?:리|려|렸)/.test(question) ||
+    /미(?:루|뤄|뤘)/.test(question) ||
+    question.includes("보류")
   ) {
     return "waitingTiming";
   }

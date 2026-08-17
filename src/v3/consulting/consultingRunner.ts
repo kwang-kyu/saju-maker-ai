@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ConsultingInput,
 } from "./consultingInput";
 
@@ -143,7 +143,15 @@ export function runConsultingTurn(
   );
 
   const targetPeriodBuildResult =
-    input.sajuFacts
+  input.sajuFacts
+    && (
+      questionContext
+        .requirements
+        .lifeFlowInterpretationAnalysisRequired
+      || questionContext
+        .requirements
+        .timingAnalysisRequired
+    )
       ? buildTargetPeriodLuckFlowForQuestion({
           sajuFacts:
             input.sajuFacts,
@@ -151,6 +159,13 @@ export function runConsultingTurn(
           normalizedQuestion:
             questionReaderResult
               .normalizedQuestion,
+
+          purpose:
+            questionContext
+              .requirements
+              .lifeFlowInterpretationAnalysisRequired
+              ? "lifeFlowInterpretation"
+              : "decisionTiming",
         })
       : null;
 

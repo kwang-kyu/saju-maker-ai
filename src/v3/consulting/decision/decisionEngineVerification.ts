@@ -16,6 +16,82 @@ import {
   buildCounterpartSajuCalculation,
 } from "./counterpartSajuCalculationBuilder";
 import type { TimingAssessment } from "./timingAssessment";
+function buildNeutralTimingAssessment():
+  TimingAssessment {
+  return {
+    analysisRequired:
+      false,
+
+    timingType:
+      "unknown",
+
+    evidenceLevel:
+      "notRequired",
+
+    assessmentScope:
+      "none",
+
+    targetScope:
+      null,
+
+    targetStartDate:
+      null,
+
+    targetEndDate:
+      null,
+
+    targetYear:
+      null,
+
+    targetMonth:
+      null,
+
+    targetDay:
+      null,
+
+    hasCurrentDaeun:
+      false,
+
+    hasTargetSeun:
+      false,
+
+    hasYearSegments:
+      false,
+
+    hasWolun:
+      false,
+
+    hasIlun:
+      false,
+
+    flowInterpretationAvailable:
+      false,
+
+    flowDirection:
+      "notAssessed",
+
+    overallTheme:
+      null,
+
+    supportiveSignals:
+      [],
+
+    tensionSignals:
+      [],
+
+    cautions:
+      [],
+
+    limitations:
+      [],
+
+    evidenceKeys:
+      [],
+
+    evidenceComplete:
+      true,
+  };
+}
 const VERIFIED_COUNTERPART_SAJU =
   buildCounterpartSajuCalculation({
     birthDate:
@@ -898,12 +974,8 @@ export function verifyReadinessConditionSensitivity(
     additionalCounterpartDataRequired: false,
   };
 
-  const neutralTimingAssessment: TimingAssessment = {
-    analysisRequired: false,
-    timingType: "unknown",
-    evidenceLevel: "notRequired",
-    assessmentScope: "none",
-  };
+  const neutralTimingAssessment =
+  buildNeutralTimingAssessment();
 
   const buildConditions = (
     readiness: ActionReadiness,
@@ -1043,12 +1115,8 @@ export function verifyLifeContextConditionSensitivity(
     additionalCounterpartDataRequired: false,
   };
 
-  const neutralTimingAssessment: TimingAssessment = {
-    analysisRequired: false,
-    timingType: "unknown",
-    evidenceLevel: "notRequired",
-    assessmentScope: "none",
-  };
+  const neutralTimingAssessment =
+  buildNeutralTimingAssessment();
 
   const buildConditions = (
     lifeAssessment: LifeContextAssessment,
@@ -1223,12 +1291,8 @@ export function verifyCompatibilityConditionSensitivity(
     expansionRisk: "low",
   };
 
-  const neutralTimingAssessment: TimingAssessment = {
-    analysisRequired: false,
-    timingType: "unknown",
-    evidenceLevel: "notRequired",
-    assessmentScope: "none",
-  };
+  const neutralTimingAssessment =
+  buildNeutralTimingAssessment();
 
   const buildConditions = (
     compatibilityAssessment: CompatibilityAssessment,

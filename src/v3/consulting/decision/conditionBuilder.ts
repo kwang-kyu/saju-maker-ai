@@ -19,7 +19,7 @@ import type {
   import {
     buildReaderDecisionConditions,
   } from "./readerDecisionConditionBuilder";
-  
+
   /**
    * Decision Condition Builder
    *
@@ -28,22 +28,22 @@ import type {
    *
    * 이 Builder는 Verdict를 생성하거나 변경하지 않는다.
    */
-  
+
   function buildRepeatedPatternConditions(
     input: DecisionEngineInput,
   ): DecisionCondition[] {
     const repeatedPattern =
       input.humanContext.identity.profile.repeatedPattern;
-  
+
     const patterns = [
       repeatedPattern.primary.pattern,
       ...(repeatedPattern.secondary
         ? [repeatedPattern.secondary.pattern]
         : []),
     ];
-  
+
     const conditions: DecisionCondition[] = [];
-  
+
     for (const pattern of patterns) {
       switch (pattern) {
         case "earlySuccessCollapse":
@@ -55,7 +55,7 @@ import type {
             satisfied: false,
           });
           break;
-  
+
         case "slowGrowthStable":
           conditions.push({
             key: "useGradualGrowth",
@@ -65,7 +65,7 @@ import type {
             satisfied: false,
           });
           break;
-  
+
         case "relationshipLoss":
           conditions.push({
             key: "defineRelationshipBoundaries",
@@ -75,7 +75,7 @@ import type {
             satisfied: false,
           });
           break;
-  
+
         case "wealthLeak":
           conditions.push({
             key: "protectCashFlow",
@@ -85,7 +85,7 @@ import type {
             satisfied: false,
           });
           break;
-  
+
         case "restartCycle":
           conditions.push({
             key: "confirmContinuationPlan",
@@ -95,7 +95,7 @@ import type {
             satisfied: false,
           });
           break;
-  
+
         case "responsibilityOverload":
           conditions.push({
             key: "divideResponsibility",
@@ -105,7 +105,7 @@ import type {
             satisfied: false,
           });
           break;
-  
+
         case "lateBloom":
           conditions.push({
             key: "allowLongTermAccumulation",
@@ -115,7 +115,7 @@ import type {
             satisfied: false,
           });
           break;
-  
+
         case "opportunityMiss":
           conditions.push({
             key: "setDecisionDeadline",
@@ -127,7 +127,7 @@ import type {
           break;
       }
     }
-  
+
     return conditions;
   }
 
@@ -137,9 +137,9 @@ import type {
     if (!assessment.analysisRequired) {
       return [];
     }
-  
+
     const conditions: DecisionCondition[] = [];
-  
+
     if (!assessment.counterpartExists) {
       conditions.push({
         key: "identifyCompatibilityCounterpart",
@@ -148,10 +148,10 @@ import type {
         required: true,
         satisfied: false,
       });
-  
+
       return conditions;
     }
-  
+
     if (
       assessment.additionalCounterpartDataRequired
     ) {
@@ -163,59 +163,232 @@ import type {
         satisfied: false,
       });
     }
-  
+
     return conditions;
   }
-  
+
   function buildTimingConditions(
     assessment: TimingAssessment,
   ): DecisionCondition[] {
     if (!assessment.analysisRequired) {
       return [];
     }
-  
+
+    if (
+      assessment.evidenceLevel
+      === "missing"
+    ) {
+      return [
+        {
+          key:
+            "completeTimingEvidence",
+
+          description:
+            assessment.targetStartDate
+            && assessment.targetEndDate
+              ? `시기 판단은 필요하지만 ${assessment.targetStartDate}~${assessment.targetEndDate} 기간의 운 근거가 완성되지 않아 실행 시기를 확정할 수 없다.`
+              : "시기 판단은 필요하지만 대상 기간과 해당 기간의 운 근거가 완성되지 않아 실행 시기를 확정할 수 없다.",
+
+          required:
+            true,
+
+          satisfied:
+            false,
+        },
+      ];
+    }
+
+    const supportiveSummary =
+      assessment
+        .supportiveSignals
+        .slice(
+          0,
+          2,
+        )
+        .join(" ");
+
+    const tensionSummary =
+      assessment
+        .tensionSignals
+        .slice(
+          0,
+          2,
+        )
+        .join(" ");
+
+    const theme =
+      assessment.overallTheme
+      ?? "";
+
+    switch (assessment.flowDirection) {
+      case "supportive":
+        return [
+          {
+            key:
+              "timingFlowSupportive",
+
+            description:
+              [
+                theme,
+                supportiveSummary,
+              ]
+                .filter(Boolean)
+                .join(" "),
+
+            required:
+              true,
+
+            satisfied:
+              true,
+          },
+        ];
+
+      case "tension":
+        return [
+          {
+            key:
+              "timingFlowTension",
+
+            description:
+              [
+                theme,
+                tensionSummary,
+              ]
+                .filter(Boolean)
+                .join(" "),
+
+            required:
+              true,
+
+            satisfied:
+              false,
+          },
+        ];
+
+      case "mixed":
+        return [
+          {
+            key:
+              "timingFlowMixed",
+
+            description:
+              [
+                theme,
+                supportiveSummary
+                  ? `유리 근거: ${supportiveSummary}`
+                  : null,
+                tensionSummary
+                  ? `긴장 근거: ${tensionSummary}`
+                  : null,
+              ]
+                .filter(
+                  (
+                    item,
+                  ): item is string =>
+                    Boolean(item),
+                )
+                .join(" "),
+
+            required:
+              true,
+
+            satisfied:
+              false,
+          },
+        ];
+
+      case "indeterminate":
+        return [
+          {
+            key:
+              "timingFlowIndeterminate",
+
+            description:
+              [
+                theme,
+                "현재 확보된 운 근거만으로 실행 시기의 유불리를 한 방향으로 확정하지 않는다.",
+              ]
+                .filter(Boolean)
+                .join(" "),
+
+            required:
+              true,
+
+            satisfied:
+              false,
+          },
+        ];
+
+      case "notAssessed":
+        break;
+    }
+
     switch (assessment.timingType) {
       case "executionTiming":
         return [
           {
-            key: "verifyImmediateExecutionReadiness",
+            key:
+              "verifyImmediateExecutionReadiness",
+
             description:
-              "지금 바로 실행하려는 질문이므로 자금, 역할, 일정과 실제 실행 준비가 갖춰졌는지 먼저 확인해야 한다.",
-            required: true,
-            satisfied: false,
+              "지금 실행하려는 질문이지만 시기 흐름 판단이 완료되지 않았다.",
+
+            required:
+              true,
+
+            satisfied:
+              false,
           },
         ];
-  
+
       case "waitingTiming":
         return [
           {
-            key: "defineWaitingCondition",
+            key:
+              "defineWaitingCondition",
+
             description:
-              "단순히 기다리는 것이 아니라 무엇이 충족될 때까지 기다릴 것인지 기준과 재검토 시점을 정해야 한다.",
-            required: true,
-            satisfied: false,
+              "기다림 여부를 판단하려면 실제 대상 기간과 그 기간의 운 흐름을 확인해야 한다.",
+
+            required:
+              true,
+
+            satisfied:
+              false,
           },
         ];
-  
+
       case "bestTiming":
         return [
           {
-            key: "identifyActionTimingWindow",
+            key:
+              "identifyActionTimingWindow",
+
             description:
-              "실행에 유리한 시기를 판단할 수 있도록 현재 준비 상태와 실제 행동 예정 기간을 구체적으로 확인해야 한다.",
-            required: true,
-            satisfied: false,
+              "가장 적합한 시기를 정하려면 비교 가능한 대상 기간의 운 흐름을 확인해야 한다.",
+
+            required:
+              true,
+
+            satisfied:
+              false,
           },
         ];
-  
+
       case "unknown":
         return [
           {
-            key: "clarifyTimingIntent",
+            key:
+              "clarifyTimingIntent",
+
             description:
               "지금 실행할 것인지, 기다릴 것인지, 가장 적합한 시기를 찾는 것인지 질문의 시기 목적을 명확히 해야 한다.",
-            required: true,
-            satisfied: false,
+
+            required:
+              true,
+
+            satisfied:
+              false,
           },
         ];
     }
@@ -461,7 +634,7 @@ function buildLifeContextConditions(
     hasEssentialFundsExposure
     && hasAssetConcentration
     && !hasExistingFinancialReality;
-  
+
     if (
       assessment.financialPressure === "high"
       && !wealthConditionsCoverFinancialPressure
@@ -476,7 +649,7 @@ function buildLifeContextConditions(
         satisfied: false,
       });
     }
-  
+
     if (assessment.familyResponsibility === "high") {
       conditions.push({
         key: "protectFamilyResponsibility",
@@ -486,7 +659,7 @@ function buildLifeContextConditions(
         satisfied: false,
       });
     }
-  
+
     if (assessment.transitionDifficulty === "high") {
       conditions.push({
         key: "useGradualTransition",
@@ -498,7 +671,7 @@ function buildLifeContextConditions(
         satisfied: false,
       });
     }
-  
+
     if (
       assessment.expansionRisk === "high"
       && !wealthConditionsCoverExpansionRisk
@@ -511,7 +684,7 @@ function buildLifeContextConditions(
         satisfied: false,
       });
     }
-  
+
     if (assessment.executionConstraint === "high") {
       conditions.push({
         key: "secureExecutionCapacity",
@@ -521,10 +694,10 @@ function buildLifeContextConditions(
         satisfied: false,
       });
     }
-  
+
     return conditions;
   }
-  
+
   function buildReadinessConditions(
     readiness: ActionReadiness,
     alignmentReason: string,
@@ -532,7 +705,7 @@ function buildLifeContextConditions(
     if (readiness === "ready") {
       return [];
     }
-  
+
     if (readiness === "readyWithConditions") {
       return [
         {
@@ -544,7 +717,7 @@ function buildLifeContextConditions(
         },
       ];
     }
-  
+
     if (readiness === "preparationRequired") {
       return [
         {
@@ -556,7 +729,7 @@ function buildLifeContextConditions(
         },
       ];
     }
-  
+
     if (readiness === "delayRequired") {
       return [
         {
@@ -567,7 +740,7 @@ function buildLifeContextConditions(
         },
       ];
     }
-  
+
     if (readiness === "stopRequired") {
       return [
         {
@@ -579,7 +752,7 @@ function buildLifeContextConditions(
         },
       ];
     }
-  
+
     return [
       {
         key: "clarifyDecisionTarget",
@@ -590,7 +763,7 @@ function buildLifeContextConditions(
       },
     ];
   }
-  
+
   export type DecisionConditionBuilderInput = {
     decisionInput: DecisionEngineInput;
     readiness: ActionReadiness;
@@ -599,7 +772,7 @@ function buildLifeContextConditions(
     compatibilityAssessment: CompatibilityAssessment;
     timingAssessment: TimingAssessment;
   };
-  
+
   export function buildDecisionConditions(
     input: DecisionConditionBuilderInput,
   ): DecisionCondition[] {

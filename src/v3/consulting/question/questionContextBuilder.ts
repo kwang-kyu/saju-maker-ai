@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ConsultingClarificationFact,
 } from "../consultingInput";
 import type {
@@ -522,6 +522,12 @@ const relation =
         question,
       );
 
+      const lifeFlowInterpretationAnalysisRequired =
+      isLifeFlowInterpretationQuestion(
+        question.normalizedQuestion,
+        question.decisionTarget,
+  );
+
       const context:
   QuestionContext = {
     question,
@@ -587,9 +593,13 @@ const relation =
             === "partner"
           || question.decisionTarget
             === "marry",
-        timingAnalysisRequired:
-          question.intent === "timing" ||
-          question.urgency !== "unknown",
+            timingAnalysisRequired:
+          !lifeFlowInterpretationAnalysisRequired
+          && (
+            question.intent === "timing"
+          || question.urgency !== "unknown"
+          || question.timingType !== "unknown"
+  ),
 
         realityAssessmentRequired:
           question.topic === "business" ||
@@ -612,11 +622,7 @@ const relation =
             question.normalizedQuestion,
           ),
 
-        lifeFlowInterpretationAnalysisRequired:
-          isLifeFlowInterpretationQuestion(
-            question.normalizedQuestion,
-            question.decisionTarget,
-          ),
+          lifeFlowInterpretationAnalysisRequired,
         },
       };
 

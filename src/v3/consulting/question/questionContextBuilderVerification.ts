@@ -33,11 +33,14 @@ import type {
       typeof readQuestion
     >["counterpartFacts"];
 
-      counterpartExists: boolean;
-      compatibilityAnalysisRequired: boolean;
-      timingAnalysisRequired: boolean;
-      comparisonAnalysisRequired: boolean;
-      roleRecommendationAnalysisRequired?: boolean;
+    counterpartExists: boolean;
+    compatibilityAnalysisRequired: boolean;
+    timingType?: ReturnType<
+      typeof readQuestion
+    >["timingType"];
+    timingAnalysisRequired: boolean;
+    comparisonAnalysisRequired: boolean;
+    roleRecommendationAnalysisRequired?: boolean;
     };
   };
 
@@ -66,17 +69,20 @@ import type {
       typeof readQuestion
     >["counterpartFacts"];
 
-      counterpartExists: boolean;
-      compatibilityAnalysisRequired: boolean;
-      timingAnalysisRequired: boolean;
-      comparisonAnalysisRequired: boolean;
-    };
+    counterpartExists: boolean;
+compatibilityAnalysisRequired: boolean;
+timingType?: ReturnType<
+  typeof readQuestion
+>["timingType"];
+timingAnalysisRequired: boolean;
+comparisonAnalysisRequired: boolean;
+};
 
-    expected:
-      QuestionContextVerificationCase["expected"];
+expected:
+  QuestionContextVerificationCase["expected"];
 
-    passed: boolean;
-  };
+passed: boolean;
+};
 
   const QUESTION_CONTEXT_VERIFICATION_CASES:
     readonly QuestionContextVerificationCase[] = [
@@ -124,6 +130,22 @@ import type {
         timingAnalysisRequired: true,
         comparisonAnalysisRequired: false,
       },
+    },
+    {
+      id: "business-waiting-timing",
+
+      question:
+        "조금 더 기다렸다가 사업을 시작하는 게 좋을까요?",
+
+        expected: {
+          topic: "business",
+          decisionTarget: "start",
+          counterpartExists: false,
+          compatibilityAnalysisRequired: false,
+          timingType: "waitingTiming",
+          timingAnalysisRequired: true,
+          comparisonAnalysisRequired: false,
+        },
     },
     {
       id: "investment-comparison",
@@ -414,6 +436,18 @@ import type {
           compatibilityAnalysisRequired:
             context.requirements
               .compatibilityAnalysisRequired,
+
+              ...(
+                verificationCase
+                  .expected
+                  .timingType
+                !== undefined
+                  ? {
+                      timingType:
+                        question.timingType,
+                    }
+                  : {}
+              ),
 
           timingAnalysisRequired:
             context.requirements

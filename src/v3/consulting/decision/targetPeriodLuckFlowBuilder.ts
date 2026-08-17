@@ -1,4 +1,4 @@
-﻿import {
+import {
   buildV3TargetPeriodLuckFlow,
   assertV3LuckFlowGender,
 } from "../../builders/luckFlowCalculationBuilder";
@@ -21,12 +21,19 @@ import type {
   LifeFlowTarget,
 } from "../question/lifeFlowTarget";
 
+export type TargetPeriodLuckFlowBuildPurpose =
+  | "lifeFlowInterpretation"
+  | "decisionTiming";
+
 export type TargetPeriodLuckFlowBuildInput = {
   sajuFacts:
     SajuFactsPipelineResult;
 
   normalizedQuestion:
     string;
+
+  purpose?:
+    TargetPeriodLuckFlowBuildPurpose;
 };
 
 export type TargetPeriodLuckFlowBuildResult = {
@@ -41,13 +48,19 @@ export function buildTargetPeriodLuckFlowForQuestion(
   input:
     TargetPeriodLuckFlowBuildInput,
 ): TargetPeriodLuckFlowBuildResult | null {
-  if (
-    !isLifeFlowInterpretationQuestion(
-      input.normalizedQuestion,
-    )
-  ) {
-    return null;
-  }
+  const purpose =
+  input.purpose
+  ?? "lifeFlowInterpretation";
+
+if (
+  purpose
+    === "lifeFlowInterpretation"
+  && !isLifeFlowInterpretationQuestion(
+    input.normalizedQuestion,
+  )
+) {
+  return null;
+}
 
   const referenceDate =
     input
