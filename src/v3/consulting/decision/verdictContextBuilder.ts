@@ -8,12 +8,17 @@ import type {
 import type {
     DecisionRealityAssessment,
   } from "./decisionRealityAssessment";
+
+  import type {
+    TimingAssessment,
+  } from "./timingAssessment";
   export type VerdictContext = {
     alignment: ContextAlignment;
     readiness: ActionReadiness;
     confidence: DecisionConfidence;
 
     lifeAssessment: DecisionRealityAssessment;
+    timingAssessment: TimingAssessment;
 
     primaryLifeDriver:
       DecisionEngineInput["humanContext"]["identity"]["profile"]["lifeDriver"]["primary"]["driver"];
@@ -53,6 +58,7 @@ import type {
     readiness: ActionReadiness;
     confidence: DecisionConfidence;
     lifeAssessment: DecisionRealityAssessment;
+    timingAssessment: TimingAssessment;
   };
 
   export function buildVerdictContext(
@@ -75,6 +81,8 @@ import type {
       confidence: input.confidence,
 
       lifeAssessment: input.lifeAssessment,
+      timingAssessment:
+      input.timingAssessment,
 
       primaryLifeDriver:
         primaryLifeDriver.driver,

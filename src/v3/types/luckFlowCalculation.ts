@@ -161,6 +161,9 @@ export type V3TargetPeriodLuckFlowInput = {
 
   targetDay:
     number | null;
+
+  includeWolunSegments?:
+    boolean;
 };
 
 export type V3LuckFlowCalculationResult = {

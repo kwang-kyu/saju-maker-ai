@@ -520,6 +520,157 @@ function buildLifeFlowInterpretationExplanationBlocks(
   ];
 }
 
+function buildTimingSearchExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+): ExplanationBlock[] {
+  const timingSearch =
+    input
+      .timingAssessment
+      ?.timingSearch;
+
+  if (
+    !timingSearch
+    || !timingSearch.required
+    || !timingSearch.available
+  ) {
+    return [];
+  }
+
+  const recommendedLines =
+    timingSearch
+      .recommendedWindows
+      .map(
+        (window) => {
+          const reasons =
+            window
+              .supportiveReasons
+              .slice(
+                0,
+                3,
+              )
+              .join(" / ");
+
+          return [
+            `${window.targetYear}년 ${window.targetMonth}월`,
+            `(${window.startDate} ~ ${window.endDate})`,
+            `${window.ganZhi} · ${window.tenGod}`,
+            `시기 점수 ${window.score}`,
+            reasons.length > 0
+              ? `근거: ${reasons}`
+              : "",
+          ]
+            .filter(
+              (line) =>
+                line.length > 0,
+            )
+            .join(" ");
+        },
+      );
+
+  const cautionLines =
+    timingSearch
+      .cautionWindows
+      .map(
+        (window) => {
+          const reasons =
+            window
+              .cautionReasons
+              .slice(
+                0,
+                3,
+              )
+              .join(" / ");
+
+          return [
+            `${window.targetYear}년 ${window.targetMonth}월`,
+            `(${window.startDate} ~ ${window.endDate})`,
+            `${window.ganZhi} · ${window.tenGod}`,
+            `시기 점수 ${window.score}`,
+            reasons.length > 0
+              ? `주의 근거: ${reasons}`
+              : "",
+          ]
+            .filter(
+              (line) =>
+                line.length > 0,
+            )
+            .join(" ");
+        },
+      );
+
+  const limitations =
+    timingSearch
+      .limitations
+      .join("\n");
+
+  const blocks:
+    ExplanationBlock[] = [];
+
+  if (
+    recommendedLines.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "recommendedDirection",
+
+      title:
+        "상대적으로 유리한 시기",
+
+      required:
+        true,
+
+      content:
+        recommendedLines.join(
+          "\n",
+        ),
+    });
+  }
+
+  if (
+    cautionLines.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "risks",
+
+      title:
+        "상대적으로 주의할 시기",
+
+      required:
+        true,
+
+      content:
+        cautionLines.join(
+          "\n",
+        ),
+    });
+  }
+
+  if (
+    limitations.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "conditions",
+
+      title:
+        "시기 판단의 한계",
+
+      required:
+        true,
+
+      content:
+        limitations,
+    });
+  }
+
+  return blocks;
+}
+
 /**
  * Decision Explanation Plan
  *
@@ -743,6 +894,9 @@ export function buildDecisionExplanationPlan(
             "\n",
           ),
       },
+      ...buildTimingSearchExplanationBlocks(
+        input,
+      ),
       {
         step:
           "conditions",

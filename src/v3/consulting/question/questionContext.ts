@@ -127,6 +127,9 @@ export type QuestionAnalysisRequirements = {
   timingAnalysisRequired:
     boolean;
 
+  timingSearchRequired:
+    boolean;
+
   realityAssessmentRequired:
     boolean;
 

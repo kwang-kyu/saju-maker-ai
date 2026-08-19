@@ -433,6 +433,35 @@ import {
         ),
     );
   }
+  function requiresDecisionTimingAnalysis(
+    question:
+      QuestionReaderResult,
+  ): boolean {
+    return (
+      question.intent === "timing"
+      || question.urgency !== "unknown"
+      || question.timingType !== "unknown"
+    );
+  }
+
+  function requiresTimingSearch(
+    question:
+      QuestionReaderResult,
+  ): boolean {
+    const normalizedQuestion =
+      question.normalizedQuestion;
+
+    return (
+      /(?:언제쯤|언제가\s*좋|언제\s*하는\s*게\s*좋|몇\s*월|어느\s*달|좋은\s*시기|적절한\s*시기|유리한\s*시기|시기가\s*좋)/.test(
+        normalizedQuestion,
+      )
+      && (
+        question.intent === "timing"
+        || question.timingType !== "unknown"
+        || question.urgency !== "unknown"
+      )
+    );
+  }
   export function buildQuestionContext(
     question:
       QuestionReaderResult,
@@ -594,11 +623,15 @@ const relation =
           || question.decisionTarget
             === "marry",
             timingAnalysisRequired:
-          !lifeFlowInterpretationAnalysisRequired
-          && (
-            question.intent === "timing"
-          || question.urgency !== "unknown"
-          || question.timingType !== "unknown"
+  !lifeFlowInterpretationAnalysisRequired
+  && requiresDecisionTimingAnalysis(
+       question,
+     ),
+
+     timingSearchRequired:
+  !lifeFlowInterpretationAnalysisRequired
+  && requiresTimingSearch(
+    question,
   ),
 
         realityAssessmentRequired:

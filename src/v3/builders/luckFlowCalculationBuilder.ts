@@ -1248,6 +1248,36 @@ export function buildV3TargetPeriodLuckFlow(
   }
 
   if (
+    input.scope === "year"
+    && input.includeWolunSegments
+    && input.targetYear
+    !== null
+  ) {
+    const firstMonth =
+      targetStart.month;
+
+    const lastMonth =
+      targetEnd.month;
+
+    for (
+      let month = firstMonth;
+      month <= lastMonth;
+      month += 1
+    ) {
+      wolunSegments.push(
+        ...filterWolunSegmentsByRange(
+          buildV3WolunSegments(
+            input.targetYear,
+            month,
+          ),
+          input.targetStartDate,
+          input.targetEndDate,
+        ),
+      );
+    }
+  }
+
+  if (
     input.scope === "day"
   ) {
     targetIlun =

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
     HumanDestinyContext,
   } from "../../types/humanDestinyContext";
   import {
@@ -16,85 +16,96 @@ import type {
   import {
     assessTiming,
   } from "./timingAssessment";
-  
+
   const REFERENCE_DATE =
     "2025-08-16";
-  
+
   export type TimingAssessmentVerificationResult = {
     checks: {
       nonTimingQuestionIsNotRequired:
         boolean;
-  
+
       requiredTimingWithoutLuckFlowIsMissing:
         boolean;
-  
+
       requiredTimingWithRealLuckFlowIsAvailable:
         boolean;
-  
+
       realFlowInterpretationIsAvailable:
         boolean;
-  
+
       availableTimingEvidenceIsComplete:
         boolean;
-  
+
       targetDatesArePreserved:
         boolean;
-  
+
       targetYearIsResolved:
         boolean;
-  
+
       waitingTimingIsPreserved:
         boolean;
-  
+
       realTargetSeunIsPresent:
         boolean;
-  
+
       flowDirectionIsAssessed:
         boolean;
-  
+
       flowEvidenceIsPreserved:
         boolean;
-  
+
       missingTimingDoesNotPretendEvidenceExists:
         boolean;
+        timingSearchQuestionIsDetected:
+        boolean;
+
+      timingSearchWithRealWolunIsAvailable:
+        boolean;
+
+      timingSearchBuildsMonthlyCandidates:
+        boolean;
+
+      timingSearchKeepsCandidatesInsideTargetPeriod:
+        boolean;
     };
-  
+
     passed:
       boolean;
   };
-  
+
   function buildPipeline() {
     return buildSajuFactsPipeline({
       name:
         "타이밍검증",
-  
+
       birthDate:
         "1990-05-15",
-  
+
       birthTime:
         "14:30",
-  
+
       gender:
         "male",
-  
+
       calendarType:
         "solar",
-  
+
       referenceDate:
         REFERENCE_DATE,
-  
+
       luckStartMethod:
         "minuteBased",
     });
   }
-  
+
   export function verifyTimingAssessment(
     humanContext:
       HumanDestinyContext,
   ): TimingAssessmentVerificationResult {
     const pipeline =
       buildPipeline();
-  
+
     /*
      * 1. 시기 분석이 필요 없는 일반 질문
      */
@@ -103,23 +114,23 @@ import type {
         humanContext,
         "통닭집을 개업해도 될까요?",
       );
-  
+
     const nonTimingQuestionContext =
       buildQuestionContext(
         nonTimingQuestion,
       );
-  
+
     const nonTimingAssessment =
       assessTiming({
         questionContext:
           nonTimingQuestionContext,
-  
+
         humanContext,
-  
+
         selfSajuFacts:
           pipeline.facts,
       });
-  
+
     /*
      * 2. 기다림 시기 질문.
      *
@@ -131,23 +142,23 @@ import type {
         humanContext,
         "조금 더 기다렸다가 사업을 시작하는 게 좋을까요?",
       );
-  
+
     const waitingQuestionContext =
       buildQuestionContext(
         waitingQuestion,
       );
-  
+
     const missingTimingAssessment =
       assessTiming({
         questionContext:
           waitingQuestionContext,
-  
+
         humanContext,
-  
+
         selfSajuFacts:
           pipeline.facts,
       });
-  
+
     /*
      * 3. 실제 기간이 명확한 Timing 질문.
      *
@@ -162,43 +173,100 @@ import type {
         humanContext,
         "내년에 사업을 시작해도 될까요?",
       );
-  
+
     const availableTimingQuestionContext =
       buildQuestionContext(
         availableTimingQuestion,
       );
-  
+
       const targetBuild =
       buildTargetPeriodLuckFlowForQuestion({
         sajuFacts:
           pipeline,
-    
+
         normalizedQuestion:
           availableTimingQuestion
             .normalizedQuestion,
-    
+
         purpose:
           "decisionTiming",
       });
-  
+
     const availableTimingAssessment =
       assessTiming({
         questionContext:
           availableTimingQuestionContext,
-  
+
         humanContext,
-  
+
         selfSajuFacts:
           pipeline.facts,
-  
+
         lifeFlowTarget:
           targetBuild?.target,
-  
+
         targetPeriodLuckFlow:
           targetBuild?.fact
           ?? undefined,
       });
-  
+
+          /*
+     * 4. 기간 안에서 가장 유리한 시기를 찾는 질문.
+     *
+     * REFERENCE_DATE가 2025-08-16이므로
+     * "올해 안"은 2025년 남은 기간을 의미한다.
+     *
+     * 단순 timing 판정이 아니라 실제 월운 후보를 비교하여
+     * 추천/주의 시기를 찾는 timingSearch 경로를 검증한다.
+     */
+    const timingSearchQuestion =
+    readQuestion(
+      humanContext,
+      "올해 안에는 언제쯤 사업을 시작하는 것이 좋을까요?",
+    );
+
+  const timingSearchQuestionContext =
+    buildQuestionContext(
+      timingSearchQuestion,
+    );
+
+  const timingSearchTargetBuild =
+    buildTargetPeriodLuckFlowForQuestion({
+      sajuFacts:
+        pipeline,
+
+      normalizedQuestion:
+        timingSearchQuestion
+          .normalizedQuestion,
+
+      purpose:
+        "decisionTiming",
+        timingSearchRequired:
+        timingSearchQuestionContext
+          .requirements
+          .timingSearchRequired,
+    });
+
+  const timingSearchAssessment =
+    assessTiming({
+      questionContext:
+        timingSearchQuestionContext,
+
+      humanContext,
+
+      selfSajuFacts:
+        pipeline.facts,
+
+      lifeFlowTarget:
+        timingSearchTargetBuild
+          ?.target,
+
+      targetPeriodLuckFlow:
+        timingSearchTargetBuild
+          ?.fact
+        ?? undefined,
+    });
+
     const checks = {
       nonTimingQuestionIsNotRequired:
         nonTimingAssessment.analysisRequired
@@ -209,7 +277,7 @@ import type {
           === "none"
         && nonTimingAssessment.flowDirection
           === "notAssessed",
-  
+
       requiredTimingWithoutLuckFlowIsMissing:
         missingTimingAssessment.analysisRequired
           === true
@@ -220,7 +288,7 @@ import type {
         && missingTimingAssessment
           .flowInterpretationAvailable
           === false,
-  
+
       requiredTimingWithRealLuckFlowIsAvailable:
         availableTimingAssessment.analysisRequired
           === true
@@ -228,7 +296,7 @@ import type {
           === "available"
         && availableTimingAssessment.assessmentScope
           === "timingEvaluation",
-  
+
       realFlowInterpretationIsAvailable:
         availableTimingAssessment
           .flowInterpretationAvailable
@@ -240,12 +308,12 @@ import type {
           .overallTheme
           .length
           > 0,
-  
+
       availableTimingEvidenceIsComplete:
         availableTimingAssessment
           .evidenceComplete
           === true,
-  
+
       targetDatesArePreserved:
         targetBuild
           !== null
@@ -257,7 +325,7 @@ import type {
         && availableTimingAssessment
           .targetEndDate
           === targetBuild.target.endDate,
-  
+
       targetYearIsResolved:
         targetBuild
           !== null
@@ -268,13 +336,13 @@ import type {
         && availableTimingAssessment
           .targetYear
           === 2026,
-  
+
       waitingTimingIsPreserved:
         waitingQuestion.timingType
           === "waitingTiming"
         && missingTimingAssessment.timingType
           === "waitingTiming",
-  
+
           realTargetSeunIsPresent:
           targetBuild
             !== null
@@ -288,7 +356,7 @@ import type {
           && availableTimingAssessment
             .hasTargetSeun
             === true,
-  
+
             flowDirectionIsAssessed:
             (
               availableTimingAssessment
@@ -304,7 +372,7 @@ import type {
                 .flowDirection
               === "indeterminate"
             ),
-  
+
       flowEvidenceIsPreserved:
         availableTimingAssessment
           .evidenceKeys
@@ -321,7 +389,7 @@ import type {
                 key.startsWith("year-"),
             )
         ),
-  
+
       missingTimingDoesNotPretendEvidenceExists:
         missingTimingAssessment
           .evidenceComplete
@@ -349,11 +417,53 @@ import type {
           .tensionSignals
           .length
           === 0,
+          timingSearchQuestionIsDetected:
+          timingSearchQuestionContext
+            .requirements
+            .timingSearchRequired
+            === true,
+
+        timingSearchWithRealWolunIsAvailable:
+          timingSearchAssessment
+            .timingSearch
+            .required
+            === true
+          && timingSearchAssessment
+            .timingSearch
+            .available
+            === true,
+
+        timingSearchBuildsMonthlyCandidates:
+          timingSearchAssessment
+            .timingSearch
+            .candidateWindows
+            .length
+            > 0,
+
+        timingSearchKeepsCandidatesInsideTargetPeriod:
+          timingSearchAssessment
+            .timingSearch
+            .candidateWindows
+            .every(
+              (window) =>
+                timingSearchTargetBuild
+                  !== null
+                && timingSearchTargetBuild
+                  !== undefined
+                && window.startDate
+                  >= timingSearchTargetBuild
+                    .target
+                    .startDate
+                && window.endDate
+                  <= timingSearchTargetBuild
+                    .target
+                    .endDate,
+            ),
     };
-  
+
     return {
       checks,
-  
+
       passed:
         Object.values(
           checks,

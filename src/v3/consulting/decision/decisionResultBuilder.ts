@@ -8,6 +8,9 @@
   import type {
     LifeFlowInterpretationAssessment,
   } from "./lifeFlowInterpretationAssessment";
+  import type {
+    TimingAssessment,
+  } from "./timingAssessment";
 
   export type DecisionResultBuilderInput = {
     decisionInput: DecisionEngineInput;
@@ -39,6 +42,8 @@
 
     lifeFlowInterpretationAssessment?:
       LifeFlowInterpretationAssessment | null;
+      timingAssessment?:
+      TimingAssessment | null;
   };
 
   function hasContextConflict(
@@ -76,6 +81,7 @@
       prohibitedDirection,
       roleRecommendationAssessment,
       lifeFlowInterpretationAssessment,
+      timingAssessment,
       finalDecisionSentence:
         inputFinalDecisionSentence,
     } = input;
@@ -131,6 +137,9 @@
 
       lifeFlowInterpretationAssessment:
         lifeFlowInterpretationAssessment
+        ?? null,
+        timingAssessment:
+        timingAssessment
         ?? null,
     };
   }

@@ -1,4 +1,4 @@
-import { analyzeContextAlignment } from "./contextAlignment";
+﻿import { analyzeContextAlignment } from "./contextAlignment";
 import { buildDecisionBrain } from "./decisionBrain";
 import type {
   DecisionEngineInput,
@@ -145,6 +145,7 @@ export function runDecisionEngine(
     readiness: actionReadiness,
     confidence,
     lifeAssessment,
+    timingAssessment,
   });
 
   const baseVerdict =
@@ -260,6 +261,8 @@ export function runDecisionEngine(
     evidence,
     conditions,
     risks,
+
+    timingAssessment,
 
     currentPhaseDescription:
       brain.snapshot.currentPhase,

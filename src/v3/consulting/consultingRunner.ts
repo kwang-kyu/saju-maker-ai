@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ConsultingInput,
 } from "./consultingInput";
 
@@ -166,6 +166,10 @@ export function runConsultingTurn(
               .lifeFlowInterpretationAnalysisRequired
               ? "lifeFlowInterpretation"
               : "decisionTiming",
+              timingSearchRequired:
+          questionContext
+              .requirements
+              .timingSearchRequired,
         })
       : null;
 

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   HumanDestinyContext,
 } from "../../types/humanDestinyContext";
 import type {
@@ -19,6 +19,10 @@ import type {
 import {
   assessLifeFlowInterpretation,
 } from "./lifeFlowInterpretationAssessment";
+import {
+  assessTimingSearch,
+  type TimingSearchAssessment,
+} from "./timingSearchAssessment";
 
 export type TimingEvidenceLevel =
   | "notRequired"
@@ -119,6 +123,9 @@ export type TimingAssessment = {
 
   limitations:
     string[];
+
+    timingSearch:
+  TimingSearchAssessment;
 
   evidenceKeys:
     string[];
@@ -258,6 +265,17 @@ export function assessTiming(
       limitations:
         [],
 
+      timingSearch:
+        assessTimingSearch({
+          questionContext,
+
+          selfSajuFacts,
+
+          lifeFlowTarget,
+
+           targetPeriodLuckFlow,
+        }),
+
       evidenceKeys:
         [],
 
@@ -328,6 +346,17 @@ export function assessTiming(
       !== null
     && flowInterpretation
       .available;
+
+      const timingSearch =
+  assessTimingSearch({
+    questionContext,
+
+    selfSajuFacts,
+
+    lifeFlowTarget,
+
+    targetPeriodLuckFlow,
+  });
 
   return {
     analysisRequired:
@@ -419,5 +448,8 @@ export function assessTiming(
       ],
 
     evidenceComplete,
+
+    timingSearch,
+
   };
 }

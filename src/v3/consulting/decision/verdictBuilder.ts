@@ -182,6 +182,85 @@ function applyLifeContextEffect(
   return verdict;
 }
 
+function applyTimingEffect(
+  verdict: DecisionVerdict,
+  context: VerdictContext,
+): DecisionVerdict {
+  const assessment =
+    context.timingAssessment;
+
+  if (
+    !assessment.analysisRequired
+  ) {
+    return verdict;
+  }
+
+  if (
+    verdict === "notRecommended"
+  ) {
+    return verdict;
+  }
+
+  if (
+    assessment.evidenceLevel ===
+    "missing"
+  ) {
+    if (
+      verdict === "recommended"
+      || verdict ===
+        "conditionallyRecommended"
+    ) {
+      return "wait";
+    }
+
+    return verdict;
+  }
+
+  if (
+    assessment.evidenceLevel !==
+    "available"
+  ) {
+    return verdict;
+  }
+
+  switch (
+    assessment.flowDirection
+  ) {
+    case "tension":
+      if (
+        verdict === "recommended"
+        || verdict ===
+          "conditionallyRecommended"
+      ) {
+        return "wait";
+      }
+
+      return verdict;
+
+    case "mixed":
+      if (
+        verdict === "recommended"
+      ) {
+        return "conditionallyRecommended";
+      }
+
+      return verdict;
+
+    case "indeterminate":
+      if (
+        verdict === "recommended"
+      ) {
+        return "conditionallyRecommended";
+      }
+
+      return verdict;
+
+    case "supportive":
+    case "notAssessed":
+      return verdict;
+  }
+}
+
 export function buildVerdict(
   context: VerdictContext,
 ): DecisionVerdict {
@@ -239,8 +318,14 @@ export function buildVerdict(
       context,
     );
 
-  return applyLifeContextEffect(
-    repeatedPatternVerdict,
+    const lifeContextVerdict =
+    applyLifeContextEffect(
+      repeatedPatternVerdict,
+      context,
+    );
+
+  return applyTimingEffect(
+    lifeContextVerdict,
     context,
   );
 }

@@ -15,6 +15,9 @@ import type {
   LifeFlowInterpretationAssessment,
 } from "./lifeFlowInterpretationAssessment";
 import type {
+  TimingAssessment,
+} from "./timingAssessment";
+import type {
   LifeFlowTarget,
 } from "../question/lifeFlowTarget";
 import type {
@@ -239,4 +242,6 @@ export type DecisionResult = {
 
   lifeFlowInterpretationAssessment?:
     LifeFlowInterpretationAssessment | null;
+    timingAssessment?:
+    TimingAssessment | null;
 };

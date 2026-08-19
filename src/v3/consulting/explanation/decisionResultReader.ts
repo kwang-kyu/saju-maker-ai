@@ -67,6 +67,9 @@
     lifeFlowInterpretationAssessment?:
       DecisionResult["lifeFlowInterpretationAssessment"];
 
+      timingAssessment?:
+    DecisionResult["timingAssessment"];
+
     engineDecisionLocked: true;
     gptMayRejudge: false;
   };
@@ -168,6 +171,10 @@
 
       lifeFlowInterpretationAssessment:
         result.lifeFlowInterpretationAssessment
+        ?? null,
+
+        timingAssessment:
+        result.timingAssessment
         ?? null,
 
       engineDecisionLocked: true,
