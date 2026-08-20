@@ -23,6 +23,10 @@
     resolveConfidence,
   } from "./decisionResolver";
 
+  import {
+    assessTiming,
+  } from "./timingAssessment";
+
   export type DirectionJudgementBuilderVerificationResult = {
     checks:
       Record<
@@ -98,6 +102,25 @@
         lifeAssessment,
       );
 
+    const timingAssessment =
+      assessTiming({
+        questionContext:
+          regressionInput.questionContext,
+
+        humanContext:
+          regressionInput.humanContext,
+
+        selfSajuFacts:
+          regressionInput.selfSajuFacts
+          ?? null,
+
+        lifeFlowTarget:
+          regressionInput.lifeFlowTarget,
+
+        targetPeriodLuckFlow:
+          regressionInput.targetPeriodLuckFlow,
+      });
+
     const verdictContext =
       buildVerdictContext({
         decisionInput:
@@ -112,6 +135,8 @@
         confidence,
 
         lifeAssessment,
+
+        timingAssessment,
       });
 
     const nonExecutionPrediction =

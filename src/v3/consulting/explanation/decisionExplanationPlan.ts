@@ -140,6 +140,20 @@ function requireOriginalQuestion(
   return normalizedQuestion;
 }
 
+function buildQuestionLockedDirectAnswerContent(
+  normalizedQuestion:
+    string,
+  directAnswer:
+    string,
+): string {
+  return [
+    `질문하신 “${normalizedQuestion}”에 대한 판단입니다.`,
+    directAnswer,
+  ].join(
+    "\n",
+  );
+}
+
 function translateContextAlignment(
   contextAlignment:
     string,
@@ -778,9 +792,17 @@ export function buildDecisionExplanationPlan(
     );
 
   const evidenceContent =
-    buildDecisionExplanationEvidence(
-      input.evidence,
-    );
+    buildDecisionExplanationEvidence({
+      evidence:
+        input.evidence,
+
+      topic:
+        input.topic,
+
+      readerEffectSources:
+        readerDecisionExplanation
+          .sources,
+    });
 
   const evidenceLines =
     deduplicateExplanationLines(
@@ -834,7 +856,10 @@ export function buildDecisionExplanationPlan(
           true,
 
         content:
-          input.directAnswer,
+          buildQuestionLockedDirectAnswerContent(
+            normalizedQuestion,
+            input.directAnswer,
+          ),
       },
       {
         step:

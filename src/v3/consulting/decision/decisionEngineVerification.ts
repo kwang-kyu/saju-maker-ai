@@ -85,6 +85,32 @@ function buildNeutralTimingAssessment():
     limitations:
       [],
 
+    timingSearch: {
+      required:
+        false,
+
+      available:
+        false,
+
+      searchedFromDate:
+        null,
+
+      searchedToDate:
+        null,
+
+      candidateWindows:
+        [],
+
+      recommendedWindows:
+        [],
+
+      cautionWindows:
+        [],
+
+      limitations:
+        [],
+    },
+
     evidenceKeys:
       [],
 

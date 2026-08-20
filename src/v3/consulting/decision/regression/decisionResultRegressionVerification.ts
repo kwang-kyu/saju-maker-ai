@@ -34,6 +34,8 @@ export type DecisionResultRegressionComparison = {
     humanContextUsedMatched: boolean;
     questionContextUsedMatched: boolean;
 
+    timingAssessmentMatched: boolean;
+
     passed: boolean;
 };
 
@@ -138,6 +140,11 @@ export function compareDecisionResultRegression(
         actual.questionContextUsed ===
         expected.questionContextUsed;
 
+    const timingAssessmentMatched = areValuesEqual(
+        actual.timingAssessment,
+        expected.timingAssessment,
+    );
+
     const passed =
         verdictMatched &&
         confidenceMatched &&
@@ -156,7 +163,8 @@ export function compareDecisionResultRegression(
         prohibitedDirectionMatched &&
         finalDecisionSentenceMatched &&
         humanContextUsedMatched &&
-        questionContextUsedMatched;
+        questionContextUsedMatched &&
+        timingAssessmentMatched;
 
     return {
         verdictMatched,
@@ -185,6 +193,8 @@ export function compareDecisionResultRegression(
 
         humanContextUsedMatched,
         questionContextUsedMatched,
+
+        timingAssessmentMatched,
 
         passed,
     };

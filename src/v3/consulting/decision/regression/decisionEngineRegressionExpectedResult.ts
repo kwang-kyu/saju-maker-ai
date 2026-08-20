@@ -4,7 +4,7 @@
 
   export const BUSINESS_START_EXPECTED_RESULT:
     DecisionResult = {
-    verdict: "conditionallyRecommended",
+    verdict: "wait",
     confidence: "high",
 
     contextAlignment: "stronglyAligned",
@@ -15,7 +15,7 @@
     intent: "prediction",
 
     coreDecision:
-    "지금 시작하는 방향 자체는 가능하지만, 질문한 결과로 이어지려면 필요한 조건과 변수의 영향을 함께 봐야 한다.",
+    "시작 가능성이 닫힌 것은 아니지만 지금 바로 시작해 질문한 결과까지 이어질 흐름으로 보기는 어렵다.",
 
     decisionReason:
       "현재 인생 국면은 '성장 국면'이다. 현재는 새로운 기회를 실행으로 연결하되, 검증된 범위 안에서 단계적으로 확장해야 하는 국면이다. 질문에서 실제로 결정하려는 것은 '지금 시작할 것인가'이다. 현재 국면은 확장과 성장을 요구하며, 질문 속 선택도 새로운 행동과 확대를 향하고 있어 서로 강하게 맞는다.",
@@ -149,9 +149,9 @@
         satisfied: false,
       },
       {
-        key: "verifyImmediateExecutionReadiness",
+        key: "completeTimingEvidence",
         description:
-          "지금 바로 실행하려는 질문이므로 자금, 역할, 일정과 실제 실행 준비가 갖춰졌는지 먼저 확인해야 한다.",
+          "시기 판단은 필요하지만 대상 기간과 해당 기간의 운 근거가 완성되지 않아 실행 시기를 확정할 수 없다.",
         required: true,
         satisfied: false,
       },
@@ -199,14 +199,58 @@
     },
 
     recommendedDirection:
-      "필수 조건과 위험 관리 기준을 먼저 갖춘 뒤 제한적으로 진행한다.",
+      "현재 충돌 요소를 정리하고 준비가 완료될 때까지 판단을 유보한다.",
 
     prohibitedDirection:
-      "필수 조건을 충족하지 않은 채 바로 실행하지 않는다.",
+      "불안과 조급함만으로 결정을 밀어붙이지 않는다.",
 
       finalDecisionSentence:
-      "지금 시작하는 방향 자체는 가능하지만, 질문한 결과로 이어지려면 필요한 조건과 변수의 영향을 함께 봐야 한다. 필수 조건과 위험 관리 기준을 먼저 갖춘 뒤 제한적으로 진행한다.",
+      "시작 가능성이 닫힌 것은 아니지만 지금 바로 시작해 질문한 결과까지 이어질 흐름으로 보기는 어렵다. 현재 충돌 요소를 정리하고 준비가 완료될 때까지 판단을 유보한다.",
 
     humanContextUsed: true,
     questionContextUsed: true,
+
+    timingAssessment: {
+      analysisRequired: true,
+      timingType: "executionTiming",
+      evidenceLevel: "missing",
+      assessmentScope: "timingEvaluation",
+
+      targetScope: null,
+      targetStartDate: null,
+      targetEndDate: null,
+      targetYear: null,
+      targetMonth: null,
+      targetDay: null,
+
+      hasCurrentDaeun: false,
+      hasTargetSeun: false,
+      hasYearSegments: false,
+      hasWolun: false,
+      hasIlun: false,
+
+      flowInterpretationAvailable: false,
+      flowDirection: "indeterminate",
+      overallTheme: null,
+
+      supportiveSignals: [],
+      tensionSignals: [],
+      cautions: [],
+      limitations: [
+        "대상 기간이 확인되지 않았다.",
+      ],
+      evidenceKeys: [],
+      evidenceComplete: false,
+
+      timingSearch: {
+        required: false,
+        available: false,
+        searchedFromDate: null,
+        searchedToDate: null,
+        candidateWindows: [],
+        recommendedWindows: [],
+        cautionWindows: [],
+        limitations: [],
+      },
+    },
   };
