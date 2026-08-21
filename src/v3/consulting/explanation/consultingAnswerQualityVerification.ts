@@ -108,6 +108,8 @@ export type ConsultingAnswerQualityVerificationResult = {
  * 8. 서로 다른 질문의 원문·Prompt·Evidence 블록이 동일하지 않은가
  * 9. Prompt가 엔진 최종 결론을 마지막 단락에
  *    원문 그대로 정확히 1회만 쓰도록 강제하는가
+ * 10. Prompt가 근거보다 더 구체적인 주장과
+ *     도메인 상식 확장을 금지하는가
  */
 
 
@@ -405,6 +407,80 @@ export function promptForbidsRepeatingFinalDecisionInBody(
     )
     && prompt.userPrompt.includes(
       "본문에서는 위 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 마세요",
+    )
+  );
+}
+
+
+export function promptRequiresSentenceSourceTraceability(
+  prompt: ConsultingPrompt,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "상담문의 모든 판단 문장은 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응되어야 한다",
+    )
+    && prompt.userPrompt.includes(
+      "모든 판단 문장이 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응하는가",
+    )
+  );
+}
+
+
+export function promptForbidsMoreSpecificClaimsThanSource(
+  prompt: ConsultingPrompt,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않는다",
+    )
+    && prompt.userPrompt.includes(
+      "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않았는가",
+    )
+  );
+}
+
+
+export function promptForbidsUnsupportedDomainExpansion(
+  prompt: ConsultingPrompt,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "상위 개념을 도메인 상식으로 구체화하지 않는다",
+    )
+    && prompt.systemPrompt.includes(
+      "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않는다",
+    )
+    && prompt.systemPrompt.includes(
+      "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않는다",
+    )
+    && prompt.userPrompt.includes(
+      "상위 개념을 도메인 상식으로 구체화하지 않았는가",
+    )
+    && prompt.userPrompt.includes(
+      "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않았는가",
+    )
+    && prompt.userPrompt.includes(
+      "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않았는가",
+    )
+  );
+}
+
+
+export function promptOmitsUntraceableClaims(
+  prompt: ConsultingPrompt,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "연결어, 존칭, 자연스러운 문장 변환은 허용하지만 새로운 판단 사실이나 명사는 추가하지 않는다",
+    )
+    && prompt.systemPrompt.includes(
+      "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략한다",
+    )
+    && prompt.userPrompt.includes(
+      "연결어, 존칭, 자연스러운 문장 변환 외에 새로운 판단 사실이나 명사를 추가하지 않았는가",
+    )
+    && prompt.userPrompt.includes(
+      "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략했는가",
     )
   );
 }
@@ -1100,6 +1176,42 @@ function buildCase(
       ),
 
     /**
+     * Prompt가 모든 판단 문장을 원문 질문 또는
+     * 제공된 Explanation 자료 문장에 직접 대응시킨다.
+     */
+    promptRequiresSentenceSourceTraceability:
+      promptRequiresSentenceSourceTraceability(
+        prompt,
+      ),
+
+    /**
+     * Prompt가 제공 근거보다 더 구체적인
+     * 하위 항목·사례·원인·결과를 금지한다.
+     */
+    promptForbidsMoreSpecificClaimsThanSource:
+      promptForbidsMoreSpecificClaimsThanSource(
+        prompt,
+      ),
+
+    /**
+     * Prompt가 상위 개념의 도메인 상식 구체화와
+     * 없는 조건의 확인·계산·주의 추가를 금지한다.
+     */
+    promptForbidsUnsupportedDomainExpansion:
+      promptForbidsUnsupportedDomainExpansion(
+        prompt,
+      ),
+
+    /**
+     * Prompt가 근거 대응이 불분명한 문장을
+     * 생략하고 새 판단 사실·명사 추가를 금지한다.
+     */
+    promptOmitsUntraceableClaims:
+      promptOmitsUntraceableClaims(
+        prompt,
+      ),
+
+    /**
      * Evidence 블록의 Reader source가
      * 선택 규칙과 일치해야 한다.
      */
@@ -1367,6 +1479,100 @@ export function verifyConsultingAnswerQuality():
 
         userPrompt:
           "최종 결론은 답변 전체에 정확히 1회만 작성하세요",
+      }) === false,
+
+    /**
+     * 문장 근거 대응 규칙이 없으면
+     * Prompt 검사를 통과시키지 않는다.
+     */
+    sentenceSourceTraceabilityRuleRejectsMissingText:
+      promptRequiresSentenceSourceTraceability({
+        systemPrompt: [
+          "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않는다",
+          "상위 개념을 도메인 상식으로 구체화하지 않는다",
+          "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않는다",
+          "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않는다",
+          "연결어, 존칭, 자연스러운 문장 변환은 허용하지만 새로운 판단 사실이나 명사는 추가하지 않는다",
+          "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략한다",
+        ].join("\n"),
+
+        userPrompt: [
+          "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않았는가",
+          "상위 개념을 도메인 상식으로 구체화하지 않았는가",
+          "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않았는가",
+          "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않았는가",
+          "연결어, 존칭, 자연스러운 문장 변환 외에 새로운 판단 사실이나 명사를 추가하지 않았는가",
+          "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략했는가",
+        ].join("\n"),
+      }) === false,
+
+    /**
+     * 더 구체적인 주장 금지 규칙이 없으면
+     * Prompt 검사를 통과시키지 않는다.
+     */
+    moreSpecificClaimBanRuleRejectsMissingText:
+      promptForbidsMoreSpecificClaimsThanSource({
+        systemPrompt: [
+          "상담문의 모든 판단 문장은 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응되어야 한다",
+          "상위 개념을 도메인 상식으로 구체화하지 않는다",
+          "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않는다",
+          "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않는다",
+          "연결어, 존칭, 자연스러운 문장 변환은 허용하지만 새로운 판단 사실이나 명사는 추가하지 않는다",
+          "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략한다",
+        ].join("\n"),
+
+        userPrompt: [
+          "모든 판단 문장이 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응하는가",
+          "상위 개념을 도메인 상식으로 구체화하지 않았는가",
+          "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않았는가",
+          "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않았는가",
+          "연결어, 존칭, 자연스러운 문장 변환 외에 새로운 판단 사실이나 명사를 추가하지 않았는가",
+          "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략했는가",
+        ].join("\n"),
+      }) === false,
+
+    /**
+     * 도메인 상식 구체화 금지 규칙이 없으면
+     * Prompt 검사를 통과시키지 않는다.
+     */
+    unsupportedDomainExpansionBanRuleRejectsMissingText:
+      promptForbidsUnsupportedDomainExpansion({
+        systemPrompt: [
+          "상담문의 모든 판단 문장은 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응되어야 한다",
+          "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않는다",
+          "연결어, 존칭, 자연스러운 문장 변환은 허용하지만 새로운 판단 사실이나 명사는 추가하지 않는다",
+          "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략한다",
+        ].join("\n"),
+
+        userPrompt: [
+          "모든 판단 문장이 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응하는가",
+          "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않았는가",
+          "연결어, 존칭, 자연스러운 문장 변환 외에 새로운 판단 사실이나 명사를 추가하지 않았는가",
+          "근거 대응 여부가 불분명한 문장은 쓰지 않고 생략했는가",
+        ].join("\n"),
+      }) === false,
+
+    /**
+     * 추적 불가 문장 생략 규칙이 없으면
+     * Prompt 검사를 통과시키지 않는다.
+     */
+    untraceableClaimOmissionRuleRejectsMissingText:
+      promptOmitsUntraceableClaims({
+        systemPrompt: [
+          "상담문의 모든 판단 문장은 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응되어야 한다",
+          "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않는다",
+          "상위 개념을 도메인 상식으로 구체화하지 않는다",
+          "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않는다",
+          "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않는다",
+        ].join("\n"),
+
+        userPrompt: [
+          "모든 판단 문장이 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응하는가",
+          "제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않았는가",
+          "상위 개념을 도메인 상식으로 구체화하지 않았는가",
+          "재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않았는가",
+          "제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않았는가",
+        ].join("\n"),
       }) === false,
   };
 
