@@ -1,0 +1,54 @@
+# 이 workflow는 mock/contract 기반 비-API 검증이다.
+# 실제 OpenAI, Supabase, 배포 HTTP를 호출하지 않는다.
+
+name: V3 Non-API Readiness
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/v3/**"
+      - "api/v3/**"
+      - "api/v3Consulting.ts"
+      - "api/v3ConsultingRoute.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/v3-non-api-readiness.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/v3/**"
+      - "api/v3/**"
+      - "api/v3Consulting.ts"
+      - "api/v3ConsultingRoute.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/v3-non-api-readiness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.15.0"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run verify:v3:non-api
+
+      - run: npm run build
