@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ConsultingClarificationFact,
 } from "../consultingInput";
 import type {
@@ -483,15 +483,29 @@ const counterpartBirthFieldKeys =
     "counterpartBirthData",
   );
 
-const identityProvided =
-  counterpartIdentityFieldKeys.has(
-    "relation",
-  )
-  && counterpartIdentityFieldKeys.has(
-    "currentStatus",
+  const relation =
+  detectCounterpartRelation(
+    normalizedQuestion,
   );
 
-  const birthDataProvided =
+const identityProvided =
+  (
+    counterpartIdentityFieldKeys.has(
+      "relation",
+    )
+    && counterpartIdentityFieldKeys.has(
+      "currentStatus",
+    )
+  )
+  || (
+    relation !== "unknown"
+    && question
+      .counterpartFacts
+      .birthDate
+    !== null
+  );
+
+const birthDataProvided =
   (
     counterpartBirthFieldKeys.has(
       "birthDate",
@@ -526,11 +540,6 @@ const zodiacProvided =
     .counterpartFacts
     .zodiac
   !== null;
-
-const relation =
-      detectCounterpartRelation(
-        normalizedQuestion,
-      );
 
       const counterpartExists =
       relation !== "unknown"

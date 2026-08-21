@@ -17,6 +17,12 @@ import {
   import {
     createSourceRequest,
   } from "./initialConsultingSessionBuilderVerification";
+  import {
+    buildConsultingClarification,
+  } from "./consultingClarificationBuilder";
+  import type {
+    QuestionReaderResult,
+  } from "./question/questionReader";
 
   export type AuthenticatedInitialConsultingClarificationVerificationResult = {
     checks:
@@ -31,6 +37,12 @@ import {
         boolean
       >;
 
+    completeCounterpartChecks:
+      Record<
+        string,
+        boolean
+      >;
+
     passed:
       boolean;
   };
@@ -40,6 +52,12 @@ import {
 
   const MARRIAGE_FAKE_OPENAI_ANSWER =
     "호출되면 안 되는 결혼 상담 정형 GPT 답변";
+
+  const COMPLETE_COUNTERPART_QUESTION =
+    "1967년 4월 10일 양력 출생 여성과 동업은 어떤가요?";
+
+  const COMPLETE_COUNTERPART_FAKE_OPENAI_ANSWER =
+    "완전정보 동업 상담 정형 GPT 답변";
 
   type MarriageClarificationInspectionItem = {
     key:
@@ -105,6 +123,83 @@ import {
 
     returnedSession:
       ConsultingSession;
+  };
+
+  type CompleteCounterpartInspectionInput = {
+    counterpartExists:
+      boolean;
+
+    identityProvided:
+      boolean;
+
+    birthDataProvided:
+      boolean;
+
+    decisionEvidence: readonly {
+      source:
+        string;
+    }[];
+
+    verdict:
+      string;
+
+    answerRequestCount:
+      number;
+
+    sessionStatus:
+      string;
+
+    pendingClarification: {
+      decisionTurnId:
+        string;
+
+      items:
+        readonly MarriageClarificationInspectionItem[];
+    } | null;
+
+    initialTurnCount:
+      number;
+
+    initialTurnKind:
+      string | undefined;
+
+    initialTurnQuestion:
+      string | undefined;
+
+    initialTurnOriginalQuestion:
+      string | undefined;
+
+    assistantAnswer:
+      string;
+
+    originalQuestion:
+      string;
+
+    mockAnswer:
+      string;
+
+    createCount:
+      number;
+
+    updateCount:
+      number;
+
+    persistedSession:
+      ConsultingSession | null;
+
+    returnedSession:
+      ConsultingSession;
+
+    missingCalendarTypeBirthDataProvided:
+      boolean;
+
+    missingCalendarTypeVerdict:
+      string;
+
+    missingCalendarTypeClarificationItems: readonly {
+      key:
+        string;
+    }[];
   };
 
   function everyCheckPassed(
@@ -517,6 +612,209 @@ import {
     };
   }
 
+  function evaluateCompleteCounterpartChecks(
+    input:
+      CompleteCounterpartInspectionInput,
+  ):
+    Record<
+      string,
+      boolean
+    > {
+    return {
+      counterpartExists:
+        input.counterpartExists
+        === true,
+
+      identityProvided:
+        input.identityProvided
+        === true,
+
+      birthDataProvided:
+        input.birthDataProvided
+        === true,
+
+      compatibilityEvidenceExists:
+        input
+          .decisionEvidence
+          .some(
+            (evidence) =>
+              evidence.source
+              === "compatibility",
+          ),
+
+      verdictIsNotInsufficientEvidence:
+        input.verdict
+        !== "insufficientEvidence",
+
+      openAIAnswerIsRequestedOnce:
+        input.answerRequestCount
+        === 1,
+
+      sessionIsActive:
+        input.sessionStatus
+        === "active",
+
+      pendingClarificationIsNull:
+        input.pendingClarification
+        === null,
+
+      initialTurnCountIsOne:
+        input.initialTurnCount
+        === 1,
+
+      initialTurnKindIsInitial:
+        input.initialTurnKind
+        === "initial",
+
+      originalQuestionIsPreserved:
+        input.initialTurnQuestion
+        === input.originalQuestion
+        && input.initialTurnOriginalQuestion
+        === input.originalQuestion,
+
+      mockFinalAnswerIsStored:
+        input.assistantAnswer
+        === input.mockAnswer,
+
+      assistantAnswerDoesNotRequestCounterpartBirthData:
+        !input
+          .assistantAnswer
+          .includes(
+            "말씀하신 생년월일은 확인했습니다.",
+          )
+        && !input
+          .assistantAnswer
+          .includes(
+            "양력·음력 여부",
+          )
+        && !input
+          .assistantAnswer
+          .includes(
+            "이미 알려주신 정보는 다시 적지 않아도 됩니다.",
+          )
+        && !input
+          .assistantAnswer
+          .includes(
+            "상대방의 생년월일",
+          )
+        && !input
+          .assistantAnswer
+          .includes(
+            "출생시간",
+          ),
+
+      sessionIsCreatedOnce:
+        input.createCount
+        === 1,
+
+      repositoryUpdateIsNotCalled:
+        input.updateCount
+        === 0,
+
+      persistedSessionMatchesReturnedSession:
+        input.persistedSession
+        === input.returnedSession,
+    };
+  }
+
+  function evaluateCompleteCounterpartNegativeChecks(
+    input:
+      CompleteCounterpartInspectionInput,
+  ):
+    Record<
+      string,
+      boolean
+    > {
+    const actualChecks =
+      evaluateCompleteCounterpartChecks(
+        input,
+      );
+
+    const evidenceWithoutCompatibility =
+      input
+        .decisionEvidence
+        .filter(
+          (evidence) =>
+            evidence.source
+            !== "compatibility",
+        );
+
+    return {
+      missingCalendarTypeBirthDataIsNotProvided:
+        input
+          .missingCalendarTypeBirthDataProvided
+        === false,
+
+      missingCalendarTypeVerdictIsInsufficientEvidence:
+        input.missingCalendarTypeVerdict
+        === "insufficientEvidence",
+
+      missingCalendarTypeCounterpartBirthDataItemExists:
+        input
+          .missingCalendarTypeClarificationItems
+          .some(
+            (item) =>
+              item.key
+              === "counterpartBirthData",
+          ),
+
+      wrongVerdictFails:
+        evaluateCompleteCounterpartChecks({
+          ...input,
+
+          verdict:
+            "insufficientEvidence",
+        }).verdictIsNotInsufficientEvidence
+        === false,
+
+      nonActiveStatusFails:
+        evaluateCompleteCounterpartChecks({
+          ...input,
+
+          sessionStatus:
+            "awaitingClarification",
+        }).sessionIsActive
+        === false,
+
+      pendingClarificationObjectFails:
+        evaluateCompleteCounterpartChecks({
+          ...input,
+
+          pendingClarification: {
+            decisionTurnId:
+              "injected-complete-counterpart-decision-turn",
+
+            items:
+              [],
+          },
+        }).pendingClarificationIsNull
+        === false,
+
+      wrongAnswerRequestCountFails:
+        evaluateCompleteCounterpartChecks({
+          ...input,
+
+          answerRequestCount:
+            0,
+        }).openAIAnswerIsRequestedOnce
+        === false,
+
+      missingCompatibilityEvidenceFails:
+        evaluateCompleteCounterpartChecks({
+          ...input,
+
+          decisionEvidence:
+            evidenceWithoutCompatibility,
+        }).compatibilityEvidenceExists
+        === false,
+
+      actualCompleteCounterpartChecksPassBeforeNegatives:
+        everyCheckPassed(
+          actualChecks,
+        ),
+    };
+  }
+
   /**
    * 최초 상담에서 판단 근거가 부족한 경우
    * GPT 일반 설명을 호출하지 않고 구체적인 보충질문을 저장하는지 검증한다.
@@ -917,10 +1215,354 @@ import {
       ),
     };
 
+    const completeCounterpartRequest = {
+      ...createSourceRequest(),
+
+      question:
+        COMPLETE_COUNTERPART_QUESTION,
+    };
+
+    const actualCompleteQuestionReaderResult =
+      buildInitialConsultingExecution(
+        completeCounterpartRequest,
+      )
+        .turnResult
+        .questionReaderResult;
+
+    const completeCounterpartInterpretation:
+      QuestionReaderResult = {
+        ...actualCompleteQuestionReaderResult,
+
+        evidence: [
+          ...actualCompleteQuestionReaderResult
+            .evidence,
+        ],
+
+        counterpartFacts: {
+          birthDate:
+            "1967-04-10",
+
+          birthTime:
+            null,
+
+          calendarType:
+            "solar",
+
+          gender:
+            "female",
+
+          zodiac:
+            actualCompleteQuestionReaderResult
+              .counterpartFacts
+              .zodiac,
+
+          relationship:
+            actualCompleteQuestionReaderResult
+              .counterpartFacts
+              .relationship,
+
+          evidence: [
+            "1967년 4월 10일",
+            "양력",
+            "여성",
+          ],
+        },
+      };
+
+    const completeCounterpartPersistedSessions:
+      ConsultingSession[] = [];
+
+    let completeCounterpartCreateCount =
+      0;
+
+    let completeCounterpartUpdateCount =
+      0;
+
+    const completeCounterpartRepository:
+      ConsultingSessionRepository = {
+        async findById() {
+          return null;
+        },
+
+        async create(
+          createdSession,
+        ) {
+          completeCounterpartCreateCount +=
+            1;
+
+          completeCounterpartPersistedSessions.push(
+            createdSession,
+          );
+
+          return {
+            status:
+              "created",
+          };
+        },
+
+        async update() {
+          completeCounterpartUpdateCount +=
+            1;
+
+          return {
+            status:
+              "updated",
+          };
+        },
+      };
+
+    let completeCounterpartAnswerRequestCount =
+      0;
+
+    const completeCounterpartSession =
+      await createAuthenticatedInitialConsultingSession(
+        {
+          authorizationHeader:
+            "Bearer complete-counterpart-verification-token",
+
+          request:
+            completeCounterpartRequest,
+
+          environment: {
+            SUPABASE_URL:
+              "https://verification.supabase.co",
+
+            SUPABASE_SECRET_KEY:
+              "verification-server-secret",
+          },
+        },
+        {
+          async createRepository() {
+            return completeCounterpartRepository;
+          },
+
+          createSessionId() {
+            return "initial-complete-counterpart-session";
+          },
+
+          createTurnId() {
+            return "initial-complete-counterpart-turn";
+          },
+
+          now() {
+            return "2026-08-03T06:00:00.000Z";
+          },
+
+          async interpretQuestion() {
+            return completeCounterpartInterpretation;
+          },
+
+          buildExecution(
+            request,
+            questionInterpretation,
+          ) {
+            return buildInitialConsultingExecution(
+              request,
+              questionInterpretation,
+            );
+          },
+
+          async requestAnswer() {
+            completeCounterpartAnswerRequestCount +=
+              1;
+
+            return COMPLETE_COUNTERPART_FAKE_OPENAI_ANSWER;
+          },
+
+          buildSession(
+            input,
+          ) {
+            return buildInitialConsultingSession(
+              input,
+            );
+          },
+        },
+      );
+
+    const completeCounterpartInitialTurns =
+      completeCounterpartSession
+        .turns
+        .filter(
+          (turn) =>
+            turn.kind
+            === "initial",
+        );
+
+    const completeCounterpartInitialTurn =
+      completeCounterpartInitialTurns[0];
+
+    const missingCalendarTypeInterpretation:
+      QuestionReaderResult = {
+        ...completeCounterpartInterpretation,
+
+        evidence: [
+          ...completeCounterpartInterpretation
+            .evidence,
+        ],
+
+        counterpartFacts: {
+          ...completeCounterpartInterpretation
+            .counterpartFacts,
+
+          evidence: [
+            ...completeCounterpartInterpretation
+              .counterpartFacts
+              .evidence,
+          ],
+
+          calendarType:
+            null,
+        },
+      };
+
+    const missingCalendarTypeExecution =
+      buildInitialConsultingExecution(
+        completeCounterpartRequest,
+        missingCalendarTypeInterpretation,
+      );
+
+    const missingCalendarTypeClarification =
+      buildConsultingClarification({
+        decisionTurnId:
+          "initial-complete-counterpart-missing-calendar-turn",
+
+        lifeContext:
+          missingCalendarTypeExecution
+            .lifeContext,
+
+        questionContext:
+          missingCalendarTypeExecution
+            .turnResult
+            .questionContext,
+
+        decisionResult:
+          missingCalendarTypeExecution
+            .turnResult
+            .decisionResult,
+      });
+
+    const completeCounterpartInspectionInput:
+      CompleteCounterpartInspectionInput = {
+        counterpartExists:
+          completeCounterpartInitialTurn
+            ?.questionContext
+            .counterpart
+            .exists
+          === true,
+
+        identityProvided:
+          completeCounterpartInitialTurn
+            ?.questionContext
+            .counterpart
+            .identityProvided
+          === true,
+
+        birthDataProvided:
+          completeCounterpartInitialTurn
+            ?.questionContext
+            .counterpart
+            .birthDataProvided
+          === true,
+
+        decisionEvidence:
+          completeCounterpartInitialTurn
+            ?.decisionResult
+            .evidence
+          ?? [],
+
+        verdict:
+          completeCounterpartInitialTurn
+            ?.decisionResult
+            .verdict
+          ?? "",
+
+        answerRequestCount:
+          completeCounterpartAnswerRequestCount,
+
+        sessionStatus:
+          completeCounterpartSession.status,
+
+        pendingClarification:
+          toClarificationInspectionItems(
+            completeCounterpartSession
+              .pendingClarification,
+          ),
+
+        initialTurnCount:
+          completeCounterpartInitialTurns.length,
+
+        initialTurnKind:
+          completeCounterpartInitialTurn
+            ?.kind,
+
+        initialTurnQuestion:
+          completeCounterpartInitialTurn
+            ?.question,
+
+        initialTurnOriginalQuestion:
+          completeCounterpartInitialTurn
+            ?.questionReaderResult
+            .originalQuestion,
+
+        assistantAnswer:
+          completeCounterpartInitialTurn
+            ?.assistantAnswer
+          ?? "",
+
+        originalQuestion:
+          COMPLETE_COUNTERPART_QUESTION,
+
+        mockAnswer:
+          COMPLETE_COUNTERPART_FAKE_OPENAI_ANSWER,
+
+        createCount:
+          completeCounterpartCreateCount,
+
+        updateCount:
+          completeCounterpartUpdateCount,
+
+        persistedSession:
+          completeCounterpartPersistedSessions[0]
+          ?? null,
+
+        returnedSession:
+          completeCounterpartSession,
+
+        missingCalendarTypeBirthDataProvided:
+          missingCalendarTypeExecution
+            .turnResult
+            .questionContext
+            .counterpart
+            .birthDataProvided,
+
+        missingCalendarTypeVerdict:
+          missingCalendarTypeExecution
+            .turnResult
+            .decisionResult
+            .verdict,
+
+        missingCalendarTypeClarificationItems:
+          missingCalendarTypeClarification
+            ?.items
+          ?? [],
+      };
+
+    const completeCounterpartChecks = {
+      ...evaluateCompleteCounterpartChecks(
+        completeCounterpartInspectionInput,
+      ),
+
+      ...evaluateCompleteCounterpartNegativeChecks(
+        completeCounterpartInspectionInput,
+      ),
+    };
+
     return {
       checks,
 
       marriageChecks,
+
+      completeCounterpartChecks,
 
       passed:
         everyCheckPassed(
@@ -928,6 +1570,9 @@ import {
         )
         && everyCheckPassed(
           marriageChecks,
+        )
+        && everyCheckPassed(
+          completeCounterpartChecks,
         ),
     };
   }

@@ -16,6 +16,9 @@ import {
   import type {
     QuestionReaderResult,
   } from "./question/questionReader";
+  import {
+    buildCounterpartSajuCalculation,
+  } from "./decision/counterpartSajuCalculationBuilder";
 
   export type InitialConsultingExecutionResult = {
     humanDestinyPipeline:
@@ -106,6 +109,30 @@ import {
           ),
       });
 
+      const counterpartFacts =
+      questionInterpretation
+        ?.counterpartFacts;
+
+    const counterpartSaju =
+      counterpartFacts
+      && counterpartFacts.birthDate
+      && counterpartFacts.calendarType
+      && counterpartFacts.gender
+        ? buildCounterpartSajuCalculation({
+            birthDate:
+              counterpartFacts.birthDate,
+
+            birthTime:
+              counterpartFacts.birthTime,
+
+            calendarType:
+              counterpartFacts.calendarType,
+
+            gender:
+              counterpartFacts.gender,
+          })
+        : undefined;
+
       const turnResult =
       runConsultingTurn({
         sajuFacts:
@@ -118,7 +145,9 @@ import {
 
             questionInterpretation,
 
-        humanContext:
+            counterpartSaju,
+
+            humanContext:
           humanDestinyPipeline
             .humanContext,
 
