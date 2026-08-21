@@ -64,6 +64,16 @@ export type ConsultingAnswerTopicCoverageCaseResult = {
 
   finalDecision: string;
 
+  evidenceLineCount: number;
+
+  conditionLineCount: number;
+
+  riskLineCount: number;
+
+  recommendedDirectionLineCount: number;
+
+  prohibitedDirectionLineCount: number;
+
   checks: Record<
     string,
     boolean
@@ -249,6 +259,9 @@ const TOPIC_COVERAGE_LIMITATIONS = [
   "이 검증은 실제 GPT 최종 답변을 생성하거나 고객 노출 상담문을 채점하지 않는다.",
   "질문 의미 해석 OpenAI를 호출하지 않으며 Question Reader의 현재 분류 결과를 그대로 보고한다.",
   "OpenAI, Supabase, 배포 HTTP를 호출하지 않는다.",
+  "문자열 source-lock은 의미상 동의어 왜곡을 완전히 판별하지 못함",
+  "Evidence 전체 일치가 아니라 Explanation Builder가 선택한 Evidence 줄의 출처만 검증",
+  "marriage insufficientEvidence는 결혼 판단을 내린 것이 아니라 보충질문 경로 대상임",
 ] as const;
 
 
@@ -302,6 +315,61 @@ type TopicCoverageCaseMaterial = {
   planGptMayRejudge: boolean;
 
   payloadGptMayRejudge: boolean;
+
+  confidence: string;
+
+  readerConfidence: string;
+
+  planVerdict: string;
+
+  payloadVerdict: string;
+
+  planConfidence: string;
+
+  payloadConfidence: string;
+
+  engineConditionDescriptions:
+    readonly string[];
+
+  planConditionLines:
+    readonly string[];
+
+  payloadConditionLines:
+    readonly string[];
+
+  engineRiskDescriptions:
+    readonly string[];
+
+  planRiskLines:
+    readonly string[];
+
+  payloadRiskLines:
+    readonly string[];
+
+  engineEvidenceDescriptions:
+    readonly string[];
+
+  planEvidenceLines:
+    readonly string[];
+
+  payloadEvidenceLines:
+    readonly string[];
+
+  engineRecommendedDirection: string;
+
+  planRecommendedDirection: string;
+
+  payloadRecommendedDirection: string;
+
+  engineProhibitedDirection: string;
+
+  planProhibitedDirection: string;
+
+  payloadProhibitedDirection: string;
+
+  planFinalDecision: string;
+
+  payloadFinalDecision: string;
 };
 
 
@@ -336,6 +404,437 @@ function valuesAreAllDistinct(
     values.length > 1
     && new Set(values).size
       === values.length
+  );
+}
+
+
+type ExplanationPlanStep =
+  DecisionExplanationPlan["blocks"][number]["step"];
+
+
+function findPlanBlockContent(
+  plan: DecisionExplanationPlan,
+  step: ExplanationPlanStep,
+): string {
+  return (
+    plan.blocks.find(
+      (block) =>
+        block.step === step,
+    )?.content
+    ?? ""
+  );
+}
+
+
+function findPayloadContentForStep(
+  plan: DecisionExplanationPlan,
+  payload: DecisionExplanationPayload,
+  step: ExplanationPlanStep,
+): string {
+  if (
+    step
+    === "finalDecision"
+  ) {
+    return payload.finalDecision;
+  }
+
+  const block =
+    plan.blocks.find(
+      (item) =>
+        item.step === step,
+    );
+
+  if (
+    !block
+  ) {
+    return "";
+  }
+
+  return (
+    payload.explanationOrder.find(
+      (item) =>
+        item.title === block.title,
+    )?.content
+    ?? ""
+  );
+}
+
+
+export function uniqueNormalizedLines(
+  values: readonly string[],
+): string[] {
+  const unique: string[] = [];
+
+  for (const value of values) {
+    const normalizedValue =
+      normalize(
+        value,
+      );
+
+    if (
+      !normalizedValue
+      || unique.includes(
+        normalizedValue,
+      )
+    ) {
+      continue;
+    }
+
+    unique.push(
+      normalizedValue,
+    );
+  }
+
+  return unique;
+}
+
+
+function toNonEmptyLines(
+  content: string,
+): string[] {
+  return content
+    .split(/\r?\n/)
+    .map(
+      (line) =>
+        line.trim(),
+    )
+    .filter(Boolean);
+}
+
+
+function toComparableDirectionLines(
+  value:
+    string
+    | readonly string[],
+): string[] {
+  if (
+    typeof value
+    === "string"
+  ) {
+    return uniqueNormalizedLines(
+      value.split(/\r?\n/),
+    );
+  }
+
+  return uniqueNormalizedLines(
+    value,
+  );
+}
+
+
+export function linesMatchAsSet(
+  actual: readonly string[],
+  expected: readonly string[],
+): boolean {
+  const actualLines =
+    uniqueNormalizedLines(
+      actual,
+    );
+
+  const expectedLines =
+    uniqueNormalizedLines(
+      expected,
+    );
+
+  return (
+    actualLines.length
+    === expectedLines.length
+    && actualLines.every(
+      (item) =>
+        expectedLines.includes(
+          item,
+        ),
+    )
+    && expectedLines.every(
+      (item) =>
+        actualLines.includes(
+          item,
+        ),
+    )
+  );
+}
+
+
+export function promptContainsNormalizedLines(
+  promptText: string,
+  lines: readonly string[],
+): boolean {
+  const uniqueLines =
+    uniqueNormalizedLines(
+      lines,
+    );
+
+  if (
+    uniqueLines.length
+    === 0
+  ) {
+    return true;
+  }
+
+  const normalizedPrompt =
+    normalize(
+      promptText,
+    );
+
+  return uniqueLines.every(
+    (line) =>
+      normalizedPrompt.includes(
+        line,
+      ),
+  );
+}
+
+
+export function conditionLinesMatchEngineSources(
+  planLines: readonly string[],
+  engineDescriptions: readonly string[],
+): boolean {
+  return linesMatchAsSet(
+    planLines,
+    engineDescriptions,
+  );
+}
+
+
+export function conditionLinesReachPayload(
+  planLines: readonly string[],
+  payloadLines: readonly string[],
+): boolean {
+  return linesMatchAsSet(
+    planLines,
+    payloadLines,
+  );
+}
+
+
+export function conditionLinesReachPrompt(
+  planLines: readonly string[],
+  promptText: string,
+): boolean {
+  return promptContainsNormalizedLines(
+    promptText,
+    planLines,
+  );
+}
+
+
+export function riskLinesMatchEngineSources(
+  planLines: readonly string[],
+  engineDescriptions: readonly string[],
+): boolean {
+  return linesMatchAsSet(
+    planLines,
+    engineDescriptions,
+  );
+}
+
+
+export function riskLinesReachPayload(
+  planLines: readonly string[],
+  payloadLines: readonly string[],
+): boolean {
+  return linesMatchAsSet(
+    planLines,
+    payloadLines,
+  );
+}
+
+
+export function riskLinesReachPrompt(
+  planLines: readonly string[],
+  promptText: string,
+): boolean {
+  return promptContainsNormalizedLines(
+    promptText,
+    planLines,
+  );
+}
+
+
+export function evidenceLinesAreSourceLocked(
+  planLines: readonly string[],
+  sourceDescriptions: readonly string[],
+): boolean {
+  const uniqueLines =
+    uniqueNormalizedLines(
+      planLines,
+    );
+
+  const uniqueSources =
+    uniqueNormalizedLines(
+      sourceDescriptions,
+    );
+
+  if (
+    uniqueLines.length
+    === 0
+  ) {
+    return false;
+  }
+
+  return uniqueLines.every(
+    (line) =>
+      uniqueSources.includes(
+        line,
+      ),
+  );
+}
+
+
+export function evidenceLinesReachPayload(
+  planLines: readonly string[],
+  payloadLines: readonly string[],
+): boolean {
+  const uniquePlanLines =
+    uniqueNormalizedLines(
+      planLines,
+    );
+
+  if (
+    uniquePlanLines.length
+    === 0
+  ) {
+    return false;
+  }
+
+  return linesMatchAsSet(
+    uniquePlanLines,
+    payloadLines,
+  );
+}
+
+
+export function evidenceLinesReachPrompt(
+  planLines: readonly string[],
+  promptText: string,
+): boolean {
+  const uniqueLines =
+    uniqueNormalizedLines(
+      planLines,
+    );
+
+  if (
+    uniqueLines.length
+    === 0
+  ) {
+    return false;
+  }
+
+  return promptContainsNormalizedLines(
+    promptText,
+    uniqueLines,
+  );
+}
+
+
+export function verdictIsPreservedAcrossLayers(
+  resultVerdict: string,
+  planVerdict: string,
+  payloadVerdict: string,
+): boolean {
+  return (
+    resultVerdict.length > 0
+    && resultVerdict === planVerdict
+    && planVerdict === payloadVerdict
+  );
+}
+
+
+export function confidenceIsPreservedAcrossLayers(
+  resultConfidence: string,
+  readerConfidence: string,
+  planConfidence: string,
+  payloadConfidence: string,
+): boolean {
+  return (
+    resultConfidence.length > 0
+    && resultConfidence === readerConfidence
+    && readerConfidence === planConfidence
+    && planConfidence === payloadConfidence
+  );
+}
+
+
+export function directionIsSourceLocked(
+  engineDirection:
+    string
+    | readonly string[],
+  planDirection:
+    string
+    | readonly string[],
+  payloadDirection:
+    string
+    | readonly string[],
+  promptText: string,
+): boolean {
+  const engineLines =
+    toComparableDirectionLines(
+      engineDirection,
+    );
+
+  if (
+    engineLines.length
+    === 0
+  ) {
+    return false;
+  }
+
+  const planLines =
+    toComparableDirectionLines(
+      planDirection,
+    );
+
+  const payloadLines =
+    toComparableDirectionLines(
+      payloadDirection,
+    );
+
+  return (
+    linesMatchAsSet(
+      engineLines,
+      planLines,
+    )
+    && linesMatchAsSet(
+      planLines,
+      payloadLines,
+    )
+    && promptContainsNormalizedLines(
+      promptText,
+      engineLines,
+    )
+  );
+}
+
+
+export function finalDecisionMatchesAcrossLayers(
+  resultFinalDecision: string,
+  planFinalDecision: string,
+  payloadFinalDecision: string,
+  userPrompt: string,
+): boolean {
+  const normalizedResult =
+    normalize(
+      resultFinalDecision,
+    );
+
+  if (
+    normalizedResult.length
+    === 0
+  ) {
+    return false;
+  }
+
+  return (
+    normalize(
+      planFinalDecision,
+    ) === normalizedResult
+    && normalize(
+      payloadFinalDecision,
+    ) === normalizedResult
+    && countOccurrences(
+      userPrompt,
+      resultFinalDecision,
+    ) === 1
   );
 }
 
@@ -600,6 +1099,99 @@ function evaluateCaseChecks(
       promptOmitsUntraceableClaims(
         material.prompt,
       ),
+
+    verdictPreservedAcrossLayers:
+      verdictIsPreservedAcrossLayers(
+        material.verdict,
+        material.planVerdict,
+        material.payloadVerdict,
+      ),
+
+    confidencePreservedAcrossLayers:
+      confidenceIsPreservedAcrossLayers(
+        material.confidence,
+        material.readerConfidence,
+        material.planConfidence,
+        material.payloadConfidence,
+      ),
+
+    conditionLinesMatchEngineSources:
+      conditionLinesMatchEngineSources(
+        material.planConditionLines,
+        material.engineConditionDescriptions,
+      ),
+
+    conditionLinesReachPayload:
+      conditionLinesReachPayload(
+        material.planConditionLines,
+        material.payloadConditionLines,
+      ),
+
+    conditionLinesReachPrompt:
+      conditionLinesReachPrompt(
+        material.planConditionLines,
+        material.userPrompt,
+      ),
+
+    riskLinesMatchEngineSources:
+      riskLinesMatchEngineSources(
+        material.planRiskLines,
+        material.engineRiskDescriptions,
+      ),
+
+    riskLinesReachPayload:
+      riskLinesReachPayload(
+        material.planRiskLines,
+        material.payloadRiskLines,
+      ),
+
+    riskLinesReachPrompt:
+      riskLinesReachPrompt(
+        material.planRiskLines,
+        material.userPrompt,
+      ),
+
+    evidenceLinesAreSourceLocked:
+      evidenceLinesAreSourceLocked(
+        material.planEvidenceLines,
+        material.engineEvidenceDescriptions,
+      ),
+
+    evidenceLinesReachPayload:
+      evidenceLinesReachPayload(
+        material.planEvidenceLines,
+        material.payloadEvidenceLines,
+      ),
+
+    evidenceLinesReachPrompt:
+      evidenceLinesReachPrompt(
+        material.planEvidenceLines,
+        material.userPrompt,
+      ),
+
+    recommendedDirectionIsSourceLocked:
+      directionIsSourceLocked(
+        material.engineRecommendedDirection,
+        material.planRecommendedDirection,
+        material.payloadRecommendedDirection,
+        material.userPrompt,
+      ),
+
+    prohibitedDirectionIsSourceLocked:
+      directionIsSourceLocked(
+        material.engineProhibitedDirection,
+        material.planProhibitedDirection,
+        material.payloadProhibitedDirection,
+        material.userPrompt,
+      ),
+
+    finalDecisionMatchesAcrossLayers:
+      finalDecisionMatchesAcrossLayers(
+        material.finalDecision,
+        material.planFinalDecision,
+        material.payloadFinalDecision,
+        material.userPrompt,
+      ),
   };
 }
 
@@ -707,6 +1299,42 @@ function buildCaseMaterial(
   const payloadText =
     getPayloadContent(payload);
 
+  const planConditionContent =
+    findPlanBlockContent(
+      plan,
+      "conditions",
+    );
+
+  const planRiskContent =
+    findPlanBlockContent(
+      plan,
+      "risks",
+    );
+
+  const planEvidenceContent =
+    findPlanBlockContent(
+      plan,
+      "evidence",
+    );
+
+  const planRecommendedDirection =
+    findPlanBlockContent(
+      plan,
+      "recommendedDirection",
+    );
+
+  const planProhibitedDirection =
+    findPlanBlockContent(
+      plan,
+      "prohibitedDirection",
+    );
+
+  const planFinalDecision =
+    findPlanBlockContent(
+      plan,
+      "finalDecision",
+    );
+
   return {
     name,
 
@@ -768,6 +1396,113 @@ function buildCaseMaterial(
 
     payloadGptMayRejudge:
       payload.gptMayRejudge,
+
+    confidence:
+      result.confidence,
+
+    readerConfidence:
+      explanationInput.confidence,
+
+    planVerdict:
+      plan.verdict,
+
+    payloadVerdict:
+      payload.verdict,
+
+    planConfidence:
+      plan.confidence,
+
+    payloadConfidence:
+      payload.confidence,
+
+    engineConditionDescriptions:
+      result.conditions.map(
+        (condition) =>
+          condition.description,
+      ),
+
+    planConditionLines:
+      toNonEmptyLines(
+        planConditionContent,
+      ),
+
+    payloadConditionLines:
+      toNonEmptyLines(
+        findPayloadContentForStep(
+          plan,
+          payload,
+          "conditions",
+        ),
+      ),
+
+    engineRiskDescriptions:
+      result.risks.map(
+        (risk) =>
+          risk.description,
+      ),
+
+    planRiskLines:
+      toNonEmptyLines(
+        planRiskContent,
+      ),
+
+    payloadRiskLines:
+      toNonEmptyLines(
+        findPayloadContentForStep(
+          plan,
+          payload,
+          "risks",
+        ),
+      ),
+
+    engineEvidenceDescriptions:
+      explanationInput.evidence.map(
+        (item) =>
+          item.description,
+      ),
+
+    planEvidenceLines:
+      toNonEmptyLines(
+        planEvidenceContent,
+      ),
+
+    payloadEvidenceLines:
+      toNonEmptyLines(
+        findPayloadContentForStep(
+          plan,
+          payload,
+          "evidence",
+        ),
+      ),
+
+    engineRecommendedDirection:
+      result.recommendedDirection,
+
+    planRecommendedDirection,
+
+    payloadRecommendedDirection:
+      findPayloadContentForStep(
+        plan,
+        payload,
+        "recommendedDirection",
+      ),
+
+    engineProhibitedDirection:
+      result.prohibitedDirection,
+
+    planProhibitedDirection,
+
+    payloadProhibitedDirection:
+      findPayloadContentForStep(
+        plan,
+        payload,
+        "prohibitedDirection",
+      ),
+
+    planFinalDecision,
+
+    payloadFinalDecision:
+      payload.finalDecision,
   };
 }
 
@@ -801,6 +1536,31 @@ function toCaseResult(
 
     finalDecision:
       material.finalDecision,
+
+    evidenceLineCount:
+      uniqueNormalizedLines(
+        material.planEvidenceLines,
+      ).length,
+
+    conditionLineCount:
+      uniqueNormalizedLines(
+        material.planConditionLines,
+      ).length,
+
+    riskLineCount:
+      uniqueNormalizedLines(
+        material.planRiskLines,
+      ).length,
+
+    recommendedDirectionLineCount:
+      toComparableDirectionLines(
+        material.planRecommendedDirection,
+      ).length,
+
+    prohibitedDirectionLineCount:
+      toComparableDirectionLines(
+        material.planProhibitedDirection,
+      ).length,
 
     checks,
 
@@ -855,6 +1615,42 @@ function evaluateNegativeChecks(
 
       duplicateCaseFailsUniqueTopicContract:
         false,
+
+      emptyPlanConditionsFailWhenEngineSourceExists:
+        false,
+
+      inventedPlanConditionFails:
+        false,
+
+      partialPlanConditionsFail:
+        false,
+
+      emptyPlanRisksFailWhenEngineSourceExists:
+        false,
+
+      inventedPlanRiskFails:
+        false,
+
+      partialPlanRisksFail:
+        false,
+
+      inventedPlanEvidenceFails:
+        false,
+
+      payloadEvidenceMissingPlanLineFails:
+        false,
+
+      alteredRecommendedDirectionFails:
+        false,
+
+      removedProhibitedDirectionFails:
+        false,
+
+      alteredPlanVerdictFails:
+        false,
+
+      alteredPayloadFinalDecisionFails:
+        false,
     };
   }
 
@@ -862,6 +1658,59 @@ function evaluateNegativeChecks(
     firstMaterial.expectedTopic === "job"
       ? "health"
       : "job";
+
+  const otherVerdict =
+    firstMaterial.verdict === "wait"
+      ? "recommended"
+      : "wait";
+
+  const twoConditionSources =
+    uniqueNormalizedLines(
+      materials.flatMap(
+        (item) =>
+          item.engineConditionDescriptions,
+      ),
+    ).slice(
+      0,
+      2,
+    );
+
+  const twoRiskSources =
+    uniqueNormalizedLines(
+      materials.flatMap(
+        (item) =>
+          item.engineRiskDescriptions,
+      ),
+    ).slice(
+      0,
+      2,
+    );
+
+  const conditionSourcesForPartial =
+    twoConditionSources.length === 2
+      ? twoConditionSources
+      : [
+          "첫 번째 조건 문장이다.",
+          "두 번째 조건 문장이다.",
+        ];
+
+  const riskSourcesForPartial =
+    twoRiskSources.length === 2
+      ? twoRiskSources
+      : [
+          "첫 번째 위험 문장이다.",
+          "두 번째 위험 문장이다.",
+        ];
+
+  const engineConditionSources =
+    uniqueNormalizedLines(
+      firstMaterial.engineConditionDescriptions,
+    );
+
+  const engineRiskSources =
+    uniqueNormalizedLines(
+      firstMaterial.engineRiskDescriptions,
+    );
 
   const wrongTopicChecks =
     evaluateCaseChecks({
@@ -1025,6 +1874,103 @@ function evaluateNegativeChecks(
       evaluateCrossFixtureChecks(
         duplicateCase,
       ).expectedTopicsAreDistinct === false,
+
+    emptyPlanConditionsFailWhenEngineSourceExists:
+      engineConditionSources.length > 0
+      && conditionLinesMatchEngineSources(
+        [],
+        engineConditionSources,
+      ) === false,
+
+    inventedPlanConditionFails:
+      conditionLinesMatchEngineSources(
+        [
+          ...engineConditionSources,
+          "엔진에 없는 조건 문장이다.",
+        ],
+        engineConditionSources,
+      ) === false,
+
+    partialPlanConditionsFail:
+      conditionLinesMatchEngineSources(
+        [
+          conditionSourcesForPartial[0] ?? "",
+        ],
+        conditionSourcesForPartial,
+      ) === false,
+
+    emptyPlanRisksFailWhenEngineSourceExists:
+      engineRiskSources.length > 0
+      && riskLinesMatchEngineSources(
+        [],
+        engineRiskSources,
+      ) === false,
+
+    inventedPlanRiskFails:
+      riskLinesMatchEngineSources(
+        [
+          ...engineRiskSources,
+          "엔진에 없는 위험 문장이다.",
+        ],
+        engineRiskSources,
+      ) === false,
+
+    partialPlanRisksFail:
+      riskLinesMatchEngineSources(
+        [
+          riskSourcesForPartial[0] ?? "",
+        ],
+        riskSourcesForPartial,
+      ) === false,
+
+    inventedPlanEvidenceFails:
+      evidenceLinesAreSourceLocked(
+        [
+          ...firstMaterial.planEvidenceLines,
+          "source에 없는 근거 문장이다.",
+        ],
+        firstMaterial.engineEvidenceDescriptions,
+      ) === false,
+
+    payloadEvidenceMissingPlanLineFails:
+      evidenceLinesReachPayload(
+        firstMaterial.planEvidenceLines,
+        firstMaterial.planEvidenceLines.slice(
+          0,
+          -1,
+        ),
+      ) === false,
+
+    alteredRecommendedDirectionFails:
+      directionIsSourceLocked(
+        firstMaterial.engineRecommendedDirection,
+        "다른 권장 방향 문장이다.",
+        firstMaterial.payloadRecommendedDirection,
+        firstMaterial.userPrompt,
+      ) === false,
+
+    removedProhibitedDirectionFails:
+      directionIsSourceLocked(
+        firstMaterial.engineProhibitedDirection,
+        "",
+        firstMaterial.payloadProhibitedDirection,
+        firstMaterial.userPrompt,
+      ) === false,
+
+    alteredPlanVerdictFails:
+      verdictIsPreservedAcrossLayers(
+        firstMaterial.verdict,
+        otherVerdict,
+        firstMaterial.payloadVerdict,
+      ) === false,
+
+    alteredPayloadFinalDecisionFails:
+      finalDecisionMatchesAcrossLayers(
+        firstMaterial.finalDecision,
+        firstMaterial.planFinalDecision,
+        "다른 최종 결론 문장이다.",
+        firstMaterial.userPrompt,
+      ) === false,
   };
 }
 
