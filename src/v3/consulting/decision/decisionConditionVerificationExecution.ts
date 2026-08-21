@@ -47,4 +47,3 @@ import {
     process.exitCode = 1;
   }
 
-  
