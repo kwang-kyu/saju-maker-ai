@@ -17,6 +17,9 @@ import {
   verifyConsultingAnswerQuality,
 } from "./explanation/consultingAnswerQualityVerification";
 import {
+  verifyConsultingAnswerTopicCoverage,
+} from "./explanation/consultingAnswerTopicCoverageVerification";
+import {
   verifyConsultingLiveAnswerSemanticGateContract,
 } from "./explanation/consultingLiveAnswerSemanticGateVerification";
 import {
@@ -39,7 +42,7 @@ import {
 } from "./v3InitialConsultingSessionApiVerification";
 
 export const V3_NON_API_PRODUCTION_READINESS_EXPECTED_STAGE_COUNT =
-  12;
+  13;
 
 export const V3_NON_API_PRODUCTION_READINESS_STAGE_NAMES = [
   "verifyV3ConsultingRouteIntegration",
@@ -53,6 +56,7 @@ export const V3_NON_API_PRODUCTION_READINESS_STAGE_NAMES = [
   "verifySupabaseConsultingSessionRepositoryFactory",
   "runDecisionEngineRegression",
   "verifyConsultingAnswerQuality",
+  "verifyConsultingAnswerTopicCoverage",
   "verifyConsultingLiveAnswerSemanticGateContract",
 ] as const;
 
@@ -85,7 +89,7 @@ export type V3NonApiProductionReadinessNegativeChecks = {
 
   thrownStageFails: boolean;
 
-  exactTwelvePassingStagesPass: boolean;
+  exactExpectedStagesPass: boolean;
 };
 
 export type V3NonApiProductionReadinessStageEvaluation = {
@@ -234,6 +238,14 @@ const V3_NON_API_PRODUCTION_READINESS_STAGE_RUNNERS: readonly V3NonApiProduction
     run:
       async () =>
         verifyConsultingAnswerQuality(),
+  },
+  {
+    name:
+      "verifyConsultingAnswerTopicCoverage",
+
+    run:
+      async () =>
+        verifyConsultingAnswerTopicCoverage(),
   },
   {
     name:
@@ -501,7 +513,7 @@ function evaluateNegativeChecks():
         thrownStage,
       ).passed === false,
 
-    exactTwelvePassingStagesPass:
+    exactExpectedStagesPass:
       evaluateNonApiProductionReadinessStages(
         exactPassingStages,
       ).passed === true,
