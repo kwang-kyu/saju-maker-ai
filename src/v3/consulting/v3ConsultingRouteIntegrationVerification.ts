@@ -11,6 +11,10 @@
     buildV3ConsultingRequest,
   } from "../../../api/v3Consulting";
 
+  import {
+    buildInitialConsultingExecution,
+  } from "./initialConsultingExecutionBuilder";
+
   import type {
     ConsultingOpenAIRequest,
   } from "./openai/consultingOpenAIAdapter";
@@ -66,9 +70,29 @@
         boolean;
     };
 
+    crossChecks: {
+      missingExpectedFinalDecisionFails:
+        boolean;
+
+      duplicatedExpectedFinalDecisionFails:
+        boolean;
+
+      missingFinalDecisionSectionTitleFails:
+        boolean;
+
+      otherFinalDecisionFails:
+        boolean;
+    };
+
     passed:
       boolean;
   };
+
+  const FINAL_DECISION_SECTION_TITLE =
+    "엔진이 확정한 최종 결론";
+
+  const OTHER_FINAL_DECISION =
+    "검증 전용 다른 최종 결론 문장입니다.";
 
   function createSourceRequest():
     V3ConsultingRequest {
@@ -205,10 +229,107 @@
       : undefined;
   }
 
+  function countOccurrences(
+    value: string,
+    target: string,
+  ): number {
+    if (!target) {
+      return 0;
+    }
+
+    return value
+      .split(target)
+      .length - 1;
+  }
+
+  function replaceAllOccurrences(
+    value: string,
+    target: string,
+    replacement: string,
+  ): string {
+    if (!target) {
+      return value;
+    }
+
+    return value
+      .split(target)
+      .join(
+        replacement,
+      );
+  }
+
+  function withUserPrompt(
+    request:
+      ConsultingOpenAIRequest | undefined,
+    userPrompt: string,
+  ): ConsultingOpenAIRequest | undefined {
+    if (!request) {
+      return undefined;
+    }
+
+    return {
+      model:
+        request.model,
+
+      systemPrompt:
+        request.systemPrompt,
+
+      userPrompt,
+    };
+  }
+
+  function gptRequestContainsDecision(
+    deliveredRequest:
+      ConsultingOpenAIRequest | undefined,
+    expectedFinalDecision: string,
+  ): boolean {
+    if (!deliveredRequest) {
+      return false;
+    }
+
+    if (
+      expectedFinalDecision
+        .trim()
+        .length === 0
+    ) {
+      return false;
+    }
+
+    const userPrompt =
+      deliveredRequest.userPrompt;
+
+    return (
+      userPrompt.includes(
+        FINAL_DECISION_SECTION_TITLE,
+      )
+      && userPrompt.includes(
+        expectedFinalDecision,
+      )
+      && countOccurrences(
+        userPrompt,
+        expectedFinalDecision,
+      ) === 1
+    );
+  }
+
   export async function verifyV3ConsultingRouteIntegration():
     Promise<
       V3ConsultingRouteIntegrationVerificationResult
     > {
+    const sourceRequest =
+      createSourceRequest();
+
+    const expectedExecution =
+      buildInitialConsultingExecution(
+        sourceRequest,
+      );
+
+    const expectedFinalDecision =
+      expectedExecution
+        .turnResult
+        .decisionResult
+        .finalDecisionSentence;
+
     let pipelineCallCount = 0;
 
     const capturedRequests:
@@ -272,13 +393,18 @@
     await handler(
       createMockRequest(
         "POST",
-        createSourceRequest(),
+        sourceRequest,
       ),
       validPost.response,
     );
 
     const deliveredRequest =
       capturedRequests[0];
+
+    const deliveredUserPrompt =
+      deliveredRequest
+        ?.userPrompt
+        ?? "";
 
     const emptyAnswerHandler =
       createV3ConsultingHandler({
@@ -295,7 +421,7 @@
     await emptyAnswerHandler(
       createMockRequest(
         "POST",
-        createSourceRequest(),
+        sourceRequest,
       ),
       emptyAnswer.response,
     );
@@ -343,16 +469,10 @@
         ),
 
       gptRequestContainsDecision:
-        deliveredRequest
-          ?.userPrompt
-          .includes(
-            "판단 결과:",
-          ) === true
-        && deliveredRequest
-          .userPrompt
-          .includes(
-            "최종 판단",
-          ),
+        gptRequestContainsDecision(
+          deliveredRequest,
+          expectedFinalDecision,
+        ),
 
       gptRequestLocksEngineVerdict:
         deliveredRequest
@@ -377,11 +497,80 @@
         ) === false,
     };
 
+    const crossChecks = {
+      missingExpectedFinalDecisionFails:
+        Boolean(
+          deliveredRequest,
+        )
+        && gptRequestContainsDecision(
+          withUserPrompt(
+            deliveredRequest,
+            replaceAllOccurrences(
+              deliveredUserPrompt,
+              expectedFinalDecision,
+              "",
+            ),
+          ),
+          expectedFinalDecision,
+        ) === false,
+
+      duplicatedExpectedFinalDecisionFails:
+        Boolean(
+          deliveredRequest,
+        )
+        && gptRequestContainsDecision(
+          withUserPrompt(
+            deliveredRequest,
+            deliveredUserPrompt
+              + expectedFinalDecision,
+          ),
+          expectedFinalDecision,
+        ) === false,
+
+      missingFinalDecisionSectionTitleFails:
+        Boolean(
+          deliveredRequest,
+        )
+        && gptRequestContainsDecision(
+          withUserPrompt(
+            deliveredRequest,
+            replaceAllOccurrences(
+              deliveredUserPrompt,
+              FINAL_DECISION_SECTION_TITLE,
+              "",
+            ),
+          ),
+          expectedFinalDecision,
+        ) === false,
+
+      otherFinalDecisionFails:
+        Boolean(
+          deliveredRequest,
+        )
+        && OTHER_FINAL_DECISION
+          !== expectedFinalDecision
+        && gptRequestContainsDecision(
+          withUserPrompt(
+            deliveredRequest,
+            replaceAllOccurrences(
+              deliveredUserPrompt,
+              expectedFinalDecision,
+              OTHER_FINAL_DECISION,
+            ),
+          ),
+          expectedFinalDecision,
+        ) === false,
+    };
+
     return {
       checks,
 
+      crossChecks,
+
       passed:
         Object.values(checks)
+          .every(Boolean)
+        && Object.values(crossChecks)
           .every(Boolean),
     };
   }
