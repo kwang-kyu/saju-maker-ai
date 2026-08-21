@@ -2,6 +2,9 @@ import {
   verifyAuthenticatedConsultingInitialFollowUpHttpE2E,
 } from "./authenticatedConsultingInitialFollowUpHttpE2EVerification";
 import {
+  verifyAuthenticatedInitialConsultingClarification,
+} from "./authenticatedInitialConsultingClarificationVerification";
+import {
   verifyAuthenticatedSupabaseConsultingSessionRepositoryFactory,
 } from "./authenticatedSupabaseConsultingSessionRepositoryFactoryVerification";
 import {
@@ -42,13 +45,14 @@ import {
 } from "./v3InitialConsultingSessionApiVerification";
 
 export const V3_NON_API_PRODUCTION_READINESS_EXPECTED_STAGE_COUNT =
-  13;
+  14;
 
 export const V3_NON_API_PRODUCTION_READINESS_STAGE_NAMES = [
   "verifyV3ConsultingRouteIntegration",
   "verifyV3InitialConsultingSessionApi",
   "verifyV3ConsultingSessionTurnApi",
   "verifyAuthenticatedConsultingInitialFollowUpHttpE2E",
+  "verifyAuthenticatedInitialConsultingClarification",
   "verifyConsultingInitialFollowUpAnswerE2E",
   "verifyAuthenticatedSupabaseConsultingSessionRepositoryFactory",
   "verifySupabaseConsultingSessionOwnerResolver",
@@ -180,6 +184,14 @@ const V3_NON_API_PRODUCTION_READINESS_STAGE_RUNNERS: readonly V3NonApiProduction
     run:
       () =>
         verifyAuthenticatedConsultingInitialFollowUpHttpE2E(),
+  },
+  {
+    name:
+      "verifyAuthenticatedInitialConsultingClarification",
+
+    run:
+      () =>
+        verifyAuthenticatedInitialConsultingClarification(),
   },
   {
     name:
