@@ -68,7 +68,7 @@ import {
       PrepareConsultingSessionTurnInput;
 
     pendingClarificationOverride:
-      ConsultingClarificationRequest | undefined;
+      ConsultingClarificationRequest | null | undefined;
   };
 
   async function resolveConfirmedFacts(
@@ -417,8 +417,7 @@ import {
 
         confirmedFacts:
           accumulatedFacts,
-      })
-      ?? undefined;
+      });
 
     return {
       preparationInput: {
@@ -477,40 +476,29 @@ import {
           .preparationInput,
       );
 
-    const clarificationDecisionTurnId =
+    const clarification =
       input.preparationInput.kind
       === "clarification"
-        ? input.preparationInput
-            .session
-            .pendingClarification
-            ?.decisionTurnId
-          ?? input.turnId
-        : input.turnId;
+        ? clarificationExecutionContext
+            .pendingClarificationOverride
+        : buildConsultingClarification({
+            decisionTurnId:
+              input.turnId,
 
-    const generatedClarification =
-      buildConsultingClarification({
-        decisionTurnId:
-          clarificationDecisionTurnId,
+            lifeContext:
+              preparation
+                .effectiveLifeContext,
 
-        lifeContext:
-          preparation
-            .effectiveLifeContext,
+            questionContext:
+              preparation
+                .turnResult
+                .questionContext,
 
-        questionContext:
-          preparation
-            .turnResult
-            .questionContext,
-
-        decisionResult:
-          preparation
-            .turnResult
-            .decisionResult,
-      });
-
-    const clarification =
-      clarificationExecutionContext
-        .pendingClarificationOverride
-      ?? generatedClarification;
+            decisionResult:
+              preparation
+                .turnResult
+                .decisionResult,
+          });
 
     const assistantAnswer =
       clarification
@@ -546,6 +534,7 @@ import {
 
       pendingClarificationOverride:
         clarificationExecutionContext
-          .pendingClarificationOverride,
+          .pendingClarificationOverride
+        ?? undefined,
     });
   }

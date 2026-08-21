@@ -66,7 +66,7 @@
         return "notRecommended";
 
       case "insufficientEvidence":
-        return "insufficientEvidence";
+        return "wait";
 
       case "interpreted":
         return "interpreted";

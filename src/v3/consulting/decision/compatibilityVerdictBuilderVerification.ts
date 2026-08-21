@@ -21,6 +21,9 @@ import type {
     mixedFullCompatibilityPreservesVerdict:
       boolean;
 
+    cautionFullCompatibilityResolvesInsufficientToWait:
+      boolean;
+
     supportiveZodiacRecommends:
       boolean;
 
@@ -191,6 +194,131 @@ import type {
           "general",
       });
 
+    const mixedFullCompatibilityAssessment = {
+      available:
+        true,
+
+      precision:
+        "dateOnly" as const,
+
+      calculationBasis:
+        "crossPillarComparison" as const,
+
+      analysisScope:
+        "fullCompatibility" as const,
+
+      counterpartSource: {
+        birthDate:
+          "1967-04-10",
+
+        birthTime:
+          null,
+
+        calendarType:
+          "solar" as const,
+
+        gender:
+          "male" as const,
+      },
+
+      comparedSelfPillars:
+        [],
+
+      comparedCounterpartPillars:
+        [],
+
+      selfDayMaster:
+        "甲" as const,
+
+      counterpartDayMaster:
+        "丁" as const,
+
+      dayMasterElementRelation:
+        "selfGeneratesCounterpart" as const,
+
+      selfElementDistribution:
+        null,
+
+      counterpartElementDistribution:
+        null,
+
+      complementaryElements:
+        [],
+
+      sharedDominantElements:
+        [],
+
+      overConcentrationSignals:
+        [],
+
+      interactionFacts:
+        [],
+
+      interactionCounts: {
+        combination:
+          0,
+
+        clash:
+          0,
+
+        punishment:
+          0,
+
+        break:
+          0,
+
+        harm:
+          0,
+      },
+
+      supportiveSignals:
+        [],
+
+      cautionSignals:
+        [],
+
+      supportScore:
+        1,
+
+      cautionScore:
+        0,
+
+      overallLevel:
+        "mixed" as const,
+
+      limitations:
+        [],
+    };
+
+    const fullCompatibilitySufficientInput = {
+      analysisRequired:
+        true,
+
+      counterpartExists:
+        true,
+
+      counterpartRelation:
+        "businessPartner" as const,
+
+      identityProvided:
+        true,
+
+      birthDataProvided:
+        true,
+
+      evidenceLevel:
+        "sufficient" as const,
+
+      analysisScope:
+        "fullCompatibility" as const,
+
+      counterpartReadingRequired:
+        true,
+
+      additionalCounterpartDataRequired:
+        false,
+    };
+
     const mixedFullCompatibilityVerdict =
       applyCompatibilityVerdictEffect({
         verdict:
@@ -198,130 +326,71 @@ import type {
 
         assessment:
           buildAssessment({
-            analysisRequired:
-              true,
+            ...fullCompatibilitySufficientInput,
 
-            counterpartExists:
-              true,
-
-            counterpartRelation:
-              "businessPartner",
-
-            identityProvided:
-              true,
-
-            birthDataProvided:
-              true,
-
-            evidenceLevel:
-              "sufficient",
-
-            analysisScope:
-              "fullCompatibility",
-
-            counterpartReadingRequired:
-              true,
-
-            additionalCounterpartDataRequired:
-              false,
-
-            fullCompatibilityAssessment: {
-              available:
-                true,
-
-              precision:
-                "dateOnly",
-
-              calculationBasis:
-                "crossPillarComparison",
-
-              analysisScope:
-                "fullCompatibility",
-
-              counterpartSource: {
-                birthDate:
-                  "1967-04-10",
-
-                birthTime:
-                  null,
-
-                calendarType:
-                  "solar",
-
-                gender:
-                  "male",
-              },
-
-              comparedSelfPillars:
-                [],
-
-              comparedCounterpartPillars:
-                [],
-
-              selfDayMaster:
-                "甲",
-
-              counterpartDayMaster:
-                "丁",
-
-              dayMasterElementRelation:
-                "selfGeneratesCounterpart",
-
-              selfElementDistribution:
-                null,
-
-              counterpartElementDistribution:
-                null,
-
-              complementaryElements:
-                [],
-
-              sharedDominantElements:
-                [],
-
-              overConcentrationSignals:
-                [],
-
-              interactionFacts:
-                [],
-
-              interactionCounts: {
-                combination:
-                  0,
-
-                clash:
-                  0,
-
-                punishment:
-                  0,
-
-                break:
-                  0,
-
-                harm:
-                  0,
-              },
-
-              supportiveSignals:
-                [],
-
-              cautionSignals:
-                [],
-
-              supportScore:
-                1,
-
-              cautionScore:
-                0,
-
-              overallLevel:
-                "mixed",
-
-              limitations:
-                [],
-            },
+            fullCompatibilityAssessment:
+              mixedFullCompatibilityAssessment,
           }),
           requestedAnalysisScope:
+          "general",
+      });
+
+    const cautionFullCompatibilityFromInsufficientVerdict =
+      applyCompatibilityVerdictEffect({
+        verdict:
+          "insufficientEvidence",
+
+        assessment:
+          buildAssessment({
+            ...fullCompatibilitySufficientInput,
+
+            fullCompatibilityAssessment: {
+              ...mixedFullCompatibilityAssessment,
+
+              overallLevel:
+                "caution",
+            },
+          }),
+
+        requestedAnalysisScope:
+          "general",
+      });
+
+    const cautionMissingFullAssessmentVerdict =
+      applyCompatibilityVerdictEffect({
+        verdict:
+          "insufficientEvidence",
+
+        assessment:
+          buildAssessment({
+            ...fullCompatibilitySufficientInput,
+          }),
+
+        requestedAnalysisScope:
+          "general",
+      });
+
+    const cautionUnavailableFullAssessmentVerdict =
+      applyCompatibilityVerdictEffect({
+        verdict:
+          "insufficientEvidence",
+
+        assessment:
+          buildAssessment({
+            ...fullCompatibilitySufficientInput,
+
+            fullCompatibilityAssessment: {
+              ...mixedFullCompatibilityAssessment,
+
+              available:
+                false,
+
+              overallLevel:
+                "caution",
+            },
+          }),
+
+        requestedAnalysisScope:
           "general",
       });
 
@@ -457,11 +526,19 @@ import type {
 
     const missingFullAssessmentStopsVerdict =
       sufficientEvidenceWithoutAssessmentVerdict
+        === "insufficientEvidence"
+      && cautionMissingFullAssessmentVerdict
+        === "insufficientEvidence"
+      && cautionUnavailableFullAssessmentVerdict
         === "insufficientEvidence";
 
     const mixedFullCompatibilityPreservesVerdict =
       mixedFullCompatibilityVerdict
         === "conditionallyRecommended";
+
+    const cautionFullCompatibilityResolvesInsufficientToWait =
+      cautionFullCompatibilityFromInsufficientVerdict
+        === "wait";
 
         const supportiveZodiacRecommends =
         supportiveZodiacVerdict
@@ -482,6 +559,8 @@ import type {
 
       mixedFullCompatibilityPreservesVerdict,
 
+      cautionFullCompatibilityResolvesInsufficientToWait,
+
       supportiveZodiacRecommends,
 
       conflictedZodiacDoesNotRecommend,
@@ -492,6 +571,7 @@ import type {
         && missingBirthDataStopsVerdict
         && missingFullAssessmentStopsVerdict
         && mixedFullCompatibilityPreservesVerdict
+        && cautionFullCompatibilityResolvesInsufficientToWait
         && supportiveZodiacRecommends
         && conflictedZodiacDoesNotRecommend,
     };
