@@ -11,6 +11,17 @@ import {
   extractQuestionEntities,
   type QuestionEntityExtractionResult,
 } from "./questionEntityExtractor";
+import {
+  buildOtherPersonSaju,
+  type OtherPersonSajuBuildResult,
+} from "./otherPersonSajuBuilder";
+import {
+  analyzeCompatibility,
+} from "../compatibility/compatibilityEngine";
+import type {
+  CompatibilityMode,
+  CompatibilityResult,
+} from "../compatibility/compatibilityTypes";
 
 export type ConsultingPipelineResult = {
   question: string;
@@ -19,6 +30,8 @@ export type ConsultingPipelineResult = {
   executedCores: CoreRunResult[];
   strategy: ConsultingStrategy;
   entities: QuestionEntityExtractionResult;
+  otherPersonSaju: OtherPersonSajuBuildResult;
+  compatibility?: CompatibilityResult;
   hasPreviousConversation: boolean;
   previousQuestion?: string;
   opening: string;
@@ -28,11 +41,78 @@ export type ConsultingPipelineResult = {
 
 const conversationContext = new ConversationContext();
 
+function detectCompatibilityMode(
+  entities: QuestionEntityExtractionResult
+): CompatibilityMode {
+  const otherPerson = entities.persons.find(
+    (person) => person.role !== "self"
+  );
+
+  if (!otherPerson) {
+    return "general";
+  }
+
+  switch (otherPerson.role) {
+    case "businessPartner":
+      return "business";
+
+    case "spouse":
+      return "marriage";
+
+    case "lover":
+      return "love";
+
+    case "family":
+      return "family";
+
+    case "employee":
+      return "employee";
+
+    default:
+      return "general";
+  }
+}
+
+function buildCompatibilityResult(params: {
+  basic: BasicSajuResult;
+  entities: QuestionEntityExtractionResult;
+  otherPersonSaju: OtherPersonSajuBuildResult;
+}): CompatibilityResult | undefined {
+  const {
+    basic,
+    entities,
+    otherPersonSaju,
+  } = params;
+
+  if (
+    otherPersonSaju.status !== "calculated" ||
+    !otherPersonSaju.basic
+  ) {
+    return undefined;
+  }
+
+  const mode = detectCompatibilityMode(entities);
+
+  return analyzeCompatibility({
+    selfBasic: basic,
+    otherBasic: otherPersonSaju.basic,
+    mode,
+  });
+}
+
 export function runConsultingPipeline(
   question: string,
   basic: BasicSajuResult
 ): ConsultingPipelineResult {
   const entities = extractQuestionEntities(question);
+  const otherPersonSaju = buildOtherPersonSaju(entities);
+
+  const compatibility = buildCompatibilityResult({
+    basic,
+    entities,
+    otherPersonSaju,
+  });
+
   const intentAnalysis = analyzeIntent(question);
 
   const coreResult = runRequiredCores({
@@ -44,7 +124,10 @@ export function runConsultingPipeline(
   const answerPlan = buildAnswerPlan(intentAnalysis);
   const lastTurn = conversationContext.getLastTurn();
 
-  conversationContext.addTurn(intentAnalysis, answerPlan);
+  conversationContext.addTurn(
+    intentAnalysis,
+    answerPlan
+  );
 
   return {
     question,
@@ -53,6 +136,8 @@ export function runConsultingPipeline(
     executedCores: coreResult.executedCores,
     strategy,
     entities,
+    otherPersonSaju,
+    compatibility,
     hasPreviousConversation: Boolean(lastTurn),
     previousQuestion: lastTurn?.question,
     opening: answerPlan.opening,
