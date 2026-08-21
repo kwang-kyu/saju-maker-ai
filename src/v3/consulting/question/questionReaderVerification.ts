@@ -1,4 +1,4 @@
-﻿import {
+import {
   buildDecisionEngineRegressionInput,
 } from "../decision/regression/decisionEngineRegressionFixture";
 import {
@@ -861,6 +861,69 @@ const DECISION_PATH_PRESERVATION_CASES:
 
         analysisMode:
           "decision",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "올해 사업 시작해도 될까요?",
+
+      expected: {
+        topic:
+          "business",
+
+        intent:
+          "timing",
+
+        decisionTarget:
+          "start",
+
+        analysisMode:
+          "decision",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "내년에 부동산 투자를 시작해도 될까요?",
+
+      expected: {
+        topic:
+          "realEstate",
+
+        intent:
+          "timing",
+
+        decisionTarget:
+          "invest",
+
+        analysisMode:
+          "decision",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+          "지금 동업을 시작해도 될까요?",
+
+      expected: {
+        topic:
+          "business",
+
+        intent:
+          "possibility",
+
+        decisionTarget:
+          "partner",
+
+        analysisMode:
+          "compatibility",
 
         roleRecommendationAnalysisRequired:
           false,
