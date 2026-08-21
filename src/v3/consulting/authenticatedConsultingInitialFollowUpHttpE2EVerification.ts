@@ -139,7 +139,7 @@ const E2E_LIMITATIONS = [
   "이 E2E는 인증 HTTP 핸들러와 소유자 범위 in-memory repository를 검증하지만 실제 Supabase와 OpenAI 네트워크, 배포 API는 호출하지 않는다.",
 ] as const;
 
-type StoredConsultingSessionRecord = {
+export type StoredConsultingSessionRecord = {
   ownerId:
     string;
 
@@ -236,7 +236,7 @@ export type AuthenticatedConsultingInitialFollowUpHttpE2EVerificationResult = {
     readonly string[];
 };
 
-class OwnerAwareConsultingSessionStorage {
+export class OwnerAwareConsultingSessionStorage {
   readonly records =
     new Map<
       string,
@@ -278,7 +278,7 @@ class OwnerAwareConsultingSessionStorage {
   }
 }
 
-class OwnerScopedConsultingSessionRepository
+export class OwnerScopedConsultingSessionRepository
   implements ConsultingSessionRepository {
   private readonly storage:
     OwnerAwareConsultingSessionStorage;
