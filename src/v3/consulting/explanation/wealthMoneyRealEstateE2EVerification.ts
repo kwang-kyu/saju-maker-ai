@@ -792,20 +792,159 @@ import {
   }
 
   export function verifyWealthMoneyRealEstateE2E():
-    WealthMoneyRealEstateE2EVerificationResult {
-    const cases =
-      WEALTH_MONEY_REAL_ESTATE_E2E_FIXTURES
-        .map(
-          verifyWealthMoneyRealEstateE2ECase,
-        );
+  WealthMoneyRealEstateE2EVerificationResult {
+  const cases =
+    WEALTH_MONEY_REAL_ESTATE_E2E_FIXTURES
+      .map(
+        verifyWealthMoneyRealEstateE2ECase,
+      );
 
-    return {
-      cases,
+  /*
+   * v3 핵심 개인화 검증.
+   *
+   * 같은 "투자" 질문이라도
+   * 현실조건이 달라지면 실제 판단 경로의 결과가
+   * 동일하게 고정되어서는 안 된다.
+   *
+   * 단,
+   * 현실조건이 다르다고 반드시 verdict 자체가
+   * 달라져야 하는 것은 아니다.
+   *
+   * 따라서 verdict,
+   * actionReadiness,
+   * realityEvidenceKeys 중
+   * 하나 이상의 의미 있는 차이가 발생했는지를 검증한다.
+   */
+  const moneyInvestmentCases =
+    cases.filter(
+      (verificationCase) =>
+        verificationCase.actualTopic
+          === "money"
+        && verificationCase.actualDecisionTarget
+          === "invest",
+    );
 
-      passed:
-        cases.every(
-          (verificationCase) =>
-            verificationCase.passed,
-        ),
-    };
+  const baselineCase =
+    moneyInvestmentCases.find(
+      (verificationCase) =>
+        verificationCase.name
+          === "money-surplus-funds-investment",
+    );
+
+  const debtCase =
+    moneyInvestmentCases.find(
+      (verificationCase) =>
+        verificationCase.name
+          === "money-debt-and-living-cost-investment",
+    );
+
+  const retirementCase =
+    moneyInvestmentCases.find(
+      (verificationCase) =>
+        verificationCase.name
+          === "money-retirement-funds-investment",
+    );
+
+  const combinedRealityCase =
+    moneyInvestmentCases.find(
+      (verificationCase) =>
+        verificationCase.name
+          === "money-combined-reality-investment",
+    );
+
+  const casesExistForPersonalization =
+    Boolean(
+      baselineCase
+      && debtCase
+      && retirementCase
+      && combinedRealityCase,
+    );
+
+  function hasMeaningfulDecisionDifference(
+    left:
+      WealthMoneyRealEstateE2ECaseResult,
+    right:
+      WealthMoneyRealEstateE2ECaseResult,
+  ): boolean {
+    const verdictDiffers =
+      left.verdict
+      !== right.verdict;
+
+    const actionReadinessDiffers =
+      left.actionReadiness
+      !== right.actionReadiness;
+
+    const realityEvidenceDiffers =
+      left.realityEvidenceKeys.join("|")
+      !== right.realityEvidenceKeys.join("|");
+
+    return (
+      verdictDiffers
+      || actionReadinessDiffers
+      || realityEvidenceDiffers
+    );
   }
+
+  const personalizationChecks = {
+    investmentPersonalizationCasesExist:
+      casesExistForPersonalization,
+
+    debtBurdenChangesDecisionPath:
+      casesExistForPersonalization
+      && hasMeaningfulDecisionDifference(
+        baselineCase!,
+        debtCase!,
+      ),
+
+    essentialFundsChangesDecisionPath:
+      casesExistForPersonalization
+      && hasMeaningfulDecisionDifference(
+        baselineCase!,
+        retirementCase!,
+      ),
+
+    combinedRealityChangesDecisionPath:
+      casesExistForPersonalization
+      && hasMeaningfulDecisionDifference(
+        baselineCase!,
+        combinedRealityCase!,
+      ),
+
+    combinedRealityPreservesItsSpecificEvidence:
+      casesExistForPersonalization
+      && combinedRealityCase!
+        .realityEvidenceKeys
+        .includes(
+          "reality-financial-essentialFundsExposure",
+        )
+      && combinedRealityCase!
+        .realityEvidenceKeys
+        .includes(
+          "reality-financial-liquidityConstraint",
+        )
+      && combinedRealityCase!
+        .realityEvidenceKeys
+        .includes(
+          "reality-financial-assetConcentration",
+        ),
+  };
+
+  const allCasesPassed =
+    cases.every(
+      (verificationCase) =>
+        verificationCase.passed,
+    );
+
+  const personalizationPassed =
+    Object.values(
+      personalizationChecks,
+    ).every(Boolean);
+
+  return {
+    cases,
+
+    passed:
+      allCasesPassed
+      && personalizationPassed,
+  };
+}
