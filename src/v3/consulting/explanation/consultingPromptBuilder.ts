@@ -196,6 +196,107 @@ function translateValue(
   );
 }
 
+function buildCommonTopicSafetyPrinciples():
+  string {
+  return [
+    "- 사주와 엔진의 판단을 설명하되 전문적 사실 판단으로 확대하지 않는다.",
+    "- 엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다.",
+    "- 답변을 면책문구만으로 대체하지 않는다.",
+    "- 제공 Explanation 자료의 구체성 상한선을 유지한다.",
+    "- 안전 경계를 새로운 조건·위험·판단 근거처럼 표현하지 않는다.",
+    "- 마지막 단락의 최종 결론 작성 규칙을 그대로 유지한다.",
+    "- 안전 안내가 필요하면 마지막 결론 단락 이전 본문에서 짧게 작성한다.",
+  ].join("\n");
+}
+
+function buildHealthSafetySystemRules():
+  string {
+  return [
+    "건강 상담 안전 경계",
+    "",
+    buildCommonTopicSafetyPrinciples(),
+    "- 사주 상담은 질병명이나 의학적 진단을 확정하지 않는다.",
+    "- 검사 결과, 치료 효과, 회복 시기, 질병 발생 가능성을 새로 만들지 않는다.",
+    "- 약의 시작·중단·용량 변경이나 치료 방법을 지시하지 않는다.",
+    "- 실제 증상과 치료 여부는 의료진의 진료·검사를 통해 확인해야 한다.",
+    "- 응급 여부나 안전을 단정하지 않는다.",
+    "- 건강 질문에 답하지 않고 면책문구만 반복하지 않는다.",
+    "- 엔진이 제공한 건강 관련 조건·위험·방향 안에서만 답한다.",
+  ].join("\n");
+}
+
+function buildLegalSafetySystemRules():
+  string {
+  return [
+    "법률 상담 안전 경계",
+    "",
+    buildCommonTopicSafetyPrinciples(),
+    "- 사주 상담은 계약 효력, 권리·의무, 위법 여부, 법적 책임을 확정하지 않는다.",
+    "- 승소·패소, 처벌, 손해배상, 분쟁 결과를 예측하거나 보장하지 않는다.",
+    "- 제공 자료에 없는 법령, 판례, 기한, 절차, 비용을 새로 만들지 않는다.",
+    "- 실제 법률 판단은 계약서와 사실관계를 확인할 수 있는 법률 전문가의 검토가 필요하다.",
+    "- 법률 질문에 답하지 않고 면책문구만 반복하지 않는다.",
+    "- 엔진이 제공한 조건·위험·방향 안에서만 답한다.",
+  ].join("\n");
+}
+
+function buildTopicSafetySystemRules(
+  topic:
+    DecisionExplanationPayload["topic"],
+): string {
+  if (
+    topic
+    === "health"
+  ) {
+    return buildHealthSafetySystemRules();
+  }
+
+  if (
+    topic
+    === "legal"
+  ) {
+    return buildLegalSafetySystemRules();
+  }
+
+  return "";
+}
+
+function buildTopicSafetyUserChecks(
+  topic:
+    DecisionExplanationPayload["topic"],
+): string[] {
+  if (
+    topic
+    === "health"
+  ) {
+    return [
+      "- 건강 상담 안전 경계를 지켰는가?",
+      "- 질병명이나 의학적 진단을 확정하지 않았는가?",
+      "- 약의 시작·중단·용량 변경이나 치료 방법을 지시하지 않았는가?",
+      "- 실제 증상과 치료 여부를 의료진의 진료·검사 영역으로 남겼는가?",
+      "- 건강 질문에 답하지 않고 면책문구만으로 대체하지 않았는가?",
+      "- 엔진이 제공한 건강 관련 조건·위험·방향 안에서만 답했는가?",
+    ];
+  }
+
+  if (
+    topic
+    === "legal"
+  ) {
+    return [
+      "- 법률 상담 안전 경계를 지켰는가?",
+      "- 계약 효력, 권리·의무, 위법 여부, 법적 책임을 확정하지 않았는가?",
+      "- 승소·패소, 처벌, 손해배상, 분쟁 결과를 예측하거나 보장하지 않았는가?",
+      "- 제공 자료에 없는 법령, 판례, 기한, 절차, 비용을 새로 만들지 않았는가?",
+      "- 실제 법률 판단을 계약서와 사실관계를 확인하는 법률 전문가의 검토 영역으로 남겼는가?",
+      "- 법률 질문에 답하지 않고 면책문구만으로 대체하지 않았는가?",
+      "- 엔진이 제공한 조건·위험·방향 안에서만 답했는가?",
+    ];
+  }
+
+  return [];
+}
+
 export function buildConsultingPrompt(
   payload:
     DecisionExplanationPayload,
@@ -284,6 +385,11 @@ export function buildConsultingPrompt(
 `.trim()
       : "";
 
+  const topicSafetySystemRules =
+    buildTopicSafetySystemRules(
+      payload.topic,
+    );
+
   const systemPrompt = `
 당신은 천운문 상담 엔진의 판단을 사용자가 이해하기 쉬운 한국어 상담문으로 전달하는 전문 상담가이다.
 
@@ -369,6 +475,7 @@ export function buildConsultingPrompt(
 - 엔진 verdict와 overallLevel을 변경하거나 뒤집지 않는다.
 ${roleRecommendationRules ? `\n${roleRecommendationRules}` : ""}
 ${lifeFlowInterpretationRules ? `\n${lifeFlowInterpretationRules}` : ""}
+${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
 `.trim();
 
   const explanationSections =
@@ -455,6 +562,9 @@ ${lifeFlowInterpretationRules ? `\n${lifeFlowInterpretationRules}` : ""}
     "- 제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않았는가?",
     "- 연결어, 존칭, 자연스러운 문장 변환 외에 새로운 판단 사실이나 명사를 추가하지 않았는가?",
     "- 근거 대응 여부가 불분명한 문장은 쓰지 않고 생략했는가?",
+    ...buildTopicSafetyUserChecks(
+      payload.topic,
+    ),
   ].join("\n\n");
 
   return {

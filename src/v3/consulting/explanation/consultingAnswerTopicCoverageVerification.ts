@@ -123,6 +123,93 @@ const EXPECTED_TOPIC_COVERAGE_CASE_COUNT =
 const FINAL_DECISION_SECTION_TITLE =
   "엔진이 확정한 최종 결론";
 
+const HEALTH_SAFETY_SYSTEM_TITLE =
+  "건강 상담 안전 경계";
+
+const LEGAL_SAFETY_SYSTEM_TITLE =
+  "법률 상담 안전 경계";
+
+const HEALTH_SYSTEM_REQUIRED_PHRASES = [
+  HEALTH_SAFETY_SYSTEM_TITLE,
+  "사주 상담은 질병명이나 의학적 진단을 확정하지 않는다",
+  "검사 결과, 치료 효과, 회복 시기, 질병 발생 가능성을 새로 만들지 않는다",
+  "약의 시작·중단·용량 변경이나 치료 방법을 지시하지 않는다",
+  "실제 증상과 치료 여부는 의료진의 진료·검사를 통해 확인해야 한다",
+  "응급 여부나 안전을 단정하지 않는다",
+  "건강 질문에 답하지 않고 면책문구만 반복하지 않는다",
+  "엔진이 제공한 건강 관련 조건·위험·방향 안에서만 답한다",
+  "답변을 면책문구만으로 대체하지 않는다",
+] as const;
+
+const HEALTH_USER_REQUIRED_PHRASES = [
+  "건강 상담 안전 경계를 지켰는가",
+  "질병명이나 의학적 진단을 확정하지 않았는가",
+  "약의 시작·중단·용량 변경이나 치료 방법을 지시하지 않았는가",
+  "실제 증상과 치료 여부를 의료진의 진료·검사 영역으로 남겼는가",
+  "건강 질문에 답하지 않고 면책문구만으로 대체하지 않았는가",
+  "엔진이 제공한 건강 관련 조건·위험·방향 안에서만 답했는가",
+] as const;
+
+const LEGAL_SYSTEM_REQUIRED_PHRASES = [
+  LEGAL_SAFETY_SYSTEM_TITLE,
+  "사주 상담은 계약 효력, 권리·의무, 위법 여부, 법적 책임을 확정하지 않는다",
+  "승소·패소, 처벌, 손해배상, 분쟁 결과를 예측하거나 보장하지 않는다",
+  "제공 자료에 없는 법령, 판례, 기한, 절차, 비용을 새로 만들지 않는다",
+  "실제 법률 판단은 계약서와 사실관계를 확인할 수 있는 법률 전문가의 검토가 필요하다",
+  "법률 질문에 답하지 않고 면책문구만 반복하지 않는다",
+  "엔진이 제공한 조건·위험·방향 안에서만 답한다",
+  "답변을 면책문구만으로 대체하지 않는다",
+] as const;
+
+const LEGAL_USER_REQUIRED_PHRASES = [
+  "법률 상담 안전 경계를 지켰는가",
+  "계약 효력, 권리·의무, 위법 여부, 법적 책임을 확정하지 않았는가",
+  "승소·패소, 처벌, 손해배상, 분쟁 결과를 예측하거나 보장하지 않았는가",
+  "제공 자료에 없는 법령, 판례, 기한, 절차, 비용을 새로 만들지 않았는가",
+  "실제 법률 판단을 계약서와 사실관계를 확인하는 법률 전문가의 검토 영역으로 남겼는가",
+  "법률 질문에 답하지 않고 면책문구만으로 대체하지 않았는가",
+  "엔진이 제공한 조건·위험·방향 안에서만 답했는가",
+] as const;
+
+const HEALTH_SAFETY_MARKERS = [
+  HEALTH_SAFETY_SYSTEM_TITLE,
+  "질병명이나 의학적 진단",
+  "약의 시작·중단·용량 변경",
+  "의료진의 진료·검사",
+  "건강 질문에 답하지 않고 면책문구만",
+  "검사 결과, 치료 효과, 회복 시기, 질병 발생 가능성",
+  "응급 여부나 안전을 단정하지 않는다",
+  "엔진이 제공한 건강 관련 조건·위험·방향",
+] as const;
+
+const LEGAL_SAFETY_MARKERS = [
+  LEGAL_SAFETY_SYSTEM_TITLE,
+  "계약 효력, 권리·의무, 위법 여부, 법적 책임",
+  "승소·패소, 처벌, 손해배상",
+  "법령, 판례, 기한, 절차, 비용",
+  "법률 전문가의 검토",
+  "법률 질문에 답하지 않고 면책문구만",
+] as const;
+
+const IRRELEVANT_HIGH_STAKES_SAFETY_MARKERS = [
+  ...HEALTH_SAFETY_MARKERS,
+  ...LEGAL_SAFETY_MARKERS,
+  "면책문구",
+  "전문적 사실 판단",
+] as const;
+
+const HEALTH_MEDICATION_RULE =
+  "약의 시작·중단·용량 변경이나 치료 방법을 지시하지 않는다";
+
+const HEALTH_MEDICAL_STAFF_RULE =
+  "실제 증상과 치료 여부는 의료진의 진료·검사를 통해 확인해야 한다";
+
+const LEGAL_OUTCOME_RULE =
+  "승소·패소, 처벌, 손해배상, 분쟁 결과를 예측하거나 보장하지 않는다";
+
+const LEGAL_EXPERT_RULE =
+  "실제 법률 판단은 계약서와 사실관계를 확인할 수 있는 법률 전문가의 검토가 필요하다";
+
 
 const TOPIC_COVERAGE_FIXTURES = [
   {
@@ -956,6 +1043,274 @@ export function hasExactTopicCoverageCaseCount(
 }
 
 
+function promptCombinedText(
+  prompt: ConsultingPrompt,
+): string {
+  return [
+    prompt.systemPrompt,
+    prompt.userPrompt,
+  ].join(
+    "\n",
+  );
+}
+
+
+function textContainsAllPhrases(
+  text: string,
+  phrases: readonly string[],
+): boolean {
+  return phrases.every(
+    (phrase) =>
+      phrase.length > 0
+      && text.includes(
+        phrase,
+      ),
+  );
+}
+
+
+function textContainsAnyPhrase(
+  text: string,
+  phrases: readonly string[],
+): boolean {
+  return phrases.some(
+    (phrase) =>
+      phrase.length > 0
+      && text.includes(
+        phrase,
+      ),
+  );
+}
+
+
+function removeLinesContainingPhrases(
+  text: string,
+  phrases: readonly string[],
+): string {
+  return text
+    .split(/\r?\n/)
+    .filter(
+      (line) =>
+        phrases.every(
+          (phrase) =>
+            !line.includes(
+              phrase,
+            ),
+        ),
+    )
+    .join(
+      "\n",
+    );
+}
+
+
+function extractSectionFromTitle(
+  text: string,
+  title: string,
+): string {
+  const startIndex =
+    text.indexOf(
+      title,
+    );
+
+  if (
+    startIndex < 0
+  ) {
+    return "";
+  }
+
+  return text
+    .slice(
+      startIndex,
+    )
+    .trim();
+}
+
+
+function promptContainsHealthSafetyBoundary(
+  prompt: ConsultingPrompt,
+): boolean {
+  return textContainsAnyPhrase(
+    promptCombinedText(
+      prompt,
+    ),
+    HEALTH_SAFETY_MARKERS,
+  );
+}
+
+
+function promptContainsLegalSafetyBoundary(
+  prompt: ConsultingPrompt,
+): boolean {
+  return textContainsAnyPhrase(
+    promptCombinedText(
+      prompt,
+    ),
+    LEGAL_SAFETY_MARKERS,
+  );
+}
+
+
+export function promptRequiresHealthSafetyBoundary(
+  prompt: ConsultingPrompt,
+): boolean {
+  return (
+    textContainsAllPhrases(
+      prompt.systemPrompt,
+      HEALTH_SYSTEM_REQUIRED_PHRASES,
+    )
+    && textContainsAllPhrases(
+      prompt.userPrompt,
+      HEALTH_USER_REQUIRED_PHRASES,
+    )
+  );
+}
+
+
+export function promptRequiresLegalSafetyBoundary(
+  prompt: ConsultingPrompt,
+): boolean {
+  return (
+    textContainsAllPhrases(
+      prompt.systemPrompt,
+      LEGAL_SYSTEM_REQUIRED_PHRASES,
+    )
+    && textContainsAllPhrases(
+      prompt.userPrompt,
+      LEGAL_USER_REQUIRED_PHRASES,
+    )
+  );
+}
+
+
+export function promptOmitsIrrelevantHighStakesSafetyBoundary(
+  prompt: ConsultingPrompt,
+): boolean {
+  return !textContainsAnyPhrase(
+    promptCombinedText(
+      prompt,
+    ),
+    IRRELEVANT_HIGH_STAKES_SAFETY_MARKERS,
+  );
+}
+
+
+function evaluateTopicSafetyChecks(
+  material: TopicCoverageCaseMaterial,
+): Record<
+  string,
+  boolean
+> {
+  if (
+    material.expectedTopic
+    === "health"
+  ) {
+    return {
+      promptRequiresHealthSafetyBoundary:
+        promptRequiresHealthSafetyBoundary(
+          material.prompt,
+        ),
+
+      promptOmitsLegalSafetyBoundary:
+        promptContainsLegalSafetyBoundary(
+          material.prompt,
+        ) === false,
+
+      promptForbidsHealthDiagnosisClaim:
+        material.prompt.systemPrompt.includes(
+          "사주 상담은 질병명이나 의학적 진단을 확정하지 않는다",
+        ),
+
+      promptForbidsMedicationChangeInstruction:
+        material.prompt.systemPrompt.includes(
+          HEALTH_MEDICATION_RULE,
+        ),
+
+      promptLeavesSymptomConfirmationToMedicalCare:
+        material.prompt.systemPrompt.includes(
+          HEALTH_MEDICAL_STAFF_RULE,
+        ),
+
+      promptForbidsDisclaimerOnlyHealthAnswer:
+        material.prompt.systemPrompt.includes(
+          "건강 질문에 답하지 않고 면책문구만 반복하지 않는다",
+        )
+        && material.prompt.systemPrompt.includes(
+          "답변을 면책문구만으로 대체하지 않는다",
+        )
+        && material.prompt.userPrompt.includes(
+          "건강 질문에 답하지 않고 면책문구만으로 대체하지 않았는가",
+        ),
+    };
+  }
+
+  if (
+    material.expectedTopic
+    === "legal"
+  ) {
+    return {
+      promptRequiresLegalSafetyBoundary:
+        promptRequiresLegalSafetyBoundary(
+          material.prompt,
+        ),
+
+      promptOmitsHealthSafetyBoundary:
+        promptContainsHealthSafetyBoundary(
+          material.prompt,
+        ) === false,
+
+      promptForbidsLegalLiabilityDetermination:
+        material.prompt.systemPrompt.includes(
+          "사주 상담은 계약 효력, 권리·의무, 위법 여부, 법적 책임을 확정하지 않는다",
+        ),
+
+      promptForbidsLegalOutcomePrediction:
+        material.prompt.systemPrompt.includes(
+          LEGAL_OUTCOME_RULE,
+        ),
+
+      promptForbidsInventedLegalSources:
+        material.prompt.systemPrompt.includes(
+          "제공 자료에 없는 법령, 판례, 기한, 절차, 비용을 새로 만들지 않는다",
+        ),
+
+      promptLeavesLegalJudgementToExpertReview:
+        material.prompt.systemPrompt.includes(
+          LEGAL_EXPERT_RULE,
+        ),
+
+      promptForbidsDisclaimerOnlyLegalAnswer:
+        material.prompt.systemPrompt.includes(
+          "법률 질문에 답하지 않고 면책문구만 반복하지 않는다",
+        )
+        && material.prompt.systemPrompt.includes(
+          "답변을 면책문구만으로 대체하지 않는다",
+        )
+        && material.prompt.userPrompt.includes(
+          "법률 질문에 답하지 않고 면책문구만으로 대체하지 않았는가",
+        ),
+    };
+  }
+
+  return {
+    promptOmitsIrrelevantHighStakesSafetyBoundary:
+      promptOmitsIrrelevantHighStakesSafetyBoundary(
+        material.prompt,
+      ),
+
+    promptOmitsHealthSafetyBoundary:
+      promptContainsHealthSafetyBoundary(
+        material.prompt,
+      ) === false,
+
+    promptOmitsLegalSafetyBoundary:
+      promptContainsLegalSafetyBoundary(
+        material.prompt,
+      ) === false,
+  };
+}
+
+
 function evaluateCaseChecks(
   material: TopicCoverageCaseMaterial,
 ): Record<
@@ -1192,6 +1547,10 @@ function evaluateCaseChecks(
         material.payloadFinalDecision,
         material.userPrompt,
       ),
+
+    ...evaluateTopicSafetyChecks(
+      material,
+    ),
   };
 }
 
@@ -1651,6 +2010,39 @@ function evaluateNegativeChecks(
 
       alteredPayloadFinalDecisionFails:
         false,
+
+      healthSystemSafetyBlockMissingFails:
+        false,
+
+      healthUserSafetyChecklistMissingFails:
+        false,
+
+      healthMedicationChangeRuleMissingFails:
+        false,
+
+      healthMedicalStaffConfirmationRuleMissingFails:
+        false,
+
+      legalSystemSafetyBlockMissingFails:
+        false,
+
+      legalUserSafetyChecklistMissingFails:
+        false,
+
+      legalOutcomePredictionRuleMissingFails:
+        false,
+
+      legalExpertReviewRuleMissingFails:
+        false,
+
+      jobPromptWithHealthSafetyBlockFails:
+        false,
+
+      relationshipPromptWithLegalSafetyBlockFails:
+        false,
+
+      safetyBlockWithRepeatedFinalDecisionFails:
+        false,
     };
   }
 
@@ -1821,6 +2213,206 @@ function evaluateNegativeChecks(
     },
   ];
 
+  const healthMaterial =
+    materials.find(
+      (item) =>
+        item.name === "health",
+    );
+
+  const legalMaterial =
+    materials.find(
+      (item) =>
+        item.name === "legal",
+    );
+
+  const jobMaterial =
+    materials.find(
+      (item) =>
+        item.name === "job",
+    )
+    ?? firstMaterial;
+
+  const relationshipMaterial =
+    materials.find(
+      (item) =>
+        item.name === "relationship",
+    );
+
+  const healthPromptWithoutSystemSafety =
+    healthMaterial
+      ? {
+          systemPrompt:
+            removeLinesContainingPhrases(
+              healthMaterial.prompt.systemPrompt,
+              HEALTH_SYSTEM_REQUIRED_PHRASES,
+            ),
+
+          userPrompt:
+            healthMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const healthPromptWithoutUserChecks =
+    healthMaterial
+      ? {
+          systemPrompt:
+            healthMaterial.prompt.systemPrompt,
+
+          userPrompt:
+            removeLinesContainingPhrases(
+              healthMaterial.prompt.userPrompt,
+              HEALTH_USER_REQUIRED_PHRASES,
+            ),
+        }
+      : undefined;
+
+  const healthPromptWithoutMedicationRule =
+    healthMaterial
+      ? {
+          systemPrompt:
+            removeLinesContainingPhrases(
+              healthMaterial.prompt.systemPrompt,
+              [
+                HEALTH_MEDICATION_RULE,
+              ],
+            ),
+
+          userPrompt:
+            healthMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const healthPromptWithoutMedicalStaffRule =
+    healthMaterial
+      ? {
+          systemPrompt:
+            removeLinesContainingPhrases(
+              healthMaterial.prompt.systemPrompt,
+              [
+                HEALTH_MEDICAL_STAFF_RULE,
+              ],
+            ),
+
+          userPrompt:
+            healthMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const legalPromptWithoutSystemSafety =
+    legalMaterial
+      ? {
+          systemPrompt:
+            removeLinesContainingPhrases(
+              legalMaterial.prompt.systemPrompt,
+              LEGAL_SYSTEM_REQUIRED_PHRASES,
+            ),
+
+          userPrompt:
+            legalMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const legalPromptWithoutUserChecks =
+    legalMaterial
+      ? {
+          systemPrompt:
+            legalMaterial.prompt.systemPrompt,
+
+          userPrompt:
+            removeLinesContainingPhrases(
+              legalMaterial.prompt.userPrompt,
+              LEGAL_USER_REQUIRED_PHRASES,
+            ),
+        }
+      : undefined;
+
+  const legalPromptWithoutOutcomeRule =
+    legalMaterial
+      ? {
+          systemPrompt:
+            removeLinesContainingPhrases(
+              legalMaterial.prompt.systemPrompt,
+              [
+                LEGAL_OUTCOME_RULE,
+              ],
+            ),
+
+          userPrompt:
+            legalMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const legalPromptWithoutExpertRule =
+    legalMaterial
+      ? {
+          systemPrompt:
+            removeLinesContainingPhrases(
+              legalMaterial.prompt.systemPrompt,
+              [
+                LEGAL_EXPERT_RULE,
+              ],
+            ),
+
+          userPrompt:
+            legalMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const healthSystemSafetyBlock =
+    healthMaterial
+      ? extractSectionFromTitle(
+          healthMaterial.prompt.systemPrompt,
+          HEALTH_SAFETY_SYSTEM_TITLE,
+        )
+      : "";
+
+  const legalSystemSafetyBlock =
+    legalMaterial
+      ? extractSectionFromTitle(
+          legalMaterial.prompt.systemPrompt,
+          LEGAL_SAFETY_SYSTEM_TITLE,
+        )
+      : "";
+
+  const jobPromptWithHealthSafety =
+    healthSystemSafetyBlock.length > 0
+      ? {
+          systemPrompt: [
+            jobMaterial.prompt.systemPrompt,
+            healthSystemSafetyBlock,
+          ].join(
+            "\n",
+          ),
+
+          userPrompt:
+            jobMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const relationshipPromptWithLegalSafety =
+    relationshipMaterial
+    && legalSystemSafetyBlock.length > 0
+      ? {
+          systemPrompt: [
+            relationshipMaterial.prompt.systemPrompt,
+            legalSystemSafetyBlock,
+          ].join(
+            "\n",
+          ),
+
+          userPrompt:
+            relationshipMaterial.prompt.userPrompt,
+        }
+      : undefined;
+
+  const userPromptWithSafetyBlockAndRepeatedFinalDecision = [
+    jobMaterial.userPrompt,
+    healthSystemSafetyBlock,
+    jobMaterial.finalDecision,
+  ].join(
+    "\n",
+  );
+
   return {
     wrongExpectedTopicFails:
       wrongTopicChecks.inputTopicMatchesExpected === false
@@ -1970,6 +2562,116 @@ function evaluateNegativeChecks(
         firstMaterial.planFinalDecision,
         "다른 최종 결론 문장이다.",
         firstMaterial.userPrompt,
+      ) === false,
+
+    healthSystemSafetyBlockMissingFails:
+      healthMaterial !== undefined
+      && healthPromptWithoutSystemSafety !== undefined
+      && promptRequiresHealthSafetyBoundary(
+        healthMaterial.prompt,
+      ) === true
+      && promptRequiresHealthSafetyBoundary(
+        healthPromptWithoutSystemSafety,
+      ) === false,
+
+    healthUserSafetyChecklistMissingFails:
+      healthMaterial !== undefined
+      && healthPromptWithoutUserChecks !== undefined
+      && promptRequiresHealthSafetyBoundary(
+        healthMaterial.prompt,
+      ) === true
+      && promptRequiresHealthSafetyBoundary(
+        healthPromptWithoutUserChecks,
+      ) === false,
+
+    healthMedicationChangeRuleMissingFails:
+      healthMaterial !== undefined
+      && healthPromptWithoutMedicationRule !== undefined
+      && promptRequiresHealthSafetyBoundary(
+        healthMaterial.prompt,
+      ) === true
+      && promptRequiresHealthSafetyBoundary(
+        healthPromptWithoutMedicationRule,
+      ) === false,
+
+    healthMedicalStaffConfirmationRuleMissingFails:
+      healthMaterial !== undefined
+      && healthPromptWithoutMedicalStaffRule !== undefined
+      && promptRequiresHealthSafetyBoundary(
+        healthMaterial.prompt,
+      ) === true
+      && promptRequiresHealthSafetyBoundary(
+        healthPromptWithoutMedicalStaffRule,
+      ) === false,
+
+    legalSystemSafetyBlockMissingFails:
+      legalMaterial !== undefined
+      && legalPromptWithoutSystemSafety !== undefined
+      && promptRequiresLegalSafetyBoundary(
+        legalMaterial.prompt,
+      ) === true
+      && promptRequiresLegalSafetyBoundary(
+        legalPromptWithoutSystemSafety,
+      ) === false,
+
+    legalUserSafetyChecklistMissingFails:
+      legalMaterial !== undefined
+      && legalPromptWithoutUserChecks !== undefined
+      && promptRequiresLegalSafetyBoundary(
+        legalMaterial.prompt,
+      ) === true
+      && promptRequiresLegalSafetyBoundary(
+        legalPromptWithoutUserChecks,
+      ) === false,
+
+    legalOutcomePredictionRuleMissingFails:
+      legalMaterial !== undefined
+      && legalPromptWithoutOutcomeRule !== undefined
+      && promptRequiresLegalSafetyBoundary(
+        legalMaterial.prompt,
+      ) === true
+      && promptRequiresLegalSafetyBoundary(
+        legalPromptWithoutOutcomeRule,
+      ) === false,
+
+    legalExpertReviewRuleMissingFails:
+      legalMaterial !== undefined
+      && legalPromptWithoutExpertRule !== undefined
+      && promptRequiresLegalSafetyBoundary(
+        legalMaterial.prompt,
+      ) === true
+      && promptRequiresLegalSafetyBoundary(
+        legalPromptWithoutExpertRule,
+      ) === false,
+
+    jobPromptWithHealthSafetyBlockFails:
+      jobPromptWithHealthSafety !== undefined
+      && promptOmitsIrrelevantHighStakesSafetyBoundary(
+        jobMaterial.prompt,
+      ) === true
+      && promptOmitsIrrelevantHighStakesSafetyBoundary(
+        jobPromptWithHealthSafety,
+      ) === false,
+
+    relationshipPromptWithLegalSafetyBlockFails:
+      relationshipMaterial !== undefined
+      && relationshipPromptWithLegalSafety !== undefined
+      && promptOmitsIrrelevantHighStakesSafetyBoundary(
+        relationshipMaterial.prompt,
+      ) === true
+      && promptOmitsIrrelevantHighStakesSafetyBoundary(
+        relationshipPromptWithLegalSafety,
+      ) === false,
+
+    safetyBlockWithRepeatedFinalDecisionFails:
+      healthSystemSafetyBlock.length > 0
+      && finalDecisionAppearsExactlyOnce(
+        jobMaterial.userPrompt,
+        jobMaterial.finalDecision,
+      ) === true
+      && finalDecisionAppearsExactlyOnce(
+        userPromptWithSafetyBlockAndRepeatedFinalDecision,
+        jobMaterial.finalDecision,
       ) === false,
   };
 }
