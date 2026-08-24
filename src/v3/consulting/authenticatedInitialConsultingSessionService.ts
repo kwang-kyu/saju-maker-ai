@@ -4,49 +4,49 @@ import {
 
   import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingSessionAuthorizationHeader,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     ConsultingSessionRepository,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
   import {
     createAuthenticatedSupabaseConsultingSessionRepository,
-  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory";
+  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory.js";
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     interpretQuestionSemantics,
-  } from "./question/questionSemanticInterpreter";
+  } from "./question/questionSemanticInterpreter.js";
   import type {
     QuestionReaderResult,
-  } from "./question/questionReader";
+  } from "./question/questionReader.js";
   import type {
     InitialConsultingExecutionResult,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     requestInitialConsultingAnswer,
-  } from "./initialConsultingAnswerRequester";
+  } from "./initialConsultingAnswerRequester.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import type {
     InitialConsultingSessionBuilderInput,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
   import {
     buildConsultingClarificationAnswer,
-  } from "./consultingClarificationAnswerBuilder";
+  } from "./consultingClarificationAnswerBuilder.js";
   import {
     buildConsultingClarification,
-  } from "./consultingClarificationBuilder";
+  } from "./consultingClarificationBuilder.js";
 
   export type CreateAuthenticatedInitialConsultingSessionInput = {
     authorizationHeader:
