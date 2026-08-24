@@ -1,12 +1,18 @@
 import {
     getConsultingClarificationFieldDefinition,
-  } from "./consultingClarificationFieldDefinitions";
+  } from "./consultingClarificationFieldDefinitions.js";
+  import type {
+    InterpretedClarificationItemState,
+  } from "./consultingClarificationResponseInterpreter.js";
   import type {
     ConsultingClarificationItem,
     ConsultingClarificationRequest,
     ConsultingConfirmedFact,
     ConsultingConfirmedField,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
+  import type {
+    QuestionAnalysisMode,
+  } from "./question/questionReader.js";
 
   export type ConsultingClarificationCompletionPathProgress = {
     key:
@@ -65,10 +71,27 @@ import {
 
     confirmedFacts:
       readonly ConsultingConfirmedFact[];
+
+    itemStates?:
+      readonly InterpretedClarificationItemState[];
   };
 
   export type RebuildPendingConsultingClarificationInput =
-    ResolveConsultingClarificationProgressInput;
+    ResolveConsultingClarificationProgressInput & {
+      compatibilityAnalysisRequired?:
+        boolean;
+
+      analysisMode?:
+        QuestionAnalysisMode;
+
+      /**
+       * GPT analysisMode가 compatibility가 아니어도
+       * 질문 자체가 궁합 분석을 요구하면
+       * 일반 relationship clarification을 되살리지 않는다.
+       */
+      compatibilityMatchingQuestion?:
+        boolean;
+    };
 
   function buildNonEmptyTuple<T>(
     values:
@@ -271,7 +294,7 @@ import {
     },
   ];
 
-const completionPaths =
+            const completionPaths =
   completionPathDefinitions
     .map(
       (path) => {
@@ -316,12 +339,31 @@ const completionPaths =
       },
     );
 
+const itemState =
+  input
+    .itemStates
+    ?.find(
+      (state) =>
+        state.key
+        === item.key,
+    );
+
+const settledWithoutRequiredFields =
+  itemState
+    ?.status
+  === "unavailable"
+  || itemState
+    ?.status
+  === "redirected";
+
 const completed =
   completionPaths
     .some(
       (path) =>
         path.completed,
-    );
+    )
+  || settledWithoutRequiredFields
+    === true;
 
 const missingRequiredFieldKeys =
   completed
@@ -417,12 +459,40 @@ return {
       return null;
     }
 
+    const skipGeneralRelationshipClarification =
+      (
+        input.compatibilityAnalysisRequired
+        === true
+        && input.analysisMode
+          === "compatibility"
+      )
+      || input.compatibilityMatchingQuestion
+        === true;
+
     const pendingItems =
       progress
         .items
         .filter(
           (itemProgress) =>
             !itemProgress.completed,
+        )
+        .filter(
+          (itemProgress) => {
+            if (
+              !skipGeneralRelationshipClarification
+            ) {
+              return true;
+            }
+
+            return (
+              itemProgress.item.key
+              !== "counterpartIdentity"
+              && itemProgress.item.key
+              !== "currentRelationshipSituation"
+              && itemProgress.item.key
+              !== "decisionDeadline"
+            );
+          },
         )
         .map(
           (
@@ -532,6 +602,13 @@ return {
 };
           },
         );
+
+    if (
+      pendingItems.length
+      === 0
+    ) {
+      return null;
+    }
 
     return {
       decisionTurnId:
