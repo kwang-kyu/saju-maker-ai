@@ -1,9 +1,16 @@
 ﻿import type {
   DecisionExplanationPayload,
-} from "./decisionExplanationPayload";
+} from "./decisionExplanationPayload.js";
 import type {
   ConsultingGroundingContext,
-} from "./consultingGroundingContextBuilder";
+} from "./consultingGroundingContextBuilder.js";
+import type {
+  QuestionContext,
+} from "../question/questionContext.js";
+import {
+  resolveDecisionExplanationFocus,
+  type DecisionExplanationFocus,
+} from "./decisionExplanationFocus.js";
 
 export type ConsultingPrompt = {
   systemPrompt:
@@ -111,6 +118,12 @@ const INTENT_KOREAN_LABELS:
     selection:
       "가장 적합한 선택 판단",
 
+    continuation:
+      "계속 유지할지 판단",
+
+    termination:
+      "정리하거나 변경할지 판단",
+
     risk:
       "위험과 주의점 판단",
 
@@ -131,6 +144,12 @@ const DECISION_TARGET_KOREAN_LABELS:
 
     stop:
       "중단하거나 정리할지 결정",
+
+    wait:
+      "기다리며 지켜볼지 결정",
+
+    move:
+      "자리를 옮길지 결정",
 
     choose:
       "가장 적합한 대상을 선택",
@@ -179,6 +198,99 @@ const DECISION_TARGET_KOREAN_LABELS:
 
     confirmDirection:
       "앞으로의 방향을 정할지 판단",
+
+    protectHealth:
+      "건강을 지킬 방법을 결정",
+
+    respondToConflict:
+      "갈등에 어떻게 대응할지 결정",
+  };
+
+const ANALYSIS_MODE_KOREAN_LABELS:
+  Readonly<Record<string, string>> = {
+    decision:
+      "실행 여부를 판단",
+
+    compatibility:
+      "상대와의 궁합을 판단",
+
+    selection:
+      "선택지를 고르는 판단",
+
+    interpretation:
+      "성향과 흐름을 해석",
+  };
+
+const ACTION_OBJECT_KOREAN_LABELS:
+  Readonly<Record<string, string>> = {
+    business:
+      "사업",
+
+    job:
+      "직업과 활동",
+
+    investment:
+      "투자",
+
+    realEstate:
+      "부동산",
+
+    marriage:
+      "결혼",
+
+    relationship:
+      "관계",
+
+    health:
+      "건강",
+
+    legal:
+      "법률 문제",
+
+    lifeDirection:
+      "삶의 방향",
+
+    other:
+      "질문의 대상",
+
+    unknown:
+      "질문의 대상",
+  };
+
+const COUNTERPART_RELATION_KOREAN_LABELS:
+  Readonly<Record<string, string>> = {
+    spouse:
+      "배우자",
+
+    partner:
+      "함께하는 상대",
+
+    lover:
+      "연인",
+
+    friend:
+      "친구",
+
+    parent:
+      "부모",
+
+    child:
+      "자녀",
+
+    sibling:
+      "형제자매",
+
+    coworker:
+      "함께 일하는 사람",
+
+    businessPartner:
+      "함께하는 상대",
+
+    other:
+      "상대",
+
+    unknown:
+      "상대",
   };
 
 
@@ -204,9 +316,242 @@ function buildCommonTopicSafetyPrinciples():
     "- 답변을 면책문구만으로 대체하지 않는다.",
     "- 제공 Explanation 자료의 구체성 상한선을 유지한다.",
     "- 안전 경계를 새로운 조건·위험·판단 근거처럼 표현하지 않는다.",
-    "- 마지막 단락의 최종 결론 작성 규칙을 그대로 유지한다.",
-    "- 안전 안내가 필요하면 마지막 결론 단락 이전 본문에서 짧게 작성한다.",
+    "- 안전 안내가 필요하면 본문에서 짧게 작성하고 엔진 판단을 대체하지 않는다.",
   ].join("\n");
+}
+
+function resolvePromptExplanationFocus(
+  payload:
+    DecisionExplanationPayload,
+  questionContext?:
+    QuestionContext,
+): DecisionExplanationFocus | null {
+  if (
+    payload.explanationKind
+    === "roleRecommendation"
+    || payload.explanationKind
+    === "lifeFlowInterpretation"
+  ) {
+    return null;
+  }
+
+  return resolveDecisionExplanationFocus(
+    {
+      intent:
+        payload.intent,
+
+      decisionTarget:
+        payload.decisionTarget,
+
+      topic:
+        payload.topic,
+
+      originalQuestion:
+        payload.originalQuestion,
+
+      questionContext,
+    },
+  );
+}
+
+function buildQuestionFocusSystemRules(
+  focus:
+    DecisionExplanationFocus
+    | null,
+): string {
+  if (
+    focus
+    === "compatibility"
+  ) {
+    return [
+      "궁합 질문 답변 원칙",
+      "",
+      "- 두 사람의 궁합에 직접 답한다.",
+      "- 잘 맞는 부분과 충돌하는 부분을 필요한 근거와 함께 설명한다.",
+      "- 일반적인 인생 성향 설명을 길게 반복하지 않는다.",
+      "- 사업이나 실행 조언을 억지로 붙이지 않는다.",
+    ].join("\n");
+  }
+
+  if (
+    focus
+    === "continuation"
+  ) {
+    return [
+      "유지 여부 질문 답변 원칙",
+      "",
+      "- 계속 유지하는 것이 맞는지 중심으로 답한다.",
+      "- 유지해야 할 이유와 조건을 설명한다.",
+      "- 변화 또는 이탈 신호가 있을 때만 설명한다.",
+    ].join("\n");
+  }
+
+  if (
+    focus
+    === "termination"
+  ) {
+    return [
+      "정리·변경 질문 답변 원칙",
+      "",
+      "- 계속할지 떠날지 또는 변경할지에 직접 답한다.",
+      "- 필요한 근거와 실행 조건, 위험을 중심으로 설명한다.",
+    ].join("\n");
+  }
+
+  if (
+    focus
+    === "businessStart"
+  ) {
+    return [
+      "사업 시작 질문 답변 원칙",
+      "",
+      "- 사업을 시작하는 것이 맞는지 중심으로 답한다.",
+      "- 현재 시점, 성공 조건, 사업 위험, 실행 방향을 필요한 만큼 설명한다.",
+      "- 일반적인 사주 성향 설명을 길게 반복하지 않는다.",
+    ].join("\n");
+  }
+
+  if (
+    focus
+    === "realEstateBuy"
+  ) {
+    return [
+      "부동산 매수 질문 답변 원칙",
+      "",
+      "- 매수 여부와 현재 시점에 집중한다.",
+      "- 자금과 현금흐름은 실제 근거 자료가 있을 때만 설명한다.",
+      "- 일반적인 인생 설명을 반복하지 않는다.",
+    ].join("\n");
+  }
+
+  if (
+    focus
+    === "generalJudgement"
+  ) {
+    return [
+      "일반 판단 질문 답변 원칙",
+      "",
+      "- 질문 자체에 직접 답한다.",
+      "- 필요한 근거와 조건, 위험만 사용한다.",
+      "- 질문과 관계없는 설명을 억지로 붙이지 않는다.",
+    ].join("\n");
+  }
+
+  return "";
+}
+
+function buildQuestionContextUserSection(
+  questionContext?:
+    QuestionContext,
+): string[] {
+  if (
+    !questionContext
+  ) {
+    return [];
+  }
+
+  const question =
+    questionContext
+      .question;
+
+  const analysisModeLabel =
+    translateValue(
+      question.analysisMode,
+      ANALYSIS_MODE_KOREAN_LABELS,
+      "질문의 핵심을 판단",
+    );
+
+  const actionObjectDescription =
+    questionContext
+      .actionObject
+      .description
+      ?.trim();
+
+  const actionObjectLabel =
+    actionObjectDescription
+    && actionObjectDescription
+      .length
+      > 0
+      ? actionObjectDescription
+      : translateValue(
+          questionContext
+            .actionObject
+            .type,
+          ACTION_OBJECT_KOREAN_LABELS,
+          "질문의 대상",
+        );
+
+  const counterpartLines =
+    questionContext
+      .counterpart
+      .exists
+      ? [
+          `상대: ${
+            translateValue(
+              questionContext
+                .counterpart
+                .relation,
+              COUNTERPART_RELATION_KOREAN_LABELS,
+              "상대",
+            )
+          }`,
+        ]
+      : [];
+
+  const realityLines =
+    questionContext
+      .reality
+      .constraints
+      .map(
+        (constraint) =>
+          constraint.description.trim(),
+      )
+      .filter(
+        (description) =>
+          description.length
+          > 0,
+      );
+
+  return [
+    [
+      "질문에서 실제로 알고 싶은 내용",
+      `알고 싶은 점: ${question.asksWhat}`,
+      `이유의 초점: ${question.asksWhy}`,
+      `결정할 질문: ${question.decisionQuestion}`,
+      `분석의 초점: ${analysisModeLabel}`,
+      `대상: ${actionObjectLabel}`,
+      ...counterpartLines,
+      ...(
+        realityLines.length > 0
+          ? [
+              "현실에서 확인된 조건",
+              ...realityLines,
+            ]
+          : []
+      ),
+    ].join("\n"),
+    "",
+  ];
+}
+
+function buildExplanationMaterialSections(
+  payload:
+    DecisionExplanationPayload,
+): string[] {
+  const materialSections =
+    payload.explanationOrder.map(
+      (item) =>
+        [
+          item.title,
+          item.content,
+        ].join("\n"),
+    );
+
+  return [
+    "답변에 필요한 판단 근거와 설명 요소",
+    "아래 자료는 그대로 번호 매겨 출력해야 하는 목차가 아닙니다. 질문 유형에 맞게 중심과 순서를 정하고, 필요한 근거와 설명 요소로 사용하세요.",
+    ...materialSections,
+  ];
 }
 
 function buildHealthSafetySystemRules():
@@ -303,6 +648,9 @@ export function buildConsultingPrompt(
 
     groundingContext?:
     ConsultingGroundingContext,
+
+    questionContext?:
+    QuestionContext,
 ): ConsultingPrompt {
   const verdictLabel =
     translateValue(
@@ -390,6 +738,17 @@ export function buildConsultingPrompt(
       payload.topic,
     );
 
+  const questionFocus =
+    resolvePromptExplanationFocus(
+      payload,
+      questionContext,
+    );
+
+  const questionFocusSystemRules =
+    buildQuestionFocusSystemRules(
+      questionFocus,
+    );
+
   const systemPrompt = `
 당신은 천운문 상담 엔진의 판단을 사용자가 이해하기 쉬운 한국어 상담문으로 전달하는 전문 상담가이다.
 
@@ -400,14 +759,19 @@ export function buildConsultingPrompt(
 - 엔진에 없는 사주 판단이나 미래 예측을 새로 만들지 않는다.
 - 제공된 근거를 과장하거나 성공과 실패를 단정하지 않는다.
 - 일반적인 처세 조언을 새로운 판단 근거로 추가하지 않는다.
+- GPT는 판단을 새로 만들지 않고 엔진 판단을 사람이 이해할 수 있게 설명한다.
+- 엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다.
 
-최종 결론 작성 원칙
+설명 구성 원칙
 
-- 답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다.
-- 최종 결론은 답변 전체에 정확히 1회만 작성한다.
-- 마지막 단락 앞에 제목, "최종 판단:", 따옴표, 목록 기호를 붙이지 않는다.
-- 본문에서는 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 않는다.
-- 마지막 단락에는 그 문장만 두고 다른 설명을 덧붙이지 않는다.
+- 제공된 설명 요소는 반드시 그대로 번호 매겨 출력해야 하는 목차가 아니다.
+- 질문 유형에 맞춰 답변의 중심과 순서를 자연스럽게 정한다.
+- 같은 질문 유형이라도 근거와 조건에 따라 문단 구성과 강조점이 달라질 수 있다.
+- 답변은 자연스러운 상담 답변이어야 한다.
+- 엔진의 판단 구조가 사라지면 안 된다. 판단, 근거, 조건, 위험, 권장 방향, 금지 방향은 자료에 있을 때 활용한다.
+- 최종 결론이라는 고정 문구를 여러 번 반복하지 않는다.
+- 답변의 마지막에 기계적으로 같은 문장을 복사하는 방식으로 강제하지 않는다.
+- 마지막 단락에 제목이나 최종 판단이라는 형식을 붙여 복사하지 않는다.
 
 질문 중심 원칙
 
@@ -420,8 +784,7 @@ export function buildConsultingPrompt(
 
 개인화 원칙
 
-- 먼저 이 사람에게서 현재 질문과 관련된 강점과 취약점을 구체적으로 설명한다.
-- 그 특성이 사용자가 묻는 실제 행동에서 어떻게 나타나는지 연결한다.
+- 질문과 관련된 특성이 있다면 사용자가 묻는 실제 행동에서 어떻게 나타나는지 연결한다.
 - 조건과 위험은 현재 질문의 대상에 맞게 설명하되, 제공된 근거 문장의 구체성을 넘지 않는다.
 - 권장 방향은 제공된 근거에 있는 확인과 준비만 작성한다.
 - 금지 방향은 어떤 행동을 피해야 하는지 분명하게 작성한다.
@@ -444,15 +807,11 @@ export function buildConsultingPrompt(
 
 - 질문을 미리 정해진 키워드나 사례 목록에 끼워 맞추지 않는다.
 - 사용자의 원문 질문 전체를 읽고 실제로 알고 싶은 의미를 파악한다.
-- 질문에 대한 직접적인 답을 첫 문단에서 제시한다.
 - 성격이나 역할을 묻는 질문은 원국과 개인 Reader 근거를 그 상황에 직접 적용한다.
 - 역할이나 적합성을 묻는 질문에는 제공된 원국과 Reader 근거상 실제로 가까운 역할 또는 특성을 구체적인 이유와 함께 답한다.
-- 사업·이직·투자처럼 지금 실행할지를 묻는 질문은 현재 대운·세운과 현재 운의 국면을 우선하여 답한다.
-- 현재 운이 질문을 돕는지, 방해하는지, 아직 때가 아닌지를 명확하게 설명한다.
 - 현실 조건은 사주와 현재 운의 결론을 대체하지 않고 실행 가능성을 보완하는 자료로만 사용한다.
 - 질문과 관계없는 준비사항이나 일반적인 조언을 기계적으로 나열하지 않는다.
-- 제목, 문단 수, 설명 순서는 질문 성격에 맞게 자유롭게 구성한다.
-- 마지막 단락만은 예외로, 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다.
+- 제목, 문단 수, 설명 순서는 질문 성격과 제공된 근거에 맞게 구성한다.
 - 정해진 후속 질문이나 반복되는 확인 질문을 만들지 않는다.
 
 근거 구체성 상한선
@@ -473,21 +832,11 @@ export function buildConsultingPrompt(
 - 상대방 출생시간이 없거나 limitations에 시주 제외가 명시되면 시주 궁합을 말하지 않는다.
 - evidence에 없는 합·충·형·파·해와 오행 관계를 새로 만들지 않는다.
 - 엔진 verdict와 overallLevel을 변경하거나 뒤집지 않는다.
+${questionFocusSystemRules ? `\n${questionFocusSystemRules}` : ""}
 ${roleRecommendationRules ? `\n${roleRecommendationRules}` : ""}
 ${lifeFlowInterpretationRules ? `\n${lifeFlowInterpretationRules}` : ""}
 ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
 `.trim();
-
-  const explanationSections =
-    payload.explanationOrder.map(
-      (
-        item,
-        index,
-      ) => [
-        `${index + 1}. ${item.title}`,
-        item.content,
-      ].join("\n"),
-    );
 
     const groundingSections =
     groundingContext
@@ -515,6 +864,9 @@ ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
     `질문 의도: ${intentLabel}`,
     `결정할 대상: ${decisionTargetLabel}`,
     "",
+    ...buildQuestionContextUserSection(
+      questionContext,
+    ),
     "확정된 판단",
     verdictLabel,
     "",
@@ -522,20 +874,12 @@ ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
     confidenceLabel,
     "",
     ...groundingSections,
-    "질문별 판단 근거",
-    ...explanationSections,
+    ...buildExplanationMaterialSections(
+      payload,
+    ),
     "",
     "엔진이 확정한 최종 결론",
     payload.finalDecision,
-    "",
-    [
-      "최종 결론 작성 규칙",
-      "- 위 최종 결론을 답변의 마지막 단락에 한 글자도 변경하지 않고 그대로 작성하세요.",
-      "- 최종 결론은 답변 전체에 정확히 1회만 작성하세요.",
-      "- 앞에 제목, 최종 판단:, 따옴표, 목록 기호를 붙이지 마세요.",
-      "- 본문에서는 위 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 마세요.",
-      "- 마지막 단락에는 그 문장만 두고 다른 설명을 덧붙이지 마세요.",
-    ].join("\n"),
     "",
     [
       "근거 구체성 상한선",
@@ -548,14 +892,12 @@ ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
     ].join("\n"),
     "",
     "작성 전 최종 확인",
-    "- 첫 문단이 원래 질문에 직접 답하는가?",
+    "- 질문 유형의 중심에 맞게 답했는가?",
     "- 질문에 나온 구체적인 대상과 행동을 사용했는가?",
     "- 다른 사람이나 다른 질문에도 그대로 붙일 수 있는 상투적인 문장을 제거했는가?",
     "- 영문 내부 코드와 마크다운 기호를 제거했는가?",
-    "- 마지막 단락이 엔진이 확정한 최종 결론과 한 글자도 같은가?",
-    "- 최종 결론이 답변 전체에 정확히 한 번만 나왔는가?",
-    "- 마지막 단락 앞에 제목, 최종 판단:, 따옴표, 목록 기호가 없는가?",
-    "- 본문에서 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 않았는가?",
+    "- 엔진이 확정한 판단을 뒤집거나 약화하지 않았는가?",
+    "- 설명 요소를 번호 목차처럼 그대로 나열하지 않았는가?",
     "- 모든 판단 문장이 원문 질문 또는 제공된 Explanation 자료의 문장과 직접 대응하는가?",
     "- 제공 근거보다 더 구체적인 하위 항목, 사례, 원인, 결과, 비용 항목, 시장 상황, 사건 가능성을 새로 만들지 않았는가?",
     "- 상위 개념을 도메인 상식으로 구체화하지 않았는가? 제공 자료가 ‘재무 점검’이라고만 하면 재무 점검이 필요하다고만 설명하고 임의의 세부 항목을 나열하지 않았는가?",
