@@ -1,12 +1,12 @@
 import type {
     ConsultingTurnKind,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import {
     isV3HumanLifeContextRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
   import type {
     V3HumanLifeContextRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type AuthenticatedConsultingSessionTurnKind =
     Exclude<
