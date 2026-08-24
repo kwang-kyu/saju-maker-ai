@@ -1,19 +1,19 @@
 import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import {
     buildAuthenticatedConsultingSessionTurnCommand,
-  } from "./authenticatedConsultingSessionTurnCommandBuilder";
+  } from "./authenticatedConsultingSessionTurnCommandBuilder.js";
   import type {
     AuthenticatedConsultingSessionTurnCommandBuilderDependencies,
     BuildAuthenticatedConsultingSessionTurnCommandInput,
-  } from "./authenticatedConsultingSessionTurnCommandBuilder";
+  } from "./authenticatedConsultingSessionTurnCommandBuilder.js";
   import {
     executeAuthenticatedPersistedConsultingSessionTurn,
-  } from "./authenticatedPersistedConsultingSessionTurnService";
+  } from "./authenticatedPersistedConsultingSessionTurnService.js";
   import type {
     ExecuteAuthenticatedPersistedConsultingSessionTurnInput,
-  } from "./authenticatedPersistedConsultingSessionTurnService";
+  } from "./authenticatedPersistedConsultingSessionTurnService.js";
 
   export type ExecuteAuthenticatedConsultingSessionTurnRequestInput =
     BuildAuthenticatedConsultingSessionTurnCommandInput;
