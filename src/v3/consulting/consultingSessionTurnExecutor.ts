@@ -1,43 +1,44 @@
-import {
+  import {
     buildConsultingClarificationAnswer,
-  } from "./consultingClarificationAnswerBuilder";
+  } from "./consultingClarificationAnswerBuilder.js";
   import {
     buildConsultingClarification,
-  } from "./consultingClarificationBuilder";
+  } from "./consultingClarificationBuilder.js";
   import {
-    rebuildPendingConsultingClarification,
-  } from "./consultingClarificationProgressResolver";
-  import {
+    extractClarificationObservations,
     interpretConsultingClarificationResponse,
-  } from "./consultingClarificationResponseInterpreter";
+  } from "./consultingClarificationResponseInterpreter.js";
   import type {
     ConsultingClarificationResponseRequestFunction,
-  } from "./consultingClarificationResponseInterpreter";
+    InterpretedClarificationItemState,
+    InterpretedClarificationObservation,
+  } from "./consultingClarificationResponseInterpreter.js";
   import type {
     ConsultingClarificationFact,
-  } from "./consultingInput";
+  } from "./consultingInput.js";
   import type {
+    ConsultingClarificationObservation,
     ConsultingClarificationRequest,
     ConsultingConfirmedFact,
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import {
     requestConsultingSessionAnswer,
-  } from "./consultingSessionAnswerRequester";
+  } from "./consultingSessionAnswerRequester.js";
   import type {
     ConsultingAnswerRequestFunction,
-  } from "./consultingSessionAnswerRequester";
+  } from "./consultingSessionAnswerRequester.js";
   import {
     buildConsultingSessionTurn,
     prepareConsultingSessionTurn,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
   import type {
     BuildConsultingSessionTurnInput,
     PrepareConsultingSessionTurnInput,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
   import {
     buildCounterpartSajuCalculation,
-  } from "./decision/counterpartSajuCalculationBuilder";
+  } from "./decision/counterpartSajuCalculationBuilder.js";
 
   export type ExecuteConsultingSessionTurnInput = {
     preparationInput:
@@ -71,25 +72,51 @@ import {
       ConsultingClarificationRequest | null | undefined;
   };
 
-  async function resolveConfirmedFacts(
+  type ResolvedClarificationInterpretation = {
+    confirmedFacts:
+      BuildConsultingSessionTurnInput["confirmedFacts"];
+
+    itemStates:
+      InterpretedClarificationItemState[];
+  };
+
+  async function resolveClarificationInterpretation(
     input:
       ExecuteConsultingSessionTurnInput,
-  ): Promise<
-    BuildConsultingSessionTurnInput["confirmedFacts"]
-  > {
+  ): Promise<ResolvedClarificationInterpretation> {
     if (
       input.confirmedFacts
       && input.confirmedFacts.length
       > 0
     ) {
-      return input.confirmedFacts;
+      return {
+        confirmedFacts:
+          input.confirmedFacts,
+
+        itemStates:
+          input.confirmedFacts.map(
+            (fact) => ({
+              key:
+                fact.key,
+
+              status:
+                "answered" as const,
+            }),
+          ),
+      };
     }
 
     if (
       input.preparationInput.kind
       !== "clarification"
     ) {
-      return undefined;
+      return {
+        confirmedFacts:
+          undefined,
+
+        itemStates:
+          [],
+      };
     }
 
     const pendingClarification =
@@ -102,7 +129,13 @@ import {
       pendingClarification
       === null
     ) {
-      return undefined;
+      return {
+        confirmedFacts:
+          undefined,
+
+        itemStates:
+          [],
+      };
     }
 
     const interpretation =
@@ -120,29 +153,198 @@ import {
           .requestClarificationInterpretation,
       );
 
+    return {
+      confirmedFacts:
+        interpretation
+          .confirmedFacts
+          .length
+        === 0
+          ? undefined
+          : interpretation
+              .confirmedFacts
+              .map(
+                (fact) => ({
+                  key:
+                    fact.key,
+
+                  description:
+                    fact.description,
+
+                  fields:
+                    fact.fields,
+                }),
+              ),
+
+      itemStates:
+        interpretation.itemStates,
+    };
+  }
+
+  function normalizeObservationIdentity(
+    key:
+      string,
+    rawValue:
+      string,
+  ): string {
+    return [
+      key,
+
+      rawValue
+        .trim()
+        .toLocaleLowerCase()
+        .replace(
+          /\s+/g,
+          "",
+        ),
+    ].join(
+      ":",
+    );
+  }
+
+  function resolvePreservedObservations(
+    input:
+      ExecuteConsultingSessionTurnInput,
+  ): InterpretedClarificationObservation[] {
     if (
-      interpretation
-        .confirmedFacts
-        .length
-      === 0
+      input.preparationInput.kind
+      !== "clarification"
     ) {
-      return undefined;
+      return [];
     }
 
-    return interpretation
-      .confirmedFacts
-      .map(
-        (fact) => ({
+    return extractClarificationObservations(
+      input
+        .preparationInput
+        .question,
+    );
+  }
+
+  function mergeClarificationObservations(
+    existing:
+      readonly ConsultingClarificationObservation[],
+    incoming:
+      readonly InterpretedClarificationObservation[],
+    sourceTurnId:
+      string,
+    observedAt:
+      string,
+  ): ConsultingClarificationObservation[] {
+    const merged:
+      ConsultingClarificationObservation[] =
+        existing.map(
+          (observation) => ({
+            key:
+              observation.key,
+
+            description:
+              observation.description,
+
+            rawValue:
+              observation.rawValue,
+
+            evidence: [
+              ...observation.evidence,
+            ],
+
+            sourceTurnId:
+              observation.sourceTurnId,
+
+            observedAt:
+              observation.observedAt,
+          }),
+        );
+
+    const seenIdentities =
+      new Set(
+        merged.map(
+          (observation) =>
+            normalizeObservationIdentity(
+              observation.key,
+              observation.rawValue,
+            ),
+        ),
+      );
+
+    for (
+      const observation
+      of incoming
+    ) {
+      const identity =
+        normalizeObservationIdentity(
+          observation.key,
+          observation.rawValue,
+        );
+
+      if (
+        seenIdentities.has(
+          identity,
+        )
+      ) {
+        continue;
+      }
+
+      seenIdentities.add(
+        identity,
+      );
+
+      merged.push(
+        {
           key:
-            fact.key,
+            observation.key,
 
           description:
-            fact.description,
+            observation.description,
 
-          fields:
-            fact.fields,
-        }),
+          rawValue:
+            observation.rawValue,
+
+          evidence: [
+            ...observation.evidence,
+          ],
+
+          sourceTurnId,
+
+          observedAt,
+        },
       );
+    }
+
+    return merged;
+  }
+
+  function attachClarificationObservations(
+    session:
+      ConsultingSession,
+    preservedObservations:
+      readonly InterpretedClarificationObservation[],
+    sourceTurnId:
+      string,
+    observedAt:
+      string,
+  ): ConsultingSession {
+    const mergedObservations =
+      mergeClarificationObservations(
+        session
+          .clarificationObservations
+        ?? [],
+        preservedObservations,
+        sourceTurnId,
+        observedAt,
+      );
+
+    if (
+      mergedObservations.length
+      === 0
+    ) {
+      return session;
+    }
+
+    return {
+      ...session,
+
+      clarificationObservations:
+        mergedObservations,
+    };
   }
 
   function buildConfirmedFactAdditions(
@@ -410,14 +612,6 @@ import {
       buildConfirmedCounterpartSaju(
         clarificationFacts,
       );
-    const pendingClarificationOverride =
-      rebuildPendingConsultingClarification({
-        clarification:
-          pendingClarification,
-
-        confirmedFacts:
-          accumulatedFacts,
-      });
 
     return {
       preparationInput: {
@@ -439,8 +633,42 @@ import {
             counterpartSaju,
       },
 
-      pendingClarificationOverride,
+      pendingClarificationOverride:
+        undefined,
     };
+  }
+
+  function resolveClarificationDecisionTurnId(
+    input:
+      ExecuteConsultingSessionTurnInput,
+  ):
+    string {
+    if (
+      input.preparationInput.kind
+      !== "clarification"
+    ) {
+      return input.turnId;
+    }
+
+    const decisionTurnId =
+      input
+        .preparationInput
+        .session
+        .pendingClarification
+        ?.decisionTurnId
+        .trim()
+      ?? "";
+
+    if (
+      decisionTurnId.length
+      === 0
+    ) {
+      throw new Error(
+        "Clarification execution requires a pending clarification request.",
+      );
+    }
+
+    return decisionTurnId;
   }
 
   /**
@@ -451,16 +679,27 @@ import {
    * 2. 같은 원래 판단에 연결된 사실만 누적한다.
    * 3. clarification 답변 조각은 턴 원문으로 저장하되,
    *    Decision Engine에는 원래 결정 질문과 누적 사실을 전달한다.
-   * 4. 추가정보가 남아 있으면 완료된 필드를 제외한 질문만 반환한다.
-   * 5. 판단 근거가 충분한 경우에만 GPT 설명을 요청한다.
-   * 6. 확인된 사실, 답변과 Decision Result를 같은 턴에 저장한다.
+   * 4. Decision을 재실행한 뒤 새 DecisionResult와
+   *    questionContext로 clarification을 다시 평가한다.
+   * 5. 기존 pending 목록의 다음 item을 자동으로 고르지 않는다.
+   * 6. 판단 근거가 충분하거나 추가 질문이 없으면 GPT 설명을 요청한다.
+   * 7. 확인된 사실, 답변과 Decision Result를 같은 턴에 저장한다.
    */
   export async function executeConsultingSessionTurn(
     input:
       ExecuteConsultingSessionTurnInput,
   ): Promise<ConsultingSession> {
+    const clarificationInterpretation =
+      await resolveClarificationInterpretation(
+        input,
+      );
+
     const confirmedFacts =
-      await resolveConfirmedFacts(
+      clarificationInterpretation
+        .confirmedFacts;
+
+    const preservedObservations =
+      resolvePreservedObservations(
         input,
       );
 
@@ -477,28 +716,41 @@ import {
       );
 
     const clarification =
+      buildConsultingClarification({
+        decisionTurnId:
+          resolveClarificationDecisionTurnId(
+            input,
+          ),
+
+        lifeContext:
+          preparation
+            .effectiveLifeContext,
+
+        questionContext:
+          preparation
+            .turnResult
+            .questionContext,
+
+        decisionResult:
+          preparation
+            .turnResult
+            .decisionResult,
+
+        clarificationFacts:
+          clarificationExecutionContext
+            .preparationInput
+            .clarificationFacts,
+
+        itemStates:
+          clarificationInterpretation
+            .itemStates,
+      });
+
+    const pendingClarificationOverride =
       input.preparationInput.kind
       === "clarification"
-        ? clarificationExecutionContext
-            .pendingClarificationOverride
-        : buildConsultingClarification({
-            decisionTurnId:
-              input.turnId,
-
-            lifeContext:
-              preparation
-                .effectiveLifeContext,
-
-            questionContext:
-              preparation
-                .turnResult
-                .questionContext,
-
-            decisionResult:
-              preparation
-                .turnResult
-                .decisionResult,
-          });
+        ? clarification
+        : undefined;
 
     const assistantAnswer =
       clarification
@@ -514,27 +766,32 @@ import {
             input.requestAnswer,
           );
 
-    return buildConsultingSessionTurn({
-      session:
-        input
-          .preparationInput
-          .session,
+    const nextSession =
+      buildConsultingSessionTurn({
+        session:
+          input
+            .preparationInput
+            .session,
 
-      preparation,
+        preparation,
 
-      turnId:
-        input.turnId,
+        turnId:
+          input.turnId,
 
-      createdAt:
-        input.createdAt,
+        createdAt:
+          input.createdAt,
 
-      assistantAnswer,
+        assistantAnswer,
 
-      confirmedFacts,
+        confirmedFacts,
 
-      pendingClarificationOverride:
-        clarificationExecutionContext
-          .pendingClarificationOverride
-        ?? undefined,
-    });
+        pendingClarificationOverride,
+      });
+
+    return attachClarificationObservations(
+      nextSession,
+      preservedObservations,
+      input.turnId,
+      input.createdAt,
+    );
   }
