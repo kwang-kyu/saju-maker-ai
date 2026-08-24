@@ -1,6 +1,6 @@
 import type {
     ConsultingClarificationRequest,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
 
   export type ConsultingClarificationAnswerBuilderInput = {
     originalQuestion:
