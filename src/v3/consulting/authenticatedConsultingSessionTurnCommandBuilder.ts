@@ -4,16 +4,16 @@ import {
 
   import {
     parseAuthenticatedConsultingSessionTurnRequest,
-  } from "./authenticatedConsultingSessionTurnRequest";
+  } from "./authenticatedConsultingSessionTurnRequest.js";
   import type {
     ConsultingSessionAuthorizationHeader,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     ExecuteAuthenticatedPersistedConsultingSessionTurnInput,
-  } from "./authenticatedPersistedConsultingSessionTurnService";
+  } from "./authenticatedPersistedConsultingSessionTurnService.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
 
   export type BuildAuthenticatedConsultingSessionTurnCommandInput = {
     authorizationHeader:
