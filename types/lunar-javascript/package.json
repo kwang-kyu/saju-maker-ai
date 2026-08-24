@@ -1,0 +1,7 @@
+{
+  "name": "@types/lunar-javascript",
+  "version": "1.7.7",
+  "description": "Local TypeScript declarations for lunar-javascript APIs used by this project.",
+  "types": "index.d.ts",
+  "private": true
+}
