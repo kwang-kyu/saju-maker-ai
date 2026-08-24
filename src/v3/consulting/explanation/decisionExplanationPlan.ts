@@ -1,18 +1,31 @@
 ﻿import type {
+  QuestionContext,
+} from "../question/questionContext.js";
+
+import type {
   DecisionExplanationInput,
-} from "./decisionResultReader";
+} from "./decisionResultReader.js";
+
+import {
+  resolveDecisionExplanationFocus,
+  type DecisionExplanationFocus,
+} from "./decisionExplanationFocus.js";
 
 import {
   buildReaderDecisionExplanation,
-} from "./readerDecisionExplanationBuilder";
+} from "./readerDecisionExplanationBuilder.js";
 
 import {
   buildDecisionExplanationEvidence,
-} from "./decisionExplanationEvidenceBuilder";
+} from "./decisionExplanationEvidenceBuilder.js";
 
 import {
   deduplicateExplanationLines,
-} from "./decisionExplanationTextDeduplicator";
+} from "./decisionExplanationTextDeduplicator.js";
+
+export type {
+  DecisionExplanationFocus,
+} from "./decisionExplanationFocus.js";
 
 export type ExplanationStep =
   | "directAnswer"
@@ -66,6 +79,9 @@ export type DecisionExplanationPlan = {
     "roleRecommendation"
     | "lifeFlowInterpretation"
     | "decision";
+
+  explanationFocus?:
+    DecisionExplanationFocus;
 
   engineDecisionLocked:
     true;
@@ -685,6 +701,964 @@ function buildTimingSearchExplanationBlocks(
   return blocks;
 }
 
+type DecisionExplanationMaterials = {
+  normalizedQuestion:
+    string;
+
+  directAnswerContent:
+    string;
+
+  alignmentContent:
+    string;
+
+  compatibilityAlignmentContent:
+    string;
+
+  readerDecisionExplanation:
+    ReturnType<
+      typeof buildReaderDecisionExplanation
+    >;
+
+  evidenceLines:
+    string[];
+
+  conditionLines:
+    string[];
+
+  riskLines:
+    string[];
+
+  hasCashFlowEvidence:
+    boolean;
+};
+
+const BUSINESS_START_STEP_TITLES = {
+  directAnswer:
+    "사업 방향의 적합성",
+
+  humanContext:
+    "이 사람에게서 중요한 특성",
+
+  alignment:
+    "현재 시점의 적합성",
+
+  evidence:
+    "이번 질문을 판단한 핵심 근거",
+
+  conditions:
+    "성공을 위해 필요한 조건",
+
+  risks:
+    "사업상 위험",
+
+  recommendedDirection:
+    "권장 실행 방향",
+
+  prohibitedDirection:
+    "피해야 할 진행 방식",
+
+  finalDecision:
+    "최종 판단",
+} as const;
+
+function hasCashFlowRelatedEvidence(
+  input:
+    DecisionExplanationInput,
+  questionContext?:
+    QuestionContext,
+): boolean {
+  const hasCashFlowSource =
+    input.evidence.some(
+      (item) =>
+        item.source
+        === "currentContext",
+    );
+
+  const hasFinancialReality =
+    questionContext
+      ?.reality
+      .constraints
+      .some(
+        (constraint) =>
+          constraint.area
+          === "financial",
+      )
+    === true;
+
+  return (
+    hasCashFlowSource
+    || hasFinancialReality
+  );
+}
+
+function buildCompatibilityAlignmentContent(
+  input:
+    DecisionExplanationInput,
+): string {
+  const lines = [
+    translateContextAlignment(
+      input.contextAlignment,
+    ),
+  ];
+
+  if (
+    input.conflictExists
+    && input.conflictDescription.trim()
+      .length
+    > 0
+  ) {
+    lines.push(
+      input.conflictDescription,
+    );
+  }
+
+  return lines.join(
+    "\n",
+  );
+}
+
+function buildDecisionExplanationMaterials(
+  input:
+    DecisionExplanationInput,
+  normalizedQuestion:
+    string,
+  questionContext?:
+    QuestionContext,
+): DecisionExplanationMaterials {
+  const readerDecisionExplanation =
+    buildReaderDecisionExplanation(
+      input,
+    );
+
+  const evidenceContent =
+    buildDecisionExplanationEvidence({
+      evidence:
+        input.evidence,
+
+      topic:
+        input.topic,
+
+      readerEffectSources:
+        readerDecisionExplanation
+          .sources,
+    });
+
+  const evidenceLines =
+    deduplicateExplanationLines(
+      evidenceContent.split(
+        /\r?\n/,
+      ),
+    );
+
+  const conditionLines =
+    deduplicateExplanationLines(
+      input.conditions.map(
+        (condition) =>
+          condition.description,
+      ),
+      evidenceLines,
+    );
+
+  const riskLines =
+    deduplicateExplanationLines(
+      input.risks.map(
+        (risk) =>
+          risk.description,
+      ),
+      [
+        ...evidenceLines,
+        ...conditionLines,
+      ],
+    );
+
+  return {
+    normalizedQuestion,
+
+    directAnswerContent:
+      buildQuestionLockedDirectAnswerContent(
+        normalizedQuestion,
+        input.directAnswer,
+      ),
+
+    alignmentContent: [
+      translateContextAlignment(
+        input.contextAlignment,
+      ),
+      translateActionReadiness(
+        input.actionReadiness,
+      ),
+    ].join(
+      "\n",
+    ),
+
+    compatibilityAlignmentContent:
+      buildCompatibilityAlignmentContent(
+        input,
+      ),
+
+    readerDecisionExplanation,
+
+    evidenceLines,
+
+    conditionLines,
+
+    riskLines,
+
+    hasCashFlowEvidence:
+      hasCashFlowRelatedEvidence(
+        input,
+        questionContext,
+      ),
+  };
+}
+
+function buildFinalDecisionBlock(
+  input:
+    DecisionExplanationInput,
+): ExplanationBlock {
+  return {
+    step:
+      "finalDecision",
+
+    title:
+      "최종 판단",
+
+    required:
+      true,
+
+    content:
+      input.finalDecisionSentence,
+  };
+}
+
+function buildCompatibilityExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+  materials:
+    DecisionExplanationMaterials,
+): ExplanationBlock[] {
+  const blocks:
+    ExplanationBlock[] = [
+      {
+        step:
+          "directAnswer",
+
+        title:
+          "직접 궁합 판단",
+
+        required:
+          true,
+
+        content:
+          materials.directAnswerContent,
+      },
+      {
+        step:
+          "alignment",
+
+        title:
+          "상대와의 맞음/충돌",
+
+        required:
+          true,
+
+        content:
+          materials.compatibilityAlignmentContent,
+      },
+      {
+        step:
+          "evidence",
+
+        title:
+          "필요한 근거",
+
+        required:
+          materials.evidenceLines.length
+          > 0,
+
+        content:
+          materials.evidenceLines.join(
+            "\n",
+          ),
+      },
+    ];
+
+  if (
+    materials.conditionLines.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "conditions",
+
+      title:
+        "이번 판단에 필요한 조건",
+
+      required:
+        true,
+
+      content:
+        materials.conditionLines.join(
+          "\n",
+        ),
+    });
+  }
+
+  blocks.push({
+    step:
+      "risks",
+
+    title:
+      "주의점",
+
+    required:
+      materials.riskLines.length
+      > 0,
+
+    content:
+      materials.riskLines.join(
+        "\n",
+      ),
+  });
+
+  blocks.push({
+    step:
+      "recommendedDirection",
+
+    title:
+      "관계 방향",
+
+    required:
+      true,
+
+    content:
+      input.recommendedDirection,
+  });
+
+  blocks.push(
+    buildFinalDecisionBlock(
+      input,
+    ),
+  );
+
+  return blocks;
+}
+
+function buildContinuationExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+  materials:
+    DecisionExplanationMaterials,
+): ExplanationBlock[] {
+  return [
+    {
+      step:
+        "directAnswer",
+
+      title:
+        "계속 유지하는 것이 맞는지",
+
+      required:
+        true,
+
+      content:
+        materials.directAnswerContent,
+    },
+    {
+      step:
+        "evidence",
+
+      title:
+        "유지의 근거",
+
+      required:
+        materials.evidenceLines.length
+        > 0,
+
+      content:
+        materials.evidenceLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "conditions",
+
+      title:
+        "유지할 조건",
+
+      required:
+        materials.conditionLines.length
+        > 0,
+
+      content:
+        materials.conditionLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "risks",
+
+      title:
+        "변경·이탈을 고려해야 하는 신호",
+
+      required:
+        materials.riskLines.length
+        > 0,
+
+      content:
+        materials.riskLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "recommendedDirection",
+
+      title:
+        "유지하는 방향",
+
+      required:
+        true,
+
+      content:
+        input.recommendedDirection,
+    },
+    {
+      step:
+        "prohibitedDirection",
+
+      title:
+        "유지할 때 피해야 할 방식",
+
+      required:
+        true,
+
+      content:
+        input.prohibitedDirection,
+    },
+    buildFinalDecisionBlock(
+      input,
+    ),
+  ];
+}
+
+function buildTerminationExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+  materials:
+    DecisionExplanationMaterials,
+): ExplanationBlock[] {
+  return [
+    {
+      step:
+        "directAnswer",
+
+      title:
+        "현재 상태에서 벗어나는 것이 맞는지",
+
+      required:
+        true,
+
+      content:
+        materials.directAnswerContent,
+    },
+    {
+      step:
+        "evidence",
+
+      title:
+        "이동·변경의 근거",
+
+      required:
+        materials.evidenceLines.length
+        > 0,
+
+      content:
+        materials.evidenceLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "conditions",
+
+      title:
+        "실행 조건",
+
+      required:
+        materials.conditionLines.length
+        > 0,
+
+      content:
+        materials.conditionLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "risks",
+
+      title:
+        "위험",
+
+      required:
+        materials.riskLines.length
+        > 0,
+
+      content:
+        materials.riskLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "recommendedDirection",
+
+      title:
+        "권장하는 이동 방향",
+
+      required:
+        true,
+
+      content:
+        input.recommendedDirection,
+    },
+    {
+      step:
+        "prohibitedDirection",
+
+      title:
+        "피해야 할 방식",
+
+      required:
+        true,
+
+      content:
+        input.prohibitedDirection,
+    },
+    buildFinalDecisionBlock(
+      input,
+    ),
+  ];
+}
+
+function buildBusinessStartExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+  materials:
+    DecisionExplanationMaterials,
+): ExplanationBlock[] {
+  return [
+    {
+      step:
+        "directAnswer",
+
+      title:
+        BUSINESS_START_STEP_TITLES.directAnswer,
+
+      required:
+        true,
+
+      content:
+        materials.directAnswerContent,
+    },
+    {
+      step:
+        "humanContext",
+
+      title:
+        BUSINESS_START_STEP_TITLES.humanContext,
+
+      required:
+        true,
+
+      content:
+        input.reason,
+    },
+    {
+      step:
+        "alignment",
+
+      title:
+        BUSINESS_START_STEP_TITLES.alignment,
+
+      required:
+        true,
+
+      content:
+        materials.alignmentContent,
+    },
+    {
+      step:
+        "readerDecisionEffect",
+
+      title:
+        materials
+          .readerDecisionExplanation
+          .title,
+
+      required:
+        materials
+          .readerDecisionExplanation
+          .required,
+
+      content:
+        materials
+          .readerDecisionExplanation
+          .content,
+    },
+    {
+      step:
+        "evidence",
+
+      title:
+        BUSINESS_START_STEP_TITLES.evidence,
+
+      required:
+        materials.evidenceLines.length
+        > 0,
+
+      content:
+        materials.evidenceLines.join(
+          "\n",
+        ),
+    },
+    ...buildTimingSearchExplanationBlocks(
+      input,
+    ),
+    {
+      step:
+        "conditions",
+
+      title:
+        BUSINESS_START_STEP_TITLES.conditions,
+
+      required:
+        materials.conditionLines.length
+        > 0,
+
+      content:
+        materials.conditionLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "risks",
+
+      title:
+        BUSINESS_START_STEP_TITLES.risks,
+
+      required:
+        materials.riskLines.length
+        > 0,
+
+      content:
+        materials.riskLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "recommendedDirection",
+
+      title:
+        BUSINESS_START_STEP_TITLES.recommendedDirection,
+
+      required:
+        true,
+
+      content:
+        input.recommendedDirection,
+    },
+    {
+      step:
+        "prohibitedDirection",
+
+      title:
+        BUSINESS_START_STEP_TITLES.prohibitedDirection,
+
+      required:
+        true,
+
+      content:
+        input.prohibitedDirection,
+    },
+    buildFinalDecisionBlock(
+      input,
+    ),
+  ];
+}
+
+function buildRealEstateBuyExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+  materials:
+    DecisionExplanationMaterials,
+): ExplanationBlock[] {
+  return [
+    {
+      step:
+        "directAnswer",
+
+      title:
+        "매수 판단",
+
+      required:
+        true,
+
+      content:
+        materials.directAnswerContent,
+    },
+    {
+      step:
+        "alignment",
+
+      title:
+        "현재 시점",
+
+      required:
+        true,
+
+      content:
+        materials.alignmentContent,
+    },
+    {
+      step:
+        "evidence",
+
+      title:
+        materials.hasCashFlowEvidence
+          ? "자금·현금흐름을 포함한 매수 근거"
+          : "매수 판단 근거",
+
+      required:
+        materials.evidenceLines.length
+        > 0,
+
+      content:
+        materials.evidenceLines.join(
+          "\n",
+        ),
+    },
+    ...buildTimingSearchExplanationBlocks(
+      input,
+    ),
+    {
+      step:
+        "conditions",
+
+      title:
+        "실행 조건",
+
+      required:
+        materials.conditionLines.length
+        > 0,
+
+      content:
+        materials.conditionLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "risks",
+
+      title:
+        "위험",
+
+      required:
+        materials.riskLines.length
+        > 0,
+
+      content:
+        materials.riskLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "recommendedDirection",
+
+      title:
+        "권장하는 매수 방향",
+
+      required:
+        true,
+
+      content:
+        input.recommendedDirection,
+    },
+    {
+      step:
+        "prohibitedDirection",
+
+      title:
+        "피해야 할 매수 방식",
+
+      required:
+        true,
+
+      content:
+        input.prohibitedDirection,
+    },
+    buildFinalDecisionBlock(
+      input,
+    ),
+  ];
+}
+
+function buildGeneralJudgementExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+  materials:
+    DecisionExplanationMaterials,
+): ExplanationBlock[] {
+  return [
+    {
+      step:
+        "directAnswer",
+
+      title:
+        "질문에 대한 결론",
+
+      required:
+        true,
+
+      content:
+        materials.directAnswerContent,
+    },
+    {
+      step:
+        "evidence",
+
+      title:
+        "필요한 근거",
+
+      required:
+        materials.evidenceLines.length
+        > 0,
+
+      content:
+        materials.evidenceLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "conditions",
+
+      title:
+        "조건",
+
+      required:
+        materials.conditionLines.length
+        > 0,
+
+      content:
+        materials.conditionLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "risks",
+
+      title:
+        "위험",
+
+      required:
+        materials.riskLines.length
+        > 0,
+
+      content:
+        materials.riskLines.join(
+          "\n",
+        ),
+    },
+    {
+      step:
+        "recommendedDirection",
+
+      title:
+        "권장하는 진행 방향",
+
+      required:
+        true,
+
+      content:
+        input.recommendedDirection,
+    },
+    {
+      step:
+        "prohibitedDirection",
+
+      title:
+        "피해야 할 진행 방식",
+
+      required:
+        true,
+
+      content:
+        input.prohibitedDirection,
+    },
+    buildFinalDecisionBlock(
+      input,
+    ),
+  ];
+}
+
+function buildFocusedDecisionExplanationBlocks(
+  focus:
+    DecisionExplanationFocus,
+  input:
+    DecisionExplanationInput,
+  materials:
+    DecisionExplanationMaterials,
+): ExplanationBlock[] {
+  switch (
+    focus
+  ) {
+    case "compatibility":
+      return buildCompatibilityExplanationBlocks(
+        input,
+        materials,
+      );
+
+    case "continuation":
+      return buildContinuationExplanationBlocks(
+        input,
+        materials,
+      );
+
+    case "termination":
+      return buildTerminationExplanationBlocks(
+        input,
+        materials,
+      );
+
+    case "businessStart":
+      return buildBusinessStartExplanationBlocks(
+        input,
+        materials,
+      );
+
+    case "realEstateBuy":
+      return buildRealEstateBuyExplanationBlocks(
+        input,
+        materials,
+      );
+
+    case "generalJudgement":
+      return buildGeneralJudgementExplanationBlocks(
+        input,
+        materials,
+      );
+  }
+}
+
 /**
  * Decision Explanation Plan
  *
@@ -700,6 +1674,8 @@ export function buildDecisionExplanationPlan(
     DecisionExplanationInput,
   originalQuestion:
     string,
+  questionContext?:
+    QuestionContext,
 ): DecisionExplanationPlan {
   const normalizedQuestion =
     requireOriginalQuestion(
@@ -786,214 +1762,29 @@ export function buildDecisionExplanationPlan(
     };
   }
 
-  const readerDecisionExplanation =
-    buildReaderDecisionExplanation(
-      input,
-    );
+  const explanationFocus =
+    resolveDecisionExplanationFocus({
+      intent:
+        input.intent,
 
-  const evidenceContent =
-    buildDecisionExplanationEvidence({
-      evidence:
-        input.evidence,
+      decisionTarget:
+        input.decisionTarget,
 
       topic:
         input.topic,
 
-      readerEffectSources:
-        readerDecisionExplanation
-          .sources,
+      originalQuestion:
+        normalizedQuestion,
+
+      questionContext,
     });
 
-  const evidenceLines =
-    deduplicateExplanationLines(
-      evidenceContent.split(
-        /\r?\n/,
-      ),
+  const materials =
+    buildDecisionExplanationMaterials(
+      input,
+      normalizedQuestion,
+      questionContext,
     );
-
-  const conditionLines =
-    deduplicateExplanationLines(
-      input.conditions.map(
-        (condition) =>
-          condition.description,
-      ),
-      evidenceLines,
-    );
-
-  const riskLines =
-    deduplicateExplanationLines(
-      input.risks.map(
-        (risk) =>
-          risk.description,
-      ),
-      [
-        ...evidenceLines,
-        ...conditionLines,
-      ],
-    );
-
-  const alignmentContent = [
-    translateContextAlignment(
-      input.contextAlignment,
-    ),
-    translateActionReadiness(
-      input.actionReadiness,
-    ),
-  ].join(
-    "\n",
-  );
-
-  const blocks:
-    ExplanationBlock[] = [
-      {
-        step:
-          "directAnswer",
-
-        title:
-          "질문에 대한 결론",
-
-        required:
-          true,
-
-        content:
-          buildQuestionLockedDirectAnswerContent(
-            normalizedQuestion,
-            input.directAnswer,
-          ),
-      },
-      {
-        step:
-          "humanContext",
-
-        title:
-          "이 사람에게서 중요한 특성",
-
-        required:
-          true,
-
-        content:
-          input.reason,
-      },
-      {
-        step:
-          "alignment",
-
-        title:
-          "현재 국면과 질문의 관계",
-
-        required:
-          true,
-
-        content:
-          alignmentContent,
-      },
-      {
-        step:
-          "readerDecisionEffect",
-
-        title:
-          readerDecisionExplanation
-            .title,
-
-        required:
-          readerDecisionExplanation
-            .required,
-
-        content:
-          readerDecisionExplanation
-            .content,
-      },
-      {
-        step:
-          "evidence",
-
-        title:
-          "이번 질문을 판단한 핵심 근거",
-
-        required:
-          evidenceLines.length
-          > 0,
-
-        content:
-          evidenceLines.join(
-            "\n",
-          ),
-      },
-      ...buildTimingSearchExplanationBlocks(
-        input,
-      ),
-      {
-        step:
-          "conditions",
-
-        title:
-          "진행 전에 갖춰야 할 조건",
-
-        required:
-          conditionLines.length
-          > 0,
-
-        content:
-          conditionLines.join(
-            "\n",
-          ),
-      },
-      {
-        step:
-          "risks",
-
-        title:
-          "이번 선택에서 주의할 위험",
-
-        required:
-          riskLines.length
-          > 0,
-
-        content:
-          riskLines.join(
-            "\n",
-          ),
-      },
-      {
-        step:
-          "recommendedDirection",
-
-        title:
-          "권장하는 진행 방향",
-
-        required:
-          true,
-
-        content:
-          input.recommendedDirection,
-      },
-      {
-        step:
-          "prohibitedDirection",
-
-        title:
-          "피해야 할 진행 방식",
-
-        required:
-          true,
-
-        content:
-          input.prohibitedDirection,
-      },
-      {
-        step:
-          "finalDecision",
-
-        title:
-          "최종 판단",
-
-        required:
-          true,
-
-        content:
-          input.finalDecisionSentence,
-      },
-    ];
 
   return {
     originalQuestion:
@@ -1014,7 +1805,14 @@ export function buildDecisionExplanationPlan(
     confidence:
       input.confidence,
 
-    blocks,
+    blocks:
+      buildFocusedDecisionExplanationBlocks(
+        explanationFocus,
+        input,
+        materials,
+      ),
+
+    explanationFocus,
 
     engineDecisionLocked:
       true,
