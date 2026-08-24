@@ -1,49 +1,49 @@
-﻿import { analyzeContextAlignment } from "./contextAlignment";
-import { buildDecisionBrain } from "./decisionBrain";
+﻿import { analyzeContextAlignment } from "./contextAlignment.js";
+import { buildDecisionBrain } from "./decisionBrain.js";
 import type {
   DecisionEngineInput,
   DecisionResult,
-} from "./decisionTypes";
-import { buildVerdict } from "./verdictBuilder";
-import { buildCoreDecision } from "./coreDecisionBuilder";
-import { buildDecisionResult } from "./decisionResultBuilder";
+} from "./decisionTypes.js";
+import { buildVerdict } from "./verdictBuilder.js";
+import { buildCoreDecision } from "./coreDecisionBuilder.js";
+import { buildDecisionResult } from "./decisionResultBuilder.js";
 import {
   resolveConfidence,
   resolveActionReadiness,
-} from "./decisionResolver";
-import { buildVerdictContext } from "./verdictContextBuilder";
-import { buildDirectionJudgement } from "./directionJudgementBuilder";
-import { buildDecisionEvidence } from "./evidenceBuilder";
+} from "./decisionResolver.js";
+import { buildVerdictContext } from "./verdictContextBuilder.js";
+import { buildDirectionJudgement } from "./directionJudgementBuilder.js";
+import { buildDecisionEvidence } from "./evidenceBuilder.js";
 import {
   buildReaderAwareDecisionConditions,
-} from "./conditionBuilder";
+} from "./conditionBuilder.js";
 import {
   buildReaderAwareDecisionRisks,
-} from "./riskBuilder";
+} from "./riskBuilder.js";
 import {
   assessDecisionReality,
-} from "./decisionRealityAssessment";
+} from "./decisionRealityAssessment.js";
 import {
   assessCompatibility,
-} from "./compatibilityAssessment";
+} from "./compatibilityAssessment.js";
 import {
   applyCompatibilityVerdictEffect,
-} from "./compatibilityVerdictBuilder";
+} from "./compatibilityVerdictBuilder.js";
 import {
   assessTiming,
-} from "./timingAssessment";
+} from "./timingAssessment.js";
 import {
   assessReaderDecision,
-} from "./readerDecisionAssessment";
+} from "./readerDecisionAssessment.js";
 import {
   applyReaderDecisionVerdictEffect,
-} from "./readerDecisionVerdictBuilder";
+} from "./readerDecisionVerdictBuilder.js";
 import {
   buildRoleRecommendationDecisionResult,
-} from "./roleRecommendationDecisionBuilder";
+} from "./roleRecommendationDecisionBuilder.js";
 import {
   buildLifeFlowInterpretationDecisionResult,
-} from "./lifeFlowInterpretationDecisionBuilder";
+} from "./lifeFlowInterpretationDecisionBuilder.js";
 
 /**
  * Decision Engine

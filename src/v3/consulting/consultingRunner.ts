@@ -1,40 +1,40 @@
 ﻿import type {
   ConsultingInput,
-} from "./consultingInput";
+} from "./consultingInput.js";
 
 import {
   readQuestion,
-} from "./question/questionReader";
+} from "./question/questionReader.js";
 import {
   buildQuestionContext,
-} from "./question/questionContextBuilder";
+} from "./question/questionContextBuilder.js";
 
 import {
   runDecisionEngine,
-} from "./decision/decisionEngine";
+} from "./decision/decisionEngine.js";
 import {
   buildTargetPeriodLuckFlowForQuestion,
-} from "./decision/targetPeriodLuckFlowBuilder";
+} from "./decision/targetPeriodLuckFlowBuilder.js";
 
 import {
   readDecisionResult,
-} from "./explanation/decisionResultReader";
+} from "./explanation/decisionResultReader.js";
 
 import {
   buildDecisionExplanationPlan,
-} from "./explanation/decisionExplanationPlan";
+} from "./explanation/decisionExplanationPlan.js";
 
 import {
   buildDecisionExplanationPayload,
-} from "./explanation/decisionExplanationPayload";
+} from "./explanation/decisionExplanationPayload.js";
 
 import {
   buildConsultingPrompt,
-} from "./explanation/consultingPromptBuilder";
+} from "./explanation/consultingPromptBuilder.js";
 
 import {
   buildConsultingGroundingContext,
-} from "./explanation/consultingGroundingContextBuilder";
+} from "./explanation/consultingGroundingContextBuilder.js";
 
 /**
  * 질문 한 번이 천운문 v3의 전체 상담 판단 경로를
@@ -225,6 +225,7 @@ export function runConsultingTurn(
       explanation,
       questionReaderResult
         .originalQuestion,
+      questionContext,
     );
 
   const explanationPayload =
