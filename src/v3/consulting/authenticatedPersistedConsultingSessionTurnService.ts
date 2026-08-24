@@ -1,33 +1,33 @@
 import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingSessionAuthorizationHeader,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     ConsultingSessionRepository,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
   import {
     createAuthenticatedSupabaseConsultingSessionRepository,
-  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory";
+  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory.js";
   import type {
     CreateAuthenticatedSupabaseConsultingSessionRepositoryInput,
-  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory";
+  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory.js";
   import {
     executePersistedConsultingSessionTurn,
-  } from "./persistedConsultingSessionTurnService";
+  } from "./persistedConsultingSessionTurnService.js";
   import type {
     ExecutePersistedConsultingSessionTurnInput,
-  } from "./persistedConsultingSessionTurnService";
+  } from "./persistedConsultingSessionTurnService.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
   import {
     interpretQuestionSemantics,
-  } from "./question/questionSemanticInterpreter";
+  } from "./question/questionSemanticInterpreter.js";
   import type {
     QuestionReaderResult,
-  } from "./question/questionReader";
+  } from "./question/questionReader.js";
 
   export type ExecuteAuthenticatedPersistedConsultingSessionTurnInput =
     Omit<
