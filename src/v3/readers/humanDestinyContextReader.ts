@@ -1,10 +1,10 @@
-import { buildHumanDestinyContext } from "../builders/humanDestinyContextBuilder";
-import { buildHumanDestinyProfile } from "../masterReader/readers/humanDestinyProfileBuilder";
-import { readHumanLifePhase } from "../masterReader/readers/humanLifePhaseReader";
-import { readMasterProfile } from "../masterReader/readers/masterReader";
-import type { MasterReaderInput } from "../masterReader/types/masterReaderInput";
-import type { HumanLifePhaseReaderInput } from "../masterReader/types/humanLifePhaseEvidence";
-import type { HumanDestinyContext } from "../types/humanDestinyContext";
+import { buildHumanDestinyContext } from "../builders/humanDestinyContextBuilder.js";
+import { buildHumanDestinyProfile } from "../masterReader/readers/humanDestinyProfileBuilder.js";
+import { readHumanLifePhase } from "../masterReader/readers/humanLifePhaseReader.js";
+import { readMasterProfile } from "../masterReader/readers/masterReader.js";
+import type { MasterReaderInput } from "../masterReader/types/masterReaderInput.js";
+import type { HumanLifePhaseReaderInput } from "../masterReader/types/humanLifePhaseEvidence.js";
+import type { HumanDestinyContext } from "../types/humanDestinyContext.js";
 
 export type HumanDestinyContextReaderInput = {
   masterReaderInput: MasterReaderInput;

@@ -1,9 +1,9 @@
 import type {
   DecisionExplanationEvidence,
-} from "./decisionResultReader";
+} from "./decisionResultReader.js";
 import {
   buildDecisionExplanationEvidence,
-} from "./decisionExplanationEvidenceBuilder";
+} from "./decisionExplanationEvidenceBuilder.js";
 
 export type DecisionExplanationEvidenceBuilderVerificationResult = {
   cases: Array<{

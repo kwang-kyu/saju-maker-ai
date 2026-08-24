@@ -1,19 +1,19 @@
 ﻿import type {
     DecisionVerdict,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
 
   import type {
     VerdictContext,
-  } from "./verdictContextBuilder";
+  } from "./verdictContextBuilder.js";
 
   import type {
     QuestionRealitySignal,
-  } from "../question/questionContext";
+  } from "../question/questionContext.js";
 
   import type {
     DecisionTarget,
     QuestionIntent,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
 
   export type DirectionJudgement = {
     recommendedDirection: string;

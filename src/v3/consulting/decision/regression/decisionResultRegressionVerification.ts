@@ -1,10 +1,10 @@
 import {
     runDecisionEngine,
-  } from "../decisionEngine";
+  } from "../decisionEngine.js";
   import type {
     DecisionEngineInput,
     DecisionResult,
-  } from "../decisionTypes";
+  } from "../decisionTypes.js";
 
 export type DecisionResultRegressionComparison = {
     verdictMatched: boolean;

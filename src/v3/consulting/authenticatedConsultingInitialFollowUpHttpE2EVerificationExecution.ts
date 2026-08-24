@@ -1,6 +1,6 @@
 import {
   verifyAuthenticatedConsultingInitialFollowUpHttpE2E,
-} from "./authenticatedConsultingInitialFollowUpHttpE2EVerification";
+} from "./authenticatedConsultingInitialFollowUpHttpE2EVerification.js";
 
 /**
  * 인증 HTTP 최초 상담 → 후속 상담의

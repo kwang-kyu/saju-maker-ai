@@ -1,4 +1,4 @@
-import type { SurvivalStyleType } from "../types/survivalStyle";
+import type { SurvivalStyleType } from "../types/survivalStyle.js";
 
 export type SurvivalStyleDefinition = {
   type: SurvivalStyleType;

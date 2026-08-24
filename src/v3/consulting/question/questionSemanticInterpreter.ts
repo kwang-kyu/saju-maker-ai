@@ -11,13 +11,13 @@ import type {
   QuestionTimingType,
   QuestionTopic,
   QuestionUrgency,
-} from "./questionReader";
+} from "./questionReader.js";
 import {
   applyRoleRecommendationNormalization,
-} from "./roleRecommendationQuestionDetector";
+} from "./roleRecommendationQuestionDetector.js";
 import {
   applyLifeFlowInterpretationNormalization,
-} from "./lifeFlowInterpretationQuestionDetector";
+} from "./lifeFlowInterpretationQuestionDetector.js";
 
 const QUESTION_TOPICS:
   readonly QuestionTopic[] = [

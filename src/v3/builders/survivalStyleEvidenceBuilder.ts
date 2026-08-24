@@ -1,12 +1,12 @@
 import type {
     SurvivalEvidence,
-  } from "../masterReader/types/survivalStyle";
+  } from "../masterReader/types/survivalStyle.js";
 
   import type {
     SajuEvidenceStrength,
     SajuFacts,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
 
   function toWeight(
     strength: SajuEvidenceStrength,

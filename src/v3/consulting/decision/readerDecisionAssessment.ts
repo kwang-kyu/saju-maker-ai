@@ -1,13 +1,13 @@
 import type {
     DecisionEngineInput,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import {
     selectReaderDecisionAreas,
     type ReaderDecisionAreaSelection,
-  } from "./readerDecisionAreaRules";
+  } from "./readerDecisionAreaRules.js";
   import type {
     ReaderDecisionSource,
-  } from "./readerDecisionSelectionBuilder";
+  } from "./readerDecisionSelectionBuilder.js";
 
   export type ReaderDecisionLevel =
     | "limited"

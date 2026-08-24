@@ -1,4 +1,4 @@
-import type { LifeDriverType } from "../types/lifeDriver";
+import type { LifeDriverType } from "../types/lifeDriver.js";
 
 export type LifeDriverDefinition = {
   type: LifeDriverType;

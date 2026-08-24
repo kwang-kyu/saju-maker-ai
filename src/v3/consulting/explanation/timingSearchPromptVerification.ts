@@ -1,18 +1,18 @@
 ﻿import {
     buildConsultingPrompt,
-  } from "./consultingPromptBuilder";
+  } from "./consultingPromptBuilder.js";
 
   import {
     buildDecisionExplanationPlan,
-  } from "./decisionExplanationPlan";
+  } from "./decisionExplanationPlan.js";
 
   import type {
     DecisionExplanationInput,
-  } from "./decisionResultReader";
+  } from "./decisionResultReader.js";
 
   import {
     buildDecisionExplanationPayload,
-  } from "./decisionExplanationPayload";
+  } from "./decisionExplanationPayload.js";
 
   export type TimingSearchPromptVerificationResult = {
     checks: {

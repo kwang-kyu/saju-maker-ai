@@ -1,6 +1,6 @@
 import {
     verifyTimingDecisionProductionIntegration,
-  } from "./timingDecisionProductionIntegrationVerification";
+  } from "./timingDecisionProductionIntegrationVerification.js";
   
   /**
    * 실제 상담 실행 경로에서

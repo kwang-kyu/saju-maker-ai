@@ -1,12 +1,12 @@
 import type {
     LifeDriverInterpretation,
     LifeDriverType,
-  } from "../types/lifeDriver";
+  } from "../types/lifeDriver.js";
 import type {
   LifeDriverEvidenceSource,
   LifeDriverMeaning,
-} from "../types/lifeDriverInput";
-import type { SajuStructureSignal } from "../../types/sajuFacts";
+} from "../types/lifeDriverInput.js";
+import type { SajuStructureSignal } from "../../types/sajuFacts.js";
 
 export type LifeDriverRule = {
   id: string;

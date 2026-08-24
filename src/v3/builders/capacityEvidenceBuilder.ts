@@ -1,10 +1,10 @@
 import type {
     CapacityEvidence,
-  } from "../masterReader/types/capacity";
+  } from "../masterReader/types/capacity.js";
   import type {
     SajuEvidenceStrength,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   function toCapacityWeight(
     strength: SajuEvidenceStrength,

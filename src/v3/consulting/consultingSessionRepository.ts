@@ -1,6 +1,6 @@
 import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
 
   export type CreateConsultingSessionResult =
     | {

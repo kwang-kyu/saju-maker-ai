@@ -353,4 +353,3 @@ export function normalizeStem(stem: string): KoreanStem | null {
   
     return "흰색, 은색, 금색";
   }
-  

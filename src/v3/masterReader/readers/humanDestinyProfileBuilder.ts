@@ -1,5 +1,5 @@
-import type { HumanDestinyProfile } from "../types/humanDestinyProfile";
-import type { MasterReaderResult } from "../types/masterReaderResult";
+import type { HumanDestinyProfile } from "../types/humanDestinyProfile.js";
+import type { MasterReaderResult } from "../types/masterReaderResult.js";
 
 export function buildHumanDestinyProfile(
   result: MasterReaderResult,

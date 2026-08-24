@@ -4,7 +4,7 @@ import type {
     BlessingJudgement,
     BlessingLevel,
     BlessingResult,
-  } from "../types/blessing";
+  } from "../types/blessing.js";
   
   export type BlessingAreaExplanation = {
     area: BlessingArea;

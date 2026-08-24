@@ -1,6 +1,6 @@
 import {
   verifyHumanDestinyContextLunarRegression,
-} from "./humanDestinyContextLunarRegressionVerification";
+} from "./humanDestinyContextLunarRegressionVerification.js";
 
 const cases = [
   {

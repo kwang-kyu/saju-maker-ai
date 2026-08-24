@@ -1,9 +1,9 @@
 import type {
   ConsultingClarificationRequest,
-} from "./consultingSession";
+} from "./consultingSession.js";
 import {
   buildConsultingClarificationAnswer,
-} from "./consultingClarificationAnswerBuilder";
+} from "./consultingClarificationAnswerBuilder.js";
 
 export type ConsultingClarificationAnswerBuilderVerificationResult = {
   checks:

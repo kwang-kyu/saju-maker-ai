@@ -1,11 +1,11 @@
 import type {
     MoneyArea,
     MoneyEvidence,
-  } from "../types/money";
+  } from "../types/money.js";
   import {
     matchMoneyRules,
     type MatchedMoneyRule,
-  } from "../rules/moneyRules";
+  } from "../rules/moneyRules.js";
   
   export type MoneyAreaScore = {
     area: MoneyArea;

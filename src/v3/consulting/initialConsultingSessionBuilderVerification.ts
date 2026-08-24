@@ -1,12 +1,12 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type InitialConsultingSessionBuilderVerificationResult = {
     checks: Record<
@@ -258,33 +258,29 @@ import {
           .assistantAnswer
         === assistantAnswer,
 
-      insufficientEvidenceAwaitsClarification:
+      insufficientEvidenceDoesNotAutoAwaitClarification:
         session
           .turns[0]
           .decisionResult
           .verdict
         === "insufficientEvidence"
         && session.status
-        === "awaitingClarification",
+        === "active"
+        && session.pendingClarification
+        === null,
 
-      clarificationIsLinkedToInitialTurn:
-        session
-          .pendingClarification
-          ?.decisionTurnId
-        === "turn-001",
-
-      debtClarificationIsPreserved:
-        clarificationQuestions
+      debtClarificationIsNotAutoCreated:
+        !clarificationQuestions
           .includes(
             "대출 잔액",
           )
-        && clarificationQuestions
+        && !clarificationQuestions
           .includes(
             "월 상환액",
           ),
 
-      deadlineClarificationIsPreserved:
-        clarificationQuestions
+      deadlineClarificationIsNotAutoCreated:
+        !clarificationQuestions
           .includes(
             "마감 시점",
           ),

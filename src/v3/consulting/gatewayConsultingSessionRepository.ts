@@ -1,22 +1,22 @@
 import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingSessionPersistenceGateway,
     ConsultingSessionPersistenceRow,
-  } from "./consultingSessionPersistenceGateway";
+  } from "./consultingSessionPersistenceGateway.js";
   import {
     CONSULTING_SESSION_SCHEMA_VERSION,
     InvalidConsultingSessionPersistenceRecordError,
     deserializeConsultingSession,
     serializeConsultingSession,
-  } from "./consultingSessionPersistenceRecord";
+  } from "./consultingSessionPersistenceRecord.js";
   import type {
     ConsultingSessionRepository,
     CreateConsultingSessionResult,
     UpdateConsultingSessionInput,
     UpdateConsultingSessionResult,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
 
   function buildPersistenceRow(
     session:

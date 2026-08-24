@@ -1,7 +1,7 @@
 import {
     countFiveElementsFromPillars,
     getStrongWeakElements,
-  } from "../data/fiveElementService";
+  } from "../data/fiveElementService.js";
   
   type SajuElementParams = {
     yearGanZhi: string;

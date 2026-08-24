@@ -1,10 +1,10 @@
 ﻿import {
     buildDecisionEngineRegressionInput,
-  } from "./decision/regression/decisionEngineRegressionFixture";
+  } from "./decision/regression/decisionEngineRegressionFixture.js";
 
   import {
     runConsultingTurn,
-  } from "./consultingRunner";
+  } from "./consultingRunner.js";
 
   export type RealWorldScenarioVerificationCase = {
     id:

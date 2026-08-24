@@ -1,6 +1,6 @@
 import type {
     ConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
 
   export type ConsultingSessionAuthenticationFailureReason =
     | "missingAuthorization"

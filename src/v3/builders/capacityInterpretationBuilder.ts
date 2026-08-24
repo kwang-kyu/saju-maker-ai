@@ -2,10 +2,10 @@ import type {
     CapacityArea,
     CapacityInterpretation,
     CapacityLevel,
-  } from "../masterReader/types/capacity";
+  } from "../masterReader/types/capacity.js";
   import type {
     CapacityAreaSelection,
-  } from "../masterReader/readers/capacitySelector";
+  } from "../masterReader/readers/capacitySelector.js";
   
   type CapacityAreaDefinition = {
     corePattern: Record<CapacityLevel, string>;

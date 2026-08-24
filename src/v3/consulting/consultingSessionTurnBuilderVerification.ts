@@ -1,19 +1,19 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     buildConsultingSessionTurn,
     prepareConsultingSessionTurn,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
   import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
 
   export type ConsultingSessionTurnBuilderVerificationResult = {
     checks:
@@ -61,7 +61,7 @@ import {
     const initialAssistantAnswer =
       "현재 정보만으로 매수를 확정할 수 없습니다. 대출 상환능력과 실제 결정기한을 먼저 확인해야 합니다.";
 
-    const initialSession =
+    const generatedInitialSession =
       buildInitialConsultingSession({
         sessionId:
           "session-continuous-001",
@@ -80,6 +80,42 @@ import {
         assistantAnswer:
           initialAssistantAnswer,
       });
+
+    const initialSession:
+      ConsultingSession = {
+        ...generatedInitialSession,
+
+        status:
+          "awaitingClarification",
+
+        pendingClarification: {
+          decisionTurnId:
+            "turn-001",
+
+          items: [
+            {
+              key:
+                "debtRepaymentCapacity",
+
+              description:
+                "대출 부담은 확인됐지만 잔액·월 상환액·상환 재원이 확인되지 않았다.",
+
+              question:
+                "현재 대출 잔액, 월 상환액, 월 고정지출과 안정적으로 들어오는 월소득은 각각 얼마인가요?",
+            },
+            {
+              key:
+                "decisionDeadline",
+
+              description:
+                "결정을 내려야 하는 현실적인 기한이 확인되지 않았다.",
+
+              question:
+                "이 결정을 내려야 하는 실제 마감 시점이나 예정일이 있나요?",
+            },
+          ],
+        },
+      };
 
     const clarificationQuestion =
       "대출 잔액은 2억 원이고 월 상환액은 180만 원입니다. 월 고정지출은 250만 원, 안정적인 월소득은 900만 원이며 실제 결정 마감은 두 달 뒤입니다.";
@@ -350,30 +386,12 @@ import {
           }),
       );
 
-    const clarificationVerdict =
-      clarificationPreparation
-        .turnResult
-        .decisionResult
-        .verdict;
-
     const clarificationStateMatchesDecision =
-      clarificationVerdict
-      === "insufficientEvidence"
-        ? (
-            clarificationSession.status
-              === "awaitingClarification"
-            && clarificationSession
-              .pendingClarification
-              ?.decisionTurnId
-              === "turn-002"
-          )
-        : (
-            clarificationSession.status
-              === "active"
-            && clarificationSession
-              .pendingClarification
-              === null
-          );
+      clarificationSession.status
+      === "active"
+      && clarificationSession
+        .pendingClarification
+      === null;
 
     const latestChangedRevision =
       changedRealitySession

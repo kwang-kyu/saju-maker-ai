@@ -1,24 +1,24 @@
 import {
     buildHumanDestinyContextPipeline,
     type HumanDestinyContextPipelineResult,
-  } from "../builders/humanDestinyContextPipelineBuilder";
+  } from "../builders/humanDestinyContextPipelineBuilder.js";
   import {
     readHumanLifeContext,
-  } from "../readers/humanLifeContextReader";
+  } from "../readers/humanLifeContextReader.js";
 
   import {
     runConsultingTurn,
     type ConsultingTurnRunResult,
-  } from "./consultingRunner";
+  } from "./consultingRunner.js";
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
   import type {
     QuestionReaderResult,
-  } from "./question/questionReader";
+  } from "./question/questionReader.js";
   import {
     buildCounterpartSajuCalculation,
-  } from "./decision/counterpartSajuCalculationBuilder";
+  } from "./decision/counterpartSajuCalculationBuilder.js";
 
   export type InitialConsultingExecutionResult = {
     humanDestinyPipeline:

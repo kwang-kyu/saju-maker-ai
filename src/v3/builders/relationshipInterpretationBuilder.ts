@@ -2,13 +2,13 @@ import type {
     RelationshipArea,
     RelationshipInterpretation,
     RelationshipLevel,
-  } from "../masterReader/types/relationship";
+  } from "../masterReader/types/relationship.js";
   import type {
     RelationshipAreaSelection,
-  } from "../masterReader/readers/relationshipSelector";
+  } from "../masterReader/readers/relationshipSelector.js";
   import {
     buildRelationshipAreaInterpretation,
-  } from "./relationshipAreaInterpretationBuilder";
+  } from "./relationshipAreaInterpretationBuilder.js";
   
   const RELATIONSHIP_AREAS:
     RelationshipArea[] = [

@@ -1,11 +1,11 @@
 import type {
     CapacityArea,
     CapacityEvidence,
-  } from "../types/capacity";
+  } from "../types/capacity.js";
   import {
     matchCapacityRules,
     type MatchedCapacityRule,
-  } from "../rules/capacityRules";
+  } from "../rules/capacityRules.js";
   
   export type CapacityAreaScore = {
     area: CapacityArea;

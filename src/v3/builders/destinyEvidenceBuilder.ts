@@ -1,10 +1,10 @@
 import type {
     DestinyEvidence,
-  } from "../masterReader/types/destiny";
+  } from "../masterReader/types/destiny.js";
   import type {
     SajuEvidenceStrength,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   function toDestinyWeight(
     strength: SajuEvidenceStrength,

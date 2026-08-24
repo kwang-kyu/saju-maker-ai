@@ -10,35 +10,35 @@ import {
 } from "node:url";
 import {
   buildDecisionEngineRegressionInput,
-} from "./regression/decisionEngineRegressionFixture";
+} from "./regression/decisionEngineRegressionFixture.js";
 import {
   runDecisionEngine,
-} from "./decisionEngine";
+} from "./decisionEngine.js";
 import {
   assessRoleRecommendation,
   rankRoleRecommendationSeeds,
-} from "./roleRecommendationAssessment";
+} from "./roleRecommendationAssessment.js";
 import {
   buildQuestionContext,
-} from "../question/questionContextBuilder";
+} from "../question/questionContextBuilder.js";
 import {
   readQuestion,
-} from "../question/questionReader";
+} from "../question/questionReader.js";
 import type {
   LifeDriverType,
-} from "../../masterReader/types/lifeDriver";
+} from "../../masterReader/types/lifeDriver.js";
 import type {
   RepeatedPatternType,
-} from "../../masterReader/types/repeatedPattern";
+} from "../../masterReader/types/repeatedPattern.js";
 import type {
   SurvivalStyleType,
-} from "../../masterReader/types/survivalStyle";
+} from "../../masterReader/types/survivalStyle.js";
 import type {
   CareerResult,
-} from "../../masterReader/types/career";
+} from "../../masterReader/types/career.js";
 import type {
   HumanDestinyContext,
-} from "../../types/humanDestinyContext";
+} from "../../types/humanDestinyContext.js";
 
 const ROLE_QUESTION =
   "내가 연극을 하면 어떤 역할이 어울릴까요?";

@@ -1,10 +1,11 @@
 import {
+    extractClarificationObservations,
     InvalidConsultingClarificationResponseError,
     interpretConsultingClarificationResponse,
-  } from "./consultingClarificationResponseInterpreter";
+  } from "./consultingClarificationResponseInterpreter.js";
   import type {
     ConsultingClarificationRequest,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
 
   export type ConsultingClarificationResponseInterpreterVerificationResult = {
     checks:
@@ -42,6 +43,45 @@ import {
 
           question:
             "자기자금, 추가 대출 예정액과 비상자금을 알려주세요.",
+        },
+      ],
+    };
+
+  const PRODUCTION_PENDING_CLARIFICATION:
+    ConsultingClarificationRequest = {
+      decisionTurnId:
+        "turn-production-decision",
+
+      items: [
+        {
+          key:
+            "concreteDecisionTarget",
+
+          description:
+            "실제로 결정하려는 행동이나 선택지가 구체적으로 확인되지 않았다.",
+
+          question:
+            "이번 상담에서 실제로 결정하려는 행동이나 선택지는 무엇인가요?",
+        },
+        {
+          key:
+            "financialExecutionCapacity",
+
+          description:
+            "실행에 사용할 자기자금과 차입 범위가 확인되지 않았다.",
+
+          question:
+            "이번 선택에 투입할 자기자금, 추가 대출 예정액, 반드시 남겨둘 비상자금은 각각 얼마인가요?",
+        },
+        {
+          key:
+            "decisionDeadline",
+
+          description:
+            "결정을 내려야 하는 현실적인 기한이 확인되지 않았다.",
+
+          question:
+            "이 결정을 내려야 하는 실제 마감 시점이나 예정일이 있나요?",
         },
       ],
     };
@@ -365,6 +405,11 @@ import {
         ?? [],
       );
 
+    const duplicateIncompleteObservations =
+      extractClarificationObservations(
+        "상대방은 1967년 4월생이고 다시 말해 1967년 4월입니다.",
+      );
+
     const incompleteBirthDateResult =
       await interpretConsultingClarificationResponse(
         {
@@ -543,6 +588,194 @@ import {
         ?? [],
       );
 
+    const unavailableResponse =
+      "아직 구체적인 자금 규모는 정하지 않았습니다. 인터넷 광고 사업 자체가 나에게 맞는지, 수익을 만들 수 있는지가 궁금합니다.";
+
+    const unavailableResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            PRODUCTION_PENDING_CLARIFICATION,
+
+          response:
+            unavailableResponse,
+        },
+        async () =>
+          JSON.stringify({
+            matches: [],
+          }),
+      );
+
+    const gptMatchesDoNotOverrideResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            PRODUCTION_PENDING_CLARIFICATION,
+
+          response:
+            unavailableResponse,
+        },
+        async () =>
+          JSON.stringify({
+            matches: [
+              {
+                key:
+                  "concreteDecisionTarget",
+
+                description:
+                  "인터넷 광고 사업 적합성을 판단하려고 한다.",
+
+                fields: [
+                  {
+                    key:
+                      "decisionTarget",
+
+                    value:
+                      "인터넷 광고 사업",
+
+                    evidence: [
+                      "인터넷 광고 사업",
+                    ],
+                  },
+                ],
+
+                confidence:
+                  0.96,
+              },
+              {
+                key:
+                  "financialExecutionCapacity",
+
+                description:
+                  "자금 규모는 아직 정하지 않았다.",
+
+                fields: [
+                  {
+                    key:
+                      "selfFunds",
+
+                    value:
+                      "미정",
+
+                    evidence: [
+                      "아직 구체적인 자금 규모는 정하지 않았습니다",
+                    ],
+                  },
+                ],
+
+                confidence:
+                  0.91,
+              },
+            ],
+          }),
+      );
+
+    const cannotAnswerResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            PRODUCTION_PENDING_CLARIFICATION,
+
+          response:
+            "지금은 답할 수 없다",
+        },
+        async () =>
+          JSON.stringify({
+            matches: [],
+          }),
+      );
+
+    const actualAmountResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            PRODUCTION_PENDING_CLARIFICATION,
+
+          response:
+            "5천만 원 정도입니다",
+        },
+        async () =>
+          JSON.stringify({
+            matches: [],
+          }),
+      );
+
+    const answeredAmountResult =
+      await interpretConsultingClarificationResponse(
+        {
+          clarification:
+            PRODUCTION_PENDING_CLARIFICATION,
+
+          response:
+            "5천만 원 정도입니다",
+        },
+        async () =>
+          JSON.stringify({
+            matches: [
+              {
+                key:
+                  "financialExecutionCapacity",
+
+                description:
+                  "자기자금은 5천만 원 정도다.",
+
+                fields: [
+                  {
+                    key:
+                      "selfFunds",
+
+                    value:
+                      "50000000",
+
+                    evidence: [
+                      "5천만 원 정도입니다",
+                    ],
+                  },
+                ],
+
+                confidence:
+                  0.95,
+              },
+            ],
+          }),
+      );
+
+    const unavailableFinancialState =
+      unavailableResult
+        .itemStates
+        .find(
+          (state) =>
+            state.key
+            === "financialExecutionCapacity",
+        );
+
+    const unavailableTargetState =
+      unavailableResult
+        .itemStates
+        .find(
+          (state) =>
+            state.key
+            === "concreteDecisionTarget",
+        );
+
+    const gptOverrideFinancialState =
+      gptMatchesDoNotOverrideResult
+        .itemStates
+        .find(
+          (state) =>
+            state.key
+            === "financialExecutionCapacity",
+        );
+
+    const gptOverrideTargetState =
+      gptMatchesDoNotOverrideResult
+        .itemStates
+        .find(
+          (state) =>
+            state.key
+            === "concreteDecisionTarget",
+        );
+
     const checks = {
       clearResponseResolvesOnlyMatchingItem:
         clearFinancialResult
@@ -644,6 +877,86 @@ import {
           )
         === false,
 
+      incompleteBirthMonthIsPreservedAsObservation:
+        incompleteBirthDateResult
+          .observations
+          .length
+        === 1
+        && incompleteBirthDateResult
+          .observations[0]
+          ?.key
+        === "incompleteBirthDate"
+        && incompleteBirthDateResult
+          .observations[0]
+          ?.rawValue
+        === "1967년 4월"
+        && incompleteBirthDateResult
+          .observations[0]
+          ?.evidence
+          .includes(
+            "1967년 4월",
+          )
+        === true,
+
+      incompleteObservationIsSeparatedFromConfirmedFacts:
+        incompleteBirthDateResult
+          .confirmedFacts
+          .every(
+            (fact) =>
+              fact
+                .fields
+                .every(
+                  (field) =>
+                    field.key
+                    !== "birthDate"
+                    && field.value
+                    !== "1967년 4월"
+                    && field.value
+                    !== "1967-04"
+                    && field.value
+                    !== "1967-04-01",
+                ),
+          )
+        && incompleteBirthDateResult
+          .confirmedFacts[0]
+          ?.fields
+          .some(
+            (field) =>
+              field.key
+              === "gender",
+          )
+        === true,
+
+      incompleteObservationIsNotNormalizedBirthDate:
+        incompleteBirthDateResult
+          .observations
+          .every(
+            (observation) =>
+              observation.rawValue
+              === "1967년 4월"
+              && !/^\d{4}-\d{2}-\d{2}$/.test(
+                observation.rawValue,
+              ),
+          ),
+
+      completeBirthDateDoesNotCreateObservation:
+        regressionResult
+          .observations
+          .length
+        === 0
+        && invalidOptionalFieldResult
+          .observations
+          .length
+        === 0,
+
+      duplicateIncompleteBirthMonthIsDeduped:
+        duplicateIncompleteObservations
+          .length
+        === 1
+        && duplicateIncompleteObservations[0]
+          ?.rawValue
+        === "1967년 4월",
+
       invalidDateDoesNotReachConfirmedFacts:
         invalidBirthDateResult
           .confirmedFacts
@@ -667,6 +980,125 @@ import {
           "birthDate",
         )
         === "1967-04-10",
+
+      unavailableResponseDoesNotConfirmFacts:
+        unavailableResult
+          .confirmedFacts
+          .length
+        === 0,
+
+      unavailableResponseMarksFinancialSettled:
+        (
+          unavailableFinancialState
+            ?.status
+          === "unavailable"
+          || unavailableFinancialState
+            ?.status
+          === "redirected"
+        )
+        === true,
+
+      unavailableResponseMarksTargetRedirected:
+        unavailableTargetState
+          ?.status
+        === "redirected",
+
+      unavailableResponseLeavesDeadlinePending:
+        unavailableResult
+          .itemStates
+          .every(
+            (state) =>
+              state.key
+              !== "decisionDeadline",
+          ),
+
+      unavailableResponseIsResolved:
+        !unavailableResult
+          .hasUnresolvedResponse,
+
+      gptMatchesDoNotOverrideUnavailableOrRedirected:
+        (
+          gptOverrideFinancialState
+            ?.status
+          === "unavailable"
+          || gptOverrideFinancialState
+            ?.status
+          === "redirected"
+        )
+        === true
+        && gptOverrideTargetState
+          ?.status
+        === "redirected"
+        && gptMatchesDoNotOverrideResult
+          .itemStates
+          .every(
+            (state) =>
+              state.status
+              !== "answered",
+          ),
+
+      cannotAnswerMarksAskedItemUnavailable:
+        cannotAnswerResult
+          .itemStates
+          .length
+        === 1
+        && cannotAnswerResult
+          .itemStates[0]
+          ?.key
+        === "concreteDecisionTarget"
+        && cannotAnswerResult
+          .itemStates[0]
+          ?.status
+        === "unavailable"
+        && !cannotAnswerResult
+          .hasUnresolvedResponse,
+
+      cannotAnswerLeavesOtherItemsPending:
+        cannotAnswerResult
+          .itemStates
+          .every(
+            (state) =>
+              state.key
+              !== "financialExecutionCapacity"
+              && state.key
+              !== "decisionDeadline",
+          ),
+
+      actualAmountIsNotUnavailable:
+        actualAmountResult
+          .itemStates
+          .length
+        === 0
+        && actualAmountResult
+          .confirmedFacts
+          .length
+        === 0
+        && actualAmountResult
+          .hasUnresolvedResponse,
+
+      extractedAmountIsAnswered:
+        answeredAmountResult
+          .itemStates
+          .length
+        === 1
+        && answeredAmountResult
+          .itemStates[0]
+          ?.key
+        === "financialExecutionCapacity"
+        && answeredAmountResult
+          .itemStates[0]
+          ?.status
+        === "answered"
+        && answeredAmountResult
+          .confirmedFacts[0]
+          ?.fields[0]
+          ?.key
+        === "selfFunds"
+        && answeredAmountResult
+          .confirmedFacts[0]
+          ?.fields[0]
+          ?.value
+        === "50000000",
     };
 
     return {

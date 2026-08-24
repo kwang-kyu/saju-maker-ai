@@ -1,6 +1,6 @@
 import {
     verifyConsultingClarificationResponseIntegration,
-  } from "./consultingClarificationResponseIntegrationVerification";
+  } from "./consultingClarificationResponseIntegrationVerification.js";
 
   async function executeVerification():
     Promise<void> {

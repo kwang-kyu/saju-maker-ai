@@ -1,12 +1,12 @@
 import type {
     MoneyConfidence,
-  } from "../masterReader/types/money";
+  } from "../masterReader/types/money.js";
   import type {
     MoneyAreaSelection,
-  } from "../masterReader/readers/moneySelector";
+  } from "../masterReader/readers/moneySelector.js";
   import type {
     MatchedMoneyRule,
-  } from "../masterReader/rules/moneyRules";
+  } from "../masterReader/rules/moneyRules.js";
   
   type MoneyConfidenceMetrics = {
     totalMatchCount: number;

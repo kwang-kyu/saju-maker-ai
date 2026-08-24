@@ -1,6 +1,6 @@
 import {
     verifyAuthenticatedSupabaseConsultingSessionRepositoryFactory,
-  } from "./authenticatedSupabaseConsultingSessionRepositoryFactoryVerification";
+  } from "./authenticatedSupabaseConsultingSessionRepositoryFactoryVerification.js";
 
   async function executeVerification():
     Promise<void> {

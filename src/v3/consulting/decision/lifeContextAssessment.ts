@@ -1,4 +1,4 @@
-import type { HumanLifeContext } from "../../types/humanLifeContext";
+import type { HumanLifeContext } from "../../types/humanLifeContext.js";
 
 export type AssessmentLevel =
   | "low"

@@ -1,56 +1,56 @@
 import {
   buildCompatibilityEvidence,
-} from "./compatibilityEvidenceBuilder";
+} from "./compatibilityEvidenceBuilder.js";
 import {
   assessCompatibility,
-} from "./compatibilityAssessment";
+} from "./compatibilityAssessment.js";
 import {
   applyCompatibilityVerdictEffect,
-} from "./compatibilityVerdictBuilder";
+} from "./compatibilityVerdictBuilder.js";
 import {
   buildCounterpartSajuCalculation,
-} from "./counterpartSajuCalculationBuilder";
+} from "./counterpartSajuCalculationBuilder.js";
 import {
   buildSajuFactsPipeline,
-} from "../../builders/sajuFactsPipelineBuilder";
+} from "../../builders/sajuFactsPipelineBuilder.js";
 import {
   assessFullCompatibility,
   calculateElementDistributionFromPillars,
   resolveDayMasterElementRelation,
   resolveFullCompatibilityOverallLevel,
   resolveStemElement,
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";
 import {
   buildDecisionEngineRegressionInput,
-} from "./regression/decisionEngineRegressionFixture";
+} from "./regression/decisionEngineRegressionFixture.js";
 import {
   buildConsultingPrompt,
-} from "../explanation/consultingPromptBuilder";
+} from "../explanation/consultingPromptBuilder.js";
 import {
   buildDecisionExplanationPayload,
-} from "../explanation/decisionExplanationPayload";
+} from "../explanation/decisionExplanationPayload.js";
 import {
   buildDecisionExplanationPlan,
-} from "../explanation/decisionExplanationPlan";
+} from "../explanation/decisionExplanationPlan.js";
 import {
   readDecisionResult,
-} from "../explanation/decisionResultReader";
+} from "../explanation/decisionResultReader.js";
 import {
   buildDecisionEvidence,
-} from "./evidenceBuilder";
+} from "./evidenceBuilder.js";
 import {
   buildDecisionBrain,
-} from "./decisionBrain";
+} from "./decisionBrain.js";
 import {
   assessDecisionReality,
-} from "./decisionRealityAssessment";
+} from "./decisionRealityAssessment.js";
 import type {
   SajuFiveElement,
   SajuPillarFact,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 import {
   calculateCrossPersonSajuInteractions,
-} from "../../calculators/sajuInteractionCalculator";
+} from "../../calculators/sajuInteractionCalculator.js";
 
 export type FullCompatibilityAssessmentVerificationResult = {
   checks:

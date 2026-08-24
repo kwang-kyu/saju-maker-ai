@@ -1,7 +1,7 @@
 import {
   describeConsultingLiveInitialFollowUpAnswerE2EFailure,
   verifyConsultingLiveInitialFollowUpAnswerE2E,
-} from "./consultingLiveInitialFollowUpAnswerE2EVerification";
+} from "./consultingLiveInitialFollowUpAnswerE2EVerification.js";
 
 /**
  * 최초 상담 → 세션 생성 → 후속 상담 Live E2E.

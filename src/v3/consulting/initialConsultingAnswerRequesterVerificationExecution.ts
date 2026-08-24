@@ -1,6 +1,6 @@
 import {
     verifyInitialConsultingAnswerRequester,
-  } from "./initialConsultingAnswerRequesterVerification";
+  } from "./initialConsultingAnswerRequesterVerification.js";
 
   async function executeVerification():
     Promise<void> {

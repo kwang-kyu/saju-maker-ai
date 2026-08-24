@@ -4,7 +4,7 @@ import type {
     MoneyJudgement,
     MoneyLevel,
     MoneyResult,
-  } from "../types/money";
+  } from "../types/money.js";
   
   export type MoneyJudgementExplanation = {
     area: MoneyArea;

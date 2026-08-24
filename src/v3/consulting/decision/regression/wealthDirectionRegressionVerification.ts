@@ -1,18 +1,18 @@
 import {
     runDecisionEngine,
-} from "../decisionEngine";
+} from "../decisionEngine.js";
 import type {
     DecisionVerdict,
-} from "../decisionTypes";
+} from "../decisionTypes.js";
 import type {
     QuestionRealitySignal,
-} from "../../question/questionContext";
+} from "../../question/questionContext.js";
 import {
     buildDecisionEngineRegressionInput,
-} from "./decisionEngineRegressionFixture";
+} from "./decisionEngineRegressionFixture.js";
 import {
     buildCoreDecision,
-} from "../coreDecisionBuilder";
+} from "../coreDecisionBuilder.js";
 
 type WealthDirectionRegressionFixture = {
     name: string;

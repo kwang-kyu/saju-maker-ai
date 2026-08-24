@@ -1,51 +1,51 @@
 import {
   readCapacity,
-} from "../../../masterReader/readers/capacityReader";
+} from "../../../masterReader/readers/capacityReader.js";
 import {
   readCareer,
-} from "../../../masterReader/readers/careerReader";
+} from "../../../masterReader/readers/careerReader.js";
 import {
   readHealth,
-} from "../../../masterReader/readers/healthReader";
+} from "../../../masterReader/readers/healthReader.js";
 import {
   readBlessing,
-} from "../../../masterReader/readers/blessingReader";
+} from "../../../masterReader/readers/blessingReader.js";
 import {
   readDestiny,
-} from "../../../masterReader/readers/destinyReader";
+} from "../../../masterReader/readers/destinyReader.js";
 import {
   readMoney,
-} from "../../../masterReader/readers/moneyReader";
+} from "../../../masterReader/readers/moneyReader.js";
 import {
   readRelationship,
-} from "../../../masterReader/readers/relationshipReader";
+} from "../../../masterReader/readers/relationshipReader.js";
 import {
   buildMasterHumanSummary,
-} from "../../../masterReader/readers/masterHumanSummaryBuilder";
+} from "../../../masterReader/readers/masterHumanSummaryBuilder.js";
 import {
   buildMasterProfileExplanation,
-} from "../../../masterReader/readers/masterProfileExplanationBuilder";
+} from "../../../masterReader/readers/masterProfileExplanationBuilder.js";
 import type {
   MasterProfile,
-} from "../../../masterReader/types/masterProfile";
+} from "../../../masterReader/types/masterProfile.js";
 import type {
   HumanDestinyContext,
-} from "../../../types/humanDestinyContext";
+} from "../../../types/humanDestinyContext.js";
 import type {
   HumanLifeContext,
-} from "../../../types/humanLifeContext";
+} from "../../../types/humanLifeContext.js";
 import type {
   SajuStructureFact,
-} from "../../../types/sajuFacts";
+} from "../../../types/sajuFacts.js";
 import {
   buildQuestionContext,
-} from "../../question/questionContextBuilder";
+} from "../../question/questionContextBuilder.js";
 import {
   readQuestion,
-} from "../../question/questionReader";
+} from "../../question/questionReader.js";
 import type {
   DecisionEngineInput,
-} from "../decisionTypes";
+} from "../decisionTypes.js";
 
 const BUSINESS_START_QUESTION =
   "지금 통닭집을 시작하면 성공할까요?";

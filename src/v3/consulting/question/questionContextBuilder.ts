@@ -1,21 +1,22 @@
 ﻿import type {
   ConsultingClarificationFact,
-} from "../consultingInput";
+} from "../consultingInput.js";
 import type {
   QuestionContext,
   QuestionCounterpartRelation,
   QuestionRealityConstraint,
   QuestionRealityContext,
-} from "./questionContext";
-import type {
-  QuestionReaderResult,
-} from "./questionReader";
+} from "./questionContext.js";
+import {
+  isCompatibilityAnalysisQuestion,
+  type QuestionReaderResult,
+} from "./questionReader.js";
 import {
   isRoleRecommendationQuestion,
-} from "./roleRecommendationQuestionDetector";
+} from "./roleRecommendationQuestionDetector.js";
 import {
   isLifeFlowInterpretationQuestion,
-} from "./lifeFlowInterpretationQuestionDetector";
+} from "./lifeFlowInterpretationQuestionDetector.js";
 
   type QuestionRealitySignalRule = {
     area:
@@ -630,7 +631,11 @@ const zodiacProvided =
           || question.decisionTarget
             === "partner"
           || question.decisionTarget
-            === "marry",
+            === "marry"
+          || isCompatibilityAnalysisQuestion(
+            question.originalQuestion,
+            question.decisionTarget,
+          ),
             timingAnalysisRequired:
   !lifeFlowInterpretationAnalysisRequired
   && requiresDecisionTimingAnalysis(

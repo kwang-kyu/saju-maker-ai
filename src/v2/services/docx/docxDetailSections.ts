@@ -1,4 +1,4 @@
-﻿import type { DocxSection } from "./detailDocxService";
+import type { DocxSection } from "./detailDocxService";
 import { basicMapper } from "../basic/basicMapper";
 import { basicConsulting } from "../basic/basicConsulting";
 import { totalConsulting } from "../total/totalConsulting";
@@ -77,7 +77,7 @@ export function buildDetailDocxMoneyJobSections(params: {
     {
       title: "직업운",
       content: jobPersonalNote + "\n\n" + jobConsulting(mappedBasic, birthDate),
-      
+
     },
   ];
 }

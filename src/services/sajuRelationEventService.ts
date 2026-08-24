@@ -143,4 +143,4 @@ function getRelationTypeDetail(relationText: string): string {
   ■ 건강 사건 시나리오
   ${relationLevel === "강함" || relationLevel === "매우 강함" ? "과로, 수면 부족, 스트레스성 증상, 만성 피로 관리가 중요합니다." : "생활 리듬, 체력 관리, 감정 소모 조절이 중요합니다."}
   `.trim();
-  }  
+  }

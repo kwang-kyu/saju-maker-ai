@@ -1,6 +1,6 @@
 import {
     verifyReaderDecisionEvidenceDeduplicator,
-  } from "./readerDecisionEvidenceDeduplicatorVerification";
+  } from "./readerDecisionEvidenceDeduplicatorVerification.js";
   const result =
     verifyReaderDecisionEvidenceDeduplicator();
   console.log(

@@ -1,6 +1,6 @@
 ﻿import {
     verifyCoreDecisionBuilder,
-  } from "./coreDecisionBuilderVerification";
+  } from "./coreDecisionBuilderVerification.js";
 
   const result =
     verifyCoreDecisionBuilder();

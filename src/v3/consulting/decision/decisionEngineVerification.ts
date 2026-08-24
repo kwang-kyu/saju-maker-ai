@@ -1,21 +1,21 @@
-import type { HumanDestinyContext } from "../../types/humanDestinyContext";
-import type { HumanLifeContext } from "../../types/humanLifeContext";
-import { readQuestion } from "../question/questionReader";
-import { buildQuestionContext } from "../question/questionContextBuilder";
-import { runDecisionEngine } from "./decisionEngine";
+import type { HumanDestinyContext } from "../../types/humanDestinyContext.js";
+import type { HumanLifeContext } from "../../types/humanLifeContext.js";
+import { readQuestion } from "../question/questionReader.js";
+import { buildQuestionContext } from "../question/questionContextBuilder.js";
+import { runDecisionEngine } from "./decisionEngine.js";
 import type {
   ActionReadiness,
   DecisionCondition,
   DecisionEngineInput,
   DecisionResult,
-} from "./decisionTypes";
-import { buildDecisionConditions } from "./conditionBuilder";
-import type { LifeContextAssessment } from "./lifeContextAssessment";
-import type { CompatibilityAssessment } from "./compatibilityAssessment";
+} from "./decisionTypes.js";
+import { buildDecisionConditions } from "./conditionBuilder.js";
+import type { LifeContextAssessment } from "./lifeContextAssessment.js";
+import type { CompatibilityAssessment } from "./compatibilityAssessment.js";
 import {
   buildCounterpartSajuCalculation,
-} from "./counterpartSajuCalculationBuilder";
-import type { TimingAssessment } from "./timingAssessment";
+} from "./counterpartSajuCalculationBuilder.js";
+import type { TimingAssessment } from "./timingAssessment.js";
 function buildNeutralTimingAssessment():
   TimingAssessment {
   return {

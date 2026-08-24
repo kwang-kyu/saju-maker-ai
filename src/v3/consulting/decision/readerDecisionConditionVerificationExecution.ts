@@ -1,6 +1,6 @@
 import {
     verifyReaderDecisionConditions,
-  } from "./readerDecisionConditionVerification";
+  } from "./readerDecisionConditionVerification.js";
   
   const result =
     verifyReaderDecisionConditions();

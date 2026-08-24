@@ -2,7 +2,7 @@ import {
     ConsultingSessionOwnerId,
     InvalidConsultingSessionOwnerIdError,
     parseConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
 
   export type ConsultingSessionOwnerIdVerificationResult = {
     checks:

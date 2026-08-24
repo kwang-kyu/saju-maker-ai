@@ -1,6 +1,6 @@
 import {
     verifyGatewayConsultingSessionRepository,
-  } from "./gatewayConsultingSessionRepositoryVerification";
+  } from "./gatewayConsultingSessionRepositoryVerification.js";
 
   async function executeVerification():
     Promise<void> {

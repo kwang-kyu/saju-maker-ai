@@ -1,4 +1,4 @@
-import type { HumanLifePhase } from "./humanLifePhase";
+import type { HumanLifePhase } from "./humanLifePhase.js";
 
 export type HumanLifePhaseEvidenceSource =
   | "ageStage"

@@ -1,12 +1,12 @@
 import type {
     CareerConfidence,
-  } from "../masterReader/types/career";
+  } from "../masterReader/types/career.js";
   import type {
     CareerAreaSelection,
-  } from "../masterReader/readers/careerSelector";
+  } from "../masterReader/readers/careerSelector.js";
   import type {
     MatchedCareerRule,
-  } from "../masterReader/rules/careerRules";
+  } from "../masterReader/rules/careerRules.js";
   
   type CareerConfidenceMetrics = {
     totalMatchCount: number;

@@ -1,10 +1,10 @@
 import {
     InvalidAuthenticatedConsultingSessionTurnCommandError,
     buildAuthenticatedConsultingSessionTurnCommand,
-  } from "./authenticatedConsultingSessionTurnCommandBuilder";
+  } from "./authenticatedConsultingSessionTurnCommandBuilder.js";
   import {
     InvalidAuthenticatedConsultingSessionTurnRequestError,
-  } from "./authenticatedConsultingSessionTurnRequest";
+  } from "./authenticatedConsultingSessionTurnRequest.js";
 
   export type AuthenticatedConsultingSessionTurnCommandBuilderVerificationResult = {
     checks: Record<string, boolean>;

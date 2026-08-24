@@ -1,6 +1,6 @@
 import {
     verifyAuthenticatedInitialConsultingSessionHttpHandler,
-  } from "./authenticatedInitialConsultingSessionHttpHandlerVerification";
+  } from "./authenticatedInitialConsultingSessionHttpHandlerVerification.js";
 
   async function executeVerification():
     Promise<void> {

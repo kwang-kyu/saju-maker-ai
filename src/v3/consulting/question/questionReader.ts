@@ -1,12 +1,12 @@
-import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+import type { HumanDestinyContext } from "../../types/humanDestinyContext.js";
 import {
   applyRoleRecommendationNormalization,
   isRoleRecommendationQuestion,
-} from "./roleRecommendationQuestionDetector";
+} from "./roleRecommendationQuestionDetector.js";
 import {
   applyLifeFlowInterpretationNormalization,
   isLifeFlowInterpretationQuestion,
-} from "./lifeFlowInterpretationQuestionDetector";
+} from "./lifeFlowInterpretationQuestionDetector.js";
 
 export type QuestionTopic =
   | "business"

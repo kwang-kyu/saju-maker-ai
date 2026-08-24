@@ -2,13 +2,13 @@ import type {
     BlessingArea,
     BlessingInterpretation,
     BlessingLevel,
-  } from "../masterReader/types/blessing";
+  } from "../masterReader/types/blessing.js";
   import type {
     BlessingAreaSelection,
-  } from "../masterReader/readers/blessingSelector";
+  } from "../masterReader/readers/blessingSelector.js";
   import {
     buildBlessingAreaInterpretation,
-  } from "./blessingAreaInterpretationBuilder";
+  } from "./blessingAreaInterpretationBuilder.js";
   
   const BLESSING_AREAS:
     BlessingArea[] = [

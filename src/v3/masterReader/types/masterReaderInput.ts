@@ -1,16 +1,16 @@
 import type {
   LifeDriverMeaning,
   LifeDriverReaderInput,
-} from "./lifeDriverInput";
+} from "./lifeDriverInput.js";
 import type {
   PatternEvidence,
-} from "./repeatedPattern";
+} from "./repeatedPattern.js";
 import type {
   SurvivalEvidence,
-} from "./survivalStyle";
+} from "./survivalStyle.js";
 import type {
   SajuStructureFact,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 
 export type MasterReaderInput = {
   lifeDriver: LifeDriverReaderInput;

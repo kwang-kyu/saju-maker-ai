@@ -1,6 +1,6 @@
 import {
   verifyFullCompatibilityAssessment,
-} from "./fullCompatibilityAssessmentVerification";
+} from "./fullCompatibilityAssessmentVerification.js";
 
 const result =
   verifyFullCompatibilityAssessment();

@@ -1,10 +1,10 @@
 import type {
     HumanLifePhase,
-  } from "../types/humanLifePhase";
+  } from "../types/humanLifePhase.js";
 
   import type {
     SajuLuckFlowTenGod,
-  } from "../../types/luckFlowFact";
+  } from "../../types/luckFlowFact.js";
 
   export type HumanLifePhaseFlowScope =
     | "daeun"

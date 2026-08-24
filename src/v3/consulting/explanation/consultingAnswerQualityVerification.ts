@@ -1,39 +1,39 @@
 ﻿import {
   runDecisionEngine,
-} from "../decision/decisionEngine";
+} from "../decision/decisionEngine.js";
 
 import {
   buildDecisionEngineRegressionInput,
-} from "../decision/regression/decisionEngineRegressionFixture";
+} from "../decision/regression/decisionEngineRegressionFixture.js";
 
 import {
   selectReaderDecisionSources,
   type ReaderDecisionSource,
-} from "../decision/readerDecisionSelectionBuilder";
+} from "../decision/readerDecisionSelectionBuilder.js";
 
 import {
   readDecisionResult,
   type DecisionExplanationInput,
-} from "./decisionResultReader";
+} from "./decisionResultReader.js";
 
 import {
   buildReaderDecisionExplanation,
-} from "./readerDecisionExplanationBuilder";
+} from "./readerDecisionExplanationBuilder.js";
 
 import {
   buildDecisionExplanationPlan,
   type DecisionExplanationPlan,
-} from "./decisionExplanationPlan";
+} from "./decisionExplanationPlan.js";
 
 import {
   buildDecisionExplanationPayload,
   type DecisionExplanationPayload,
-} from "./decisionExplanationPayload";
+} from "./decisionExplanationPayload.js";
 
 import {
   buildConsultingPrompt,
   type ConsultingPrompt,
-} from "./consultingPromptBuilder";
+} from "./consultingPromptBuilder.js";
 
 
 export type ConsultingAnswerQualityCaseResult = {
@@ -106,8 +106,8 @@ export type ConsultingAnswerQualityVerificationResult = {
  * 6. 설명이 과도하게 반복되지 않는가
  * 7. GPT 설명용 Evidence가 질문 관련 Reader로 제한되는가
  * 8. 서로 다른 질문의 원문·Prompt·Evidence 블록이 동일하지 않은가
- * 9. Prompt가 엔진 최종 결론을 마지막 단락에
- *    원문 그대로 정확히 1회만 쓰도록 강제하는가
+ * 9. Prompt가 엔진 최종 결론을 뒤집지 않고,
+ *    마지막 단락 복사나 같은 문구 반복으로 강제하지 않는가
  * 10. Prompt가 근거보다 더 구체적인 주장과
  *     도메인 상식 확장을 금지하는가
  */
@@ -361,10 +361,13 @@ export function promptRequiresVerbatimFinalDecisionLastParagraph(
 ): boolean {
   return (
     prompt.systemPrompt.includes(
-      "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다",
+      "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
+    )
+    && prompt.systemPrompt.includes(
+      "답변의 마지막에 기계적으로 같은 문장을 복사하는 방식으로 강제하지 않는다",
     )
     && prompt.userPrompt.includes(
-      "위 최종 결론을 답변의 마지막 단락에 한 글자도 변경하지 않고 그대로 작성하세요",
+      "엔진이 확정한 최종 결론",
     )
   );
 }
@@ -374,11 +377,12 @@ export function promptRequiresFinalDecisionExactlyOnce(
   prompt: ConsultingPrompt,
 ): boolean {
   return (
-    prompt.systemPrompt.includes(
-      "최종 결론은 답변 전체에 정확히 1회만 작성한다",
-    )
-    && prompt.userPrompt.includes(
-      "최종 결론은 답변 전체에 정확히 1회만 작성하세요",
+    countOccurrences(
+      prompt.userPrompt,
+      "최종 결론",
+    ) === 1
+    && prompt.systemPrompt.includes(
+      "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
     )
   );
 }
@@ -389,9 +393,9 @@ export function promptForbidsFinalDecisionPrefix(
 ): boolean {
   return (
     prompt.systemPrompt.includes(
-      "마지막 단락 앞에 제목, \"최종 판단:\", 따옴표, 목록 기호를 붙이지 않는다",
+      "마지막 단락에 제목이나 최종 판단이라는 형식을 붙여 복사하지 않는다",
     )
-    && prompt.userPrompt.includes(
+    && !prompt.userPrompt.includes(
       "앞에 제목, 최종 판단:, 따옴표, 목록 기호를 붙이지 마세요",
     )
   );
@@ -403,9 +407,9 @@ export function promptForbidsRepeatingFinalDecisionInBody(
 ): boolean {
   return (
     prompt.systemPrompt.includes(
-      "본문에서는 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 않는다",
+      "GPT는 판단을 새로 만들지 않고 엔진 판단을 사람이 이해할 수 있게 설명한다",
     )
-    && prompt.userPrompt.includes(
+    && !prompt.userPrompt.includes(
       "본문에서는 위 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 마세요",
     )
   );
@@ -1140,8 +1144,8 @@ function buildCase(
       ),
 
     /**
-     * Prompt가 마지막 단락에 엔진 최종 결론을
-     * 한 글자도 바꾸지 않고 쓰도록 강제한다.
+     * Prompt가 엔진 최종 결론을 약화하지 않고
+     * 마지막 단락 복사를 강제하지 않는다.
      */
     promptRequiresVerbatimFinalDecisionLastParagraph:
       promptRequiresVerbatimFinalDecisionLastParagraph(
@@ -1149,8 +1153,8 @@ function buildCase(
       ),
 
     /**
-     * Prompt가 최종 결론을 답변 전체에
-     * 정확히 1회만 쓰도록 강제한다.
+     * Prompt 사용자 문구에서 최종 결론이
+     * 한 번만 등장하고 반복 강제를 하지 않는다.
      */
     promptRequiresFinalDecisionExactlyOnce:
       promptRequiresFinalDecisionExactlyOnce(
@@ -1158,8 +1162,8 @@ function buildCase(
       ),
 
     /**
-     * Prompt가 마지막 단락 앞의 제목,
-     * "최종 판단:", 따옴표, 목록 기호를 금지한다.
+     * Prompt가 마지막 단락에 제목이나
+     * 최종 판단 형식을 붙여 복사하지 않는다.
      */
     promptForbidsFinalDecisionPrefix:
       promptForbidsFinalDecisionPrefix(
@@ -1167,8 +1171,8 @@ function buildCase(
       ),
 
     /**
-     * Prompt가 본문에서 최종 결론 전체 문장의
-     * 반복과 바꿔 쓰기를 금지한다.
+     * Prompt가 엔진 판단을 새로 만들거나
+     * 본문에서 같은 문장을 반복 강제하지 않는다.
      */
     promptForbidsRepeatingFinalDecisionInBody:
       promptForbidsRepeatingFinalDecisionInBody(
@@ -1430,55 +1434,55 @@ export function verifyConsultingAnswerQuality():
       ) === false,
 
     /**
-     * 마지막 단락 원문 고정 규칙이 없으면
-     * Prompt 검사를 통과시키지 않는다.
+     * 엔진 최종 결론 유지와 마지막 단락 복사
+     * 금지 규칙이 없으면 Prompt 검사를 통과시키지 않는다.
      */
     finalDecisionPromptRuleRejectsMissingVerbatimLastParagraph:
       promptRequiresVerbatimFinalDecisionLastParagraph({
         systemPrompt:
-          "최종 결론은 답변 전체에 정확히 1회만 작성한다",
+          "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
 
         userPrompt:
-          "최종 결론은 답변 전체에 정확히 1회만 작성하세요",
+          "엔진이 확정한 최종 결론",
       }) === false,
 
     /**
-     * 정확히 1회 작성 규칙이 없으면
-     * Prompt 검사를 통과시키지 않는다.
+     * 사용자 문구에서 최종 결론이 한 번만
+     * 등장하지 않으면 Prompt 검사를 통과시키지 않는다.
      */
     finalDecisionPromptRuleRejectsMissingExactlyOnce:
       promptRequiresFinalDecisionExactlyOnce({
         systemPrompt:
-          "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다",
+          "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
 
         userPrompt:
-          "위 최종 결론을 답변의 마지막 단락에 한 글자도 변경하지 않고 그대로 작성하세요",
+          "엔진이 확정한 최종 결론\n최종 결론 작성 규칙",
       }) === false,
 
     /**
-     * 제목·최종 판단:·따옴표·목록 기호 금지 규칙이
+     * 마지막 단락 형식 복사 금지 규칙이
      * 없으면 Prompt 검사를 통과시키지 않는다.
      */
     finalDecisionPromptRuleRejectsMissingPrefixBan:
       promptForbidsFinalDecisionPrefix({
         systemPrompt:
-          "최종 결론은 답변 전체에 정확히 1회만 작성한다",
+          "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
 
         userPrompt:
-          "최종 결론은 답변 전체에 정확히 1회만 작성하세요",
+          "앞에 제목, 최종 판단:, 따옴표, 목록 기호를 붙이지 마세요",
       }) === false,
 
     /**
-     * 본문 반복·바꿔 쓰기 금지 규칙이 없으면
+     * 엔진 판단 설명 규칙이 없으면
      * Prompt 검사를 통과시키지 않는다.
      */
     finalDecisionPromptRuleRejectsMissingBodyRepeatBan:
       promptForbidsRepeatingFinalDecisionInBody({
         systemPrompt:
-          "최종 결론은 답변 전체에 정확히 1회만 작성한다",
+          "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
 
         userPrompt:
-          "최종 결론은 답변 전체에 정확히 1회만 작성하세요",
+          "본문에서는 위 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 마세요",
       }) === false,
 
     /**

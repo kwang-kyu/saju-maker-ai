@@ -1,18 +1,18 @@
 ﻿import {
   comparePillars,
-} from "../../calculators/sajuInteractionCalculator";
+} from "../../calculators/sajuInteractionCalculator.js";
 import type {
   SajuTargetPeriodLuckFlowFact,
-} from "../../types/luckFlowFact";
+} from "../../types/luckFlowFact.js";
 import type {
   SajuEvidenceStrength,
   SajuInteractionFact,
   SajuPillarFact,
   SajuPillarPosition,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 import type {
   LifeFlowTarget,
-} from "../question/lifeFlowTarget";
+} from "../question/lifeFlowTarget.js";
 
 export type LifeFlowTargetFlow =
   | "daeun"

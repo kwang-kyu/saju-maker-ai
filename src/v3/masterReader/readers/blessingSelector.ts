@@ -1,13 +1,13 @@
 import type {
     BlessingArea,
     BlessingLevel,
-  } from "../types/blessing";
+  } from "../types/blessing.js";
   import type {
     MatchedBlessingRule,
-  } from "../rules/blessingRules";
+  } from "../rules/blessingRules.js";
   import type {
     BlessingAreaScore,
-  } from "./blessingScorer";
+  } from "./blessingScorer.js";
   
   export type BlessingSelectionStatus =
     | "clear"

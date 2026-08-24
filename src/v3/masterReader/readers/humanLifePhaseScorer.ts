@@ -1,8 +1,8 @@
-import type { HumanLifePhase } from "../types/humanLifePhase";
+import type { HumanLifePhase } from "../types/humanLifePhase.js";
 import type {
   HumanLifePhaseEvidence,
   HumanLifePhaseReaderInput,
-} from "../types/humanLifePhaseEvidence";
+} from "../types/humanLifePhaseEvidence.js";
 
 export type HumanLifePhaseScore = {
   phase: HumanLifePhase;

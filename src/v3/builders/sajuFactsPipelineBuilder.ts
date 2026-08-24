@@ -1,34 +1,34 @@
 import type {
   SajuFacts,
-} from "../types/sajuFacts";
+} from "../types/sajuFacts.js";
 
 import type {
   SajuLuckFlowFact,
-} from "../types/luckFlowFact";
+} from "../types/luckFlowFact.js";
 
 import type {
   V3LuckFlowCalculationResult,
   V3LuckFlowGender,
   V3LuckStartMethod,
-} from "../types/luckFlowCalculation";
+} from "../types/luckFlowCalculation.js";
 
 import {
   buildSajuFacts,
-} from "./sajuFactsBuilder";
+} from "./sajuFactsBuilder.js";
 
 import {
   buildSajuLuckFlowFact,
-} from "./luckFlowFactBuilder";
+} from "./luckFlowFactBuilder.js";
 
 import {
   buildV3LuckFlowCalculation,
-} from "./luckFlowCalculationBuilder";
+} from "./luckFlowCalculationBuilder.js";
 
 import {
   buildV3SajuCalculation,
   type V3CalculatedSaju,
   type V3SajuCalculationInput,
-} from "./v3SajuCalculationBuilder";
+} from "./v3SajuCalculationBuilder.js";
 
 export type SajuFactsPipelineInput =
   Omit<

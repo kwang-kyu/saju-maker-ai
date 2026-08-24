@@ -1,21 +1,21 @@
 import type {
     ConsultingClarificationFact,
-  } from "../consultingInput";
+  } from "../consultingInput.js";
   import {
     buildQuestionContext,
-  } from "../question/questionContextBuilder";
+  } from "../question/questionContextBuilder.js";
   import {
     readQuestion,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./regression/decisionEngineRegressionFixture";
+  } from "./regression/decisionEngineRegressionFixture.js";
   import {
     assessCompatibility,
-  } from "./compatibilityAssessment";
+  } from "./compatibilityAssessment.js";
   import {
     buildCounterpartSajuCalculation,
-  } from "./counterpartSajuCalculationBuilder";
+  } from "./counterpartSajuCalculationBuilder.js";
 
   export type CompatibilityAssessmentVerificationResult = {
     checks:

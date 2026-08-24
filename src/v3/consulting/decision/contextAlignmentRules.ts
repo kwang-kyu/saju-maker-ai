@@ -1,12 +1,12 @@
 import type {
     ContextAlignment,
     DecisionEvidenceSource,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import type {
     DecisionTarget,
     QuestionIntent,
     QuestionTopic,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   
   export type ContextAlignmentRule = {
     topic: QuestionTopic;

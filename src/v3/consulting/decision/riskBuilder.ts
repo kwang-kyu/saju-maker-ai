@@ -2,23 +2,23 @@ import type {
     DecisionEngineInput,
     DecisionResult,
     DecisionRisk,
-  } from "./decisionTypes";
-  import type { LifeContextAssessment } from "./lifeContextAssessment";
+  } from "./decisionTypes.js";
+  import type { LifeContextAssessment } from "./lifeContextAssessment.js";
   import type {
     DecisionRealityAssessment,
-  } from "./decisionRealityAssessment";
+  } from "./decisionRealityAssessment.js";
   import type {
     CompatibilityAssessment,
-  } from "./compatibilityAssessment";
+  } from "./compatibilityAssessment.js";
   import type {
     ReaderDecisionAssessment,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   import {
     buildReaderDecisionRisks,
-  } from "./readerDecisionRiskBuilder";
+  } from "./readerDecisionRiskBuilder.js";
   import type {
     QuestionRealitySignal,
-  } from "../question/questionContext";
+  } from "../question/questionContext.js";
 
   export function buildCompatibilityRisks(
     assessment: CompatibilityAssessment,

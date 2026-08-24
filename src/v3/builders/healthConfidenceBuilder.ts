@@ -1,12 +1,12 @@
 import type {
     HealthConfidence,
-  } from "../masterReader/types/health";
+  } from "../masterReader/types/health.js";
   import type {
     HealthAreaSelection,
-  } from "../masterReader/readers/healthSelector";
+  } from "../masterReader/readers/healthSelector.js";
   import type {
     MatchedHealthRule,
-  } from "../masterReader/rules/healthRules";
+  } from "../masterReader/rules/healthRules.js";
   
   type HealthConfidenceMetrics = {
     totalMatchCount: number;

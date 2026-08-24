@@ -2,37 +2,37 @@ import {
 
   buildCompatibilityEvidence,
 
-} from "./compatibilityEvidenceBuilder";
+} from "./compatibilityEvidenceBuilder.js";
 
 import {
 
   assessCompatibility,
 
-} from "./compatibilityAssessment";
+} from "./compatibilityAssessment.js";
 
 import {
 
   buildCounterpartSajuCalculation,
 
-} from "./counterpartSajuCalculationBuilder";
+} from "./counterpartSajuCalculationBuilder.js";
 
 import {
 
   buildSajuFactsPipeline,
 
-} from "../../builders/sajuFactsPipelineBuilder";
+} from "../../builders/sajuFactsPipelineBuilder.js";
 
 import {
 
   buildDecisionEngineRegressionInput,
 
-} from "./regression/decisionEngineRegressionFixture";
+} from "./regression/decisionEngineRegressionFixture.js";
 
 import {
 
   assessFullCompatibility,
 
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";
 
 
 

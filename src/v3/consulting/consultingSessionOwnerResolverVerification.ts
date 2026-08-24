@@ -1,14 +1,14 @@
 import {
     parseConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
   import {
     ConsultingSessionAuthenticationError,
     parseConsultingSessionBearerToken,
     resolveConsultingSessionOwner,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     ConsultingSessionOwnerResolver,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
 
   export type ConsultingSessionOwnerResolverVerificationResult = {
     checks:

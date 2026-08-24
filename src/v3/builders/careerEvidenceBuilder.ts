@@ -1,10 +1,10 @@
 import type {
     CareerEvidence,
-  } from "../masterReader/types/career";
+  } from "../masterReader/types/career.js";
   import type {
     SajuEvidenceStrength,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   function toCareerWeight(
     strength: SajuEvidenceStrength,

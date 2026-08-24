@@ -1,13 +1,13 @@
 import type {
   DecisionExplanationEvidence,
-} from "./decisionResultReader";
+} from "./decisionResultReader.js";
 import type {
   QuestionTopic,
-} from "../question/questionReader";
+} from "../question/questionReader.js";
 import {
   selectReaderDecisionSources,
   type ReaderDecisionSource,
-} from "../decision/readerDecisionSelectionBuilder";
+} from "../decision/readerDecisionSelectionBuilder.js";
 
 const READER_SOURCES:
   readonly ReaderDecisionSource[] = [

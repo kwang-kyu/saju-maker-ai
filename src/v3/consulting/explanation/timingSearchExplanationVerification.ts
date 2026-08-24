@@ -1,10 +1,10 @@
 ﻿import type {
     DecisionExplanationInput,
-  } from "./decisionResultReader";
+  } from "./decisionResultReader.js";
 
   import {
     buildDecisionExplanationPlan,
-  } from "./decisionExplanationPlan";
+  } from "./decisionExplanationPlan.js";
 
   export type TimingSearchExplanationVerificationResult = {
     checks: {

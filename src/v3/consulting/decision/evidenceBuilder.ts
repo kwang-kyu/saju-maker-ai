@@ -1,25 +1,25 @@
 import type {
   DecisionBrain,
-} from "./decisionBrain";
+} from "./decisionBrain.js";
 import type {
   CompatibilityAssessment,
-} from "./compatibilityAssessment";
+} from "./compatibilityAssessment.js";
 import {
   buildCompatibilityEvidence,
-} from "./compatibilityEvidenceBuilder";
+} from "./compatibilityEvidenceBuilder.js";
 import type {
   DecisionEngineInput,
   DecisionEvidence,
-} from "./decisionTypes";
+} from "./decisionTypes.js";
 import {
   buildReaderDecisionEvidence,
-} from "./readerDecisionEvidenceBuilder";
+} from "./readerDecisionEvidenceBuilder.js";
 import {
   buildDecisionRealityEvidence,
-} from "./decisionRealityEvidenceBuilder";
+} from "./decisionRealityEvidenceBuilder.js";
 import type {
   DecisionRealityAssessment,
-} from "./decisionRealityAssessment";
+} from "./decisionRealityAssessment.js";
 
 /**
  * Decision Evidence Builder

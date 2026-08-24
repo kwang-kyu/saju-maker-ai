@@ -1,6 +1,6 @@
 import {
     verifyConsultingAnswerQuality,
-  } from "./consultingAnswerQualityVerification";
+  } from "./consultingAnswerQualityVerification.js";
 
   const result =
     verifyConsultingAnswerQuality();

@@ -2,40 +2,40 @@
   buildV3LuckFlowCalculation,
   buildV3TargetIlun,
   buildV3WolunSegments,
-} from "../../builders/luckFlowCalculationBuilder";
+} from "../../builders/luckFlowCalculationBuilder.js";
 import {
   buildSajuFactsPipeline,
-} from "../../builders/sajuFactsPipelineBuilder";
+} from "../../builders/sajuFactsPipelineBuilder.js";
 import {
   assessLifeFlowInterpretation,
-} from "../decision/lifeFlowInterpretationAssessment";
+} from "../decision/lifeFlowInterpretationAssessment.js";
 import {
   buildDecisionEngineRegressionInput,
-} from "../decision/regression/decisionEngineRegressionFixture";
+} from "../decision/regression/decisionEngineRegressionFixture.js";
 import {
   buildQuestionContext,
-} from "./questionContextBuilder";
+} from "./questionContextBuilder.js";
 import {
   readQuestion,
-} from "./questionReader";
+} from "./questionReader.js";
 import {
   isLifeFlowInterpretationQuestion,
-} from "./lifeFlowInterpretationQuestionDetector";
+} from "./lifeFlowInterpretationQuestionDetector.js";
 import {
   resolveLifeFlowTarget,
-} from "./lifeFlowTargetResolver";
+} from "./lifeFlowTargetResolver.js";
 import {
   buildConsultingClarification,
-} from "../consultingClarificationBuilder";
+} from "../consultingClarificationBuilder.js";
 import {
   runDecisionEngine,
-} from "../decision/decisionEngine";
+} from "../decision/decisionEngine.js";
 import {
   verifyLifeFlowInterpretationAssessment,
-} from "../decision/lifeFlowInterpretationAssessmentVerification";
+} from "../decision/lifeFlowInterpretationAssessmentVerification.js";
 import {
   buildTargetPeriodLuckFlowForQuestion,
-} from "../decision/targetPeriodLuckFlowBuilder";
+} from "../decision/targetPeriodLuckFlowBuilder.js";
 
 const REFERENCE_DATE =
   "2025-08-16";

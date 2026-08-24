@@ -1,11 +1,11 @@
 import type {
     RelationshipArea,
     RelationshipEvidence,
-  } from "../types/relationship";
+  } from "../types/relationship.js";
   import {
     matchRelationshipRules,
     type MatchedRelationshipRule,
-  } from "../rules/relationshipRules";
+  } from "../rules/relationshipRules.js";
   
   export type RelationshipAreaScore = {
     area: RelationshipArea;

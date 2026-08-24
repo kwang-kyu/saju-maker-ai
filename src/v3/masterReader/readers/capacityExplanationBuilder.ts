@@ -4,7 +4,7 @@ import type {
     CapacityJudgement,
     CapacityLevel,
     CapacityResult,
-  } from "../types/capacity";
+  } from "../types/capacity.js";
   
   export type CapacityJudgementExplanation = {
     area: CapacityArea;

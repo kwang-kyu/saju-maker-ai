@@ -1,12 +1,12 @@
 import type {
     DecisionEngineRegressionCase,
-  } from "./decisionEngineRegressionRunner";
+  } from "./decisionEngineRegressionRunner.js";
   import {
     BUSINESS_START_EXPECTED_RESULT,
-  } from "./decisionEngineRegressionExpectedResult";
+  } from "./decisionEngineRegressionExpectedResult.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
   
   export const BUSINESS_START_REGRESSION_CASE:
     DecisionEngineRegressionCase = {

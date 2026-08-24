@@ -1,11 +1,11 @@
 import type {
     SurvivalEvidence,
     SurvivalStyleType,
-  } from "../types/survivalStyle";
+  } from "../types/survivalStyle.js";
   import {
     matchSurvivalStyleRules,
     type MatchedSurvivalStyleRule,
-  } from "../rules/survivalStyleRules";
+  } from "../rules/survivalStyleRules.js";
   
   export type SurvivalStyleScore = {
     style: SurvivalStyleType;

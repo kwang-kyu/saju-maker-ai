@@ -1,18 +1,18 @@
 import {
   buildConsultingOpenAIRequest,
-} from "../openai/consultingOpenAIAdapter";
+} from "../openai/consultingOpenAIAdapter.js";
 
 import {
   verifyConsultingAnswerQuality,
-} from "./consultingAnswerQualityVerification";
+} from "./consultingAnswerQualityVerification.js";
 
 import {
   verifyConsultingLiveAnswerQuality,
-} from "./consultingLiveAnswerQualityVerification";
+} from "./consultingLiveAnswerQualityVerification.js";
 
 import type {
   ConsultingPrompt,
-} from "./consultingPromptBuilder";
+} from "./consultingPromptBuilder.js";
 
 
 export const CONSULTING_LIVE_ANSWER_SEMANTIC_GATE_EVALUATION_KEYS = [
@@ -1542,7 +1542,7 @@ export async function verifyConsultingLiveAnswerSemanticGate():
   const {
     requestConsultingAnswer,
   } = await import(
-    "../openai/consultingOpenAIClient"
+    "../openai/consultingOpenAIClient.js"
   );
 
   const cases:

@@ -1,22 +1,22 @@
 import {
     readHumanLifeContext,
-  } from "../readers/humanLifeContextReader";
+  } from "../readers/humanLifeContextReader.js";
 
   import type {
     HumanLifeContext,
-  } from "../types/humanLifeContext";
+  } from "../types/humanLifeContext.js";
 
   import type {
     ConsultingClarificationFact,
-  } from "./consultingInput";
+  } from "./consultingInput.js";
 
   import {
     buildConsultingClarification,
-  } from "./consultingClarificationBuilder";
+  } from "./consultingClarificationBuilder.js";
   import {
     runConsultingTurn,
     type ConsultingTurnRunResult,
-  } from "./consultingRunner";
+  } from "./consultingRunner.js";
   import type {
     ConsultingClarificationRequest,
     ConsultingConfirmedField,
@@ -24,16 +24,16 @@ import {
     ConsultingSession,
     ConsultingTurn,
     ConsultingTurnKind,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     V3HumanLifeContextRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
   import type {
     CounterpartSajuCalculation,
-  } from "./decision/counterpartSajuCalculationBuilder";
+  } from "./decision/counterpartSajuCalculationBuilder.js";
   import type {
     QuestionReaderResult,
-  } from "./question/questionReader";
+  } from "./question/questionReader.js";
 
   export type ConsultingConversationHistoryEntry = {
     turnId:
@@ -190,11 +190,13 @@ preparedAt:
      * clarification 답변을 누적한 뒤에도 필수 필드가 남아 있을 때,
      * 완료된 항목과 필드를 제거한 요청만 전달한다.
      *
-     * 모든 필드가 완료된 경우에는 전달하지 않으며,
-     * Decision Engine의 새 결과를 그대로 사용한다.
+     * undefined는 override가 없음을 뜻하며
+     * 새로 생성한 clarification을 사용한다.
+     * null은 필수 항목이 모두 완료되어
+     * clarification을 다시 만들지 않음을 뜻한다.
      */
     pendingClarificationOverride?:
-      ConsultingClarificationRequest;
+      ConsultingClarificationRequest | null;
     };
 
   const LIFE_CONTEXT_KEYS = [
@@ -785,20 +787,9 @@ preparedAt:
 
     const pendingClarification =
       input.pendingClarificationOverride
-      ?? generatedClarification;
-
-    if (
-      turnResult
-        .decisionResult
-        .verdict
-      === "insufficientEvidence"
-      && pendingClarification
-        === null
-    ) {
-      throw new Error(
-        "Insufficient evidence requires a clarification request.",
-      );
-    }
+      === undefined
+        ? generatedClarification
+        : input.pendingClarificationOverride;
 
     const newTurn:
       ConsultingTurn = {

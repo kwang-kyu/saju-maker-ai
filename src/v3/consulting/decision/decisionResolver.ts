@@ -3,10 +3,10 @@ import type {
     DecisionConfidence,
     DecisionEngineInput,
     DecisionResult,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import type {
     LifeContextAssessment,
-  } from "./lifeContextAssessment";
+  } from "./lifeContextAssessment.js";
 
   export function resolveConfidence(
     questionConfidence: number,

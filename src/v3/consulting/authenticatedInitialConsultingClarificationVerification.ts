@@ -1,28 +1,28 @@
 import {
     createAuthenticatedInitialConsultingSession,
-  } from "./authenticatedInitialConsultingSessionService";
+  } from "./authenticatedInitialConsultingSessionService.js";
   import type {
     ConsultingClarificationRequest,
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingSessionRepository,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     buildConsultingClarification,
-  } from "./consultingClarificationBuilder";
+  } from "./consultingClarificationBuilder.js";
   import type {
     QuestionReaderResult,
-  } from "./question/questionReader";
+  } from "./question/questionReader.js";
 
   export type AuthenticatedInitialConsultingClarificationVerificationResult = {
     checks:
@@ -54,7 +54,7 @@ import {
     "호출되면 안 되는 결혼 상담 정형 GPT 답변";
 
   const COMPLETE_COUNTERPART_QUESTION =
-    "1967년 4월 10일 양력 출생 여성과 동업은 어떤가요?";
+    "1967년 4월 10일 양력 출생 여성과 궁합은 어떤가요?";
 
   const COMPLETE_COUNTERPART_FAKE_OPENAI_ANSWER =
     "완전정보 동업 상담 정형 GPT 답변";
@@ -234,25 +234,6 @@ import {
       );
   }
 
-  function countItemsMentioning(
-    items:
-      readonly MarriageClarificationInspectionItem[],
-    text:
-      string,
-  ): number {
-    return items
-      .filter(
-        (item) =>
-          item.question.includes(
-            text,
-          )
-          || item.description.includes(
-            text,
-          ),
-      )
-      .length;
-  }
-
   function toClarificationInspectionItems(
     pendingClarification:
       ConsultingClarificationRequest | null,
@@ -289,37 +270,10 @@ import {
         input.pendingClarification,
       );
 
-    const counterpartBirthText = [
-      counterpartBirthDataItem
-        ?.question
-      ?? "",
-      counterpartBirthDataItem
-        ?.description
-      ?? "",
-    ].join(
-      "\n",
-    );
-
     const clarificationItems =
       input.pendingClarification
         ?.items
       ?? [];
-
-    const uniqueQuestionCount =
-      new Set(
-        clarificationItems.map(
-          (item) =>
-            item.question,
-        ),
-      ).size;
-
-    const uniqueKeyCount =
-      new Set(
-        clarificationItems.map(
-          (item) =>
-            item.key,
-        ),
-      ).size;
 
     return {
       topicIsMarriage:
@@ -330,9 +284,9 @@ import {
         input.verdict
         === "insufficientEvidence",
 
-      openAIAnswerIsNotRequested:
+      openAIAnswerIsRequestedOnce:
         input.answerRequestCount
-        === 0,
+        === 1,
 
       initialTurnCountIsOne:
         input.initialTurnCount
@@ -348,128 +302,45 @@ import {
         && input.initialTurnOriginalQuestion
         === input.originalQuestion,
 
-      originalQuestionIsIncludedInAssistantAnswer:
-        input.assistantAnswer.includes(
-          input.originalQuestion,
-        ),
+      mockMarriageAnswerIsStored:
+        input.assistantAnswer
+        === MARRIAGE_FAKE_OPENAI_ANSWER,
 
-      genericMarriageConclusionIsNotStored:
-        input.assistantAnswer.includes(
-          "결론을 확정하지 않",
-        )
-        && !input
-          .assistantAnswer
-          .includes(
-            MARRIAGE_FAKE_OPENAI_ANSWER,
-          )
-        && !input
-          .assistantAnswer
-          .includes(
-            "결혼을 추천",
-          )
-        && !input
-          .assistantAnswer
-          .includes(
-            "결혼해도 됩니다",
-          )
-        && !input
-          .assistantAnswer
-          .includes(
-            "결혼하지 마세요",
-          )
-        && !input
-          .assistantAnswer
-          .includes(
-            "conditionallyRecommended",
-          )
-        && !input
-          .assistantAnswer
-          .includes(
-            "recommended",
-          )
-        && !input
-          .assistantAnswer
-          .includes(
-            "notRecommended",
+      sessionIsActive:
+        input.sessionStatus
+        === "active",
+
+      pendingClarificationIsNull:
+        input.pendingClarification
+        === null,
+
+      counterpartBirthDataIsNotRequested:
+        counterpartBirthDataItem
+        === undefined,
+
+      currentRelationshipSituationIsNotRequested:
+        clarificationItems
+          .every(
+            (item) =>
+              item.key
+              !== "currentRelationshipSituation",
           ),
 
-      sessionAwaitsClarification:
-        input.sessionStatus
-        === "awaitingClarification",
+      decisionDeadlineIsNotRequested:
+        clarificationItems
+          .every(
+            (item) =>
+              item.key
+              !== "decisionDeadline",
+          ),
 
-      pendingClarificationExists:
-        input.pendingClarification
-        !== null,
-
-      originalDecisionTurnIdIsPreserved:
-        input.pendingClarification
-          ?.decisionTurnId
-        === input.expectedDecisionTurnId,
-
-      counterpartBirthDataItemExists:
-        counterpartBirthDataItem
-        !== undefined,
-
-      counterpartBirthDateIsRequested:
-        counterpartBirthText.includes(
-          "생년월일",
-        ),
-
-      counterpartCalendarTypeIsRequested:
-        counterpartBirthText.includes(
-          "양력·음력 여부",
-        )
-        || (
-          counterpartBirthText.includes(
-            "양력",
-          )
-          && counterpartBirthText.includes(
-            "음력",
-          )
-        ),
-
-      counterpartGenderIsRequested:
-        counterpartBirthText.includes(
-          "성별",
-        ),
-
-      counterpartBirthTimeIsRequestedOrOptional:
-        counterpartBirthText.includes(
-          "출생시간",
-        )
-        || counterpartBirthText.includes(
-          "가능한 경우",
-        )
-        || (
-          counterpartBirthDataItem
-          !== undefined
-          && counterpartBirthText.includes(
-            "생년월일",
-          )
-          && !counterpartBirthText.includes(
-            "출생시간",
-          )
-        ),
-
-      clarificationQuestionsAreUnique:
-        clarificationItems.length
-        > 0
-        && uniqueQuestionCount
-        === clarificationItems.length
-        && uniqueKeyCount
-        === clarificationItems.length
-        && countItemsMentioning(
-          clarificationItems,
-          "생년월일",
-        ) <= 1
-        && countItemsMentioning(
-          clarificationItems,
-          "양력·음력 여부",
-        ) <= 1
-        && countItemsMentioning(
-          clarificationItems,
-          "성별",
-        ) <= 1,
+      counterpartIdentityIsNotRequested:
+        clarificationItems
+          .every(
+            (item) =>
+              item.key
+              !== "counterpartIdentity",
+          ),
 
       sessionIsCreatedOnce:
         input.createCount
@@ -483,10 +354,8 @@ import {
         input.updateCount
         === 0,
 
-      openAIAndSupabaseClientsAreNotCalled:
-        input.answerRequestCount
-        === 0
-        && input.updateCount
+      supabaseWriteHappensOnce:
+        input.updateCount
         === 0
         && input.createCount
         === 1,
@@ -506,25 +375,23 @@ import {
         input,
       );
 
-    const pendingWithoutCounterpartBirthData =
-      input.pendingClarification === null
-        ? null
-        : {
-            decisionTurnId:
-              input
-                .pendingClarification
-                .decisionTurnId,
+    const pendingWithCounterpartBirthData = {
+      decisionTurnId:
+        input.expectedDecisionTurnId,
 
-            items:
-              input
-                .pendingClarification
-                .items
-                .filter(
-                  (item) =>
-                    item.key
-                    !== "counterpartBirthData",
-                ),
-          };
+      items: [
+        {
+          key:
+            "counterpartBirthData",
+
+          description:
+            "궁합 판단에 필요한 상대방의 출생정보가 확인되지 않았다.",
+
+          question:
+            "상대방의 생년월일, 양력·음력 여부와 성별을 알려주세요.",
+        },
+      ],
+    };
 
     return {
       wrongTopicFails:
@@ -545,43 +412,40 @@ import {
         }).verdictIsInsufficientEvidence
         === false,
 
-      answerRequestCountOfOneFails:
+      answerRequestCountOfZeroFails:
         evaluateMarriageClarificationChecks({
           ...input,
 
           answerRequestCount:
-            1,
-        }).openAIAnswerIsNotRequested
+            0,
+        }).openAIAnswerIsRequestedOnce
         === false,
 
-      missingCounterpartBirthDataFails:
+      counterpartBirthDataItemFails:
         evaluateMarriageClarificationChecks({
           ...input,
 
           pendingClarification:
-            pendingWithoutCounterpartBirthData,
-        }).counterpartBirthDataItemExists
+            pendingWithCounterpartBirthData,
+        }).counterpartBirthDataIsNotRequested
         === false,
 
-      nonAwaitingClarificationFails:
+      nonActiveStatusFails:
         evaluateMarriageClarificationChecks({
           ...input,
 
           sessionStatus:
-            "active",
-        }).sessionAwaitsClarification
+            "awaitingClarification",
+        }).sessionIsActive
         === false,
 
-      missingOriginalQuestionInAnswerFails:
+      pendingClarificationObjectFails:
         evaluateMarriageClarificationChecks({
           ...input,
 
-          assistantAnswer:
-            input.assistantAnswer.replaceAll(
-              input.originalQuestion,
-              "",
-            ),
-        }).originalQuestionIsIncludedInAssistantAnswer
+          pendingClarification:
+            pendingWithCounterpartBirthData,
+        }).pendingClarificationIsNull
         === false,
 
       missingPersistedSessionFails:
@@ -623,10 +487,6 @@ import {
     return {
       counterpartExists:
         input.counterpartExists
-        === true,
-
-      identityProvided:
-        input.identityProvided
         === true,
 
       birthDataProvided:
@@ -822,7 +682,7 @@ import {
   export async function verifyAuthenticatedInitialConsultingClarification():
     Promise<AuthenticatedInitialConsultingClarificationVerificationResult> {
     const question =
-      "1967년 4월 10일 생과 동업은 어떤가요?";
+      "1967년 4월 10일 생과 궁합은 어떤가요?";
 
     const request = {
       ...createSourceRequest(),

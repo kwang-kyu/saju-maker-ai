@@ -1,6 +1,6 @@
 import {
   verifyRoleRecommendationExplanation,
-} from "./roleRecommendationExplanationVerification";
+} from "./roleRecommendationExplanationVerification.js";
 
 const result =
   verifyRoleRecommendationExplanation();

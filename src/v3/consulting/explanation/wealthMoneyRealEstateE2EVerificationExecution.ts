@@ -1,6 +1,6 @@
 import {
     verifyWealthMoneyRealEstateE2E,
-  } from "./wealthMoneyRealEstateE2EVerification";
+  } from "./wealthMoneyRealEstateE2EVerification.js";
 
   const result =
     verifyWealthMoneyRealEstateE2E();

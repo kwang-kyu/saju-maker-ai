@@ -1,6 +1,6 @@
 import {
   verifyConsultingInitialFollowUpAnswerE2E,
-} from "./consultingInitialFollowUpAnswerE2EVerification";
+} from "./consultingInitialFollowUpAnswerE2EVerification.js";
 
 /**
  * 최초 상담 → 세션 생성 → 후속 상담의

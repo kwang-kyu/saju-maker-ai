@@ -1,6 +1,6 @@
 import {
   verifyConsultingLiveAnswerSemanticGate,
-} from "./consultingLiveAnswerSemanticGateVerification";
+} from "./consultingLiveAnswerSemanticGateVerification.js";
 
 /**
  * 실제 GPT 상담문 Live semanticGate Verification.

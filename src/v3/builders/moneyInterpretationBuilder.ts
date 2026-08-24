@@ -3,13 +3,13 @@ import type {
     MoneyAreaInterpretation,
     MoneyInterpretation,
     MoneyLevel,
-  } from "../masterReader/types/money";
+  } from "../masterReader/types/money.js";
   import type {
     MoneyAreaSelection,
-  } from "../masterReader/readers/moneySelector";
+  } from "../masterReader/readers/moneySelector.js";
   import {
     buildMoneyAreaInterpretation,
-  } from "./moneyAreaInterpretationBuilder";
+  } from "./moneyAreaInterpretationBuilder.js";
   
   const MONEY_AREAS: MoneyArea[] = [
     "generation",

@@ -1,6 +1,6 @@
 import {
     verifyDecisionExplanationTextDeduplicator,
-  } from "./decisionExplanationTextDeduplicatorVerification";
+  } from "./decisionExplanationTextDeduplicatorVerification.js";
 
   const result =
     verifyDecisionExplanationTextDeduplicator();

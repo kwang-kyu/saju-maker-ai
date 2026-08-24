@@ -1,6 +1,6 @@
 import type {
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   export type TenGodStructureCalculatorInput = {
     yearTenGod?: string;

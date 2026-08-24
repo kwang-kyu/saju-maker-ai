@@ -1,6 +1,6 @@
 import {
     buildReaderDecisionRisks,
-  } from "./readerDecisionRiskBuilder";
+  } from "./readerDecisionRiskBuilder.js";
   import type {
     ReaderDecisionAssessment,
     ReaderDecisionAssessmentItem,
@@ -8,10 +8,10 @@ import {
     ReaderDecisionConstraintLevel,
     ReaderDecisionLevel,
     ReaderDecisionSupportLevel,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   import type {
     DecisionRisk,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
 
   export type ReaderDecisionRiskVerificationResult = {
     cases: Array<{

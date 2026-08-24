@@ -1,9 +1,9 @@
 import type {
     QuestionRealitySignal,
-  } from "../../question/questionContext";
+  } from "../../question/questionContext.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
 
   type JobRealityRegressionFixture = {
     name: string;

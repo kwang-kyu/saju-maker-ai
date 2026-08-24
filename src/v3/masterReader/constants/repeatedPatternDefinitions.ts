@@ -1,6 +1,6 @@
 import type {
   RepeatedPatternType,
-} from "../types/repeatedPattern";
+} from "../types/repeatedPattern.js";
 
 export type RepeatedPatternDefinition = {
   type:

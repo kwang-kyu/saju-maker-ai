@@ -1,31 +1,31 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     InvalidAuthenticatedConsultingSessionTurnRequestError,
-  } from "./authenticatedConsultingSessionTurnRequest";
+  } from "./authenticatedConsultingSessionTurnRequest.js";
   import {
     ConsultingSessionAuthenticationError,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import {
     ConsultingSessionConflictError,
     ConsultingSessionNotFoundError,
-  } from "./persistedConsultingSessionTurnService";
+  } from "./persistedConsultingSessionTurnService.js";
   import {
     handleAuthenticatedConsultingSessionTurnHttpRequest,
-  } from "./authenticatedConsultingSessionTurnHttpHandler";
+  } from "./authenticatedConsultingSessionTurnHttpHandler.js";
   import type {
     AuthenticatedConsultingSessionTurnHttpResponse,
-  } from "./authenticatedConsultingSessionTurnHttpHandler";
+  } from "./authenticatedConsultingSessionTurnHttpHandler.js";
   import type {
     ExecuteAuthenticatedConsultingSessionTurnRequestInput,
-  } from "./authenticatedConsultingSessionTurnService";
+  } from "./authenticatedConsultingSessionTurnService.js";
 
   export type AuthenticatedConsultingSessionTurnHttpHandlerVerificationResult = {
     checks:

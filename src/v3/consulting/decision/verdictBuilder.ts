@@ -1,18 +1,18 @@
 import type {
   DecisionVerdict,
-} from "./decisionTypes";
+} from "./decisionTypes.js";
 import type {
   VerdictContext,
-} from "./verdictContextBuilder";
+} from "./verdictContextBuilder.js";
 import {
   evaluateLifeDriverVerdictRule,
-} from "./lifeDriverVerdictRules";
+} from "./lifeDriverVerdictRules.js";
 import {
   evaluateSurvivalStyleVerdictRule,
-} from "./survivalStyleVerdictRules";
+} from "./survivalStyleVerdictRules.js";
 import {
   evaluateRepeatedPatternVerdictRule,
-} from "./repeatedPatternVerdictRules";
+} from "./repeatedPatternVerdictRules.js";
 
 function applyLifeDriverEffect(
   verdict: DecisionVerdict,

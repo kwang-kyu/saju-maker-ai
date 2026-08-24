@@ -5,23 +5,23 @@
 
   import {
     createV3ConsultingHandler,
-  } from "../../../api/v3ConsultingRoute";
+  } from "../../../api/v3ConsultingRoute.js";
 
   import {
     buildV3ConsultingRequest,
-  } from "../../../api/v3Consulting";
+  } from "../../../api/v3Consulting.js";
 
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
 
   import type {
     ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
 
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   type MockResponseState = {
     statusCode:

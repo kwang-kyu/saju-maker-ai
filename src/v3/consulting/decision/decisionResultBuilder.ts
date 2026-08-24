@@ -1,16 +1,16 @@
 ﻿import type {
     DecisionEngineInput,
     DecisionResult,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import type {
     RoleRecommendationAssessment,
-  } from "./roleRecommendationAssessment";
+  } from "./roleRecommendationAssessment.js";
   import type {
     LifeFlowInterpretationAssessment,
-  } from "./lifeFlowInterpretationAssessment";
+  } from "./lifeFlowInterpretationAssessment.js";
   import type {
     TimingAssessment,
-  } from "./timingAssessment";
+  } from "./timingAssessment.js";
 
   export type DecisionResultBuilderInput = {
     decisionInput: DecisionEngineInput;

@@ -1,6 +1,6 @@
 import {
     verifyConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerIdVerification";
+  } from "./consultingSessionOwnerIdVerification.js";
 
   const result =
     verifyConsultingSessionOwnerId();

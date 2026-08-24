@@ -1,32 +1,32 @@
 import {
     buildCareerConfidence,
-  } from "../../builders/careerConfidenceBuilder";
+  } from "../../builders/careerConfidenceBuilder.js";
   import {
     buildCareerEvidence,
-  } from "../../builders/careerEvidenceBuilder";
+  } from "../../builders/careerEvidenceBuilder.js";
   import {
     buildCareerAreaInterpretation,
-  } from "../../builders/careerAreaInterpretationBuilder";
+  } from "../../builders/careerAreaInterpretationBuilder.js";
   import {
     buildCareerInterpretation,
-  } from "../../builders/careerInterpretationBuilder";
+  } from "../../builders/careerInterpretationBuilder.js";
   import type {
     CareerArea,
     CareerEvidence,
     CareerJudgement,
     CareerResult,
-  } from "../types/career";
+  } from "../types/career.js";
   import type {
     SajuStructureFact,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import {
     scoreCareerAreas,
     type CareerAreaScore,
-  } from "./careerScorer";
+  } from "./careerScorer.js";
   import {
     selectCareerAreas,
     type CareerAreaSelection,
-  } from "./careerSelector";
+  } from "./careerSelector.js";
   
   const CAREER_AREAS: CareerArea[] = [
     "roleOrientation",

@@ -1,6 +1,6 @@
 import {
   verifyConsultingClarificationAnswerBuilder,
-} from "./consultingClarificationAnswerBuilderVerification";
+} from "./consultingClarificationAnswerBuilderVerification.js";
 
 function executeVerification():
   void {

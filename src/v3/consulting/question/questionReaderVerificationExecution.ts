@@ -1,6 +1,6 @@
 import {
   verifyQuestionReader,
-} from "./questionReaderVerification";
+} from "./questionReaderVerification.js";
 
 const result =
   verifyQuestionReader();

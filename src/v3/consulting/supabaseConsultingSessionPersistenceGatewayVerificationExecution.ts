@@ -1,6 +1,6 @@
 import {
     verifySupabaseConsultingSessionPersistenceGateway,
-  } from "./supabaseConsultingSessionPersistenceGatewayVerification";
+  } from "./supabaseConsultingSessionPersistenceGatewayVerification.js";
 
   async function executeVerification():
     Promise<void> {

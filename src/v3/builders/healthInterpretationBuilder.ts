@@ -2,13 +2,13 @@ import type {
     HealthArea,
     HealthInterpretation,
     HealthLevel,
-  } from "../masterReader/types/health";
+  } from "../masterReader/types/health.js";
   import type {
     HealthAreaSelection,
-  } from "../masterReader/readers/healthSelector";
+  } from "../masterReader/readers/healthSelector.js";
   import {
     buildHealthAreaInterpretation,
-  } from "./healthAreaInterpretationBuilder";
+  } from "./healthAreaInterpretationBuilder.js";
   
   const HEALTH_AREAS:
     HealthArea[] = [

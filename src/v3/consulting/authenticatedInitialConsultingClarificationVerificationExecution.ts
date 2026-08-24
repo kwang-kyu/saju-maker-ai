@@ -1,6 +1,6 @@
 import {
     verifyAuthenticatedInitialConsultingClarification,
-  } from "./authenticatedInitialConsultingClarificationVerification";
+  } from "./authenticatedInitialConsultingClarificationVerification.js";
 
   async function executeVerification():
     Promise<void> {

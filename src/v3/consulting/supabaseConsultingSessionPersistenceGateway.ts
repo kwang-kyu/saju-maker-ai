@@ -8,10 +8,10 @@ import type {
     InsertConsultingSessionPersistenceRowResult,
     UpdateConsultingSessionPersistenceRowInput,
     UpdateConsultingSessionPersistenceRowResult,
-  } from "./consultingSessionPersistenceGateway";
+  } from "./consultingSessionPersistenceGateway.js";
   import type {
     ConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
 
 
   export const V3_CONSULTING_SESSIONS_TABLE =

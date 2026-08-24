@@ -1,12 +1,12 @@
 import type {
     QuestionRealitySignal,
-  } from "../../question/questionContext";
+  } from "../../question/questionContext.js";
   import {
     runDecisionEngine,
-  } from "../decisionEngine";
+  } from "../decisionEngine.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
 
   export type JobRiskRegressionVerificationResult = {
     question: {

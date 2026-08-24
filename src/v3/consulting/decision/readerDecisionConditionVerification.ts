@@ -1,6 +1,6 @@
 import {
     buildReaderDecisionConditions,
-  } from "./readerDecisionConditionBuilder";
+  } from "./readerDecisionConditionBuilder.js";
   import type {
     ReaderDecisionAssessment,
     ReaderDecisionAssessmentItem,
@@ -8,10 +8,10 @@ import {
     ReaderDecisionConstraintLevel,
     ReaderDecisionLevel,
     ReaderDecisionSupportLevel,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   import type {
     DecisionCondition,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
 
   export type ReaderDecisionConditionVerificationResult = {
     cases: Array<{

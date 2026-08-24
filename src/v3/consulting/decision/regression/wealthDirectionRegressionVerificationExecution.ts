@@ -1,6 +1,6 @@
 import {
     verifyWealthDirectionRegression,
-} from "./wealthDirectionRegressionVerification";
+} from "./wealthDirectionRegressionVerification.js";
 
 const result =
     verifyWealthDirectionRegression();

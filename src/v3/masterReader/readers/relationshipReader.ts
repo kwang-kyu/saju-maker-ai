@@ -1,32 +1,32 @@
 import {
     buildRelationshipConfidence,
-  } from "../../builders/relationshipConfidenceBuilder";
+  } from "../../builders/relationshipConfidenceBuilder.js";
   import {
     buildRelationshipEvidence,
-  } from "../../builders/relationshipEvidenceBuilder";
+  } from "../../builders/relationshipEvidenceBuilder.js";
   import {
     buildRelationshipAreaInterpretation,
-  } from "../../builders/relationshipAreaInterpretationBuilder";
+  } from "../../builders/relationshipAreaInterpretationBuilder.js";
   import {
     buildRelationshipInterpretation,
-  } from "../../builders/relationshipInterpretationBuilder";
+  } from "../../builders/relationshipInterpretationBuilder.js";
   import type {
     RelationshipArea,
     RelationshipEvidence,
     RelationshipJudgement,
     RelationshipResult,
-  } from "../types/relationship";
+  } from "../types/relationship.js";
   import type {
     SajuStructureFact,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import {
     scoreRelationshipAreas,
     type RelationshipAreaScore,
-  } from "./relationshipScorer";
+  } from "./relationshipScorer.js";
   import {
     selectRelationshipAreas,
     type RelationshipAreaSelection,
-  } from "./relationshipSelector";
+  } from "./relationshipSelector.js";
   
   const RELATIONSHIP_AREAS:
     RelationshipArea[] = [

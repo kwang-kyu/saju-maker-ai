@@ -1,49 +1,49 @@
 import type {
   MasterProfile,
-} from "../types/masterProfile";
+} from "../types/masterProfile.js";
 import type {
   MasterReaderInput,
-} from "../types/masterReaderInput";
+} from "../types/masterReaderInput.js";
 import type {
   MasterReaderResult,
-} from "../types/masterReaderResult";
+} from "../types/masterReaderResult.js";
 
 import {
   readBlessing,
-} from "./blessingReader";
+} from "./blessingReader.js";
 import {
   readCapacity,
-} from "./capacityReader";
+} from "./capacityReader.js";
 import {
   readCareer,
-} from "./careerReader";
+} from "./careerReader.js";
 import {
   readDestiny,
-} from "./destinyReader";
+} from "./destinyReader.js";
 import {
   readHealth,
-} from "./healthReader";
+} from "./healthReader.js";
 import {
   readLifeDriver,
-} from "./lifeDriverReader";
+} from "./lifeDriverReader.js";
 import {
   buildMasterHumanSummary,
-} from "./masterHumanSummaryBuilder";
+} from "./masterHumanSummaryBuilder.js";
 import {
   buildMasterProfileExplanation,
-} from "./masterProfileExplanationBuilder";
+} from "./masterProfileExplanationBuilder.js";
 import {
   readMoney,
-} from "./moneyReader";
+} from "./moneyReader.js";
 import {
   readRelationship,
-} from "./relationshipReader";
+} from "./relationshipReader.js";
 import {
   readRepeatedPattern,
-} from "./repeatedPatternReader";
+} from "./repeatedPatternReader.js";
 import {
   readSurvivalStyle,
-} from "./survivalStyleReader";
+} from "./survivalStyleReader.js";
 
 export function readMasterProfile(
   input: MasterReaderInput,

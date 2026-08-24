@@ -7,28 +7,28 @@ import {
 
   import {
     createAuthenticatedSupabaseConsultingSessionRepository,
-  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory";
+  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory.js";
   import type {
     AuthenticatedSupabaseConsultingSessionRepositoryDependencies,
-  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory";
+  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory.js";
   import {
     ConsultingSessionAuthenticationError,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     ConsultingSessionOwnerResolver,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import {
     parseConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
   import {
     GatewayConsultingSessionRepository,
-  } from "./gatewayConsultingSessionRepository";
+  } from "./gatewayConsultingSessionRepository.js";
   import {
     SupabaseConsultingSessionPersistenceGateway,
-  } from "./supabaseConsultingSessionPersistenceGateway";
+  } from "./supabaseConsultingSessionPersistenceGateway.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
 
   export type AuthenticatedSupabaseConsultingSessionRepositoryFactoryVerificationResult = {
     checks:

@@ -1,6 +1,6 @@
 ﻿import {
     verifyDirectionJudgementBuilder,
-  } from "./directionJudgementBuilderVerification";
+  } from "./directionJudgementBuilderVerification.js";
 
   const result =
     verifyDirectionJudgementBuilder();

@@ -1,6 +1,6 @@
 import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type MoneyArea =
     | "generation"

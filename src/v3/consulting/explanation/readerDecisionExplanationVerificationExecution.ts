@@ -1,6 +1,6 @@
 import {
     verifyReaderDecisionExplanation,
-  } from "./readerDecisionExplanationVerification";
+  } from "./readerDecisionExplanationVerification.js";
   
   const result =
     verifyReaderDecisionExplanation();

@@ -1,28 +1,28 @@
 import type {
   LifeDriverMeaning,
-} from "../masterReader/types/lifeDriverInput";
+} from "../masterReader/types/lifeDriverInput.js";
 
 import type {
   MasterReaderEvidenceBundle,
-} from "../types/masterReaderEvidenceBundle";
+} from "../types/masterReaderEvidenceBundle.js";
 
 import type {
   SajuEvidenceStrength,
   SajuFacts,
   SajuStructureFact,
-} from "../types/sajuFacts";
+} from "../types/sajuFacts.js";
 
 import {
   buildHumanLifePhaseReaderInput,
-} from "./humanLifePhaseEvidenceBuilder";
+} from "./humanLifePhaseEvidenceBuilder.js";
 
 import {
   buildRepeatedPatternEvidence,
-} from "./repeatedPatternEvidenceBuilder";
+} from "./repeatedPatternEvidenceBuilder.js";
 
 import {
   buildSurvivalStyleEvidence,
-} from "./survivalStyleEvidenceBuilder";
+} from "./survivalStyleEvidenceBuilder.js";
 
 function toConfidence(
   strength: SajuEvidenceStrength,

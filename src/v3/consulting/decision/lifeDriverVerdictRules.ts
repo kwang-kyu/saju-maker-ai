@@ -1,5 +1,5 @@
-import type { LifeDriverType } from "../../masterReader/types/lifeDriver";
-import type { DecisionTarget } from "../question/questionReader";
+import type { LifeDriverType } from "../../masterReader/types/lifeDriver.js";
+import type { DecisionTarget } from "../question/questionReader.js";
 
 export type LifeDriverVerdictEffect =
   | "support"

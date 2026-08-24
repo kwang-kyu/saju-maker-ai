@@ -1,12 +1,12 @@
 import type {
   PatternEvidence,
   RepeatedPatternType,
-} from "../types/repeatedPattern";
+} from "../types/repeatedPattern.js";
 
 import {
   matchRepeatedPatternRules,
   type MatchedRepeatedPatternRule,
-} from "../rules/repeatedPatternRules";
+} from "../rules/repeatedPatternRules.js";
 
 export type RepeatedPatternScore = {
   pattern:

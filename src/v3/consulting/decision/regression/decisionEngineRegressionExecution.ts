@@ -1,9 +1,9 @@
 import {
     BUSINESS_START_REGRESSION_CASE,
-  } from "./businessStartRegressionCase";
+  } from "./businessStartRegressionCase.js";
   import {
     runDecisionEngineRegression,
-  } from "./decisionEngineRegressionRunner";
+  } from "./decisionEngineRegressionRunner.js";
   
   const result =
     runDecisionEngineRegression(

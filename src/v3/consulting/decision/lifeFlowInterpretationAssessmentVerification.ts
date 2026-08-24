@@ -1,63 +1,63 @@
 ﻿import {
   buildV3TargetIlun,
-} from "../../builders/luckFlowCalculationBuilder";
+} from "../../builders/luckFlowCalculationBuilder.js";
 import {
   buildSajuFactsPipeline,
-} from "../../builders/sajuFactsPipelineBuilder";
+} from "../../builders/sajuFactsPipelineBuilder.js";
 import {
   buildConsultingPrompt,
-} from "../explanation/consultingPromptBuilder";
+} from "../explanation/consultingPromptBuilder.js";
 import {
   buildDecisionExplanationPayload,
-} from "../explanation/decisionExplanationPayload";
+} from "../explanation/decisionExplanationPayload.js";
 import {
   buildDecisionExplanationPlan,
-} from "../explanation/decisionExplanationPlan";
+} from "../explanation/decisionExplanationPlan.js";
 import {
   readDecisionResult,
-} from "../explanation/decisionResultReader";
+} from "../explanation/decisionResultReader.js";
 import {
   assessLifeFlowInterpretation,
   aggregateDirectionalSignals,
   type LifeFlowSignalContribution,
-} from "./lifeFlowInterpretationAssessment";
+} from "./lifeFlowInterpretationAssessment.js";
 import {
   buildLifeFlowInterpretationDecisionResult,
-} from "./lifeFlowInterpretationDecisionBuilder";
+} from "./lifeFlowInterpretationDecisionBuilder.js";
 import {
   buildTargetPeriodLuckFlowForQuestion,
-} from "./targetPeriodLuckFlowBuilder";
+} from "./targetPeriodLuckFlowBuilder.js";
 import {
   buildDecisionEngineRegressionInput,
-} from "./regression/decisionEngineRegressionFixture";
+} from "./regression/decisionEngineRegressionFixture.js";
 import {
   resolveLifeFlowTarget,
-} from "../question/lifeFlowTargetResolver";
+} from "../question/lifeFlowTargetResolver.js";
 import {
   buildQuestionContext,
-} from "../question/questionContextBuilder";
+} from "../question/questionContextBuilder.js";
 import {
   readQuestion,
-} from "../question/questionReader";
+} from "../question/questionReader.js";
 import {
   runDecisionEngine,
-} from "./decisionEngine";
+} from "./decisionEngine.js";
 import {
   assessLifeFlowPeriodInteractions,
-} from "./lifeFlowPeriodInteractionAssessment";
+} from "./lifeFlowPeriodInteractionAssessment.js";
 import {
   getTenGodByStem,
-} from "../../../data/tenGodService";
+} from "../../../data/tenGodService.js";
 import type {
   SajuLuckFlowTenGod,
   SajuTargetPeriodLuckFlowFact,
-} from "../../types/luckFlowFact";
+} from "../../types/luckFlowFact.js";
 import type {
   SajuElementDistribution,
   SajuFacts,
   SajuPillarFact,
   SajuStructureFact,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 import {
   readFileSync,
 } from "node:fs";

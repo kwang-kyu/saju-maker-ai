@@ -1,12 +1,12 @@
 import type {
     CapacityConfidence,
-  } from "../masterReader/types/capacity";
+  } from "../masterReader/types/capacity.js";
   import type {
     CapacityAreaSelection,
-  } from "../masterReader/readers/capacitySelector";
+  } from "../masterReader/readers/capacitySelector.js";
   import type {
     MatchedCapacityRule,
-  } from "../masterReader/rules/capacityRules";
+  } from "../masterReader/rules/capacityRules.js";
   
   type CapacityConfidenceMetrics = {
     totalMatchCount: number;

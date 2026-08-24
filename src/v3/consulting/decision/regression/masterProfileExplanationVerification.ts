@@ -1,6 +1,6 @@
 import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
   
   export type MasterProfileExplanationVerificationResult = {
     actual: {

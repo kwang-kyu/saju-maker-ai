@@ -1,46 +1,46 @@
 import type {
   MasterProfile,
-} from "../types/masterProfile";
+} from "../types/masterProfile.js";
 import {
   buildBlessingExplanation,
   type BlessingResultExplanation,
-} from "./blessingExplanationBuilder";
+} from "./blessingExplanationBuilder.js";
 import {
   buildCapacityExplanation,
   type CapacityResultExplanation,
-} from "./capacityExplanationBuilder";
+} from "./capacityExplanationBuilder.js";
 import {
   buildCareerExplanation,
   type CareerResultExplanation,
-} from "./careerExplanationBuilder";
+} from "./careerExplanationBuilder.js";
 import {
   buildDestinyExplanation,
   type DestinyResultExplanation,
-} from "./destinyExplanationBuilder";
+} from "./destinyExplanationBuilder.js";
 import {
   buildHealthExplanation,
   type HealthResultExplanation,
-} from "./healthExplanationBuilder";
+} from "./healthExplanationBuilder.js";
 import {
   buildLifeDriverExplanation,
   type LifeDriverExplanation,
-} from "./lifeDriverExplanationBuilder";
+} from "./lifeDriverExplanationBuilder.js";
 import {
   buildMoneyExplanation,
   type MoneyResultExplanation,
-} from "./moneyExplanationBuilder";
+} from "./moneyExplanationBuilder.js";
 import {
   buildRelationshipExplanation,
   type RelationshipResultExplanation,
-} from "./relationshipExplanationBuilder";
+} from "./relationshipExplanationBuilder.js";
 import {
   buildRepeatedPatternExplanation,
   type RepeatedPatternResultExplanation,
-} from "./repeatedPatternExplanationBuilder";
+} from "./repeatedPatternExplanationBuilder.js";
 import {
   buildSurvivalStyleExplanation,
   type SurvivalStyleResultExplanation,
-} from "./survivalStyleExplanationBuilder";
+} from "./survivalStyleExplanationBuilder.js";
 
 export type MasterProfileExplanation = {
   title: string;

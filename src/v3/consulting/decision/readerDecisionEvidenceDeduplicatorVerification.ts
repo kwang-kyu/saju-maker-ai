@@ -1,9 +1,9 @@
 import type {
     DecisionEvidence,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import {
     deduplicateReaderDecisionEvidence,
-  } from "./readerDecisionEvidenceDeduplicator";
+  } from "./readerDecisionEvidenceDeduplicator.js";
   export type ReaderDecisionEvidenceDeduplicatorVerificationResult = {
     input:
       DecisionEvidence[];

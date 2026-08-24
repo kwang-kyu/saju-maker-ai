@@ -1,6 +1,6 @@
 ﻿import {
     verifyV3ConsultingPipelineIntegration,
-  } from "./v3ConsultingPipelineIntegrationVerification";
+  } from "./v3ConsultingPipelineIntegrationVerification.js";
 
   const result =
     await verifyV3ConsultingPipelineIntegration();

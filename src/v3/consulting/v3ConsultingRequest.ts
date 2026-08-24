@@ -1,10 +1,10 @@
 import type {
     SajuFactsPipelineInput,
-  } from "../builders/sajuFactsPipelineBuilder";
+  } from "../builders/sajuFactsPipelineBuilder.js";
 
   import type {
     HumanLifeContextReaderInput,
-  } from "../readers/humanLifeContextReader";
+  } from "../readers/humanLifeContextReader.js";
 
   export type V3ConsultingCalendarType =
     | "solar"

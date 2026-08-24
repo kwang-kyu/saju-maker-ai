@@ -1,26 +1,26 @@
 import {
   buildDecisionEngineRegressionInput,
-} from "../decision/regression/decisionEngineRegressionFixture";
+} from "../decision/regression/decisionEngineRegressionFixture.js";
 import {
   buildQuestionContext,
-} from "./questionContextBuilder";
+} from "./questionContextBuilder.js";
 import {
   readQuestion,
-} from "./questionReader";
+} from "./questionReader.js";
 import type {
   DecisionTarget,
   QuestionAnalysisMode,
   QuestionIntent,
   QuestionMotive,
   QuestionTopic,
-} from "./questionReader";
+} from "./questionReader.js";
 import type {
   HumanDestinyContext,
-} from "../../types/humanDestinyContext";
+} from "../../types/humanDestinyContext.js";
 import {
   applyRoleRecommendationNormalization,
   isRoleRecommendationQuestion,
-} from "./roleRecommendationQuestionDetector";
+} from "./roleRecommendationQuestionDetector.js";
 
 const ROLE_QUESTION =
   "내가 연극을 하면 어떤 역할이 어울릴까요?";

@@ -4,7 +4,7 @@ import type {
     DestinyJudgement,
     DestinyLevel,
     DestinyResult,
-  } from "../types/destiny";
+  } from "../types/destiny.js";
   
   export type DestinyAreaExplanation = {
     area: DestinyArea;

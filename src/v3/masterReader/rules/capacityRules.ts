@@ -2,10 +2,10 @@ import type {
     CapacityArea,
     CapacityEvidence,
     CapacityEvidenceSource,
-  } from "../types/capacity";
+  } from "../types/capacity.js";
   import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type CapacityRuleDirection =
     | "support"

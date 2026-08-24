@@ -1,12 +1,12 @@
 ﻿import {
   buildDecisionEngineRegressionInput,
-} from "./decision/regression/decisionEngineRegressionFixture";
+} from "./decision/regression/decisionEngineRegressionFixture.js";
 
 import {
   runConsulting,
   runConsultingTurn,
   type ConsultingTurnRunResult,
-} from "./consultingRunner";
+} from "./consultingRunner.js";
 
 export type ConsultingTurnRunnerVerificationResult = {
   turnResult:

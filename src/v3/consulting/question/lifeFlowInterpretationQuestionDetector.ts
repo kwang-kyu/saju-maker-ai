@@ -4,7 +4,7 @@
   QuestionIntent,
   QuestionMotive,
   QuestionTopic,
-} from "./questionReader";
+} from "./questionReader.js";
 
 const FORTUNE_EXPRESSION_PATTERN =
   /(?:총운|평생운|전체\s*운|전반적\s*운|전반\s*운|대운|세운|월운|일운|달운|운세|운\s*흐름|운의\s*흐름|흐름|(?:^|\s)운(?:$|\s|이|은|을|의|세|이\s*어떤))/;

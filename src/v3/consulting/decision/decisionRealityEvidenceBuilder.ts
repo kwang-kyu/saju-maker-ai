@@ -1,12 +1,12 @@
 import type {
     QuestionRealityConstraint,
-  } from "../question/questionContext";
+  } from "../question/questionContext.js";
   import type {
     DecisionRealityAssessment,
-  } from "./decisionRealityAssessment";
+  } from "./decisionRealityAssessment.js";
   import type {
     DecisionEvidence,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   function buildRealityEvidenceKey(
     constraint: QuestionRealityConstraint,
   ): string {

@@ -1,15 +1,15 @@
 import type {
     ConsultingAnswerRequestFunction,
-  } from "./consultingSessionAnswerRequester";
+  } from "./consultingSessionAnswerRequester.js";
   import type {
     InitialConsultingExecutionResult,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
   import type {
     ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
 
   async function requestWithProductionClient(
     request:
@@ -18,7 +18,7 @@ import type {
     const {
       requestConsultingAnswer,
     } = await import(
-      "./openai/consultingOpenAIClient"
+      "./openai/consultingOpenAIClient.js"
     );
 
     return requestConsultingAnswer(

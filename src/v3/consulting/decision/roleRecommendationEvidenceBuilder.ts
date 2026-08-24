@@ -1,10 +1,10 @@
 import type {
   RoleRecommendationAssessment,
   RoleRecommendationCandidate,
-} from "./roleRecommendationAssessment";
+} from "./roleRecommendationAssessment.js";
 import type {
   DecisionEvidence,
-} from "./decisionTypes";
+} from "./decisionTypes.js";
 
 function buildCandidateEvidence(
   candidate:

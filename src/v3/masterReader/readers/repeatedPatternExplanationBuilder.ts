@@ -1,10 +1,10 @@
 import {
     getRepeatedPatternDefinition,
-  } from "../constants/repeatedPatternDefinitions";
+  } from "../constants/repeatedPatternDefinitions.js";
   import type {
     RepeatedPatternJudgement,
     RepeatedPatternResult,
-  } from "../types/repeatedPattern";
+  } from "../types/repeatedPattern.js";
   
   export type RepeatedPatternExplanation = {
     title: string;

@@ -1,18 +1,21 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     buildConsultingSessionPrompt,
-  } from "./consultingSessionPromptBuilder";
+  } from "./consultingSessionPromptBuilder.js";
   import {
     prepareConsultingSessionTurn,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
+  import type {
+    ConsultingSession,
+  } from "./consultingSession.js";
 
   export type ConsultingSessionPromptBuilderVerificationResult = {
     checks:
@@ -51,7 +54,7 @@ import {
     const previousAssistantAnswer =
       "현재 정보만으로 매수를 확정할 수 없습니다. 대출 상환능력과 실제 결정기한을 먼저 확인해야 합니다.";
 
-    const initialSession =
+    const generatedInitialSession =
       buildInitialConsultingSession({
         sessionId:
           "session-prompt-verification-001",
@@ -70,6 +73,32 @@ import {
         assistantAnswer:
           previousAssistantAnswer,
       });
+
+    const initialSession:
+      ConsultingSession = {
+        ...generatedInitialSession,
+
+        status:
+          "awaitingClarification",
+
+        pendingClarification: {
+          decisionTurnId:
+            "turn-prompt-001",
+
+          items: [
+            {
+              key:
+                "debtRepaymentCapacity",
+
+              description:
+                "대출 부담은 확인됐지만 잔액·월 상환액·상환 재원이 확인되지 않았다.",
+
+              question:
+                "현재 대출 잔액, 월 상환액, 월 고정지출과 안정적으로 들어오는 월소득은 각각 얼마인가요?",
+            },
+          ],
+        },
+      };
 
     const currentQuestion =
       "대출 잔액은 2억 원이고 안정적인 월소득은 900만 원입니다. 두 달 뒤까지 상가 매수를 결정해야 하는데 진행해도 될까요?";

@@ -1,8 +1,8 @@
 export type {
   FullCompatibilityAssessment as CounterpartPillarCompatibilityAssessment,
   FullCompatibilityAssessmentInput as CounterpartPillarCompatibilityAssessmentInput,
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";
 
 export {
   assessFullCompatibility as assessCounterpartPillarCompatibility,
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";

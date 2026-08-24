@@ -5,7 +5,7 @@ import type {
     HealthJudgement,
     HealthLevel,
     HealthResult,
-  } from "../types/health";
+  } from "../types/health.js";
   
   export type HealthJudgementExplanation = {
     area: HealthArea;

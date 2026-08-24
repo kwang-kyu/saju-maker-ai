@@ -1,17 +1,17 @@
 import type {
     MasterProfileExplanation,
-  } from "../../masterReader/readers/masterProfileExplanationBuilder";
+  } from "../../masterReader/readers/masterProfileExplanationBuilder.js";
   import type {
     DecisionEngineInput,
     DecisionEvidence,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import {
     deduplicateReaderDecisionEvidence,
-  } from "./readerDecisionEvidenceDeduplicator";
+  } from "./readerDecisionEvidenceDeduplicator.js";
   import {
     selectReaderDecisionSources,
     type ReaderDecisionSource,
-  } from "./readerDecisionSelectionBuilder";
+  } from "./readerDecisionSelectionBuilder.js";
 
   type ReaderExplanation = {
     summary: string;

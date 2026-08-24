@@ -1,12 +1,12 @@
 import {
     buildConsultingSessionOpenAIRequest,
-  } from "./consultingSessionOpenAIRequestBuilder";
+  } from "./consultingSessionOpenAIRequestBuilder.js";
   import type {
     ConsultingSessionTurnPreparation,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
   import type {
     ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
 
   export type ConsultingAnswerRequestFunction = (
     request:
@@ -20,7 +20,7 @@ import {
     const {
       requestConsultingAnswer,
     } = await import(
-      "./openai/consultingOpenAIClient"
+      "./openai/consultingOpenAIClient.js"
     );
 
     return requestConsultingAnswer(

@@ -1,6 +1,6 @@
 import {
     verifyConsultingSessionTurnBuilder,
-  } from "./consultingSessionTurnBuilderVerification";
+  } from "./consultingSessionTurnBuilderVerification.js";
 
   const result =
     verifyConsultingSessionTurnBuilder();

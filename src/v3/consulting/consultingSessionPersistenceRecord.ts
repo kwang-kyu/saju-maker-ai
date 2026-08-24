@@ -4,7 +4,7 @@ import type {
     ConsultingLifeContextRevision,
     ConsultingSession,
     ConsultingTurn,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
 
   export const CONSULTING_SESSION_SCHEMA_VERSION =
     1 as const;

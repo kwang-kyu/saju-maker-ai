@@ -1,6 +1,6 @@
 import {
   buildConsultingOpenAIRequest,
-} from "../openai/consultingOpenAIAdapter";
+} from "../openai/consultingOpenAIAdapter.js";
 
 import {
   containsForbiddenInternalTerm,
@@ -10,7 +10,7 @@ import {
   normalize,
   verifyConsultingAnswerQuality,
   type ConsultingAnswerQualityCaseResult,
-} from "./consultingAnswerQualityVerification";
+} from "./consultingAnswerQualityVerification.js";
 
 
 export type ConsultingLiveAnswerQualityCaseInput = {
@@ -611,7 +611,7 @@ export async function verifyConsultingLiveAnswerQuality():
   const {
     requestConsultingAnswer,
   } = await import(
-    "../openai/consultingOpenAIClient"
+    "../openai/consultingOpenAIClient.js"
   );
 
   const cases:

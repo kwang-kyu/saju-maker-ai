@@ -1,19 +1,19 @@
 import {
     runDecisionEngine,
-  } from "../decisionEngine";
+  } from "../decisionEngine.js";
   import {
     assessDecisionReality,
-  } from "../decisionRealityAssessment";
+  } from "../decisionRealityAssessment.js";
   import type {
     AssessmentLevel,
     LifeContextAssessment,
-  } from "../lifeContextAssessment";
+  } from "../lifeContextAssessment.js";
   import type {
     QuestionRealitySignal,
-  } from "../../question/questionContext";
+  } from "../../question/questionContext.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
 
   type WealthRealityDecisionFixture = {
     name: string;

@@ -1,7 +1,7 @@
 import {
   describeAuthenticatedConsultingLiveInitialFollowUpHttpE2EFailure,
   verifyAuthenticatedConsultingLiveInitialFollowUpHttpE2E,
-} from "./authenticatedConsultingLiveInitialFollowUpHttpE2EVerification";
+} from "./authenticatedConsultingLiveInitialFollowUpHttpE2EVerification.js";
 
 function isExplicitManualExecution():
   boolean {

@@ -1,33 +1,33 @@
 import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingSessionRepository,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import type {
     InitialConsultingSessionBuilderInput,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     ConsultingSessionAuthenticationError,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import {
     InitialConsultingSessionAlreadyExistsError,
     InvalidAuthenticatedInitialConsultingSessionCommandError,
     createAuthenticatedInitialConsultingSession,
-  } from "./authenticatedInitialConsultingSessionService";
+  } from "./authenticatedInitialConsultingSessionService.js";
   import type {
     AuthenticatedInitialConsultingSessionServiceDependencies,
     CreateAuthenticatedInitialConsultingSessionInput,
-  } from "./authenticatedInitialConsultingSessionService";
+  } from "./authenticatedInitialConsultingSessionService.js";
 
   export type AuthenticatedInitialConsultingSessionServiceVerificationResult = {
     checks:

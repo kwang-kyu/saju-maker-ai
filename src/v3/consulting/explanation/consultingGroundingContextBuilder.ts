@@ -1,10 +1,10 @@
 import type {
   ConsultingInput,
-} from "../consultingInput";
+} from "../consultingInput.js";
 import type {
   CounterpartCalendarType,
   CounterpartSajuCalculationPrecision,
-} from "../decision/counterpartSajuCalculationBuilder";
+} from "../decision/counterpartSajuCalculationBuilder.js";
 
 export type ConsultingGroundingCounterpartSource = {
   precision:

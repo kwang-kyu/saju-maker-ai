@@ -1,6 +1,6 @@
 import {
   verifyConsultingLiveAnswerQuality,
-} from "./consultingLiveAnswerQualityVerification";
+} from "./consultingLiveAnswerQualityVerification.js";
 
 /**
  * 실제 GPT 상담 답변 Live Quality Verification.

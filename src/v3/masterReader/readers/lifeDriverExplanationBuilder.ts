@@ -1,5 +1,5 @@
-import { getLifeDriverDefinition } from "../constants/lifeDriverDefinitions";
-import type { LifeDriverJudgement } from "../types/lifeDriver";
+import { getLifeDriverDefinition } from "../constants/lifeDriverDefinitions.js";
+import type { LifeDriverJudgement } from "../types/lifeDriver.js";
 
 export type LifeDriverExplanation = {
   title: string;

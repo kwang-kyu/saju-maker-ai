@@ -1,6 +1,6 @@
 import {
     verifyPersistedConsultingSessionTurnService,
-  } from "./persistedConsultingSessionTurnServiceVerification";
+  } from "./persistedConsultingSessionTurnServiceVerification.js";
 
   async function executeVerification():
     Promise<void> {

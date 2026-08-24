@@ -2,13 +2,13 @@
   LifeFlowHalf,
   LifeFlowScope,
   LifeFlowTarget,
-} from "./lifeFlowTarget";
+} from "./lifeFlowTarget.js";
 import {
   hasOverallFortuneExpression,
   hasPeriodExpression,
   hasFortuneExpression,
   hasInterpretationRequest,
-} from "./lifeFlowInterpretationQuestionDetector";
+} from "./lifeFlowInterpretationQuestionDetector.js";
 
 type ParsedDate = {
   year:

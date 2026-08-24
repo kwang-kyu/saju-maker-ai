@@ -1,4 +1,6 @@
-﻿import { Lunar, Solar } from "lunar-javascript";
+﻿/// <reference path="../lunar-javascript.d.ts" />
+
+import { Lunar, Solar } from "lunar-javascript";
 
 type SajuDateParams = {
   birthYear: string;

@@ -3,19 +3,19 @@ import type {
     DriverEvidence,
     LifeDriverJudgement,
     LifeDriverResult,
-  } from "../types/lifeDriver";
+  } from "../types/lifeDriver.js";
   import type {
     LifeDriverEvidenceSource,
     LifeDriverReaderInput,
-  } from "../types/lifeDriverInput";
+  } from "../types/lifeDriverInput.js";
   import {
     scoreLifeDrivers,
     type LifeDriverScore,
-  } from "./lifeDriverScorer";
+  } from "./lifeDriverScorer.js";
   import {
     selectLifeDrivers,
     type LifeDriverSelectionStatus,
-  } from "./lifeDriverSelector";
+  } from "./lifeDriverSelector.js";
   
   function mapEvidenceSource(
     source: LifeDriverEvidenceSource,

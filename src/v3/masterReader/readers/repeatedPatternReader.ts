@@ -1,20 +1,20 @@
 import {
     getRepeatedPatternDefinition,
-  } from "../constants/repeatedPatternDefinitions";
+  } from "../constants/repeatedPatternDefinitions.js";
   import type {
     PatternConfidence,
     PatternEvidence,
     RepeatedPatternJudgement,
     RepeatedPatternResult,
-  } from "../types/repeatedPattern";
+  } from "../types/repeatedPattern.js";
   import {
     scoreRepeatedPatterns,
     type RepeatedPatternScore,
-  } from "./repeatedPatternScorer";
+  } from "./repeatedPatternScorer.js";
   import {
     selectRepeatedPatterns,
     type RepeatedPatternSelectionStatus,
-  } from "./repeatedPatternSelector";
+  } from "./repeatedPatternSelector.js";
   
   function getConfidence(
     status: RepeatedPatternSelectionStatus,

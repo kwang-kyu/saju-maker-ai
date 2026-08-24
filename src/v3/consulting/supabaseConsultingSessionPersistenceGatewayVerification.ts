@@ -4,16 +4,16 @@ import {
 
   import type {
     ConsultingSessionPersistenceRow,
-  } from "./consultingSessionPersistenceGateway";
+  } from "./consultingSessionPersistenceGateway.js";
   import {
     SupabaseConsultingSessionPersistenceError,
     SupabaseConsultingSessionPersistenceGateway,
     V3_CONSULTING_SESSIONS_TABLE,
-  } from "./supabaseConsultingSessionPersistenceGateway";
+  } from "./supabaseConsultingSessionPersistenceGateway.js";
 
   import {
     parseConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
 
   const VERIFICATION_OWNER_ID =
     parseConsultingSessionOwnerId(

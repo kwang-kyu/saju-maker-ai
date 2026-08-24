@@ -1,6 +1,6 @@
-import type { HumanLifePhaseResult } from "../types/humanLifePhase";
-import { getHumanLifePhaseDefinition } from "../constants/humanLifePhaseDefinitions";
-import type { HumanLifePhaseScore } from "./humanLifePhaseScorer";
+import type { HumanLifePhaseResult } from "../types/humanLifePhase.js";
+import { getHumanLifePhaseDefinition } from "../constants/humanLifePhaseDefinitions.js";
+import type { HumanLifePhaseScore } from "./humanLifePhaseScorer.js";
 
 export function selectHumanLifePhase(
   scores: HumanLifePhaseScore[],

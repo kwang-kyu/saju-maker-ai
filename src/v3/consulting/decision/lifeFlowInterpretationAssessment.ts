@@ -1,36 +1,36 @@
 ﻿import {
   getHumanLifePhaseEvidenceRule,
-} from "../../masterReader/rules/humanLifePhaseEvidenceRules";
+} from "../../masterReader/rules/humanLifePhaseEvidenceRules.js";
 import type {
   HumanDestinyContext,
-} from "../../types/humanDestinyContext";
+} from "../../types/humanDestinyContext.js";
 import type {
   HumanLifePhase,
-} from "../../masterReader/types/humanLifePhase";
+} from "../../masterReader/types/humanLifePhase.js";
 import type {
   SajuLuckFlowTenGod,
   SajuTargetPeriodLuckFlowFact,
   SajuWolunSegmentFact,
-} from "../../types/luckFlowFact";
+} from "../../types/luckFlowFact.js";
 import type {
   SajuFacts,
   SajuFiveElement,
   SajuStructureFact,
   SajuStructureSignal,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 import {
   resolveDayMasterElementRelation,
   resolveStemElement,
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";
 import {
   assessLifeFlowPeriodInteractions,
   buildPeriodFlowPillarsFromFact,
   interactionStrengthWeight,
   type LifeFlowPeriodInteraction,
-} from "./lifeFlowPeriodInteractionAssessment";
+} from "./lifeFlowPeriodInteractionAssessment.js";
 import type {
   LifeFlowTarget,
-} from "../question/lifeFlowTarget";
+} from "../question/lifeFlowTarget.js";
 
 const LUCK_FLOW_TEN_GODS:
   readonly SajuLuckFlowTenGod[] = [

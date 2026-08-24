@@ -1,11 +1,11 @@
 import type {
     DecisionEngineInput,
     DecisionResult,
-  } from "../decisionTypes";
+  } from "../decisionTypes.js";
   import {
     verifyDecisionEngineRegression,
     type DecisionEngineRegressionVerificationResult,
-  } from "./decisionResultRegressionVerification";
+  } from "./decisionResultRegressionVerification.js";
   
   export type DecisionEngineRegressionCase = {
     id: string;

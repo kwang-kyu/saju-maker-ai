@@ -1,39 +1,39 @@
 import {
   buildConsultingClarification,
-} from "./consultingClarificationBuilder";
+} from "./consultingClarificationBuilder.js";
 import {
   requestConsultingSessionAnswer,
-} from "./consultingSessionAnswerRequester";
+} from "./consultingSessionAnswerRequester.js";
 import {
   buildConsultingSessionOpenAIRequest,
-} from "./consultingSessionOpenAIRequestBuilder";
+} from "./consultingSessionOpenAIRequestBuilder.js";
 import {
   buildConsultingSessionTurn,
   prepareConsultingSessionTurn,
   type ConsultingSessionTurnPreparation,
-} from "./consultingSessionTurnBuilder";
+} from "./consultingSessionTurnBuilder.js";
 import {
   hasExpectedSubjectTerms,
-} from "./explanation/consultingAnswerQualityVerification";
+} from "./explanation/consultingAnswerQualityVerification.js";
 import {
   requestInitialConsultingAnswer,
-} from "./initialConsultingAnswerRequester";
+} from "./initialConsultingAnswerRequester.js";
 import {
   buildInitialConsultingExecution,
-} from "./initialConsultingExecutionBuilder";
+} from "./initialConsultingExecutionBuilder.js";
 import {
   buildInitialConsultingSession,
-} from "./initialConsultingSessionBuilder";
+} from "./initialConsultingSessionBuilder.js";
 import {
   createSourceRequest,
-} from "./initialConsultingSessionBuilderVerification";
+} from "./initialConsultingSessionBuilderVerification.js";
 import {
   buildConsultingOpenAIRequest,
   type ConsultingOpenAIRequest,
-} from "./openai/consultingOpenAIAdapter";
+} from "./openai/consultingOpenAIAdapter.js";
 import type {
   V3ConsultingRequest,
-} from "./v3ConsultingRequest";
+} from "./v3ConsultingRequest.js";
 
 export const CONSULTING_INITIAL_FOLLOW_UP_E2E_QUESTION =
   "지금 새로운 사업을 시작해도 될까요?";

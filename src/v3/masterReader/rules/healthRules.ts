@@ -2,10 +2,10 @@ import type {
     HealthArea,
     HealthEvidence,
     HealthEvidenceSource,
-  } from "../types/health";
+  } from "../types/health.js";
   import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type HealthRuleDirection =
     | "support"

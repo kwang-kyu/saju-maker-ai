@@ -1,4 +1,6 @@
-﻿import { Solar } from "lunar-javascript";
+﻿/// <reference path="../../lunar-javascript.d.ts" />
+
+import { Solar } from "lunar-javascript";
 
 import type {
   V3CurrentDaeun,
@@ -11,7 +13,7 @@ import type {
   V3TargetPeriodLuckFlowInput,
   V3WolunSegment,
   V3YearGanZhiSegment,
-} from "../types/luckFlowCalculation";
+} from "../types/luckFlowCalculation.js";
 
 type ParsedDate = {
   year: number;

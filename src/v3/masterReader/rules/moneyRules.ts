@@ -2,10 +2,10 @@ import type {
     MoneyArea,
     MoneyEvidence,
     MoneyEvidenceSource,
-  } from "../types/money";
+  } from "../types/money.js";
   import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type MoneyRuleDirection =
     | "support"

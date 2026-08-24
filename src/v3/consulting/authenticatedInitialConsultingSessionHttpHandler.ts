@@ -1,25 +1,25 @@
 import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import {
     createAuthenticatedInitialConsultingSession,
     InitialConsultingSessionAlreadyExistsError,
-  } from "./authenticatedInitialConsultingSessionService";
+  } from "./authenticatedInitialConsultingSessionService.js";
   import type {
     CreateAuthenticatedInitialConsultingSessionInput,
-  } from "./authenticatedInitialConsultingSessionService";
+  } from "./authenticatedInitialConsultingSessionService.js";
   import {
     ConsultingSessionAuthenticationError,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     ConsultingSessionAuthorizationHeader,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
   import {
     isV3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type AuthenticatedInitialConsultingSessionHttpRequest = {
     method:

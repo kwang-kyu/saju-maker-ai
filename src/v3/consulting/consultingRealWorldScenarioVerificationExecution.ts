@@ -1,6 +1,6 @@
 ﻿import {
     verifyConsultingRealWorldScenarios,
-  } from "./consultingRealWorldScenarioVerification";
+  } from "./consultingRealWorldScenarioVerification.js";
 
   const result =
     verifyConsultingRealWorldScenarios();

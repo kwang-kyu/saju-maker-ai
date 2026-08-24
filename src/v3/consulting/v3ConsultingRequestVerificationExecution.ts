@@ -1,6 +1,6 @@
 import {
     verifyV3ConsultingRequest,
-  } from "./v3ConsultingRequestVerification";
+  } from "./v3ConsultingRequestVerification.js";
 
   const result =
     verifyV3ConsultingRequest();

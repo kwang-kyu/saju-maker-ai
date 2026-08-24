@@ -2,23 +2,23 @@ import type {
     ActionReadiness,
     DecisionCondition,
     DecisionEngineInput,
-  } from "./decisionTypes";
-  import type { LifeContextAssessment } from "./lifeContextAssessment";
+  } from "./decisionTypes.js";
+  import type { LifeContextAssessment } from "./lifeContextAssessment.js";
   import type {
     DecisionRealityAssessment,
-  } from "./decisionRealityAssessment";
+  } from "./decisionRealityAssessment.js";
   import type {
     CompatibilityAssessment,
-  } from "./compatibilityAssessment";
+  } from "./compatibilityAssessment.js";
   import type {
     TimingAssessment,
-  } from "./timingAssessment";
+  } from "./timingAssessment.js";
   import type {
     ReaderDecisionAssessment,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   import {
     buildReaderDecisionConditions,
-  } from "./readerDecisionConditionBuilder";
+  } from "./readerDecisionConditionBuilder.js";
 
   /**
    * Decision Condition Builder

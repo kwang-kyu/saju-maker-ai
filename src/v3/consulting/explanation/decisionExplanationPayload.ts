@@ -1,6 +1,6 @@
 import type {
   DecisionExplanationPlan,
-} from "./decisionExplanationPlan";
+} from "./decisionExplanationPlan.js";
 
 export type DecisionExplanationPayload = {
   systemRole:
@@ -52,6 +52,12 @@ export function buildDecisionExplanationPayload(
   plan:
     DecisionExplanationPlan,
 ): DecisionExplanationPayload {
+  const selectedRequiredBlocks =
+    plan.blocks.filter(
+      (block) =>
+        block.required,
+    );
+
   return {
     systemRole:
       "DigitalPhilosophyMaster",
@@ -84,12 +90,11 @@ export function buildDecisionExplanationPayload(
       plan.confidence,
 
     explanationOrder:
-      plan.blocks
+      selectedRequiredBlocks
         .filter(
           (block) =>
-            block.required
-            && block.step
-              !== "finalDecision",
+            block.step
+            !== "finalDecision",
         )
         .map(
           (block) => ({

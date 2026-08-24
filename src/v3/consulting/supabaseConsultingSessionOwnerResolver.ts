@@ -4,13 +4,13 @@ import type {
 
   import {
     parseConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
   import type {
     ConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
   import type {
     ConsultingSessionOwnerResolver,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
 
   export type SupabaseConsultingSessionAuthenticationFailureReason =
     | "authenticationFailed"

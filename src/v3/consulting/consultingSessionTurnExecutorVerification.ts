@@ -1,41 +1,45 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     rebuildPendingConsultingClarification,
-  } from "./consultingClarificationProgressResolver";
+  } from "./consultingClarificationProgressResolver.js";
   import {
     executeConsultingSessionTurn,
-  } from "./consultingSessionTurnExecutor";
+  } from "./consultingSessionTurnExecutor.js";
   import {
     prepareConsultingSessionTurn,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
   import type {
     ConsultingClarificationFact,
-  } from "./consultingInput";
+  } from "./consultingInput.js";
   import {
     buildConsultingSessionOpenAIRequest,
-  } from "./consultingSessionOpenAIRequestBuilder";
+  } from "./consultingSessionOpenAIRequestBuilder.js";
+  import {
+    deserializeConsultingSession,
+    serializeConsultingSession,
+  } from "./consultingSessionPersistenceRecord.js";
   import type {
     ConsultingClarificationRequest,
     ConsultingConfirmedFact,
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import {
     assessCompatibility,
-  } from "./decision/compatibilityAssessment";
+  } from "./decision/compatibilityAssessment.js";
   import {
     buildCounterpartSajuCalculation,
-  } from "./decision/counterpartSajuCalculationBuilder";
+  } from "./decision/counterpartSajuCalculationBuilder.js";
   import type {
     ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
 
   export type ConsultingSessionTurnExecutorVerificationResult = {
     checks:
@@ -530,7 +534,7 @@ import {
       );
 
       const incompleteCompatibilityQuestion =
-      "1967년 4월 10일 생과 동업은 어떤가요?";
+      "1967년 4월 10일 생과 궁합은 어떤가요?";
 
     let incompleteCompatibilityRequestCount =
       0;
@@ -600,6 +604,164 @@ import {
       snapshotConsultingSession(
         clarificationSession,
       );
+
+    const incompleteObservationQuestion =
+      "상대방은 1967년 4월생 여성입니다.";
+
+    const incompleteObservationTurnId =
+      "turn-executor-incomplete-observation";
+
+    const incompleteObservationCreatedAt =
+      "2026-07-28T08:16:30+09:00";
+
+    const incompleteObservationSession =
+      await executeConsultingSessionTurn({
+        preparationInput: {
+          session:
+            clarificationSession,
+
+          kind:
+            "clarification",
+
+          question:
+            incompleteObservationQuestion,
+
+          preparedAt:
+            "2026-07-28T08:16:20+09:00",
+        },
+
+        turnId:
+          incompleteObservationTurnId,
+
+        createdAt:
+          incompleteObservationCreatedAt,
+
+        requestClarificationInterpretation:
+          async () =>
+            JSON.stringify({
+              matches: [
+                {
+                  key:
+                    "counterpartBirthData",
+
+                  description:
+                    "상대방은 1967년 4월생 여성이다.",
+
+                  fields: [
+                    {
+                      key:
+                        "birthDate",
+
+                      value:
+                        "1967년 4월",
+
+                      evidence: [
+                        "1967년 4월",
+                      ],
+                    },
+                    {
+                      key:
+                        "gender",
+
+                      value:
+                        "여성",
+
+                      evidence: [
+                        "여성",
+                      ],
+                    },
+                  ],
+
+                  confidence:
+                    0.95,
+                },
+              ],
+            }),
+
+        requestAnswer:
+          async () => {
+            throw new Error(
+              "Observation clarification must not request a generic GPT answer.",
+            );
+          },
+      });
+
+    const incompleteObservationTurn =
+      incompleteObservationSession
+        .turns[
+          incompleteObservationSession
+            .turns
+            .length
+          - 1
+        ];
+
+    const persistedObservationSession =
+      deserializeConsultingSession(
+        serializeConsultingSession(
+          incompleteObservationSession,
+        ),
+      );
+
+    const duplicateObservationSession =
+      await executeConsultingSessionTurn({
+        preparationInput: {
+          session:
+            incompleteObservationSession,
+
+          kind:
+            "clarification",
+
+          question:
+            incompleteObservationQuestion,
+
+          preparedAt:
+            "2026-07-28T08:16:40+09:00",
+        },
+
+        turnId:
+          "turn-executor-incomplete-observation-duplicate",
+
+        createdAt:
+          "2026-07-28T08:16:50+09:00",
+
+        requestClarificationInterpretation:
+          async () =>
+            JSON.stringify({
+              matches: [
+                {
+                  key:
+                    "counterpartBirthData",
+
+                  description:
+                    "상대방은 1967년 4월생 여성이다.",
+
+                  fields: [
+                    {
+                      key:
+                        "gender",
+
+                      value:
+                        "여성",
+
+                      evidence: [
+                        "여성",
+                      ],
+                    },
+                  ],
+
+                  confidence:
+                    0.95,
+                },
+              ],
+            }),
+
+        requestAnswer:
+          async () => {
+            throw new Error(
+              "Duplicate observation clarification must not request a generic GPT answer.",
+            );
+          },
+      });
 
     const partialClarificationQuestion =
       "양력입니다.";
@@ -1762,6 +1924,83 @@ import {
           partialClarificationTurnId,
         )
         === false,
+
+      incompleteObservationIsStoredOnSession:
+        incompleteObservationSession
+          .clarificationObservations
+          ?.length
+        === 1
+        && incompleteObservationSession
+          .clarificationObservations?.[0]
+          ?.rawValue
+        === "1967년 4월"
+        && incompleteObservationSession
+          .clarificationObservations?.[0]
+          ?.sourceTurnId
+        === incompleteObservationTurnId
+        && incompleteObservationSession
+          .clarificationObservations?.[0]
+          ?.observedAt
+        === incompleteObservationCreatedAt,
+
+      incompleteObservationIsNotConfirmedBirthDate:
+        incompleteObservationSession
+          .confirmedFacts
+          .every(
+            (fact) =>
+              fact
+                .fields
+                .every(
+                  (field) =>
+                    field.key
+                    !== "birthDate"
+                    && field.value
+                    !== "1967-04-01"
+                    && field.value
+                    !== "1967-04",
+                ),
+          ),
+
+      incompleteObservationDoesNotEnterClarificationFacts:
+        (
+          incompleteObservationTurn
+            .questionContext
+            .clarificationFacts
+            ?.every(
+              (fact) =>
+                fact
+                  .fields
+                  .every(
+                    (field) =>
+                      field.key
+                      !== "birthDate",
+                  ),
+            )
+          ?? true
+        ),
+
+      incompleteObservationDoesNotCreateCounterpartSaju:
+        incompleteObservationTurn
+          .questionContext
+          .counterpart
+          .birthDataProvided
+        === false,
+
+      incompleteObservationPersistsWithoutSchemaChange:
+        persistedObservationSession
+          .clarificationObservations
+          ?.length
+        === 1
+        && persistedObservationSession
+          .clarificationObservations?.[0]
+          ?.rawValue
+        === "1967년 4월",
+
+      duplicateIncompleteObservationIsNotStoredTwice:
+        duplicateObservationSession
+          .clarificationObservations
+          ?.length
+        === 1,
     };
 
     return {

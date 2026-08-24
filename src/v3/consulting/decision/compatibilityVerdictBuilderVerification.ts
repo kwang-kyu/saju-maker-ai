@@ -1,9 +1,9 @@
 import type {
     CompatibilityAssessment,
-  } from "./compatibilityAssessment";
+  } from "./compatibilityAssessment.js";
   import {
     applyCompatibilityVerdictEffect,
-  } from "./compatibilityVerdictBuilder";
+  } from "./compatibilityVerdictBuilder.js";
 
   export type CompatibilityVerdictBuilderVerificationResult = {
     notRequiredPreservesVerdict:

@@ -2,10 +2,10 @@ import type {
     DestinyArea,
     DestinyAreaInterpretation,
     DestinyLevel,
-  } from "../masterReader/types/destiny";
+  } from "../masterReader/types/destiny.js";
   import type {
     DestinyAreaSelection,
-  } from "../masterReader/readers/destinySelector";
+  } from "../masterReader/readers/destinySelector.js";
   
   const CORE_PATTERNS: Record<
     DestinyArea,

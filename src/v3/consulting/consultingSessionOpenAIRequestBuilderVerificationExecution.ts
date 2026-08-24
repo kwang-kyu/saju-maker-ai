@@ -1,6 +1,6 @@
 import {
     verifyConsultingSessionOpenAIRequestBuilder,
-  } from "./consultingSessionOpenAIRequestBuilderVerification";
+  } from "./consultingSessionOpenAIRequestBuilderVerification.js";
 
   const result =
     verifyConsultingSessionOpenAIRequestBuilder();

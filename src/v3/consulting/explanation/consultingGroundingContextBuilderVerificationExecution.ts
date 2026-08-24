@@ -1,6 +1,6 @@
 import {
   verifyConsultingGroundingContextBuilder,
-} from "./consultingGroundingContextBuilderVerification";
+} from "./consultingGroundingContextBuilderVerification.js";
 
 const result =
   verifyConsultingGroundingContextBuilder();

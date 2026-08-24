@@ -1,11 +1,11 @@
 import type {
     HealthArea,
     HealthEvidence,
-  } from "../types/health";
+  } from "../types/health.js";
   import {
     matchHealthRules,
     type MatchedHealthRule,
-  } from "../rules/healthRules";
+  } from "../rules/healthRules.js";
   
   export type HealthAreaScore = {
     area: HealthArea;

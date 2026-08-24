@@ -1,14 +1,14 @@
 import type {
     DecisionTarget,
     QuestionIntent,
-  } from "../../question/questionReader";
+  } from "../../question/questionReader.js";
   import {
     selectReaderDecisionSources,
     type ReaderDecisionSource,
-  } from "../readerDecisionSelectionBuilder";
+  } from "../readerDecisionSelectionBuilder.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
 
   type JobQuestionRegressionFixture = {
     name: string;

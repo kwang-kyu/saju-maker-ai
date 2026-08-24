@@ -1,20 +1,20 @@
 import {
     getSurvivalStyleDefinition,
-  } from "../constants/survivalStyleDefinitions";
+  } from "../constants/survivalStyleDefinitions.js";
   import type {
     SurvivalConfidence,
     SurvivalEvidence,
     SurvivalStyleJudgement,
     SurvivalStyleResult,
-  } from "../types/survivalStyle";
+  } from "../types/survivalStyle.js";
   import {
     scoreSurvivalStyles,
     type SurvivalStyleScore,
-  } from "./survivalStyleScorer";
+  } from "./survivalStyleScorer.js";
   import {
     selectSurvivalStyles,
     type SurvivalStyleSelectionStatus,
-  } from "./survivalStyleSelector";
+  } from "./survivalStyleSelector.js";
   
   function getConfidence(
     status: SurvivalStyleSelectionStatus,

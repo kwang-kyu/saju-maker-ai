@@ -2,10 +2,10 @@ import type {
     CareerArea,
     CareerEvidence,
     CareerEvidenceSource,
-  } from "../types/career";
+  } from "../types/career.js";
   import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type CareerRuleDirection =
     | "support"

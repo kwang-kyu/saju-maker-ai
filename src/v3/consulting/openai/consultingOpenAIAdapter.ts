@@ -1,4 +1,4 @@
-import type { ConsultingPrompt } from "../explanation/consultingPromptBuilder";
+import type { ConsultingPrompt } from "../explanation/consultingPromptBuilder.js";
 
 export type ConsultingOpenAIRequest = {
   model: string;

@@ -1,13 +1,13 @@
 ﻿import {
   buildDecisionEngineRegressionInput,
-} from "./regression/decisionEngineRegressionFixture";
+} from "./regression/decisionEngineRegressionFixture.js";
 import {
   verifyCompatibilityRiskSensitivity,
   verifyContextAlignmentRiskSensitivity,
   verifyLifeContextRiskSensitivity,
   verifyRepeatedPatternRiskSensitivity,
   verifyUrgencyRiskSensitivity,
-} from "./decisionRiskVerification";
+} from "./decisionRiskVerification.js";
 
 const decisionInput =
   buildDecisionEngineRegressionInput();

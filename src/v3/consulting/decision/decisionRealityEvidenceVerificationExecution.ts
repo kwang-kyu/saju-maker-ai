@@ -1,6 +1,6 @@
 import {
     verifyDecisionRealityEvidence,
-  } from "./decisionRealityEvidenceVerification";
+  } from "./decisionRealityEvidenceVerification.js";
 
   const result =
     verifyDecisionRealityEvidence();

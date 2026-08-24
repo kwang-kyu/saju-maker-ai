@@ -1,33 +1,33 @@
 import {
   runDecisionEngine,
-} from "../decision/decisionEngine";
+} from "../decision/decisionEngine.js";
 
 import {
   buildDecisionEngineRegressionInput,
-} from "../decision/regression/decisionEngineRegressionFixture";
+} from "../decision/regression/decisionEngineRegressionFixture.js";
 
 import type {
   QuestionTopic,
-} from "../question/questionReader";
+} from "../question/questionReader.js";
 
 import {
   readDecisionResult,
-} from "./decisionResultReader";
+} from "./decisionResultReader.js";
 
 import {
   buildDecisionExplanationPlan,
   type DecisionExplanationPlan,
-} from "./decisionExplanationPlan";
+} from "./decisionExplanationPlan.js";
 
 import {
   buildDecisionExplanationPayload,
   type DecisionExplanationPayload,
-} from "./decisionExplanationPayload";
+} from "./decisionExplanationPayload.js";
 
 import {
   buildConsultingPrompt,
   type ConsultingPrompt,
-} from "./consultingPromptBuilder";
+} from "./consultingPromptBuilder.js";
 
 import {
   containsForbiddenInternalTerm,
@@ -43,7 +43,7 @@ import {
   promptRequiresFinalDecisionExactlyOnce,
   promptRequiresSentenceSourceTraceability,
   promptRequiresVerbatimFinalDecisionLastParagraph,
-} from "./consultingAnswerQualityVerification";
+} from "./consultingAnswerQualityVerification.js";
 
 
 export type ConsultingAnswerTopicCoverageCaseResult = {

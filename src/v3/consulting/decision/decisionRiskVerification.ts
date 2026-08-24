@@ -1,13 +1,13 @@
 import type {
     DecisionEngineInput,
     DecisionRisk,
-  } from "./decisionTypes";
-  import type { LifeContextAssessment } from "./lifeContextAssessment";
-  import type { CompatibilityAssessment } from "./compatibilityAssessment";
+  } from "./decisionTypes.js";
+  import type { LifeContextAssessment } from "./lifeContextAssessment.js";
+  import type { CompatibilityAssessment } from "./compatibilityAssessment.js";
   import {
     buildCounterpartSajuCalculation,
-  } from "./counterpartSajuCalculationBuilder";
-  import { buildDecisionRisks } from "./riskBuilder";
+  } from "./counterpartSajuCalculationBuilder.js";
+  import { buildDecisionRisks } from "./riskBuilder.js";
   const VERIFIED_COUNTERPART_SAJU =
   buildCounterpartSajuCalculation({
     birthDate:

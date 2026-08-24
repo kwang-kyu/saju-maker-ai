@@ -1,11 +1,11 @@
 import type {
     DestinyArea,
     DestinyEvidence,
-  } from "../types/destiny";
+  } from "../types/destiny.js";
   import {
     matchDestinyRules,
     type MatchedDestinyRule,
-  } from "../rules/destinyRules";
+  } from "../rules/destinyRules.js";
   
   export type DestinyAreaScore = {
     area: DestinyArea;

@@ -1,21 +1,24 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     requestConsultingSessionAnswer,
-  } from "./consultingSessionAnswerRequester";
+  } from "./consultingSessionAnswerRequester.js";
   import {
     prepareConsultingSessionTurn,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
   import type {
     ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
+  import type {
+    ConsultingSession,
+  } from "./consultingSession.js";
 
   export type ConsultingSessionAnswerRequesterVerificationResult = {
     checks:
@@ -54,7 +57,7 @@ import {
     const previousAssistantAnswer =
       "현재 정보만으로 매수를 확정할 수 없습니다. 대출 상환능력과 결정기한을 먼저 확인해야 합니다.";
 
-    const initialSession =
+    const generatedInitialSession =
       buildInitialConsultingSession({
         sessionId:
           "session-answer-requester-001",
@@ -74,6 +77,32 @@ import {
         assistantAnswer:
           previousAssistantAnswer,
       });
+
+    const initialSession:
+      ConsultingSession = {
+        ...generatedInitialSession,
+
+        status:
+          "awaitingClarification",
+
+        pendingClarification: {
+          decisionTurnId:
+            "turn-answer-requester-001",
+
+          items: [
+            {
+              key:
+                "debtRepaymentCapacity",
+
+              description:
+                "대출 부담은 확인됐지만 잔액·월 상환액·상환 재원이 확인되지 않았다.",
+
+              question:
+                "현재 대출 잔액, 월 상환액, 월 고정지출과 안정적으로 들어오는 월소득은 각각 얼마인가요?",
+            },
+          ],
+        },
+      };
 
     const preparation =
       prepareConsultingSessionTurn({

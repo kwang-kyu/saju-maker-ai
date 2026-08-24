@@ -1,7 +1,7 @@
 import type {
     SajuFiveElement,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   export type MonthCommandCalculatorInput = {
     monthBranch: string;

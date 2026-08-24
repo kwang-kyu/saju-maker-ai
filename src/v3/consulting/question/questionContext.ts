@@ -1,10 +1,10 @@
 ﻿import type {
   ConsultingClarificationFact,
-} from "../consultingInput";
+} from "../consultingInput.js";
 
 import type {
   QuestionReaderResult,
-} from "./questionReader";
+} from "./questionReader.js";
 
 export type QuestionCounterpartRelation =
   | "spouse"

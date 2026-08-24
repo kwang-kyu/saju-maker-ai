@@ -1,6 +1,6 @@
 import {
     verifyConsultingClarificationResponseInterpreter,
-  } from "./consultingClarificationResponseInterpreterVerification";
+  } from "./consultingClarificationResponseInterpreterVerification.js";
 
   async function executeVerification():
     Promise<void> {

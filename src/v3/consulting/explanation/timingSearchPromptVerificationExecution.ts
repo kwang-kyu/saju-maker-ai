@@ -1,6 +1,6 @@
 ﻿import {
     verifyTimingSearchPrompt,
-  } from "./timingSearchPromptVerification";
+  } from "./timingSearchPromptVerification.js";
 
   function executeVerification() {
     const result =

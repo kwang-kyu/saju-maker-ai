@@ -1,6 +1,6 @@
 import {
     verifySupabaseConsultingSessionOwnerResolver,
-  } from "./supabaseConsultingSessionOwnerResolverVerification";
+  } from "./supabaseConsultingSessionOwnerResolverVerification.js";
 
   async function executeVerification():
     Promise<void> {

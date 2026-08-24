@@ -1,35 +1,35 @@
 import {
     runDecisionEngine,
-  } from "../decision/decisionEngine";
+  } from "../decision/decisionEngine.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "../decision/regression/decisionEngineRegressionFixture";
+  } from "../decision/regression/decisionEngineRegressionFixture.js";
   import {
     selectReaderDecisionSources,
     type ReaderDecisionSource,
-  } from "../decision/readerDecisionSelectionBuilder";
+  } from "../decision/readerDecisionSelectionBuilder.js";
   import type {
     DecisionTarget,
     QuestionIntent,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   import type {
     QuestionRealitySignal,
-  } from "../question/questionContext";
+  } from "../question/questionContext.js";
   import {
     readDecisionResult,
-  } from "./decisionResultReader";
+  } from "./decisionResultReader.js";
   import {
     buildDecisionExplanationPlan,
     type DecisionExplanationPlan,
-  } from "./decisionExplanationPlan";
+  } from "./decisionExplanationPlan.js";
   import {
     buildDecisionExplanationPayload,
     type DecisionExplanationPayload,
-  } from "./decisionExplanationPayload";
+  } from "./decisionExplanationPayload.js";
   import {
     buildConsultingPrompt,
     type ConsultingPrompt,
-  } from "./consultingPromptBuilder";
+  } from "./consultingPromptBuilder.js";
 
   type WealthE2ETopic =
     | "money"

@@ -4,7 +4,7 @@ import type {
     CareerJudgement,
     CareerLevel,
     CareerResult,
-  } from "../types/career";
+  } from "../types/career.js";
   
   export type CareerJudgementExplanation = {
     area: CareerArea;

@@ -1,19 +1,19 @@
 import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingAnswerRequestFunction,
-  } from "./consultingSessionAnswerRequester";
+  } from "./consultingSessionAnswerRequester.js";
   import type {
     ConsultingSessionRepository,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
   import {
     executeConsultingSessionTurn,
-  } from "./consultingSessionTurnExecutor";
+  } from "./consultingSessionTurnExecutor.js";
   import type {
     BuildConsultingSessionTurnInput,
     PrepareConsultingSessionTurnInput,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
 
   export class ConsultingSessionNotFoundError
     extends Error {

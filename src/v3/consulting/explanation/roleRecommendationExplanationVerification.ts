@@ -1,36 +1,36 @@
 import {
   buildDecisionEngineRegressionInput,
-} from "../decision/regression/decisionEngineRegressionFixture";
+} from "../decision/regression/decisionEngineRegressionFixture.js";
 import {
   runDecisionEngine,
-} from "../decision/decisionEngine";
+} from "../decision/decisionEngine.js";
 import {
   assessRoleRecommendation,
-} from "../decision/roleRecommendationAssessment";
+} from "../decision/roleRecommendationAssessment.js";
 import {
   buildQuestionContext,
-} from "../question/questionContextBuilder";
+} from "../question/questionContextBuilder.js";
 import {
   readQuestion,
-} from "../question/questionReader";
+} from "../question/questionReader.js";
 import type {
   HumanDestinyContext,
-} from "../../types/humanDestinyContext";
+} from "../../types/humanDestinyContext.js";
 import {
   readDecisionResult,
-} from "./decisionResultReader";
+} from "./decisionResultReader.js";
 import {
   buildDecisionExplanationPlan,
-} from "./decisionExplanationPlan";
+} from "./decisionExplanationPlan.js";
 import type {
   DecisionExplanationPlan,
-} from "./decisionExplanationPlan";
+} from "./decisionExplanationPlan.js";
 import {
   buildDecisionExplanationPayload,
-} from "./decisionExplanationPayload";
+} from "./decisionExplanationPayload.js";
 import {
   buildConsultingPrompt,
-} from "./consultingPromptBuilder";
+} from "./consultingPromptBuilder.js";
 
 const ROLE_QUESTION =
   "내가 연극을 하면 어떤 역할이 어울릴까요?";

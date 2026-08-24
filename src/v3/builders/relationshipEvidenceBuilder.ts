@@ -1,10 +1,10 @@
 import type {
     RelationshipEvidence,
-  } from "../masterReader/types/relationship";
+  } from "../masterReader/types/relationship.js";
   import type {
     SajuEvidenceStrength,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   function toRelationshipWeight(
     strength: SajuEvidenceStrength,

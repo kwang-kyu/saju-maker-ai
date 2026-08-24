@@ -1,26 +1,26 @@
 import type {
   QuestionContext,
   QuestionCounterpartRelation,
-} from "../question/questionContext";
+} from "../question/questionContext.js";
 
 import {
   assessZodiacCompatibility,
-} from "./zodiacCompatibilityAssessment";
+} from "./zodiacCompatibilityAssessment.js";
 import type {
   ZodiacCompatibilityAssessment,
-} from "./zodiacCompatibilityAssessment";
+} from "./zodiacCompatibilityAssessment.js";
 import type {
   CounterpartSajuCalculation,
-} from "./counterpartSajuCalculationBuilder";
+} from "./counterpartSajuCalculationBuilder.js";
 import type {
   SajuFacts,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 import {
   assessFullCompatibility,
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";
 import type {
   FullCompatibilityAssessment,
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";
 
 export type CompatibilityEvidenceLevel =
   | "notRequired"

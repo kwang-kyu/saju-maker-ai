@@ -2,13 +2,13 @@ import type {
     DestinyArea,
     DestinyInterpretation,
     DestinyLevel,
-  } from "../masterReader/types/destiny";
+  } from "../masterReader/types/destiny.js";
   import type {
     DestinyAreaSelection,
-  } from "../masterReader/readers/destinySelector";
+  } from "../masterReader/readers/destinySelector.js";
   import {
     buildDestinyAreaInterpretation,
-  } from "./destinyAreaInterpretationBuilder";
+  } from "./destinyAreaInterpretationBuilder.js";
   
   const DESTINY_AREAS:
     DestinyArea[] = [

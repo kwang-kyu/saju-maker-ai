@@ -1,13 +1,13 @@
 import type {
     DestinyArea,
     DestinyLevel,
-  } from "../types/destiny";
+  } from "../types/destiny.js";
   import type {
     MatchedDestinyRule,
-  } from "../rules/destinyRules";
+  } from "../rules/destinyRules.js";
   import type {
     DestinyAreaScore,
-  } from "./destinyScorer";
+  } from "./destinyScorer.js";
   
   export type DestinySelectionStatus =
     | "clear"

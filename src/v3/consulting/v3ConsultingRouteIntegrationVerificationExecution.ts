@@ -1,6 +1,6 @@
 ﻿import {
     verifyV3ConsultingRouteIntegration,
-  } from "./v3ConsultingRouteIntegrationVerification";
+  } from "./v3ConsultingRouteIntegrationVerification.js";
 
   const result =
     await verifyV3ConsultingRouteIntegration();

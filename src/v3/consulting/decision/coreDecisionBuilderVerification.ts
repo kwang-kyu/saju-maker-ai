@@ -1,6 +1,6 @@
 ﻿import {
     buildCoreDecision,
-  } from "./coreDecisionBuilder";
+  } from "./coreDecisionBuilder.js";
 
   export type CoreDecisionBuilderVerificationResult = {
     checks: {

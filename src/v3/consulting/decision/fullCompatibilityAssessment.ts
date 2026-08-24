@@ -1,6 +1,6 @@
 import {
   calculateCrossPersonSajuInteractions,
-} from "../../calculators/sajuInteractionCalculator";
+} from "../../calculators/sajuInteractionCalculator.js";
 import type {
   SajuElementDistribution,
   SajuFacts,
@@ -8,11 +8,11 @@ import type {
   SajuInteractionFact,
   SajuPillarFact,
   SajuPillarPosition,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 import type {
   CounterpartSajuCalculation,
   CounterpartSajuCalculationPrecision,
-} from "./counterpartSajuCalculationBuilder";
+} from "./counterpartSajuCalculationBuilder.js";
 
 export type CompatibilityAssessmentSignal = {
   source:

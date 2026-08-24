@@ -1,7 +1,7 @@
 import type {
     SajuInteractionFact,
     SajuPillarFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   type InteractionRule = {
     type: SajuInteractionFact["type"];

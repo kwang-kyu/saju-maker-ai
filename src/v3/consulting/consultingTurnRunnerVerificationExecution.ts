@@ -1,6 +1,6 @@
 import {
     verifyConsultingTurnRunner,
-  } from "./consultingTurnRunnerVerification";
+  } from "./consultingTurnRunnerVerification.js";
   
   const verification =
     verifyConsultingTurnRunner();

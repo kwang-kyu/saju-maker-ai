@@ -5,15 +5,15 @@
 
 import type {
   ConsultingOpenAIRequest,
-} from "../src/v3/consulting/openai/consultingOpenAIAdapter";
+} from "../src/v3/consulting/openai/consultingOpenAIAdapter.js";
 
 import {
   buildV3ConsultingRequest,
-} from "./v3Consulting";
+} from "./v3Consulting.js";
 
 import {
   isV3ConsultingRequest,
-} from "../src/v3/consulting/v3ConsultingRequest";
+} from "../src/v3/consulting/v3ConsultingRequest.js";
 
 export type V3ConsultingRouteDependencies = {
   buildRequest:
@@ -32,7 +32,7 @@ async function requestDefaultConsultingAnswer(
   const {
     requestConsultingAnswer,
   } = await import(
-    "../src/v3/consulting/openai/consultingOpenAIClient"
+    "../src/v3/consulting/openai/consultingOpenAIClient.js"
   );
 
   return requestConsultingAnswer(

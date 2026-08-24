@@ -1,16 +1,16 @@
 import {
     GatewayConsultingSessionRepository,
-  } from "./gatewayConsultingSessionRepository";
+  } from "./gatewayConsultingSessionRepository.js";
   import {
     InvalidConsultingSessionOwnerIdError,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
   import {
     InvalidSupabaseServerEnvironmentError,
     createSupabaseConsultingSessionRepository,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
   import {
     SupabaseConsultingSessionPersistenceGateway,
-  } from "./supabaseConsultingSessionPersistenceGateway";
+  } from "./supabaseConsultingSessionPersistenceGateway.js";
 
   export type SupabaseConsultingSessionRepositoryFactoryVerificationResult = {
     checks:

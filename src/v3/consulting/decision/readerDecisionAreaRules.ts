@@ -1,27 +1,27 @@
 import type {
     BlessingArea,
-  } from "../../masterReader/types/blessing";
+  } from "../../masterReader/types/blessing.js";
   import type {
     CapacityArea,
-  } from "../../masterReader/types/capacity";
+  } from "../../masterReader/types/capacity.js";
   import type {
     CareerArea,
-  } from "../../masterReader/types/career";
+  } from "../../masterReader/types/career.js";
   import type {
     DestinyArea,
-  } from "../../masterReader/types/destiny";
+  } from "../../masterReader/types/destiny.js";
   import type {
     HealthArea,
-  } from "../../masterReader/types/health";
+  } from "../../masterReader/types/health.js";
   import type {
     MoneyArea,
-  } from "../../masterReader/types/money";
+  } from "../../masterReader/types/money.js";
   import type {
     RelationshipArea,
-  } from "../../masterReader/types/relationship";
+  } from "../../masterReader/types/relationship.js";
   import type {
     QuestionTopic,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   
   export type ReaderDecisionAreaSelection = {
     readonly capacity:

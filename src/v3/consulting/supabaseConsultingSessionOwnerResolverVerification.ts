@@ -4,11 +4,11 @@ import {
 
   import {
     InvalidConsultingSessionOwnerIdError,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
   import {
     SupabaseConsultingSessionAuthenticationError,
     SupabaseConsultingSessionOwnerResolver,
-  } from "./supabaseConsultingSessionOwnerResolver";
+  } from "./supabaseConsultingSessionOwnerResolver.js";
 
   export type SupabaseConsultingSessionOwnerResolverVerificationResult = {
     checks:

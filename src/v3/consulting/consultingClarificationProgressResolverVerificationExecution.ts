@@ -1,6 +1,6 @@
 import {
     verifyConsultingClarificationProgressResolver,
-  } from "./consultingClarificationProgressResolverVerification";
+  } from "./consultingClarificationProgressResolverVerification.js";
 
   function executeVerification(): void {
     const result =

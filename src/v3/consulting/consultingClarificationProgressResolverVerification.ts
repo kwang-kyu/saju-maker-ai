@@ -1,11 +1,11 @@
 import {
     rebuildPendingConsultingClarification,
     resolveConsultingClarificationProgress,
-  } from "./consultingClarificationProgressResolver";
+  } from "./consultingClarificationProgressResolver.js";
   import type {
     ConsultingClarificationRequest,
     ConsultingConfirmedFact,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
 
   export type ConsultingClarificationProgressResolverVerificationResult = {
     checks:
@@ -432,6 +432,342 @@ const emptyCounterpartQuestion =
     )
     ?.question
   ?? "";
+
+    const leftoverCompatibilityClarification:
+      ConsultingClarificationRequest = {
+        decisionTurnId:
+          "turn-compatibility-relationship",
+
+        items: [
+          {
+            key:
+              "counterpartBirthData",
+
+            description:
+              "궁합 판단에 필요한 상대방의 출생정보가 확인되지 않았다.",
+
+            question:
+              "상대방의 생년월일, 양력·음력 여부와 성별을 알려주세요.",
+          },
+          {
+            key:
+              "counterpartIdentity",
+
+            description:
+              "관계 판단의 상대방과 현재 관계 상태가 확인되지 않았다.",
+
+            question:
+              "상대방과의 관계, 현재 관계 상태, 지금 가장 고민되는 갈등은 무엇인가요?",
+          },
+          {
+            key:
+              "currentRelationshipSituation",
+
+            description:
+              "현재 관계에서 실제로 발생한 사건과 상대방의 입장이 충분히 확인되지 않았다.",
+
+            question:
+              "최근 관계가 달라진 구체적인 사건, 상대방의 현재 입장, 본인이 원하는 결과를 알려주세요.",
+          },
+          {
+            key:
+              "decisionDeadline",
+
+            description:
+              "결정을 내려야 하는 현실적인 기한이 확인되지 않았다.",
+
+            question:
+              "이 결정을 내려야 하는 실제 마감 시점이나 예정일이 있나요?",
+          },
+        ],
+      };
+
+    const leftoverFullBirthFacts:
+      ConsultingConfirmedFact[] = [
+        buildFact({
+          key:
+            "counterpartBirthData",
+
+          fieldKey:
+            "birthDate",
+
+          value:
+            "1990-05-12",
+
+          evidence:
+            "1990년 5월 12일생",
+
+          decisionTurnId:
+            leftoverCompatibilityClarification
+              .decisionTurnId,
+
+          sourceTurnId:
+            "turn-compat-full-birth-date",
+
+          confirmedAt:
+            "2026-08-23T12:00:00.000Z",
+        }),
+        buildFact({
+          key:
+            "counterpartBirthData",
+
+          fieldKey:
+            "calendarType",
+
+          value:
+            "solar",
+
+          evidence:
+            "양력입니다",
+
+          decisionTurnId:
+            leftoverCompatibilityClarification
+              .decisionTurnId,
+
+          sourceTurnId:
+            "turn-compat-full-calendar",
+
+          confirmedAt:
+            "2026-08-23T12:01:00.000Z",
+        }),
+        buildFact({
+          key:
+            "counterpartBirthData",
+
+          fieldKey:
+            "gender",
+
+          value:
+            "female",
+
+          evidence:
+            "여성입니다",
+
+          decisionTurnId:
+            leftoverCompatibilityClarification
+              .decisionTurnId,
+
+          sourceTurnId:
+            "turn-compat-full-gender",
+
+          confirmedAt:
+            "2026-08-23T12:02:00.000Z",
+        }),
+      ];
+
+    const leftoverPartialBirthFacts:
+      ConsultingConfirmedFact[] = [
+        leftoverFullBirthFacts[0]!,
+      ];
+
+    const leftoverZodiacFact =
+      buildFact({
+        key:
+          "counterpartBirthData",
+
+        fieldKey:
+          "zodiacSign",
+
+        value:
+          "horse",
+
+        evidence:
+          "말띠입니다",
+
+        decisionTurnId:
+          leftoverCompatibilityClarification
+            .decisionTurnId,
+
+        sourceTurnId:
+          "turn-compat-zodiac",
+
+        confirmedAt:
+          "2026-08-23T12:03:00.000Z",
+      });
+
+    const leftoverCompatibilityFullBirthPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          leftoverCompatibilityClarification,
+
+        confirmedFacts:
+          leftoverFullBirthFacts,
+
+        compatibilityAnalysisRequired:
+          true,
+
+        analysisMode:
+          "compatibility",
+      });
+
+    const leftoverCompatibilityPartialPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          leftoverCompatibilityClarification,
+
+        confirmedFacts:
+          leftoverPartialBirthFacts,
+
+        compatibilityAnalysisRequired:
+          true,
+
+        analysisMode:
+          "compatibility",
+      });
+
+    const leftoverCompatibilityZodiacPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          leftoverCompatibilityClarification,
+
+        confirmedFacts: [
+          leftoverZodiacFact,
+        ],
+
+        compatibilityAnalysisRequired:
+          true,
+
+        analysisMode:
+          "compatibility",
+      });
+
+    const leftoverGeneralRelationshipPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          leftoverCompatibilityClarification,
+
+        confirmedFacts:
+          leftoverFullBirthFacts,
+      });
+
+    const leftoverMarriageDecisionPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          leftoverCompatibilityClarification,
+
+        confirmedFacts:
+          leftoverFullBirthFacts,
+
+        compatibilityAnalysisRequired:
+          true,
+
+        analysisMode:
+          "decision",
+      });
+
+    const leftoverDecisionModeCompatibilityMatchingPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          leftoverCompatibilityClarification,
+
+        confirmedFacts:
+          leftoverFullBirthFacts,
+
+        compatibilityAnalysisRequired:
+          true,
+
+        analysisMode:
+          "decision",
+
+        compatibilityMatchingQuestion:
+          true,
+      });
+
+    const unavailableFinancialProgress =
+      resolveConsultingClarificationProgress({
+        clarification:
+          CLARIFICATION,
+
+        confirmedFacts:
+          [],
+
+        itemStates: [
+          {
+            key:
+              "financialExecutionCapacity",
+
+            status:
+              "unavailable",
+          },
+        ],
+      });
+
+    const unavailableFinancialPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          CLARIFICATION,
+
+        confirmedFacts:
+          [],
+
+        itemStates: [
+          {
+            key:
+              "financialExecutionCapacity",
+
+            status:
+              "unavailable",
+          },
+        ],
+      });
+
+    const redirectedFinancialPending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          CLARIFICATION,
+
+        confirmedFacts:
+          [],
+
+        itemStates: [
+          {
+            key:
+              "financialExecutionCapacity",
+
+            status:
+              "redirected",
+          },
+        ],
+      });
+
+    const allUnavailablePending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          CLARIFICATION,
+
+        confirmedFacts:
+          [],
+
+        itemStates: [
+          {
+            key:
+              "counterpartBirthData",
+
+            status:
+              "unavailable",
+          },
+          {
+            key:
+              "financialExecutionCapacity",
+
+            status:
+              "redirected",
+          },
+        ],
+      });
+
+    const actualAmountDoesNotSettlePending =
+      rebuildPendingConsultingClarification({
+        clarification:
+          CLARIFICATION,
+
+        confirmedFacts:
+          [],
+
+        itemStates:
+          [],
+      });
+
       const checks = {
       factsAreGroupedByOriginalDecision:
         financialProgress
@@ -629,6 +965,163 @@ const emptyCounterpartQuestion =
             .includes(
               "상대방 출생시간",
             ),
+
+        leftoverCompatibilityRelationshipItemsAreNotRevived:
+          leftoverCompatibilityFullBirthPending
+          === null,
+
+        leftoverCompatibilityDoesNotAskDecisionDeadline:
+          leftoverCompatibilityFullBirthPending
+          === null
+          && leftoverCompatibilityZodiacPending
+          === null
+          && leftoverDecisionModeCompatibilityMatchingPending
+          === null,
+
+        leftoverCompatibilityPartialBirthAsksOnlyBirthFields:
+          leftoverCompatibilityPartialPending
+            ?.items
+            .length
+          === 1
+          && leftoverCompatibilityPartialPending
+            .items[0]
+            .key
+          === "counterpartBirthData"
+          && leftoverCompatibilityPartialPending
+            .items
+            .every(
+              (item) =>
+                item.key
+                !== "currentRelationshipSituation"
+                && item.key
+                !== "counterpartIdentity",
+            )
+          === true,
+
+        leftoverCompatibilityZodiacOnlyClearsRelationshipPending:
+          leftoverCompatibilityZodiacPending
+          === null,
+
+        leftoverGeneralRelationshipItemsStayWithoutCompatibilityGuard:
+          leftoverGeneralRelationshipPending
+            ?.items
+            .some(
+              (item) =>
+                item.key
+                === "currentRelationshipSituation",
+            )
+          === true
+          && leftoverGeneralRelationshipPending
+            .items
+            .some(
+              (item) =>
+                item.key
+                === "counterpartIdentity",
+            )
+          === true,
+
+        leftoverMarriageDecisionKeepsRelationshipItems:
+          leftoverMarriageDecisionPending
+            ?.items
+            .some(
+              (item) =>
+                item.key
+                === "currentRelationshipSituation",
+            )
+          === true
+          && leftoverMarriageDecisionPending
+            .items
+            .some(
+              (item) =>
+                item.key
+                === "counterpartIdentity",
+            )
+          === true,
+
+        leftoverMarriageDecisionKeepsDecisionDeadline:
+          leftoverMarriageDecisionPending
+            ?.items
+            .some(
+              (item) =>
+                item.key
+                === "decisionDeadline",
+            )
+          === true,
+
+        leftoverGeneralRelationshipKeepsDecisionDeadline:
+          leftoverGeneralRelationshipPending
+            ?.items
+            .some(
+              (item) =>
+                item.key
+                === "decisionDeadline",
+            )
+          === true,
+
+        leftoverDecisionModeCompatibilityMatchingClearsRelationshipPending:
+          leftoverDecisionModeCompatibilityMatchingPending
+          === null,
+
+        unavailableFinancialItemIsNotIncomplete:
+          unavailableFinancialProgress
+            .incompleteItemKeys
+            .includes(
+              "financialExecutionCapacity",
+            )
+          === false
+          && unavailableFinancialProgress
+            .items
+            .find(
+              (item) =>
+                item.item.key
+                === "financialExecutionCapacity",
+            )
+            ?.completed
+          === true,
+
+        unavailableFinancialItemIsNotReasked:
+          unavailableFinancialPending
+            ?.items
+            .every(
+              (item) =>
+                item.key
+                !== "financialExecutionCapacity",
+            )
+          === true,
+
+        unavailableFinancialMovesToNextPendingItem:
+          unavailableFinancialPending
+            ?.items
+            .length
+          === 1
+          && unavailableFinancialPending
+            .items[0]
+            .key
+          === "counterpartBirthData",
+
+        redirectedFinancialItemIsNotReasked:
+          redirectedFinancialPending
+            ?.items
+            .every(
+              (item) =>
+                item.key
+                !== "financialExecutionCapacity",
+            )
+          === true,
+
+        allUnavailableOrRedirectedClearsPending:
+          allUnavailablePending
+          === null,
+
+        emptyItemStatesKeepExistingReaskPath:
+          actualAmountDoesNotSettlePending
+            ?.items
+            .some(
+              (item) =>
+                item.key
+                === "financialExecutionCapacity",
+            )
+          === true,
         };
 
     return {

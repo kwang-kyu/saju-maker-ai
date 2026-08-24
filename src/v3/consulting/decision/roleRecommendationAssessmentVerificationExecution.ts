@@ -1,6 +1,6 @@
 import {
   verifyRoleRecommendationAssessment,
-} from "./roleRecommendationAssessmentVerification";
+} from "./roleRecommendationAssessmentVerification.js";
 
 const result =
   verifyRoleRecommendationAssessment();

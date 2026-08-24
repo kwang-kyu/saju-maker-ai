@@ -1,9 +1,9 @@
 import type {
     SurvivalStyleType,
-  } from "../../masterReader/types/survivalStyle";
+  } from "../../masterReader/types/survivalStyle.js";
   import type {
     DecisionTarget,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   
   export type SurvivalStyleVerdictEffect =
     | "support"

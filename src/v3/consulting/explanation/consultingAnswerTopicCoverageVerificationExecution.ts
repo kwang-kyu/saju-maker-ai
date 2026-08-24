@@ -1,6 +1,6 @@
 import {
   verifyConsultingAnswerTopicCoverage,
-} from "./consultingAnswerTopicCoverageVerification";
+} from "./consultingAnswerTopicCoverageVerification.js";
 
 /**
  * 천운문 v3 비-API 상담 질문 주제 커버리지 검증.

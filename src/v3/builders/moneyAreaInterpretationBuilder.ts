@@ -2,10 +2,10 @@ import type {
     MoneyArea,
     MoneyAreaInterpretation,
     MoneyLevel,
-  } from "../masterReader/types/money";
+  } from "../masterReader/types/money.js";
   import type {
     MoneyAreaSelection,
-  } from "../masterReader/readers/moneySelector";
+  } from "../masterReader/readers/moneySelector.js";
   
   type MoneyAreaDefinition = {
     corePattern: Record<MoneyLevel, string>;

@@ -1,6 +1,6 @@
 import {
     verifyAuthenticatedConsultingSessionTurnRequest,
-  } from "./authenticatedConsultingSessionTurnRequestVerification";
+  } from "./authenticatedConsultingSessionTurnRequestVerification.js";
 
   function executeVerification():
     void {

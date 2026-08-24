@@ -1,6 +1,6 @@
 import {
     verifyWealthRealityRegression,
-  } from "./wealthRealityRegressionVerification";
+  } from "./wealthRealityRegressionVerification.js";
 
   export const wealthRealityRegressionVerification =
     verifyWealthRealityRegression();

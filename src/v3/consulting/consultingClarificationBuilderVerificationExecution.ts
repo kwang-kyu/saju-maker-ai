@@ -1,6 +1,6 @@
 import {
     verifyConsultingClarificationBuilder,
-  } from "./consultingClarificationBuilderVerification";
+  } from "./consultingClarificationBuilderVerification.js";
   
   const verification =
     verifyConsultingClarificationBuilder();

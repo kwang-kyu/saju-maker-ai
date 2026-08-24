@@ -3,15 +3,15 @@ import type {
     ContextAlignment,
     DecisionConfidence,
     DecisionEngineInput,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
 
 import type {
     DecisionRealityAssessment,
-  } from "./decisionRealityAssessment";
+  } from "./decisionRealityAssessment.js";
 
   import type {
     TimingAssessment,
-  } from "./timingAssessment";
+  } from "./timingAssessment.js";
   export type VerdictContext = {
     alignment: ContextAlignment;
     readiness: ActionReadiness;

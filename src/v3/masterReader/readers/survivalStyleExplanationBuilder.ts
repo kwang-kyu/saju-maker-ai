@@ -1,10 +1,10 @@
 import {
     getSurvivalStyleDefinition,
-  } from "../constants/survivalStyleDefinitions";
+  } from "../constants/survivalStyleDefinitions.js";
   import type {
     SurvivalStyleJudgement,
     SurvivalStyleResult,
-  } from "../types/survivalStyle";
+  } from "../types/survivalStyle.js";
   
   export type SurvivalStyleExplanation = {
     title: string;

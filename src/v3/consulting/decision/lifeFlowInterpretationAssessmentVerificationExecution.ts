@@ -1,6 +1,6 @@
 ﻿import {
   verifyLifeFlowInterpretationAssessment,
-} from "./lifeFlowInterpretationAssessmentVerification";
+} from "./lifeFlowInterpretationAssessmentVerification.js";
 
 const result =
   verifyLifeFlowInterpretationAssessment();

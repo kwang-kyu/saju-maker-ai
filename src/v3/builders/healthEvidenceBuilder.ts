@@ -1,10 +1,10 @@
 import type {
     HealthEvidence,
-  } from "../masterReader/types/health";
+  } from "../masterReader/types/health.js";
   import type {
     SajuEvidenceStrength,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   function toHealthWeight(
     strength: SajuEvidenceStrength,

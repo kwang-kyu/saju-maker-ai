@@ -1,32 +1,32 @@
 import {
     buildDestinyAreaInterpretation,
-  } from "../../builders/destinyAreaInterpretationBuilder";
+  } from "../../builders/destinyAreaInterpretationBuilder.js";
   import {
     buildDestinyConfidence,
-  } from "../../builders/destinyConfidenceBuilder";
+  } from "../../builders/destinyConfidenceBuilder.js";
   import {
     buildDestinyEvidence,
-  } from "../../builders/destinyEvidenceBuilder";
+  } from "../../builders/destinyEvidenceBuilder.js";
   import {
     buildDestinyInterpretation,
-  } from "../../builders/destinyInterpretationBuilder";
+  } from "../../builders/destinyInterpretationBuilder.js";
   import type {
     SajuStructureFact,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import type {
     DestinyArea,
     DestinyEvidence,
     DestinyJudgement,
     DestinyResult,
-  } from "../types/destiny";
+  } from "../types/destiny.js";
   import {
     scoreDestinyAreas,
     type DestinyAreaScore,
-  } from "./destinyScorer";
+  } from "./destinyScorer.js";
   import {
     selectDestinyAreas,
     type DestinyAreaSelection,
-  } from "./destinySelector";
+  } from "./destinySelector.js";
   
   const DESTINY_AREAS: DestinyArea[] = [
     "lifeDirection",

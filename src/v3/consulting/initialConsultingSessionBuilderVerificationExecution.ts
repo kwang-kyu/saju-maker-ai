@@ -1,6 +1,6 @@
 import {
     verifyInitialConsultingSessionBuilder,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
 
   const verification =
     verifyInitialConsultingSessionBuilder();

@@ -1,12 +1,12 @@
 import type {
     RelationshipConfidence,
-  } from "../masterReader/types/relationship";
+  } from "../masterReader/types/relationship.js";
   import type {
     RelationshipAreaSelection,
-  } from "../masterReader/readers/relationshipSelector";
+  } from "../masterReader/readers/relationshipSelector.js";
   import type {
     MatchedRelationshipRule,
-  } from "../masterReader/rules/relationshipRules";
+  } from "../masterReader/rules/relationshipRules.js";
   
   type RelationshipConfidenceMetrics = {
     totalMatchCount: number;

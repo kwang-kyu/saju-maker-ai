@@ -1,10 +1,10 @@
 import type {
     DecisionRisk,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import type {
     ReaderDecisionAssessment,
     ReaderDecisionAssessmentItem,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   
   const READER_RISK_CONSEQUENCE: Record<
     ReaderDecisionAssessmentItem["source"],

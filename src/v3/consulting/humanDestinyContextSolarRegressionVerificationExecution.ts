@@ -1,6 +1,6 @@
 import {
     verifyHumanDestinyContextSolarRegression,
-  } from "./humanDestinyContextSolarRegressionVerification";
+  } from "./humanDestinyContextSolarRegressionVerification.js";
 
   console.log(
     JSON.stringify(

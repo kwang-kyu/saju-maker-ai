@@ -2,10 +2,10 @@ import type {
     BlessingArea,
     BlessingAreaInterpretation,
     BlessingLevel,
-  } from "../masterReader/types/blessing";
+  } from "../masterReader/types/blessing.js";
   import type {
     BlessingAreaSelection,
-  } from "../masterReader/readers/blessingSelector";
+  } from "../masterReader/readers/blessingSelector.js";
   
   type BlessingAreaDefinition = {
     title: string;

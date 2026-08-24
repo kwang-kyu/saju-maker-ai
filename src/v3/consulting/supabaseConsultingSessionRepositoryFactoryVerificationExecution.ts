@@ -1,6 +1,6 @@
 import {
     verifySupabaseConsultingSessionRepositoryFactory,
-  } from "./supabaseConsultingSessionRepositoryFactoryVerification";
+  } from "./supabaseConsultingSessionRepositoryFactoryVerification.js";
 
   const result =
     verifySupabaseConsultingSessionRepositoryFactory();

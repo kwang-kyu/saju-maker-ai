@@ -2,10 +2,10 @@
     DecisionExplanationCondition,
     DecisionExplanationInput,
     DecisionExplanationRisk,
-  } from "./decisionResultReader";
+  } from "./decisionResultReader.js";
   import type {
     ReaderDecisionSource,
-  } from "../decision/readerDecisionSelectionBuilder";
+  } from "../decision/readerDecisionSelectionBuilder.js";
 
   export type ReaderDecisionExplanation = {
     required: boolean;

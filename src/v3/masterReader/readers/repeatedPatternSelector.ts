@@ -1,4 +1,4 @@
-import type { RepeatedPatternScore } from "./repeatedPatternScorer";
+import type { RepeatedPatternScore } from "./repeatedPatternScorer.js";
 
 export type RepeatedPatternSelectionStatus =
   | "clear"

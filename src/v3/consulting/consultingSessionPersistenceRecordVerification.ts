@@ -1,19 +1,19 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     CONSULTING_SESSION_SCHEMA_VERSION,
     InvalidConsultingSessionPersistenceRecordError,
     deserializeConsultingSession,
     isConsultingSession,
     serializeConsultingSession,
-  } from "./consultingSessionPersistenceRecord";
+  } from "./consultingSessionPersistenceRecord.js";
 
   export type ConsultingSessionPersistenceRecordVerificationResult = {
     checks:

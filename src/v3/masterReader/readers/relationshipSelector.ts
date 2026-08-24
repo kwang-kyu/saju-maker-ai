@@ -1,13 +1,13 @@
 import type {
     RelationshipArea,
     RelationshipLevel,
-  } from "../types/relationship";
+  } from "../types/relationship.js";
   import type {
     MatchedRelationshipRule,
-  } from "../rules/relationshipRules";
+  } from "../rules/relationshipRules.js";
   import type {
     RelationshipAreaScore,
-  } from "./relationshipScorer";
+  } from "./relationshipScorer.js";
   
   export type RelationshipSelectionStatus =
     | "clear"

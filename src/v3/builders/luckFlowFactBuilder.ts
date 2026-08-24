@@ -1,6 +1,6 @@
 ﻿import {
     getTenGodByStem,
-  } from "../../data/tenGodService";
+  } from "../../data/tenGodService.js";
 
   import type {
     V3CurrentDaeun,
@@ -10,7 +10,7 @@
     V3WolunSegment,
     V3YearGanZhiSegment,
     V3LuckFlowCalculationResult,
-  } from "../types/luckFlowCalculation";
+  } from "../types/luckFlowCalculation.js";
 
   import type {
     SajuCurrentDaeunFact,
@@ -21,11 +21,11 @@
     SajuTargetPeriodLuckFlowFact,
     SajuWolunSegmentFact,
     SajuYearGanZhiSegmentFact,
-  } from "../types/luckFlowFact";
+  } from "../types/luckFlowFact.js";
 
   import type {
     SajuFiveElement,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
 
   export type SajuLuckFlowFactBuilderInput = {
     solarBirthDate: string;

@@ -1,31 +1,31 @@
 ﻿import {
     buildDirectionJudgement,
-  } from "./directionJudgementBuilder";
+  } from "./directionJudgementBuilder.js";
 
   import {
     buildDecisionEngineRegressionInput,
-  } from "./regression/decisionEngineRegressionFixture";
+  } from "./regression/decisionEngineRegressionFixture.js";
 
   import {
     buildVerdictContext,
-  } from "./verdictContextBuilder";
+  } from "./verdictContextBuilder.js";
 
   import {
     assessDecisionReality,
-  } from "./decisionRealityAssessment";
+  } from "./decisionRealityAssessment.js";
 
   import {
     analyzeContextAlignment,
-  } from "./contextAlignment";
+  } from "./contextAlignment.js";
 
   import {
     resolveActionReadiness,
     resolveConfidence,
-  } from "./decisionResolver";
+  } from "./decisionResolver.js";
 
   import {
     assessTiming,
-  } from "./timingAssessment";
+  } from "./timingAssessment.js";
 
   export type DirectionJudgementBuilderVerificationResult = {
     checks:

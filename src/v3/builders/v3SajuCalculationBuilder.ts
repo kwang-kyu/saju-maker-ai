@@ -1,22 +1,24 @@
+/// <reference path="../../lunar-javascript.d.ts" />
+
 import {
   Solar,
 } from "lunar-javascript";
 
 import {
   getTenGodByStem,
-} from "../../data/tenGodService";
+} from "../../data/tenGodService.js";
 
 import {
   convertToSajuSolarDate,
-} from "../../services/sajuDateService";
+} from "../../services/sajuDateService.js";
 
 import {
   getSajuElementInfo,
-} from "../../services/sajuElementService";
+} from "../../services/sajuElementService.js";
 
 import {
   getSajuGanjiInfo,
-} from "../../services/sajuGanjiService";
+} from "../../services/sajuGanjiService.js";
 
 export type V3SajuCalculationInput = {
   name: string;

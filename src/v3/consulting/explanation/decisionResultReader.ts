@@ -3,7 +3,7 @@
     DecisionEvidence,
     DecisionResult,
     DecisionRisk,
-  } from "../decision/decisionTypes";
+  } from "../decision/decisionTypes.js";
 
   export type DecisionExplanationEvidence = {
     source: DecisionEvidence["source"];

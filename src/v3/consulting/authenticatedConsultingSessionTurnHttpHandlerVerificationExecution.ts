@@ -1,6 +1,6 @@
 import {
     verifyAuthenticatedConsultingSessionTurnHttpHandler,
-  } from "./authenticatedConsultingSessionTurnHttpHandlerVerification";
+  } from "./authenticatedConsultingSessionTurnHttpHandlerVerification.js";
 
   async function executeVerification():
     Promise<void> {

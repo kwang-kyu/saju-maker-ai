@@ -1,17 +1,17 @@
 import {
     runDecisionEngine,
-  } from "../decision/decisionEngine";
+  } from "../decision/decisionEngine.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "../decision/regression/decisionEngineRegressionFixture";
+  } from "../decision/regression/decisionEngineRegressionFixture.js";
   import {
     readDecisionResult,
     type DecisionExplanationInput,
-  } from "./decisionResultReader";
+  } from "./decisionResultReader.js";
   import {
     buildReaderDecisionExplanation,
     type ReaderDecisionExplanation,
-  } from "./readerDecisionExplanationBuilder";
+  } from "./readerDecisionExplanationBuilder.js";
   
   export type ReaderDecisionExplanationVerificationResult = {
     cases: Array<{

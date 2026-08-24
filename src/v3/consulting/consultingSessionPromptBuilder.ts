@@ -1,10 +1,10 @@
 import type {
     ConsultingPrompt,
-  } from "./explanation/consultingPromptBuilder";
+  } from "./explanation/consultingPromptBuilder.js";
   import type {
     ConsultingConversationHistoryEntry,
     ConsultingSessionTurnPreparation,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
 
   function requireNonEmptyValue(
     value:

@@ -1,9 +1,9 @@
 import type {
     RepeatedPatternType,
-  } from "../../masterReader/types/repeatedPattern";
+  } from "../../masterReader/types/repeatedPattern.js";
   import type {
     DecisionTarget,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
 
   export type RepeatedPatternVerdictEffect =
     | "support"

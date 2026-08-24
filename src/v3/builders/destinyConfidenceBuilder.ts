@@ -1,12 +1,12 @@
 import type {
     DestinyConfidence,
-  } from "../masterReader/types/destiny";
+  } from "../masterReader/types/destiny.js";
   import type {
     DestinyAreaSelection,
-  } from "../masterReader/readers/destinySelector";
+  } from "../masterReader/readers/destinySelector.js";
   import type {
     MatchedDestinyRule,
-  } from "../masterReader/rules/destinyRules";
+  } from "../masterReader/rules/destinyRules.js";
   
   type DestinyConfidenceMetrics = {
     totalMatchCount: number;

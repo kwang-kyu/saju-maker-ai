@@ -1,6 +1,6 @@
 import {
     verifyConsultingOpenAIAdapter,
-  } from "./consultingOpenAIAdapterVerification";
+  } from "./consultingOpenAIAdapterVerification.js";
   
   const result =
     verifyConsultingOpenAIAdapter();

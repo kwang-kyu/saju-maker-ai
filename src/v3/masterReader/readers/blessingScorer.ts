@@ -1,11 +1,11 @@
 import type {
     BlessingArea,
     BlessingEvidence,
-  } from "../types/blessing";
+  } from "../types/blessing.js";
   import {
     matchBlessingRules,
     type MatchedBlessingRule,
-  } from "../rules/blessingRules";
+  } from "../rules/blessingRules.js";
   
   export type BlessingAreaScore = {
     area: BlessingArea;

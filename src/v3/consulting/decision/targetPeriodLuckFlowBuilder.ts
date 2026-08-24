@@ -1,25 +1,25 @@
 ﻿import {
   buildV3TargetPeriodLuckFlow,
   assertV3LuckFlowGender,
-} from "../../builders/luckFlowCalculationBuilder";
+} from "../../builders/luckFlowCalculationBuilder.js";
 import {
   buildSajuTargetPeriodLuckFlowFact,
-} from "../../builders/luckFlowFactBuilder";
+} from "../../builders/luckFlowFactBuilder.js";
 import type {
   SajuFactsPipelineResult,
-} from "../../builders/sajuFactsPipelineBuilder";
+} from "../../builders/sajuFactsPipelineBuilder.js";
 import type {
   SajuTargetPeriodLuckFlowFact,
-} from "../../types/luckFlowFact";
+} from "../../types/luckFlowFact.js";
 import {
   isLifeFlowInterpretationQuestion,
-} from "../question/lifeFlowInterpretationQuestionDetector";
+} from "../question/lifeFlowInterpretationQuestionDetector.js";
 import {
   resolveLifeFlowTarget,
-} from "../question/lifeFlowTargetResolver";
+} from "../question/lifeFlowTargetResolver.js";
 import type {
   LifeFlowTarget,
-} from "../question/lifeFlowTarget";
+} from "../question/lifeFlowTarget.js";
 
 export type TargetPeriodLuckFlowBuildPurpose =
   | "lifeFlowInterpretation"

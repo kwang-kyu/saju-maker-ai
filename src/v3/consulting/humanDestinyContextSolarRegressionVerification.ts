@@ -1,48 +1,48 @@
 import {
     buildMasterReaderEvidenceBundle,
-  } from "../builders/masterReaderEvidenceBuilder";
+  } from "../builders/masterReaderEvidenceBuilder.js";
   import {
     buildSajuFactsPipeline,
-  } from "../builders/sajuFactsPipelineBuilder";
+  } from "../builders/sajuFactsPipelineBuilder.js";
   import {
     readHumanDestinyContext,
-  } from "../readers/humanDestinyContextReader";
+  } from "../readers/humanDestinyContextReader.js";
   import {
     readBlessing,
-  } from "../masterReader/readers/blessingReader";
+  } from "../masterReader/readers/blessingReader.js";
   import {
     readCapacity,
-  } from "../masterReader/readers/capacityReader";
+  } from "../masterReader/readers/capacityReader.js";
   import {
     readCareer,
-  } from "../masterReader/readers/careerReader";
+  } from "../masterReader/readers/careerReader.js";
   import {
     readDestiny,
-  } from "../masterReader/readers/destinyReader";
+  } from "../masterReader/readers/destinyReader.js";
   import {
     readHealth,
-  } from "../masterReader/readers/healthReader";
+  } from "../masterReader/readers/healthReader.js";
   import {
     readHumanLifePhase,
-  } from "../masterReader/readers/humanLifePhaseReader";
+  } from "../masterReader/readers/humanLifePhaseReader.js";
   import {
     readLifeDriver,
-  } from "../masterReader/readers/lifeDriverReader";
+  } from "../masterReader/readers/lifeDriverReader.js";
   import {
     readMasterProfile,
-  } from "../masterReader/readers/masterReader";
+  } from "../masterReader/readers/masterReader.js";
   import {
     readMoney,
-  } from "../masterReader/readers/moneyReader";
+  } from "../masterReader/readers/moneyReader.js";
   import {
     readRelationship,
-  } from "../masterReader/readers/relationshipReader";
+  } from "../masterReader/readers/relationshipReader.js";
   import {
     readRepeatedPattern,
-  } from "../masterReader/readers/repeatedPatternReader";
+  } from "../masterReader/readers/repeatedPatternReader.js";
   import {
     readSurvivalStyle,
-  } from "../masterReader/readers/survivalStyleReader";
+  } from "../masterReader/readers/survivalStyleReader.js";
 
   export function verifyHumanDestinyContextSolarRegression() {
     const input = {

@@ -1,4 +1,4 @@
-﻿import type { BasicSajuResult } from "../../types/basic";
+import type { BasicSajuResult } from "../../types/basic";
 import { buildMasterDecision } from "../framework/masterDecisionEngine";
 
 function getAge(birthDate?: string) {
@@ -40,7 +40,7 @@ export function jobConsulting(data: BasicSajuResult, birthDate?: string, masterD
   const roleStrategy = getRoleStrategy(data);
   const decision = masterDecision ?? buildMasterDecision(data);
 
-  
+
   return `
 직업 성장 상담
 

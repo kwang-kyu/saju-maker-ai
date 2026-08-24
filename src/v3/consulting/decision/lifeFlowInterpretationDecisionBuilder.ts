@@ -1,22 +1,22 @@
-﻿import { analyzeContextAlignment } from "./contextAlignment";
-import { buildDecisionBrain } from "./decisionBrain";
+﻿import { analyzeContextAlignment } from "./contextAlignment.js";
+import { buildDecisionBrain } from "./decisionBrain.js";
 import type {
   DecisionEngineInput,
   DecisionEvidence,
   DecisionResult,
-} from "./decisionTypes";
+} from "./decisionTypes.js";
 import {
   buildDecisionResult,
-} from "./decisionResultBuilder";
+} from "./decisionResultBuilder.js";
 import {
   assessLifeFlowInterpretation,
-} from "./lifeFlowInterpretationAssessment";
+} from "./lifeFlowInterpretationAssessment.js";
 import {
   buildLifeFlowInterpretationEvidence,
-} from "./lifeFlowInterpretationEvidenceBuilder";
+} from "./lifeFlowInterpretationEvidenceBuilder.js";
 import {
   buildReaderDecisionEvidence,
-} from "./readerDecisionEvidenceBuilder";
+} from "./readerDecisionEvidenceBuilder.js";
 
 function resolveLifeFlowInterpretationConfidence(
   assessment:

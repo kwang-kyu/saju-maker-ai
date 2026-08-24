@@ -1,15 +1,15 @@
 import {
     buildConsultingClarification,
-  } from "./consultingClarificationBuilder";
+  } from "./consultingClarificationBuilder.js";
   import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     InitialConsultingExecutionResult,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type InitialConsultingSessionBuilderInput = {
     sessionId:
@@ -110,19 +110,6 @@ import {
           turnResult
             .decisionResult,
       });
-
-    if (
-      turnResult
-        .decisionResult
-        .verdict
-      === "insufficientEvidence"
-      && pendingClarification
-        === null
-    ) {
-      throw new Error(
-        "Insufficient evidence requires a clarification request.",
-      );
-    }
 
     return {
       id:

@@ -1,11 +1,11 @@
 ﻿import type {
   DecisionVerdict,
-} from "./decisionTypes";
+} from "./decisionTypes.js";
 
 import type {
   DecisionTarget,
   QuestionIntent,
-} from "../question/questionReader";
+} from "../question/questionReader.js";
 
 export type CoreDecisionContext = {
   originalQuestion: string;

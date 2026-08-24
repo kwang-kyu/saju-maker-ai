@@ -1,13 +1,13 @@
 import {
     buildDecisionEngineRegressionInput,
-  } from "./regression/decisionEngineRegressionFixture";
+  } from "./regression/decisionEngineRegressionFixture.js";
   import {
     assessReaderDecision,
     type ReaderDecisionAssessment,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   import type {
     DecisionEngineInput,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
 
   export type ReaderDecisionAssessmentVerificationResult = {
     cases: Array<{

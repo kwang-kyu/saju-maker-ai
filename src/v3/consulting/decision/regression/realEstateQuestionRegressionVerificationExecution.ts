@@ -1,6 +1,6 @@
 import {
     verifyRealEstateQuestionRegression,
-  } from "./realEstateQuestionRegressionVerification";
+  } from "./realEstateQuestionRegressionVerification.js";
 
   const result =
     verifyRealEstateQuestionRegression();

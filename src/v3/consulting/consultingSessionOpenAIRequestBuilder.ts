@@ -1,15 +1,15 @@
 import {
     buildConsultingSessionPrompt,
-  } from "./consultingSessionPromptBuilder";
+  } from "./consultingSessionPromptBuilder.js";
   import type {
     ConsultingSessionTurnPreparation,
-  } from "./consultingSessionTurnBuilder";
+  } from "./consultingSessionTurnBuilder.js";
   import {
     buildConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
   import type {
     ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
 
   /**
    * 후속 연속 상담을 위한 OpenAI 요청 Payload를 만든다.

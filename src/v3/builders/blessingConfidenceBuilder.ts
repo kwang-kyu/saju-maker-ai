@@ -1,12 +1,12 @@
 import type {
     BlessingConfidence,
-  } from "../masterReader/types/blessing";
+  } from "../masterReader/types/blessing.js";
   import type {
     BlessingAreaSelection,
-  } from "../masterReader/readers/blessingSelector";
+  } from "../masterReader/readers/blessingSelector.js";
   import type {
     MatchedBlessingRule,
-  } from "../masterReader/rules/blessingRules";
+  } from "../masterReader/rules/blessingRules.js";
   
   type BlessingConfidenceMetrics = {
     totalMatchCount: number;

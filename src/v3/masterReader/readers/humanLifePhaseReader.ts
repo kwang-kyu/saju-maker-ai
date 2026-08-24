@@ -1,12 +1,12 @@
 import type {
     HumanLifePhaseReaderInput,
-  } from "../types/humanLifePhaseEvidence";
+  } from "../types/humanLifePhaseEvidence.js";
   import type {
     HumanLifePhaseResult,
-  } from "../types/humanLifePhase";
+  } from "../types/humanLifePhase.js";
   
-  import { scoreHumanLifePhases } from "./humanLifePhaseScorer";
-  import { selectHumanLifePhase } from "./humanLifePhaseSelector";
+  import { scoreHumanLifePhases } from "./humanLifePhaseScorer.js";
+  import { selectHumanLifePhase } from "./humanLifePhaseSelector.js";
   
   export function readHumanLifePhase(
     input: HumanLifePhaseReaderInput,

@@ -1,4 +1,4 @@
-import type { SurvivalStyleScore } from "./survivalStyleScorer";
+import type { SurvivalStyleScore } from "./survivalStyleScorer.js";
 
 export type SurvivalStyleSelectionStatus =
   | "clear"

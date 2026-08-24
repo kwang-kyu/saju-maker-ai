@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-import type { ConsultingOpenAIRequest } from "./consultingOpenAIAdapter";
+import type { ConsultingOpenAIRequest } from "./consultingOpenAIAdapter.js";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

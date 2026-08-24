@@ -4,37 +4,37 @@ import {
   createInitialFollowUpAnswerE2ERequest,
   verifyConsultingInitialFollowUpAnswerE2E,
   type ConsultingInitialFollowUpAnswerE2EVerificationResult,
-} from "./consultingInitialFollowUpAnswerE2EVerification";
+} from "./consultingInitialFollowUpAnswerE2EVerification.js";
 import {
   requestConsultingSessionAnswer,
-} from "./consultingSessionAnswerRequester";
+} from "./consultingSessionAnswerRequester.js";
 import {
   buildConsultingSessionTurn,
   prepareConsultingSessionTurn,
-} from "./consultingSessionTurnBuilder";
+} from "./consultingSessionTurnBuilder.js";
 import {
   inspectConsultingLiveAnswer,
   type ConsultingLiveAnswerQualityCaseResult,
-} from "./explanation/consultingLiveAnswerQualityVerification";
+} from "./explanation/consultingLiveAnswerQualityVerification.js";
 import {
   buildConsultingLiveAnswerSemanticGateEvaluationPrompt,
   inspectConsultingLiveAnswerSemanticGateJson,
   type ConsultingLiveAnswerSemanticGateCaseResult,
   type ConsultingLiveAnswerSemanticGateInspectResult,
-} from "./explanation/consultingLiveAnswerSemanticGateVerification";
+} from "./explanation/consultingLiveAnswerSemanticGateVerification.js";
 import {
   requestInitialConsultingAnswer,
-} from "./initialConsultingAnswerRequester";
+} from "./initialConsultingAnswerRequester.js";
 import {
   buildInitialConsultingExecution,
-} from "./initialConsultingExecutionBuilder";
+} from "./initialConsultingExecutionBuilder.js";
 import {
   buildInitialConsultingSession,
-} from "./initialConsultingSessionBuilder";
+} from "./initialConsultingSessionBuilder.js";
 import {
   buildConsultingOpenAIRequest,
   type ConsultingOpenAIRequest,
-} from "./openai/consultingOpenAIAdapter";
+} from "./openai/consultingOpenAIAdapter.js";
 
 export const CONSULTING_LIVE_INITIAL_FOLLOW_UP_E2E_OPENAI_CALL_COUNT =
   4;
@@ -257,7 +257,7 @@ export async function verifyConsultingLiveInitialFollowUpAnswerE2E():
   const {
     requestConsultingAnswer,
   } = await import(
-    "./openai/consultingOpenAIClient"
+    "./openai/consultingOpenAIClient.js"
   );
 
   let openaiCallCount =

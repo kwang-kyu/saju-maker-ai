@@ -2,7 +2,7 @@ import type {
     SurvivalEvidence,
     SurvivalEvidenceSource,
     SurvivalStyleType,
-  } from "../types/survivalStyle";
+  } from "../types/survivalStyle.js";
   
   export type SurvivalStyleRule = {
     id: string;

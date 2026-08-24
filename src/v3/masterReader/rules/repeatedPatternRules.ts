@@ -2,7 +2,7 @@ import type {
   PatternEvidence,
   PatternEvidenceSource,
   RepeatedPatternType,
-} from "../types/repeatedPattern";
+} from "../types/repeatedPattern.js";
 
 export type RepeatedPatternRule = {
   id: string;

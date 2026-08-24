@@ -1,33 +1,33 @@
 import {
     executeAuthenticatedPersistedConsultingSessionTurn,
-  } from "./authenticatedPersistedConsultingSessionTurnService";
+  } from "./authenticatedPersistedConsultingSessionTurnService.js";
   import type {
     AuthenticatedPersistedConsultingSessionTurnDependencies,
-  } from "./authenticatedPersistedConsultingSessionTurnService";
+  } from "./authenticatedPersistedConsultingSessionTurnService.js";
   import type {
     CreateAuthenticatedSupabaseConsultingSessionRepositoryInput,
-  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory";
+  } from "./authenticatedSupabaseConsultingSessionRepositoryFactory.js";
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import type {
     ExecutePersistedConsultingSessionTurnInput,
-  } from "./persistedConsultingSessionTurnService";
+  } from "./persistedConsultingSessionTurnService.js";
   import type {
     ConsultingSessionRepository,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
   import {
     readQuestion,
-  } from "./question/questionReader";
+  } from "./question/questionReader.js";
 
   export type AuthenticatedPersistedConsultingSessionTurnServiceVerificationResult = {
     checks:

@@ -1,51 +1,51 @@
 import {
   verifyAuthenticatedConsultingInitialFollowUpHttpE2E,
-} from "./authenticatedConsultingInitialFollowUpHttpE2EVerification";
+} from "./authenticatedConsultingInitialFollowUpHttpE2EVerification.js";
 import {
   verifyAuthenticatedInitialConsultingClarification,
-} from "./authenticatedInitialConsultingClarificationVerification";
+} from "./authenticatedInitialConsultingClarificationVerification.js";
 import {
   verifyAuthenticatedSupabaseConsultingSessionRepositoryFactory,
-} from "./authenticatedSupabaseConsultingSessionRepositoryFactoryVerification";
+} from "./authenticatedSupabaseConsultingSessionRepositoryFactoryVerification.js";
 import {
   verifyConsultingInitialFollowUpAnswerE2E,
-} from "./consultingInitialFollowUpAnswerE2EVerification";
+} from "./consultingInitialFollowUpAnswerE2EVerification.js";
 import {
   verifyConsultingSessionTurnExecutor,
-} from "./consultingSessionTurnExecutorVerification";
+} from "./consultingSessionTurnExecutorVerification.js";
 import {
   BUSINESS_START_REGRESSION_CASE,
-} from "./decision/regression/businessStartRegressionCase";
+} from "./decision/regression/businessStartRegressionCase.js";
 import {
   runDecisionEngineRegression,
-} from "./decision/regression/decisionEngineRegressionRunner";
+} from "./decision/regression/decisionEngineRegressionRunner.js";
 import {
   verifyConsultingAnswerQuality,
-} from "./explanation/consultingAnswerQualityVerification";
+} from "./explanation/consultingAnswerQualityVerification.js";
 import {
   verifyConsultingAnswerTopicCoverage,
-} from "./explanation/consultingAnswerTopicCoverageVerification";
+} from "./explanation/consultingAnswerTopicCoverageVerification.js";
 import {
   verifyConsultingLiveAnswerSemanticGateContract,
-} from "./explanation/consultingLiveAnswerSemanticGateVerification";
+} from "./explanation/consultingLiveAnswerSemanticGateVerification.js";
 import {
   verifySupabaseConsultingSessionOwnerResolver,
-} from "./supabaseConsultingSessionOwnerResolverVerification";
+} from "./supabaseConsultingSessionOwnerResolverVerification.js";
 import {
   verifySupabaseConsultingSessionPersistenceGateway,
-} from "./supabaseConsultingSessionPersistenceGatewayVerification";
+} from "./supabaseConsultingSessionPersistenceGatewayVerification.js";
 import {
   verifySupabaseConsultingSessionRepositoryFactory,
-} from "./supabaseConsultingSessionRepositoryFactoryVerification";
+} from "./supabaseConsultingSessionRepositoryFactoryVerification.js";
 import {
   verifyV3ConsultingRouteIntegration,
-} from "./v3ConsultingRouteIntegrationVerification";
+} from "./v3ConsultingRouteIntegrationVerification.js";
 import {
   verifyV3ConsultingSessionTurnApi,
-} from "./v3ConsultingSessionTurnApiVerification";
+} from "./v3ConsultingSessionTurnApiVerification.js";
 import {
   verifyV3InitialConsultingSessionApi,
-} from "./v3InitialConsultingSessionApiVerification";
+} from "./v3InitialConsultingSessionApiVerification.js";
 
 export const V3_NON_API_PRODUCTION_READINESS_EXPECTED_STAGE_COUNT =
   15;

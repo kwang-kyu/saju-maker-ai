@@ -1,9 +1,9 @@
-import type { LifeDriverType } from "../types/lifeDriver";
-import type { LifeDriverMeaning } from "../types/lifeDriverInput";
+import type { LifeDriverType } from "../types/lifeDriver.js";
+import type { LifeDriverMeaning } from "../types/lifeDriverInput.js";
 import {
   matchLifeDriverRules,
   type MatchedLifeDriverRule,
-} from "../rules/lifeDriverRules";
+} from "../rules/lifeDriverRules.js";
 
 export type LifeDriverScore = {
   driver: LifeDriverType;

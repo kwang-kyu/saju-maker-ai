@@ -3,13 +3,13 @@ import type {
     CareerAreaInterpretation,
     CareerInterpretation,
     CareerLevel,
-  } from "../masterReader/types/career";
+  } from "../masterReader/types/career.js";
   import type {
     CareerAreaSelection,
-  } from "../masterReader/readers/careerSelector";
+  } from "../masterReader/readers/careerSelector.js";
   import {
     buildCareerAreaInterpretation,
-  } from "./careerAreaInterpretationBuilder";
+  } from "./careerAreaInterpretationBuilder.js";
   
   const CAREER_AREAS: CareerArea[] = [
     "roleOrientation",

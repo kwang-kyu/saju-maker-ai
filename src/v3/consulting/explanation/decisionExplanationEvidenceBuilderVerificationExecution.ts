@@ -1,6 +1,6 @@
 import {
     verifyDecisionExplanationEvidenceBuilder,
-  } from "./decisionExplanationEvidenceBuilderVerification";
+  } from "./decisionExplanationEvidenceBuilderVerification.js";
   const result =
     verifyDecisionExplanationEvidenceBuilder();
   console.log(

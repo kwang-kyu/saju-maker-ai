@@ -1,32 +1,32 @@
 import {
     buildHealthAreaInterpretation,
-  } from "../../builders/healthAreaInterpretationBuilder";
+  } from "../../builders/healthAreaInterpretationBuilder.js";
   import {
     buildHealthConfidence,
-  } from "../../builders/healthConfidenceBuilder";
+  } from "../../builders/healthConfidenceBuilder.js";
   import {
     buildHealthEvidence,
-  } from "../../builders/healthEvidenceBuilder";
+  } from "../../builders/healthEvidenceBuilder.js";
   import {
     buildHealthInterpretation,
-  } from "../../builders/healthInterpretationBuilder";
+  } from "../../builders/healthInterpretationBuilder.js";
   import type {
     HealthArea,
     HealthEvidence,
     HealthJudgement,
     HealthResult,
-  } from "../types/health";
+  } from "../types/health.js";
   import type {
     SajuStructureFact,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import {
     scoreHealthAreas,
     type HealthAreaScore,
-  } from "./healthScorer";
+  } from "./healthScorer.js";
   import {
     selectHealthAreas,
     type HealthAreaSelection,
-  } from "./healthSelector";
+  } from "./healthSelector.js";
   
   const HEALTH_AREAS: HealthArea[] = [
     "vitalityStability",

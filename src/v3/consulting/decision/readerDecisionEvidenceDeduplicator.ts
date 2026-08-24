@@ -1,6 +1,6 @@
 import type {
     DecisionEvidence,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   function normalizeEvidenceDescription(
     description: string,
   ): string {

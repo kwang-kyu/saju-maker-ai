@@ -1,13 +1,13 @@
 import type {
     HealthArea,
     HealthLevel,
-  } from "../types/health";
+  } from "../types/health.js";
   import type {
     MatchedHealthRule,
-  } from "../rules/healthRules";
+  } from "../rules/healthRules.js";
   import type {
     HealthAreaScore,
-  } from "./healthScorer";
+  } from "./healthScorer.js";
   
   export type HealthSelectionStatus =
     | "clear"

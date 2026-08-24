@@ -1,6 +1,6 @@
 ﻿import {
     isV3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type V3ConsultingRequestVerificationResult = {
     validSolarRequestIsAccepted:

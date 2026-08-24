@@ -1,11 +1,11 @@
 import {
     buildDecisionEngineRegressionInput,
-  } from "./regression/decisionEngineRegressionFixture";
+  } from "./regression/decisionEngineRegressionFixture.js";
   import {
     verifyCompatibilityConditionSensitivity,
     verifyLifeContextConditionSensitivity,
     verifyReadinessConditionSensitivity,
-  } from "./decisionEngineVerification";
+  } from "./decisionEngineVerification.js";
   
   const decisionInput =
     buildDecisionEngineRegressionInput();

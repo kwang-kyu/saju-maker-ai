@@ -1,10 +1,10 @@
 import type {
     DecisionCondition,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   import type {
     ReaderDecisionAssessment,
     ReaderDecisionAssessmentItem,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   
   const READER_CONDITION_GUIDANCE: Record<
     ReaderDecisionAssessmentItem["source"],

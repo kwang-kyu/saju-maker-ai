@@ -1,22 +1,22 @@
 ﻿import type {
     SajuTargetPeriodLuckFlowFact,
     SajuWolunSegmentFact,
-  } from "../../types/luckFlowFact";
+  } from "../../types/luckFlowFact.js";
   import type {
     SajuFacts,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import type {
     QuestionContext,
-  } from "../question/questionContext";
+  } from "../question/questionContext.js";
   import type {
     LifeFlowTarget,
-  } from "../question/lifeFlowTarget";
+  } from "../question/lifeFlowTarget.js";
   import {
     assessLifeFlowPeriodInteractions,
     buildPeriodFlowPillarsFromFact,
     interactionStrengthWeight,
     type LifeFlowPeriodInteraction,
-  } from "./lifeFlowPeriodInteractionAssessment";
+  } from "./lifeFlowPeriodInteractionAssessment.js";
 
   export type TimingSearchWindowDirection =
     | "supportive"

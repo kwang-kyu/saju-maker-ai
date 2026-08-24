@@ -153,4 +153,4 @@ export function getTenGodAnalysis({
     if (controls[target.element] === day.element) return sameYinYang ? "편관" : "정관";
   
     return "계산불가";
-  } 
+  }

@@ -1,14 +1,14 @@
 import {
     buildV3ConsultingRequest,
-  } from "../../../api/v3Consulting";
+  } from "../../../api/v3Consulting.js";
 
   import {
     buildHumanDestinyContextPipeline,
-  } from "../builders/humanDestinyContextPipelineBuilder";
+  } from "../builders/humanDestinyContextPipelineBuilder.js";
 
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type HumanPersonalizationComparisonVerificationResult = {
     actual: {

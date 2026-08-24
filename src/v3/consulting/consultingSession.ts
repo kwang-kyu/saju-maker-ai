@@ -77,6 +77,19 @@ import type {
 
     evidence: string[];
   };
+  export type ConsultingClarificationObservation = {
+    key: string;
+
+    description: string;
+
+    rawValue: string;
+
+    evidence: string[];
+
+    sourceTurnId: string;
+
+    observedAt: string;
+  };
   export type ConsultingConfirmedFact = {
     key: string;
 
@@ -216,6 +229,9 @@ number;
 
     confirmedFacts:
       ConsultingConfirmedFact[];
+
+    clarificationObservations?:
+      ConsultingClarificationObservation[];
 
     pendingClarification:
       ConsultingClarificationRequest | null;

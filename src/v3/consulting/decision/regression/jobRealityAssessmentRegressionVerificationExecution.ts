@@ -1,6 +1,6 @@
 import {
     verifyJobRealityAssessmentRegression,
-  } from "./jobRealityAssessmentRegressionVerification";
+  } from "./jobRealityAssessmentRegressionVerification.js";
 
   export const jobRealityAssessmentRegressionVerification =
     verifyJobRealityAssessmentRegression();

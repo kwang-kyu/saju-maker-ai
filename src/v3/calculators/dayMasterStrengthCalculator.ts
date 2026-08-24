@@ -4,7 +4,7 @@ import type {
     SajuFiveElement,
     SajuPillarFact,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   export type DayMasterStrengthType =
     | "strong"

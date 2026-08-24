@@ -5,11 +5,11 @@ import type {
 
   import {
     handleAuthenticatedConsultingSessionTurnHttpRequest,
-  } from "../../../src/v3/consulting/authenticatedConsultingSessionTurnHttpHandler";
+  } from "../../../src/v3/consulting/authenticatedConsultingSessionTurnHttpHandler.js";
   import type {
     AuthenticatedConsultingSessionTurnHttpRequest,
     AuthenticatedConsultingSessionTurnHttpResponse,
-  } from "../../../src/v3/consulting/authenticatedConsultingSessionTurnHttpHandler";
+  } from "../../../src/v3/consulting/authenticatedConsultingSessionTurnHttpHandler.js";
 
   export type V3ConsultingSessionTurnApiDependencies = {
     handleRequest(

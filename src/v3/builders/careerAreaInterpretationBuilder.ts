@@ -2,10 +2,10 @@ import type {
     CareerArea,
     CareerAreaInterpretation,
     CareerLevel,
-  } from "../masterReader/types/career";
+  } from "../masterReader/types/career.js";
   import type {
     CareerAreaSelection,
-  } from "../masterReader/readers/careerSelector";
+  } from "../masterReader/readers/careerSelector.js";
   
   type CareerAreaDefinition = {
     corePattern: Record<CareerLevel, string>;

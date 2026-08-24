@@ -1,6 +1,6 @@
 import type {
   LifeDriverScore,
-} from "./lifeDriverScorer";
+} from "./lifeDriverScorer.js";
 
 export type LifeDriverSelectionStatus =
   | "clear"

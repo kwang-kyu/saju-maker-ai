@@ -2,7 +2,7 @@ import {
     InvalidAuthenticatedConsultingSessionTurnRequestError,
     isAuthenticatedConsultingSessionTurnRequest,
     parseAuthenticatedConsultingSessionTurnRequest,
-  } from "./authenticatedConsultingSessionTurnRequest";
+  } from "./authenticatedConsultingSessionTurnRequest.js";
 
   export type AuthenticatedConsultingSessionTurnRequestVerificationResult = {
     checks:

@@ -8,13 +8,13 @@ import {
 
   import {
     GatewayConsultingSessionRepository,
-  } from "./gatewayConsultingSessionRepository";
+  } from "./gatewayConsultingSessionRepository.js";
   import {
     parseConsultingSessionOwnerId,
-  } from "./consultingSessionOwnerId";
+  } from "./consultingSessionOwnerId.js";
   import {
     SupabaseConsultingSessionPersistenceGateway,
-  } from "./supabaseConsultingSessionPersistenceGateway";
+  } from "./supabaseConsultingSessionPersistenceGateway.js";
 
   export type SupabaseServerEnvironment = {
     SUPABASE_URL?:

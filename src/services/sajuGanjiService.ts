@@ -1,3 +1,5 @@
+/// <reference path="../lunar-javascript.d.ts" />
+
 import { Solar } from "lunar-javascript";
 
 type SajuGanjiParams = {

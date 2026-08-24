@@ -1,6 +1,6 @@
 import type {
   SajuLuckFlowFact,
-} from "./luckFlowFact";
+} from "./luckFlowFact.js";
 
 export type SajuPillarPosition =
   | "year"

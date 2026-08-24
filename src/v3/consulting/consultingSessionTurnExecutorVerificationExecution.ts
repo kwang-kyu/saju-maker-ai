@@ -1,6 +1,6 @@
 import {
     verifyConsultingSessionTurnExecutor,
-  } from "./consultingSessionTurnExecutorVerification";
+  } from "./consultingSessionTurnExecutorVerification.js";
 
   async function executeVerification():
     Promise<void> {

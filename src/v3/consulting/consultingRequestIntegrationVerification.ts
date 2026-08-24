@@ -1,16 +1,16 @@
 import {
     buildDecisionEngineRegressionInput,
-  } from "./decision/regression/decisionEngineRegressionFixture";
+  } from "./decision/regression/decisionEngineRegressionFixture.js";
   import {
     buildConsultingOpenAIRequest,
     type ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
   import {
     runConsulting,
-  } from "./consultingRunner";
+  } from "./consultingRunner.js";
   import type {
     ConsultingPrompt,
-  } from "./explanation/consultingPromptBuilder";
+  } from "./explanation/consultingPromptBuilder.js";
   
   export type ConsultingRequestIntegrationVerificationResult = {
     prompt:

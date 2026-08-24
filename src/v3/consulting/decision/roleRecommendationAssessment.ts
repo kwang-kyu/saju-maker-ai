@@ -1,15 +1,15 @@
 import type {
   LifeDriverType,
-} from "../../masterReader/types/lifeDriver";
+} from "../../masterReader/types/lifeDriver.js";
 import type {
   RepeatedPatternType,
-} from "../../masterReader/types/repeatedPattern";
+} from "../../masterReader/types/repeatedPattern.js";
 import type {
   SurvivalStyleType,
-} from "../../masterReader/types/survivalStyle";
+} from "../../masterReader/types/survivalStyle.js";
 import type {
   HumanDestinyContext,
-} from "../../types/humanDestinyContext";
+} from "../../types/humanDestinyContext.js";
 
 export type RoleRecommendationCandidate = {
   key:

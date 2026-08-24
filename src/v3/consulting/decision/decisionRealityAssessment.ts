@@ -1,15 +1,15 @@
 import type {
     QuestionRealityConstraint,
     QuestionRealityContext,
-  } from "../question/questionContext";
+  } from "../question/questionContext.js";
   import type {
     HumanLifeContext,
-  } from "../../types/humanLifeContext";
+  } from "../../types/humanLifeContext.js";
   import {
     assessLifeContext,
     type AssessmentLevel,
     type LifeContextAssessment,
-  } from "./lifeContextAssessment";
+  } from "./lifeContextAssessment.js";
 
   export type DecisionRealityAssessment =
     LifeContextAssessment & {

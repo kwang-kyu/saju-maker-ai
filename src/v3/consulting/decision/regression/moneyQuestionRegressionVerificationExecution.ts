@@ -1,6 +1,6 @@
 import {
     verifyMoneyQuestionRegression,
-  } from "./moneyQuestionRegressionVerification";
+  } from "./moneyQuestionRegressionVerification.js";
 
   const result =
     verifyMoneyQuestionRegression();

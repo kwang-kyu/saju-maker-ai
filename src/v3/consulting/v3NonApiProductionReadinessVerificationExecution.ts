@@ -1,7 +1,7 @@
 import {
   toSafeVerificationError,
   verifyV3NonApiProductionReadiness,
-} from "./v3NonApiProductionReadinessVerification";
+} from "./v3NonApiProductionReadinessVerification.js";
 
 /**
  * 천운문 v3 핵심 비-API Production Readiness 종합 검증.

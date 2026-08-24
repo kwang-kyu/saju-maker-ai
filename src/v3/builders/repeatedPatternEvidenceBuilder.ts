@@ -1,12 +1,12 @@
 import type {
     PatternEvidence,
-  } from "../masterReader/types/repeatedPattern";
+  } from "../masterReader/types/repeatedPattern.js";
 
   import type {
     SajuEvidenceStrength,
     SajuFacts,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
 
   function toWeight(
     strength: SajuEvidenceStrength,

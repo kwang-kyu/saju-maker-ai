@@ -1,10 +1,10 @@
 import type {
     ReaderDecisionAssessment,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   import type {
     DecisionEngineInput,
     DecisionVerdict,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   
   export type ReaderDecisionVerdictBuilderInput = {
     verdict: DecisionVerdict;

@@ -1,25 +1,25 @@
 import {
     runDecisionEngine,
-  } from "../decision/decisionEngine";
+  } from "../decision/decisionEngine.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "../decision/regression/decisionEngineRegressionFixture";
+  } from "../decision/regression/decisionEngineRegressionFixture.js";
   import {
     readDecisionResult,
     type DecisionExplanationInput,
-  } from "./decisionResultReader";
+  } from "./decisionResultReader.js";
   import {
     buildDecisionExplanationPlan,
     type DecisionExplanationPlan,
-  } from "./decisionExplanationPlan";
+  } from "./decisionExplanationPlan.js";
   import {
     buildDecisionExplanationPayload,
     type DecisionExplanationPayload,
-  } from "./decisionExplanationPayload";
+  } from "./decisionExplanationPayload.js";
   import {
     buildConsultingPrompt,
     type ConsultingPrompt,
-  } from "./consultingPromptBuilder";
+  } from "./consultingPromptBuilder.js";
   export type DecisionExplanationTextDeduplicatorIntegrationVerificationResult = {
     plan:
       DecisionExplanationPlan;

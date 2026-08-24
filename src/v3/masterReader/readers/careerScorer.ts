@@ -1,11 +1,11 @@
 import type {
     CareerArea,
     CareerEvidence,
-  } from "../types/career";
+  } from "../types/career.js";
   import {
     matchCareerRules,
     type MatchedCareerRule,
-  } from "../rules/careerRules";
+  } from "../rules/careerRules.js";
   
   export type CareerAreaScore = {
     area: CareerArea;

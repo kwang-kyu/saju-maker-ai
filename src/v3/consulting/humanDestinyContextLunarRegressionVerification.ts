@@ -1,66 +1,66 @@
 import {
     buildSajuFactsPipeline,
-  } from "../builders/sajuFactsPipelineBuilder";
+  } from "../builders/sajuFactsPipelineBuilder.js";
 
   import {
     buildMasterReaderEvidenceBundle,
-  } from "../builders/masterReaderEvidenceBuilder";
+  } from "../builders/masterReaderEvidenceBuilder.js";
 
   import {
     readMasterProfile,
-  } from "../masterReader/readers/masterReader";
+  } from "../masterReader/readers/masterReader.js";
 
   import {
     readLifeDriver,
-  } from "../masterReader/readers/lifeDriverReader";
+  } from "../masterReader/readers/lifeDriverReader.js";
 
   import {
     readSurvivalStyle,
-  } from "../masterReader/readers/survivalStyleReader";
+  } from "../masterReader/readers/survivalStyleReader.js";
 
   import {
     readRepeatedPattern,
-  } from "../masterReader/readers/repeatedPatternReader";
+  } from "../masterReader/readers/repeatedPatternReader.js";
 
   import {
     readCapacity,
-  } from "../masterReader/readers/capacityReader";
+  } from "../masterReader/readers/capacityReader.js";
 
   import {
     readMoney,
-  } from "../masterReader/readers/moneyReader";
+  } from "../masterReader/readers/moneyReader.js";
 
   import {
     readCareer,
-  } from "../masterReader/readers/careerReader";
+  } from "../masterReader/readers/careerReader.js";
 
   import {
     readRelationship,
-  } from "../masterReader/readers/relationshipReader";
+  } from "../masterReader/readers/relationshipReader.js";
 
   import {
     readHealth,
-  } from "../masterReader/readers/healthReader";
+  } from "../masterReader/readers/healthReader.js";
 
   import {
     readBlessing,
-  } from "../masterReader/readers/blessingReader";
+  } from "../masterReader/readers/blessingReader.js";
 
   import {
     readDestiny,
-  } from "../masterReader/readers/destinyReader";
+  } from "../masterReader/readers/destinyReader.js";
 
   import {
     readHumanLifePhase,
-  } from "../masterReader/readers/humanLifePhaseReader";
+  } from "../masterReader/readers/humanLifePhaseReader.js";
 
   import {
     buildHumanDestinyProfile,
-  } from "../masterReader/readers/humanDestinyProfileBuilder";
+  } from "../masterReader/readers/humanDestinyProfileBuilder.js";
 
   import {
     buildHumanDestinyContext,
-  } from "../builders/humanDestinyContextBuilder";
+  } from "../builders/humanDestinyContextBuilder.js";
 
   export type HumanDestinyContextLunarRegressionVerificationResult = {
     input: {

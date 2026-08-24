@@ -1,13 +1,13 @@
 import type {
     MoneyArea,
     MoneyLevel,
-  } from "../types/money";
+  } from "../types/money.js";
   import type {
     MatchedMoneyRule,
-  } from "../rules/moneyRules";
+  } from "../rules/moneyRules.js";
   import type {
     MoneyAreaScore,
-  } from "./moneyScorer";
+  } from "./moneyScorer.js";
   
   export type MoneySelectionStatus =
     | "clear"

@@ -1,9 +1,9 @@
 import {
     buildDecisionEngineRegressionInput,
-  } from "./regression/decisionEngineRegressionFixture";
+  } from "./regression/decisionEngineRegressionFixture.js";
   import {
     verifyTimingAssessment,
-  } from "./timingAssessmentVerification";
+  } from "./timingAssessmentVerification.js";
   
   /**
    * TimingAssessment 단독 검증 실행.

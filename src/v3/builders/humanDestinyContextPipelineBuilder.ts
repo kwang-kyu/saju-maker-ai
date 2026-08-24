@@ -1,24 +1,24 @@
 import type {
     HumanDestinyContext,
-  } from "../types/humanDestinyContext";
+  } from "../types/humanDestinyContext.js";
 
   import type {
     MasterReaderEvidenceBundle,
-  } from "../types/masterReaderEvidenceBundle";
+  } from "../types/masterReaderEvidenceBundle.js";
 
   import {
     readHumanDestinyContext,
-  } from "../readers/humanDestinyContextReader";
+  } from "../readers/humanDestinyContextReader.js";
 
   import {
     buildMasterReaderEvidenceBundle,
-  } from "./masterReaderEvidenceBuilder";
+  } from "./masterReaderEvidenceBuilder.js";
 
   import {
     buildSajuFactsPipeline,
     type SajuFactsPipelineInput,
     type SajuFactsPipelineResult,
-  } from "./sajuFactsPipelineBuilder";
+  } from "./sajuFactsPipelineBuilder.js";
 
   export type HumanDestinyContextPipelineInput =
     SajuFactsPipelineInput;

@@ -1,26 +1,26 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     ConsultingSessionConflictError,
     ConsultingSessionNotFoundError,
     executePersistedConsultingSessionTurn,
-  } from "./persistedConsultingSessionTurnService";
+  } from "./persistedConsultingSessionTurnService.js";
   import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingSessionRepository,
     CreateConsultingSessionResult,
     UpdateConsultingSessionInput,
     UpdateConsultingSessionResult,
-  } from "./consultingSessionRepository";
+  } from "./consultingSessionRepository.js";
 
   export type PersistedConsultingSessionTurnServiceVerificationResult = {
     checks:
@@ -237,7 +237,7 @@ import {
 
         preparationInput: {
           kind:
-            "clarification",
+            "followUp",
 
           question:
             "대출 잔액은 2억 원이고 월소득은 900만 원입니다. 두 달 뒤까지 상가 매수를 결정해야 합니다.",

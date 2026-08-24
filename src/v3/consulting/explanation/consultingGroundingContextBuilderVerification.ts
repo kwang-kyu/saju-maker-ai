@@ -1,12 +1,12 @@
 import {
   buildDecisionEngineRegressionInput,
-} from "../decision/regression/decisionEngineRegressionFixture";
+} from "../decision/regression/decisionEngineRegressionFixture.js";
 import {
   buildCounterpartSajuCalculation,
-} from "../decision/counterpartSajuCalculationBuilder";
+} from "../decision/counterpartSajuCalculationBuilder.js";
 import {
   buildConsultingGroundingContext,
-} from "./consultingGroundingContextBuilder";
+} from "./consultingGroundingContextBuilder.js";
 
 export type ConsultingGroundingContextBuilderVerificationResult = {
   checks:

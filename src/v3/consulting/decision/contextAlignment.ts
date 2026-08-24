@@ -1,9 +1,9 @@
-import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+import type { HumanDestinyContext } from "../../types/humanDestinyContext.js";
 import type {
   DecisionTarget,
   QuestionReaderResult,
-} from "../question/questionReader";
-import type { ContextAlignment } from "./decisionTypes";
+} from "../question/questionReader.js";
+import type { ContextAlignment } from "./decisionTypes.js";
 
 export type ContextAlignmentResult = {
   alignment: ContextAlignment;

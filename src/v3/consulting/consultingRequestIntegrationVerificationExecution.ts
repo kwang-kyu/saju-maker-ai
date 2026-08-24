@@ -1,6 +1,6 @@
 import {
     verifyConsultingRequestIntegration,
-  } from "./consultingRequestIntegrationVerification";
+  } from "./consultingRequestIntegrationVerification.js";
   
   const result =
     verifyConsultingRequestIntegration();

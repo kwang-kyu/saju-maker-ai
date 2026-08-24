@@ -1,6 +1,6 @@
 import type {
     QuestionTopic,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   
   export type ReaderDecisionSource =
     | "capacity"

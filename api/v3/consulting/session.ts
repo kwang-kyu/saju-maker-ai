@@ -5,11 +5,11 @@ import type {
 
   import {
     handleAuthenticatedInitialConsultingSessionHttpRequest,
-  } from "../../../src/v3/consulting/authenticatedInitialConsultingSessionHttpHandler";
+  } from "../../../src/v3/consulting/authenticatedInitialConsultingSessionHttpHandler.js";
   import type {
     AuthenticatedInitialConsultingSessionHttpRequest,
     AuthenticatedInitialConsultingSessionHttpResponse,
-  } from "../../../src/v3/consulting/authenticatedInitialConsultingSessionHttpHandler";
+  } from "../../../src/v3/consulting/authenticatedInitialConsultingSessionHttpHandler.js";
 
   export type V3InitialConsultingSessionApiDependencies = {
     handleRequest(

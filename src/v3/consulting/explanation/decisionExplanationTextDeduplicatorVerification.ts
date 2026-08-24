@@ -1,6 +1,6 @@
 import {
     deduplicateExplanationLines,
-  } from "./decisionExplanationTextDeduplicator";
+  } from "./decisionExplanationTextDeduplicator.js";
 
   export type DecisionExplanationTextDeduplicatorVerificationCase = {
     name: string;

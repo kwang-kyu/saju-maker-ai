@@ -1,29 +1,29 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     GatewayConsultingSessionRepository,
-  } from "./gatewayConsultingSessionRepository";
+  } from "./gatewayConsultingSessionRepository.js";
   import type {
     ConsultingSession,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import type {
     ConsultingSessionPersistenceGateway,
     ConsultingSessionPersistenceRow,
     InsertConsultingSessionPersistenceRowResult,
     UpdateConsultingSessionPersistenceRowInput,
     UpdateConsultingSessionPersistenceRowResult,
-  } from "./consultingSessionPersistenceGateway";
+  } from "./consultingSessionPersistenceGateway.js";
   import {
     InvalidConsultingSessionPersistenceRecordError,
     serializeConsultingSession,
-  } from "./consultingSessionPersistenceRecord";
+  } from "./consultingSessionPersistenceRecord.js";
 
   export type GatewayConsultingSessionRepositoryVerificationResult = {
     checks:

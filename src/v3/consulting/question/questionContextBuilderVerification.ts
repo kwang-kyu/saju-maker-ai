@@ -1,12 +1,12 @@
 import type {
     HumanDestinyContext,
-  } from "../../types/humanDestinyContext";
+  } from "../../types/humanDestinyContext.js";
   import {
     buildQuestionContext,
-  } from "./questionContextBuilder";
+  } from "./questionContextBuilder.js";
   import {
     readQuestion,
-  } from "./questionReader";
+  } from "./questionReader.js";
 
   export type QuestionContextVerificationCase = {
     id: string;

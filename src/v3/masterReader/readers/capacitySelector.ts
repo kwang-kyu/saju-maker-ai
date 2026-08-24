@@ -1,13 +1,13 @@
 import type {
     CapacityArea,
     CapacityLevel,
-  } from "../types/capacity";
+  } from "../types/capacity.js";
   import type {
     MatchedCapacityRule,
-  } from "../rules/capacityRules";
+  } from "../rules/capacityRules.js";
   import type {
     CapacityAreaScore,
-  } from "./capacityScorer";
+  } from "./capacityScorer.js";
   
   export type CapacitySelectionStatus =
     | "clear"

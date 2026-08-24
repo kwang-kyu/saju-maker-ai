@@ -1,4 +1,4 @@
-import type { MasterReaderResult } from "../types/masterReaderResult";
+import type { MasterReaderResult } from "../types/masterReaderResult.js";
 
 export type MasterHumanSummary = {
   title: string;

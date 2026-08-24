@@ -1,6 +1,6 @@
 import {
     verifyConsultingSessionOwnerResolver,
-  } from "./consultingSessionOwnerResolverVerification";
+  } from "./consultingSessionOwnerResolverVerification.js";
 
   async function executeVerification():
     Promise<void> {

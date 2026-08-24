@@ -1,26 +1,26 @@
 import type {
     HumanDestinyContext,
-  } from "../../types/humanDestinyContext";
+  } from "../../types/humanDestinyContext.js";
   
   import type {
     HumanLifeContext,
-  } from "../../types/humanLifeContext";
+  } from "../../types/humanLifeContext.js";
   
   import {
     readQuestion,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   
   import {
     buildQuestionContext,
-  } from "../question/questionContextBuilder";
+  } from "../question/questionContextBuilder.js";
   
   import {
     runDecisionEngine,
-  } from "./decisionEngine";
+  } from "./decisionEngine.js";
   
   import type {
     DecisionResult,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   
   export type HumanIdentityVerdictVerificationResult = {
     question: string;

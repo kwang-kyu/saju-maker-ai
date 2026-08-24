@@ -1,6 +1,6 @@
 import {
     verifyHumanPersonalizationComparison,
-  } from "./humanPersonalizationComparisonVerification";
+  } from "./humanPersonalizationComparisonVerification.js";
 
   async function execute():
     Promise<void> {

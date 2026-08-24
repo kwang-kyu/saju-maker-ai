@@ -2,10 +2,10 @@ import type {
     BlessingArea,
     BlessingEvidence,
     BlessingEvidenceSource,
-  } from "../types/blessing";
+  } from "../types/blessing.js";
   import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type BlessingRuleDirection =
     | "support"

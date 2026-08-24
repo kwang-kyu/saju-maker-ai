@@ -1,13 +1,13 @@
 import type {
     CareerArea,
     CareerLevel,
-  } from "../types/career";
+  } from "../types/career.js";
   import type {
     MatchedCareerRule,
-  } from "../rules/careerRules";
+  } from "../rules/careerRules.js";
   import type {
     CareerAreaScore,
-  } from "./careerScorer";
+  } from "./careerScorer.js";
   
   export type CareerSelectionStatus =
     | "clear"

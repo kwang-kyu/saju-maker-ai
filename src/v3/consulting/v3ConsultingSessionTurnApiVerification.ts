@@ -5,10 +5,10 @@ import type {
 
   import {
     createV3ConsultingSessionTurnApiHandler,
-  } from "../../../api/v3/consulting/session-turn";
+  } from "../../../api/v3/consulting/session-turn.js";
   import type {
     AuthenticatedConsultingSessionTurnHttpRequest,
-  } from "./authenticatedConsultingSessionTurnHttpHandler";
+  } from "./authenticatedConsultingSessionTurnHttpHandler.js";
 
   export type V3ConsultingSessionTurnApiVerificationResult = {
     checks:

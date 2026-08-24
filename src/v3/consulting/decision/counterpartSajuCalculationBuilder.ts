@@ -1,6 +1,6 @@
 import {
     buildV3SajuCalculation,
-  } from "../../builders/v3SajuCalculationBuilder";
+  } from "../../builders/v3SajuCalculationBuilder.js";
 
   export type CounterpartCalendarType =
     | "solar"

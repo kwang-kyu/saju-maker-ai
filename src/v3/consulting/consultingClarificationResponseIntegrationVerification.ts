@@ -1,18 +1,21 @@
 import {
     getConsultingClarificationFieldDefinition,
-  } from "./consultingClarificationFieldDefinitions";
+  } from "./consultingClarificationFieldDefinitions.js";
   import {
     executeConsultingSessionTurn,
-  } from "./consultingSessionTurnExecutor";
+  } from "./consultingSessionTurnExecutor.js";
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
+  import type {
+    ConsultingSession,
+  } from "./consultingSession.js";
 
   export type ConsultingClarificationResponseIntegrationVerificationResult = {
     checks:
@@ -35,7 +38,7 @@ import {
         sourceRequest,
       );
 
-    const initialSession =
+    const generatedInitialSession =
       buildInitialConsultingSession({
         sessionId:
           "clarification-response-session",
@@ -55,6 +58,42 @@ import {
         assistantAnswer:
           "판단에 필요한 현실 정보를 먼저 확인하겠습니다.",
       });
+
+    const initialSession:
+      ConsultingSession = {
+      ...generatedInitialSession,
+
+      status:
+        "awaitingClarification",
+
+      pendingClarification: {
+        decisionTurnId:
+          "clarification-response-initial-turn",
+
+        items: [
+          {
+            key:
+              "debtRepaymentCapacity",
+
+            description:
+              "대출 부담은 확인됐지만 잔액·월 상환액·상환 재원이 확인되지 않았다.",
+
+            question:
+              "현재 대출 잔액, 월 상환액, 월 고정지출과 안정적으로 들어오는 월소득은 각각 얼마인가요?",
+          },
+          {
+            key:
+              "decisionDeadline",
+
+            description:
+              "결정을 내려야 하는 현실적인 기한이 확인되지 않았다.",
+
+            question:
+              "이 결정을 내려야 하는 실제 마감 시점이나 예정일이 있나요?",
+          },
+        ],
+      },
+    };
 
     const pendingClarification =
       initialSession

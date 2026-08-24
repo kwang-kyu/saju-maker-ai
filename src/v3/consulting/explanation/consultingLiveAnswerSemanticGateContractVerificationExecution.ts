@@ -1,6 +1,6 @@
 import {
   verifyConsultingLiveAnswerSemanticGateContract,
-} from "./consultingLiveAnswerSemanticGateVerification";
+} from "./consultingLiveAnswerSemanticGateVerification.js";
 
 /**
  * Live 상담문 semanticGate JSON 계약·negative control 검증.

@@ -2,23 +2,23 @@ import type {
     HumanLifePhaseEvidence,
     HumanLifePhaseEvidenceSource,
     HumanLifePhaseReaderInput,
-  } from "../masterReader/types/humanLifePhaseEvidence";
+  } from "../masterReader/types/humanLifePhaseEvidence.js";
 
   import {
     getHumanLifePhaseEvidenceRule,
     getHumanLifePhaseEvidenceWeight,
     type HumanLifePhaseFlowScope,
-  } from "../masterReader/rules/humanLifePhaseEvidenceRules";
+  } from "../masterReader/rules/humanLifePhaseEvidenceRules.js";
 
   import type {
     SajuCurrentDaeunFact,
     SajuCurrentSeunFact,
     SajuLuckFlowTenGod,
-  } from "../types/luckFlowFact";
+  } from "../types/luckFlowFact.js";
 
   import type {
     SajuFacts,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
 
   type FlowEvidenceParams = {
     scope: HumanLifePhaseFlowScope;

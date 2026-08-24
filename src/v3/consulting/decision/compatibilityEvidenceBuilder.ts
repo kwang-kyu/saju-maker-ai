@@ -2,7 +2,7 @@ import type {
 
   CompatibilityAssessment,
 
-} from "./compatibilityAssessment";
+} from "./compatibilityAssessment.js";
 
 import type {
 
@@ -10,19 +10,19 @@ import type {
 
   FullCompatibilityOverallLevel,
 
-} from "./fullCompatibilityAssessment";
+} from "./fullCompatibilityAssessment.js";
 
 import type {
 
   DecisionEvidence,
 
-} from "./decisionTypes";
+} from "./decisionTypes.js";
 
 import type {
 
   ZodiacCompatibilityLevel,
 
-} from "./zodiacCompatibilityAssessment";
+} from "./zodiacCompatibilityAssessment.js";
 
 
 

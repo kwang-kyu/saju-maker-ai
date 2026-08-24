@@ -1,28 +1,28 @@
 ﻿import type {
   HumanDestinyContext,
-} from "../../types/humanDestinyContext";
+} from "../../types/humanDestinyContext.js";
 import type {
   SajuFacts,
-} from "../../types/sajuFacts";
+} from "../../types/sajuFacts.js";
 import type {
   SajuTargetPeriodLuckFlowFact,
-} from "../../types/luckFlowFact";
+} from "../../types/luckFlowFact.js";
 import type {
   QuestionContext,
-} from "../question/questionContext";
+} from "../question/questionContext.js";
 import type {
   QuestionTimingType,
-} from "../question/questionReader";
+} from "../question/questionReader.js";
 import type {
   LifeFlowTarget,
-} from "../question/lifeFlowTarget";
+} from "../question/lifeFlowTarget.js";
 import {
   assessLifeFlowInterpretation,
-} from "./lifeFlowInterpretationAssessment";
+} from "./lifeFlowInterpretationAssessment.js";
 import {
   assessTimingSearch,
   type TimingSearchAssessment,
-} from "./timingSearchAssessment";
+} from "./timingSearchAssessment.js";
 
 export type TimingEvidenceLevel =
   | "notRequired"

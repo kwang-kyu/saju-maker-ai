@@ -1,10 +1,10 @@
 import type {
     MoneyEvidence,
-  } from "../masterReader/types/money";
+  } from "../masterReader/types/money.js";
   import type {
     SajuEvidenceStrength,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   function toMoneyWeight(
     strength: SajuEvidenceStrength,

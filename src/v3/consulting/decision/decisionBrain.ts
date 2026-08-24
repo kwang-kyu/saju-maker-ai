@@ -1,9 +1,9 @@
-import type { HumanDestinyContext } from "../../types/humanDestinyContext";
-import type { QuestionReaderResult } from "../question/questionReader";
+import type { HumanDestinyContext } from "../../types/humanDestinyContext.js";
+import type { QuestionReaderResult } from "../question/questionReader.js";
 import {
   buildBrainSnapshot,
   type BrainSnapshot,
-} from "./brainSnapshot";
+} from "./brainSnapshot.js";
 
 export type BrainStep =
   | "humanIdentity"

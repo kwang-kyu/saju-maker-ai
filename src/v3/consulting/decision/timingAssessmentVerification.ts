@@ -1,21 +1,21 @@
 ﻿import type {
     HumanDestinyContext,
-  } from "../../types/humanDestinyContext";
+  } from "../../types/humanDestinyContext.js";
   import {
     buildSajuFactsPipeline,
-  } from "../../builders/sajuFactsPipelineBuilder";
+  } from "../../builders/sajuFactsPipelineBuilder.js";
   import {
     buildQuestionContext,
-  } from "../question/questionContextBuilder";
+  } from "../question/questionContextBuilder.js";
   import {
     readQuestion,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   import {
     buildTargetPeriodLuckFlowForQuestion,
-  } from "./targetPeriodLuckFlowBuilder";
+  } from "./targetPeriodLuckFlowBuilder.js";
   import {
     assessTiming,
-  } from "./timingAssessment";
+  } from "./timingAssessment.js";
 
   const REFERENCE_DATE =
     "2025-08-16";

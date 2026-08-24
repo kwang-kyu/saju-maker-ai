@@ -4,7 +4,7 @@ import type {
   QuestionIntent,
   QuestionMotive,
   QuestionTopic,
-} from "./questionReader";
+} from "./questionReader.js";
 
 const ROLE_RECOMMENDATION_EXCLUSION_PATTERNS:
   readonly RegExp[] = [

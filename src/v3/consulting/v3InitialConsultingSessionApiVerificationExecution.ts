@@ -1,6 +1,6 @@
 import {
     verifyV3InitialConsultingSessionApi,
-  } from "./v3InitialConsultingSessionApiVerification";
+  } from "./v3InitialConsultingSessionApiVerification.js";
 
   async function executeVerification():
     Promise<void> {

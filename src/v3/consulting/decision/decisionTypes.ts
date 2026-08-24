@@ -1,28 +1,28 @@
 ﻿import type {
   CounterpartSajuCalculation,
-} from "./counterpartSajuCalculationBuilder";
+} from "./counterpartSajuCalculationBuilder.js";
 import type {
   SajuFacts,
-} from "../../types/sajuFacts";
-import type { HumanDestinyContext } from "../../types/humanDestinyContext";
-import type { HumanLifeContext } from "../../types/humanLifeContext";
-import type { QuestionReaderResult } from "../question/questionReader";
-import type { QuestionContext } from "../question/questionContext";
+} from "../../types/sajuFacts.js";
+import type { HumanDestinyContext } from "../../types/humanDestinyContext.js";
+import type { HumanLifeContext } from "../../types/humanLifeContext.js";
+import type { QuestionReaderResult } from "../question/questionReader.js";
+import type { QuestionContext } from "../question/questionContext.js";
 import type {
   RoleRecommendationAssessment,
-} from "./roleRecommendationAssessment";
+} from "./roleRecommendationAssessment.js";
 import type {
   LifeFlowInterpretationAssessment,
-} from "./lifeFlowInterpretationAssessment";
+} from "./lifeFlowInterpretationAssessment.js";
 import type {
   TimingAssessment,
-} from "./timingAssessment";
+} from "./timingAssessment.js";
 import type {
   LifeFlowTarget,
-} from "../question/lifeFlowTarget";
+} from "../question/lifeFlowTarget.js";
 import type {
   SajuTargetPeriodLuckFlowFact,
-} from "../../types/luckFlowFact";
+} from "../../types/luckFlowFact.js";
 
 /**
  * Decision Engine이 내릴 수 있는 최종 판단이다.

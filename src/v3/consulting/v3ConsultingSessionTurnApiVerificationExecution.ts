@@ -1,6 +1,6 @@
 import {
     verifyV3ConsultingSessionTurnApi,
-  } from "./v3ConsultingSessionTurnApiVerification";
+  } from "./v3ConsultingSessionTurnApiVerification.js";
 
   async function executeVerification():
     Promise<void> {

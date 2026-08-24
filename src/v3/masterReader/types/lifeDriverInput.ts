@@ -1,4 +1,4 @@
-import type { SajuStructureSignal } from "../../types/sajuFacts";
+import type { SajuStructureSignal } from "../../types/sajuFacts.js";
 export type LifeDriverEvidenceSource =
   | "monthCommand"
   | "dayMasterStrength"

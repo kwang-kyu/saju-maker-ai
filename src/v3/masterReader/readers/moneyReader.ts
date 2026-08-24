@@ -1,32 +1,32 @@
 import {
     buildMoneyConfidence,
-  } from "../../builders/moneyConfidenceBuilder";
+  } from "../../builders/moneyConfidenceBuilder.js";
   import {
     buildMoneyEvidence,
-  } from "../../builders/moneyEvidenceBuilder";
+  } from "../../builders/moneyEvidenceBuilder.js";
   import {
     buildMoneyAreaInterpretation,
-  } from "../../builders/moneyAreaInterpretationBuilder";
+  } from "../../builders/moneyAreaInterpretationBuilder.js";
   import {
     buildMoneyInterpretation,
-  } from "../../builders/moneyInterpretationBuilder";
+  } from "../../builders/moneyInterpretationBuilder.js";
   import type {
     MoneyArea,
     MoneyEvidence,
     MoneyJudgement,
     MoneyResult,
-  } from "../types/money";
+  } from "../types/money.js";
   import type {
     SajuStructureFact,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import {
     scoreMoneyAreas,
     type MoneyAreaScore,
-  } from "./moneyScorer";
+  } from "./moneyScorer.js";
   import {
     selectMoneyAreas,
     type MoneyAreaSelection,
-  } from "./moneySelector";
+  } from "./moneySelector.js";
   
   const MONEY_AREAS: MoneyArea[] = [
     "generation",

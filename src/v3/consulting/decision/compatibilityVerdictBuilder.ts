@@ -1,12 +1,12 @@
 ﻿import type {
     QuestionAnalysisScope,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   import type {
     CompatibilityAssessment,
-  } from "./compatibilityAssessment";
+  } from "./compatibilityAssessment.js";
   import type {
     DecisionVerdict,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
 
   export type CompatibilityVerdictBuilderInput = {
     verdict:

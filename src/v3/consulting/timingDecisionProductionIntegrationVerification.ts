@@ -1,12 +1,12 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     runConsultingTurn,
-  } from "./consultingRunner";
+  } from "./consultingRunner.js";
   
   export type TimingDecisionProductionIntegrationVerificationResult = {
     checks:

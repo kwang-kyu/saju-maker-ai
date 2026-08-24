@@ -1,6 +1,6 @@
 import {
     verifyWealthRealityExplanationDelivery,
-  } from "./wealthRealityExplanationDeliveryVerification";
+  } from "./wealthRealityExplanationDeliveryVerification.js";
   
   const result =
     verifyWealthRealityExplanationDelivery();

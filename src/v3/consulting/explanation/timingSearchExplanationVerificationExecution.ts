@@ -1,6 +1,6 @@
 ﻿import {
     verifyTimingSearchExplanation,
-  } from "./timingSearchExplanationVerification";
+  } from "./timingSearchExplanationVerification.js";
 
   function executeVerification() {
     const result =

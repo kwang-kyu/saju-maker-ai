@@ -1,25 +1,25 @@
 import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     buildInitialConsultingSession,
-  } from "./initialConsultingSessionBuilder";
+  } from "./initialConsultingSessionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     buildAuthenticatedConsultingSessionTurnCommand,
-  } from "./authenticatedConsultingSessionTurnCommandBuilder";
+  } from "./authenticatedConsultingSessionTurnCommandBuilder.js";
   import type {
     AuthenticatedConsultingSessionTurnCommandBuilderDependencies,
     BuildAuthenticatedConsultingSessionTurnCommandInput,
-  } from "./authenticatedConsultingSessionTurnCommandBuilder";
+  } from "./authenticatedConsultingSessionTurnCommandBuilder.js";
   import type {
     ExecuteAuthenticatedPersistedConsultingSessionTurnInput,
-  } from "./authenticatedPersistedConsultingSessionTurnService";
+  } from "./authenticatedPersistedConsultingSessionTurnService.js";
   import {
     executeAuthenticatedConsultingSessionTurnRequest,
-  } from "./authenticatedConsultingSessionTurnService";
+  } from "./authenticatedConsultingSessionTurnService.js";
 
   export type AuthenticatedConsultingSessionTurnServiceVerificationResult = {
     checks:

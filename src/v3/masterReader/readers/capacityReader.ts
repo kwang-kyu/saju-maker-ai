@@ -1,29 +1,29 @@
 import {
     buildCapacityConfidence,
-  } from "../../builders/capacityConfidenceBuilder";
+  } from "../../builders/capacityConfidenceBuilder.js";
   import {
     buildCapacityEvidence,
-  } from "../../builders/capacityEvidenceBuilder";
+  } from "../../builders/capacityEvidenceBuilder.js";
   import {
     buildCapacityInterpretation,
-  } from "../../builders/capacityInterpretationBuilder";
+  } from "../../builders/capacityInterpretationBuilder.js";
   import type {
     CapacityArea,
     CapacityEvidence,
     CapacityJudgement,
     CapacityResult,
-  } from "../types/capacity";
+  } from "../types/capacity.js";
   import type {
     SajuStructureFact,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import {
     scoreCapacityAreas,
     type CapacityAreaScore,
-  } from "./capacityScorer";
+  } from "./capacityScorer.js";
   import {
     selectCapacityAreas,
     type CapacityAreaSelection,
-  } from "./capacitySelector";
+  } from "./capacitySelector.js";
   
   const CAPACITY_AREAS: CapacityArea[] = [
     "responsibility",

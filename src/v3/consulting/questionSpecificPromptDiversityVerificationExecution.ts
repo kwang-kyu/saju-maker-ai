@@ -1,6 +1,6 @@
 import {
     verifyQuestionSpecificPromptDiversity,
-  } from "./questionSpecificPromptDiversityVerification";
+  } from "./questionSpecificPromptDiversityVerification.js";
 
   const result =
     verifyQuestionSpecificPromptDiversity();

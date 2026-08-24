@@ -1,9 +1,9 @@
 ﻿import type {
   DecisionEvidence,
-} from "./decisionTypes";
+} from "./decisionTypes.js";
 import type {
   LifeFlowInterpretationAssessment,
-} from "./lifeFlowInterpretationAssessment";
+} from "./lifeFlowInterpretationAssessment.js";
 
 export function buildLifeFlowInterpretationEvidence(
   assessment:

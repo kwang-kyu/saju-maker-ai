@@ -1,8 +1,8 @@
-import { calculateDayMasterStrength } from "../calculators/dayMasterStrengthCalculator";
-import { calculateSajuInteractions } from "../calculators/sajuInteractionCalculator";
-import { calculateMonthCommand } from "../calculators/monthCommandCalculator";
-import { calculateRooting } from "../calculators/rootingCalculator";
-import { calculateTenGodStructure } from "../calculators/tenGodStructureCalculator";
+import { calculateDayMasterStrength } from "../calculators/dayMasterStrengthCalculator.js";
+import { calculateSajuInteractions } from "../calculators/sajuInteractionCalculator.js";
+import { calculateMonthCommand } from "../calculators/monthCommandCalculator.js";
+import { calculateRooting } from "../calculators/rootingCalculator.js";
+import { calculateTenGodStructure } from "../calculators/tenGodStructureCalculator.js";
 import type {
     SajuElementDistribution,
     SajuEvidenceStrength,
@@ -11,11 +11,11 @@ import type {
     SajuPillarFact,
     SajuPillarPosition,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   import type {
     SajuLuckFlowFact,
-  } from "../types/luckFlowFact";
-  import type { V3CalculatedSaju } from "./v3SajuCalculationBuilder";
+  } from "../types/luckFlowFact.js";
+  import type { V3CalculatedSaju } from "./v3SajuCalculationBuilder.js";
   
   type ElementCount = {
     element: SajuFiveElement;

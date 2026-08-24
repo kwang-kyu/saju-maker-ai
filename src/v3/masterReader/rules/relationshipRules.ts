@@ -2,10 +2,10 @@ import type {
     RelationshipArea,
     RelationshipEvidence,
     RelationshipEvidenceSource,
-  } from "../types/relationship";
+  } from "../types/relationship.js";
   import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type RelationshipRuleDirection =
     | "support"

@@ -232,4 +232,4 @@ export function getDayTenGodComboText(
   용신이 ${yongsin}으로 작용할 때는 부족한 균형을 보완하면서 장점을 현실적인 성과로 바꾸는 것이 중요합니다.
   `
     ).trim();
-  }  
+  }

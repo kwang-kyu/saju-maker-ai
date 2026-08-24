@@ -1,31 +1,31 @@
 import {
   createAuthenticatedInitialConsultingSession,
-} from "./authenticatedInitialConsultingSessionService";
+} from "./authenticatedInitialConsultingSessionService.js";
 import type {
   AuthenticatedInitialConsultingSessionServiceDependencies,
-} from "./authenticatedInitialConsultingSessionService";
+} from "./authenticatedInitialConsultingSessionService.js";
 import {
   handleAuthenticatedInitialConsultingSessionHttpRequest,
-} from "./authenticatedInitialConsultingSessionHttpHandler";
+} from "./authenticatedInitialConsultingSessionHttpHandler.js";
 import {
   buildAuthenticatedConsultingSessionTurnCommand,
-} from "./authenticatedConsultingSessionTurnCommandBuilder";
+} from "./authenticatedConsultingSessionTurnCommandBuilder.js";
 import type {
   AuthenticatedConsultingSessionTurnCommandBuilderDependencies,
-} from "./authenticatedConsultingSessionTurnCommandBuilder";
+} from "./authenticatedConsultingSessionTurnCommandBuilder.js";
 import {
   executeAuthenticatedConsultingSessionTurnRequest,
-} from "./authenticatedConsultingSessionTurnService";
+} from "./authenticatedConsultingSessionTurnService.js";
 import {
   executeAuthenticatedPersistedConsultingSessionTurn,
-} from "./authenticatedPersistedConsultingSessionTurnService";
+} from "./authenticatedPersistedConsultingSessionTurnService.js";
 import type {
   AuthenticatedPersistedConsultingSessionTurnDependencies,
   ExecuteAuthenticatedPersistedConsultingSessionTurnInput,
-} from "./authenticatedPersistedConsultingSessionTurnService";
+} from "./authenticatedPersistedConsultingSessionTurnService.js";
 import {
   handleAuthenticatedConsultingSessionTurnHttpRequest,
-} from "./authenticatedConsultingSessionTurnHttpHandler";
+} from "./authenticatedConsultingSessionTurnHttpHandler.js";
 import {
   CONSULTING_INITIAL_FOLLOW_UP_E2E_CREATED_AT,
   CONSULTING_INITIAL_FOLLOW_UP_E2E_FOLLOW_UP_CREATED_AT,
@@ -34,67 +34,67 @@ import {
   CONSULTING_INITIAL_FOLLOW_UP_E2E_QUESTION,
   CONSULTING_INITIAL_FOLLOW_UP_E2E_SESSION_ID,
   createInitialFollowUpAnswerE2ERequest,
-} from "./consultingInitialFollowUpAnswerE2EVerification";
+} from "./consultingInitialFollowUpAnswerE2EVerification.js";
 import type {
   ConsultingAnswerRequestFunction,
-} from "./consultingSessionAnswerRequester";
+} from "./consultingSessionAnswerRequester.js";
 import {
   requestConsultingSessionAnswer,
-} from "./consultingSessionAnswerRequester";
+} from "./consultingSessionAnswerRequester.js";
 import {
   buildConsultingSessionOpenAIRequest,
-} from "./consultingSessionOpenAIRequestBuilder";
+} from "./consultingSessionOpenAIRequestBuilder.js";
 import type {
   ConsultingSession,
-} from "./consultingSession";
+} from "./consultingSession.js";
 import type {
   ConsultingSessionOwnerId,
-} from "./consultingSessionOwnerId";
+} from "./consultingSessionOwnerId.js";
 import {
   parseConsultingSessionBearerToken,
   resolveConsultingSessionOwner,
-} from "./consultingSessionOwnerResolver";
+} from "./consultingSessionOwnerResolver.js";
 import type {
   ConsultingSessionAuthorizationHeader,
   ConsultingSessionOwnerResolver,
-} from "./consultingSessionOwnerResolver";
+} from "./consultingSessionOwnerResolver.js";
 import type {
   ConsultingSessionRepository,
   CreateConsultingSessionResult,
   UpdateConsultingSessionInput,
   UpdateConsultingSessionResult,
-} from "./consultingSessionRepository";
+} from "./consultingSessionRepository.js";
 import {
   prepareConsultingSessionTurn,
-} from "./consultingSessionTurnBuilder";
+} from "./consultingSessionTurnBuilder.js";
 import {
   executePersistedConsultingSessionTurn,
-} from "./persistedConsultingSessionTurnService";
+} from "./persistedConsultingSessionTurnService.js";
 import type {
   ExecutePersistedConsultingSessionTurnInput,
-} from "./persistedConsultingSessionTurnService";
+} from "./persistedConsultingSessionTurnService.js";
 import {
   requestInitialConsultingAnswer,
-} from "./initialConsultingAnswerRequester";
+} from "./initialConsultingAnswerRequester.js";
 import {
   buildInitialConsultingExecution,
-} from "./initialConsultingExecutionBuilder";
+} from "./initialConsultingExecutionBuilder.js";
 import type {
   InitialConsultingExecutionResult,
-} from "./initialConsultingExecutionBuilder";
+} from "./initialConsultingExecutionBuilder.js";
 import {
   buildInitialConsultingSession,
-} from "./initialConsultingSessionBuilder";
+} from "./initialConsultingSessionBuilder.js";
 import {
   buildConsultingOpenAIRequest,
   type ConsultingOpenAIRequest,
-} from "./openai/consultingOpenAIAdapter";
+} from "./openai/consultingOpenAIAdapter.js";
 import {
   readQuestion,
-} from "./question/questionReader";
+} from "./question/questionReader.js";
 import type {
   QuestionReaderResult,
-} from "./question/questionReader";
+} from "./question/questionReader.js";
 
 export const AUTHENTICATED_HTTP_E2E_OWNER_A =
   "owner-a";

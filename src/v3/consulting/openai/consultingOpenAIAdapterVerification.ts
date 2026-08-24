@@ -1,10 +1,10 @@
 import type {
     ConsultingPrompt,
-  } from "../explanation/consultingPromptBuilder";
+  } from "../explanation/consultingPromptBuilder.js";
   import {
     buildConsultingOpenAIRequest,
     type ConsultingOpenAIRequest,
-  } from "./consultingOpenAIAdapter";
+  } from "./consultingOpenAIAdapter.js";
   
   export type ConsultingOpenAIAdapterVerificationResult = {
     prompt:

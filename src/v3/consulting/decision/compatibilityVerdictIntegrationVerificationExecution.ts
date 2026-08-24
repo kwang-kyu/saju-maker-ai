@@ -1,6 +1,6 @@
 import {
     verifyCompatibilityVerdictIntegration,
-  } from "./compatibilityVerdictIntegrationVerification";
+  } from "./compatibilityVerdictIntegrationVerification.js";
 
   const result =
     verifyCompatibilityVerdictIntegration();

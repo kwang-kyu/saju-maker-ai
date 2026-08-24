@@ -1,15 +1,15 @@
 import type {
     ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
   import {
     createSourceRequest,
-  } from "./initialConsultingSessionBuilderVerification";
+  } from "./initialConsultingSessionBuilderVerification.js";
   import {
     requestInitialConsultingAnswer,
-  } from "./initialConsultingAnswerRequester";
+  } from "./initialConsultingAnswerRequester.js";
 
   export type InitialConsultingAnswerRequesterVerificationResult = {
     checks:

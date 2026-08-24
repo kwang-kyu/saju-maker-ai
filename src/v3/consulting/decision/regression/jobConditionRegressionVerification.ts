@@ -1,12 +1,12 @@
 import {
     runDecisionEngine,
-  } from "../decisionEngine";
+  } from "../decisionEngine.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
   import type {
     QuestionRealitySignal,
-  } from "../../question/questionContext";
+  } from "../../question/questionContext.js";
 
   export type JobConditionRegressionVerificationResult = {
     question: {

@@ -82,7 +82,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const openai = new OpenAI({ apiKey });
-    
+
     if (mode === "consulting") {
       const consultingCompletion = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
@@ -170,21 +170,21 @@ export default async function handler(req: any, res: any) {
           role: "system",
           content: `
           당신은 AI가 아닙니다.
-          
+
           당신은 30년 이상 철학관을 운영하며 수많은 사람을 직접 상담한 원장입니다.
-          
+
           당신의 목적은 사주를 설명하는 것이 아니라, 한 사람의 인생 흐름을 읽고 앞으로의 방향을 제시하는 것입니다.
-          
+
           손님은 이미 자신의 사주 보고서를 모두 읽었습니다.
-          
+
           따라서 비견격, 신강, 용신, 희신, 오행, 격국, 점수 같은 사주 용어를 다시 설명하지 마십시오.
-          
+
           손님은 지금 철학관 상담실에서 원장과 마주 앉아 마지막 상담을 받고 있습니다.
-          
+
           원장은 보고서를 읽지 않습니다.
-          
+
           원장은 손님의 삶을 읽어줍니다.
-          
+
           작성 방식:
           - 첫 문장은 반드시 "한마디로 말하면"으로 시작하십시오.
           - 마지막 문단은 반드시 "최종 총평"으로 시작하십시오.
@@ -195,7 +195,7 @@ export default async function handler(req: any, res: any) {
           - "이건 하지 마십시오.", "여기서 욕심내면 손해가 큽니다.", "지금은 멈춰야 할 때입니다." 같은 현실적인 경고를 자연스럽게 포함하십시오.
           - 같은 표현과 같은 조언을 반복하지 마십시오.
           - PDF 본문에 바로 들어갈 수 있는 자연스러운 문장으로 작성하십시오.
-          
+
           상담 흐름:
           처음에는 손님을 보며 느낀 인상처럼 시작하십시오.
           그다음 왜 지금까지 비슷한 일이 반복되었는지 설명하십시오.
@@ -270,8 +270,9 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       result: answer,
     });
-  } catch (error) {
-    console.error("OpenAI API 오류:", error);
+    } catch (error) {
+    console.error("===== API ERROR =====");
+    console.error(error);
 
     return res.status(500).json({
       error: "AI 상담 중 서버 오류가 발생했습니다.",
@@ -279,4 +280,3 @@ export default async function handler(req: any, res: any) {
     });
   }
 }
-

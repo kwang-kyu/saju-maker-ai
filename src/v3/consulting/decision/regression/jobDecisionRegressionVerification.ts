@@ -1,15 +1,15 @@
 import type {
     QuestionRealitySignal,
-  } from "../../question/questionContext";
+  } from "../../question/questionContext.js";
   import {
     runDecisionEngine,
-  } from "../decisionEngine";
+  } from "../decisionEngine.js";
   import {
     selectReaderDecisionSources,
-  } from "../readerDecisionSelectionBuilder";
+  } from "../readerDecisionSelectionBuilder.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./decisionEngineRegressionFixture";
+  } from "./decisionEngineRegressionFixture.js";
 
   export type JobDecisionRegressionVerificationResult = {
     question: {

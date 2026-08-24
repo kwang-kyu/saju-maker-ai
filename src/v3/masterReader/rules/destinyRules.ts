@@ -2,10 +2,10 @@ import type {
     DestinyArea,
     DestinyEvidence,
     DestinyEvidenceSource,
-  } from "../types/destiny";
+  } from "../types/destiny.js";
   import type {
     SajuStructureSignal,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   
   export type DestinyRuleDirection =
     | "support"

@@ -4,7 +4,7 @@ import type {
     RelationshipJudgement,
     RelationshipLevel,
     RelationshipResult,
-  } from "../types/relationship";
+  } from "../types/relationship.js";
   
   export type RelationshipJudgementExplanation = {
     area: RelationshipArea;

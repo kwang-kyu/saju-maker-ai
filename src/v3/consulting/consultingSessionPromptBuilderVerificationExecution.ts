@@ -1,6 +1,6 @@
 import {
     verifyConsultingSessionPromptBuilder,
-  } from "./consultingSessionPromptBuilderVerification";
+  } from "./consultingSessionPromptBuilderVerification.js";
 
   const result =
     verifyConsultingSessionPromptBuilder();

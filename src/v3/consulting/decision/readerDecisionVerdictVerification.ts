@@ -2,14 +2,14 @@ import type {
     ReaderDecisionAssessment,
     ReaderDecisionConstraintLevel,
     ReaderDecisionSupportLevel,
-  } from "./readerDecisionAssessment";
+  } from "./readerDecisionAssessment.js";
   import {
     applyReaderDecisionVerdictEffect,
-  } from "./readerDecisionVerdictBuilder";
+  } from "./readerDecisionVerdictBuilder.js";
   import type {
     DecisionEngineInput,
     DecisionVerdict,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   
   export type ReaderDecisionVerdictVerificationResult = {
     cases: Array<{

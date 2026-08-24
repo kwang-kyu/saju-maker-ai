@@ -1,10 +1,10 @@
 ﻿import type {
     SajuFiveElement,
-  } from "./sajuFacts";
+  } from "./sajuFacts.js";
 
   import type {
     V3LuckStartMethod,
-  } from "./luckFlowCalculation";
+  } from "./luckFlowCalculation.js";
 
   export type SajuLuckFlowTenGod =
     | "비견"

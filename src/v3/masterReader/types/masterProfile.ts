@@ -1,33 +1,33 @@
 import type {
   LifeDriverResult,
-} from "./lifeDriver";
+} from "./lifeDriver.js";
 import type {
   SurvivalStyleResult,
-} from "./survivalStyle";
+} from "./survivalStyle.js";
 import type {
   RepeatedPatternResult,
-} from "./repeatedPattern";
+} from "./repeatedPattern.js";
 import type {
   CapacityResult,
-} from "./capacity";
+} from "./capacity.js";
 import type {
   MoneyResult,
-} from "./money";
+} from "./money.js";
 import type {
   CareerResult,
-} from "./career";
+} from "./career.js";
 import type {
   RelationshipResult,
-} from "./relationship";
+} from "./relationship.js";
 import type {
   HealthResult,
-} from "./health";
+} from "./health.js";
 import type {
   BlessingResult,
-} from "./blessing";
+} from "./blessing.js";
 import type {
   DestinyResult,
-} from "./destiny";
+} from "./destiny.js";
 
 export type MasterProfile = {
   lifeDriver: LifeDriverResult;

@@ -1,6 +1,6 @@
 import {
     verifyMasterProfileExplanation,
-  } from "./masterProfileExplanationVerification";
+  } from "./masterProfileExplanationVerification.js";
   
   const result =
     verifyMasterProfileExplanation();

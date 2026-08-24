@@ -1,6 +1,6 @@
 import {
     verifyConsultingSessionPersistenceRecord,
-  } from "./consultingSessionPersistenceRecordVerification";
+  } from "./consultingSessionPersistenceRecordVerification.js";
 
   const result =
     verifyConsultingSessionPersistenceRecord();

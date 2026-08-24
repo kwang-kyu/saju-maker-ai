@@ -1,9 +1,9 @@
 import {
     buildDecisionRealityEvidence,
-  } from "./decisionRealityEvidenceBuilder";
+  } from "./decisionRealityEvidenceBuilder.js";
   import type {
     DecisionRealityAssessment,
-  } from "./decisionRealityAssessment";
+  } from "./decisionRealityAssessment.js";
 
   export type DecisionRealityEvidenceVerificationResult = {
     unusedRealityProducesNoEvidence: boolean;

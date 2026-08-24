@@ -1,17 +1,17 @@
 import type {
     QuestionTopic,
-  } from "../question/questionReader";
+  } from "../question/questionReader.js";
   import {
     buildDecisionEngineRegressionInput,
-  } from "./regression/decisionEngineRegressionFixture";
+  } from "./regression/decisionEngineRegressionFixture.js";
   import {
     buildReaderDecisionEvidence,
-  } from "./readerDecisionEvidenceBuilder";
+  } from "./readerDecisionEvidenceBuilder.js";
   import type {
     DecisionEngineInput,
     DecisionEvidence,
     DecisionEvidenceSource,
-  } from "./decisionTypes";
+  } from "./decisionTypes.js";
   
   type ReaderEvidenceSource = Extract<
     DecisionEvidenceSource,

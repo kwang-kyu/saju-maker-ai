@@ -1,6 +1,6 @@
 ﻿import {
   verifyLifeFlowInterpretationPath,
-} from "./lifeFlowInterpretationVerification";
+} from "./lifeFlowInterpretationVerification.js";
 
 const result =
   verifyLifeFlowInterpretationPath();

@@ -1,10 +1,10 @@
 import type {
     BlessingEvidence,
-  } from "../masterReader/types/blessing";
+  } from "../masterReader/types/blessing.js";
   import type {
     SajuEvidenceStrength,
     SajuStructureFact,
-  } from "../types/sajuFacts";
+  } from "../types/sajuFacts.js";
   
   function toBlessingWeight(
     strength: SajuEvidenceStrength,

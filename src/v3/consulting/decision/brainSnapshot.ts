@@ -1,4 +1,4 @@
-import type { HumanDestinyContext } from "../../types/humanDestinyContext";
+import type { HumanDestinyContext } from "../../types/humanDestinyContext.js";
 
 export type BrainSnapshot = {
   identity: string;

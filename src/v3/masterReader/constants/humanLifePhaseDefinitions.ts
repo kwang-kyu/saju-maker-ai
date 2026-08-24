@@ -1,7 +1,7 @@
 import type {
     HumanLifePhase,
     HumanLifePhaseResult,
-  } from "../types/humanLifePhase";
+  } from "../types/humanLifePhase.js";
   
   export type HumanLifePhaseDefinition = Omit<
     HumanLifePhaseResult,

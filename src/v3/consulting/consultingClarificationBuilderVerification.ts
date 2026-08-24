@@ -1,13 +1,16 @@
 import {
     buildConsultingClarification,
     type ConsultingClarificationBuilderInput,
-  } from "./consultingClarificationBuilder";
+  } from "./consultingClarificationBuilder.js";
   import {
     buildInitialConsultingExecution,
-  } from "./initialConsultingExecutionBuilder";
+  } from "./initialConsultingExecutionBuilder.js";
+  import type {
+    QuestionReaderResult,
+  } from "./question/questionReader.js";
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type ConsultingClarificationBuilderVerificationResult = {
     checks: Record<
@@ -124,7 +127,7 @@ import {
         ...request,
 
         question:
-          "1967년 4월 10일 양띠 여성과 동업은 어떨까요?",
+          "1967년 4월 10일 양띠 여성과 궁합은 어떨까요?",
       };
 
     const compatibilityExecution =
@@ -167,22 +170,303 @@ import {
         ?.question
       ?? "";
 
+    function buildForcedInsufficientClarification(
+      question:
+        string,
+      decisionTurnId:
+        string,
+      questionInterpretation?:
+        QuestionReaderResult,
+    ) {
+      const forcedRequest:
+        V3ConsultingRequest = {
+          ...request,
+
+          question,
+        };
+
+      const forcedExecution =
+        buildInitialConsultingExecution(
+          forcedRequest,
+          questionInterpretation,
+        );
+
+      return {
+        execution:
+          forcedExecution,
+
+        clarification:
+          buildConsultingClarification({
+            decisionTurnId,
+
+            lifeContext:
+              forcedExecution
+                .lifeContext,
+
+            questionContext:
+              forcedExecution
+                .turnResult
+                .questionContext,
+
+            decisionResult: {
+              ...forcedExecution
+                .turnResult
+                .decisionResult,
+
+              verdict:
+                "insufficientEvidence",
+            },
+          }),
+      };
+    }
+
+    function buildProductionCompatibilityInterpretation(
+      originalQuestion:
+        string,
+    ):
+      QuestionReaderResult {
+      const ruleBasedExecution =
+        buildInitialConsultingExecution({
+          ...request,
+
+          question:
+            originalQuestion,
+        });
+
+      return {
+        ...ruleBasedExecution
+          .turnResult
+          .questionReaderResult,
+
+        decisionTarget:
+          "none",
+
+        analysisMode:
+          "compatibility",
+      };
+    }
+
+    const newlyMetCompatibilityQuestion =
+      "지금 새로 만난 사람과 궁합이 맞나요?";
+
+    const ourCompatibilityQuestion =
+      "우리 둘의 궁합은 어떤가요?";
+
+    const compatibilityRelationshipClarification =
+      buildForcedInsufficientClarification(
+        newlyMetCompatibilityQuestion,
+        "turn-compatibility-relationship-001",
+      ).clarification;
+
+    const productionNewlyMetCompatibility =
+      buildForcedInsufficientClarification(
+        newlyMetCompatibilityQuestion,
+        "turn-production-newly-met-compatibility-001",
+        buildProductionCompatibilityInterpretation(
+          newlyMetCompatibilityQuestion,
+        ),
+      );
+
+    const productionOurCompatibility =
+      buildForcedInsufficientClarification(
+        ourCompatibilityQuestion,
+        "turn-production-our-compatibility-001",
+        buildProductionCompatibilityInterpretation(
+          ourCompatibilityQuestion,
+        ),
+      );
+
+    const boyfriendClarification =
+      buildForcedInsufficientClarification(
+        "남자친구와 계속 만나야 할까요?",
+        "turn-boyfriend-001",
+      ).clarification;
+
+    const marriageClarification =
+      buildForcedInsufficientClarification(
+        "현재 연인과 결혼을 결정해도 될까요?",
+        "turn-marriage-001",
+      ).clarification;
+
+    const internetAdClarification =
+      buildForcedInsufficientClarification(
+        "인터넷 광고 사업을 하려고 하는데 어떨까요?",
+        "turn-internet-ad-001",
+      ).clarification;
+
+    const compatibilityRelationshipExecution =
+      buildInitialConsultingExecution({
+        ...request,
+
+        question:
+          "지금 새로 만난 사람과 궁합이 맞나요?",
+      });
+
+    const decisionModeCompatibilityClarification =
+      buildConsultingClarification({
+        decisionTurnId:
+          "turn-compatibility-decision-mode-001",
+
+        lifeContext:
+          compatibilityRelationshipExecution
+            .lifeContext,
+
+        questionContext: {
+          ...compatibilityRelationshipExecution
+            .turnResult
+            .questionContext,
+
+          question: {
+            ...compatibilityRelationshipExecution
+              .turnResult
+              .questionContext
+              .question,
+
+            analysisMode:
+              "decision",
+          },
+        },
+
+        decisionResult: {
+          ...compatibilityRelationshipExecution
+            .turnResult
+            .decisionResult,
+
+          verdict:
+            "insufficientEvidence",
+        },
+      });
+
+    function buildClarificationAllowingEmpty(
+      input:
+        ConsultingClarificationBuilderInput,
+    ) {
+      try {
+        return buildConsultingClarification(
+          input,
+        );
+      } catch (
+        error
+      ) {
+        if (
+          error instanceof Error
+          && error.message.includes(
+            "no clarification item was built",
+          )
+        ) {
+          return null;
+        }
+
+        throw error;
+      }
+    }
+
+    const clarificationFactsBirthDataClarification =
+      buildClarificationAllowingEmpty({
+        decisionTurnId:
+          "turn-clarification-facts-birth-001",
+
+        lifeContext:
+          compatibilityRelationshipExecution
+            .lifeContext,
+
+        questionContext: {
+          ...compatibilityRelationshipExecution
+            .turnResult
+            .questionContext,
+
+          question: {
+            ...compatibilityRelationshipExecution
+              .turnResult
+              .questionContext
+              .question,
+
+            counterpartFacts: {
+              birthDate:
+                null,
+
+              birthTime:
+                null,
+
+              calendarType:
+                null,
+
+              gender:
+                null,
+
+              zodiac:
+                null,
+
+              relationship:
+                null,
+
+              evidence: [],
+            },
+          },
+
+          clarificationFacts: [
+            {
+              key:
+                "counterpartBirthData",
+
+              description:
+                "상대방은 1967년 4월 10일 양력 출생 여성이다.",
+
+              fields: [
+                {
+                  key:
+                    "birthDate",
+
+                  value:
+                    "1967-04-10",
+
+                  evidence: [
+                    "1967년 4월 10일",
+                  ],
+                },
+                {
+                  key:
+                    "calendarType",
+
+                  value:
+                    "solar",
+
+                  evidence: [
+                    "양력",
+                  ],
+                },
+                {
+                  key:
+                    "gender",
+
+                  value:
+                    "female",
+
+                  evidence: [
+                    "여성",
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+
+        decisionResult: {
+          ...compatibilityRelationshipExecution
+            .turnResult
+            .decisionResult,
+
+          verdict:
+            "insufficientEvidence",
+        },
+      });
+
       const missingInformation =
       clarification
         ?.items
         .map(
           (item) =>
             `${item.key}: ${item.description}`,
-        )
-        .join("\n")
-      ?? "";
-
-    const clarificationQuestions =
-      clarification
-        ?.items
-        .map(
-          (item) =>
-            item.question,
         )
         .join("\n")
       ?? "";
@@ -247,58 +531,41 @@ import {
           .verdict
         === "insufficientEvidence",
 
-      clarificationIsBuilt:
+      clarificationIsNotAutoBuiltForBusinessMoney:
         clarification
-        !== null,
+        === null,
 
-      decisionTurnIsPreserved:
-        clarification
-          ?.decisionTurnId
-        === "turn-initial-001",
-
-      debtRepaymentCapacityIsMissing:
-        missingInformation
+      debtRepaymentCapacityIsNotAutoRegistered:
+        !missingInformation
           .includes(
             "debtRepaymentCapacity",
           ),
 
-      debtQuestionIsSpecific:
-        clarificationQuestions
+      financialExecutionCapacityIsNotAutoRegistered:
+        !missingInformation
           .includes(
-            "대출 잔액",
-          )
-        && clarificationQuestions
-          .includes(
-            "월 상환액",
-          )
-        && clarificationQuestions
-          .includes(
-            "월소득",
+            "financialExecutionCapacity",
           ),
 
-      decisionDeadlineIsMissing:
-        missingInformation
+      decisionDeadlineIsNotAutoRegistered:
+        !missingInformation
           .includes(
             "decisionDeadline",
           ),
 
-      deadlineQuestionIsSpecific:
-        clarificationQuestions
-          .includes(
-            "마감 시점",
-          ),
+      clarificationItemsAreAtMostOne:
+        (
+          clarification
+            ?.items
+            .length
+          ?? 0
+        ) <= 1,
 
           clarificationQuestionsAreUnique:
           clarification
-          !== null
-          && uniqueQuestions.size
+          === null
+          || uniqueQuestions.size
           === clarification.items.length,
-
-        clarificationQuestionsAreNotEmpty:
-          clarification
-          !== null
-          && clarification.items.length
-          > 0,
 
           compatibilityFactsArePreserved:
           compatibilityExecution
@@ -343,6 +610,285 @@ import {
       nonInsufficientVerdictAsksNothing:
         nonInsufficientClarification
         === null,
+
+      compatibilityRelationshipFirstItemIsCounterpartBirthData:
+        compatibilityRelationshipClarification
+          ?.items[0]
+          ?.key
+        === "counterpartBirthData",
+
+      compatibilityRelationshipDoesNotAskConcreteDecisionTarget:
+        compatibilityRelationshipClarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "concreteDecisionTarget",
+          )
+        === true,
+
+      compatibilityRelationshipDoesNotAskCurrentRelationshipSituation:
+        compatibilityRelationshipClarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "currentRelationshipSituation",
+          )
+        === true,
+
+      compatibilityRelationshipDoesNotAskCounterpartIdentity:
+        compatibilityRelationshipClarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "counterpartIdentity",
+          )
+        === true,
+
+      productionNewlyMetUsesNoneDecisionTarget:
+        productionNewlyMetCompatibility
+          .execution
+          .turnResult
+          .questionContext
+          .question
+          .decisionTarget
+        === "none",
+
+      productionNewlyMetUsesCompatibilityAnalysisMode:
+        productionNewlyMetCompatibility
+          .execution
+          .turnResult
+          .questionContext
+          .question
+          .analysisMode
+        === "compatibility"
+        && productionNewlyMetCompatibility
+          .execution
+          .turnResult
+          .questionContext
+          .requirements
+          .compatibilityAnalysisRequired
+        === true,
+
+      productionNewlyMetFirstItemIsCounterpartBirthData:
+        productionNewlyMetCompatibility
+          .clarification
+          ?.items[0]
+          ?.key
+        === "counterpartBirthData",
+
+      productionNewlyMetDoesNotAskConcreteDecisionTarget:
+        productionNewlyMetCompatibility
+          .clarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "concreteDecisionTarget",
+          )
+        === true,
+
+      productionNewlyMetDoesNotAskDecisionDeadline:
+        productionNewlyMetCompatibility
+          .clarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "decisionDeadline",
+          )
+        === true,
+
+      productionOurCompatibilityUsesNoneDecisionTarget:
+        productionOurCompatibility
+          .execution
+          .turnResult
+          .questionContext
+          .question
+          .decisionTarget
+        === "none",
+
+      productionOurCompatibilityUsesCompatibilityAnalysisMode:
+        productionOurCompatibility
+          .execution
+          .turnResult
+          .questionContext
+          .question
+          .analysisMode
+        === "compatibility",
+
+      productionOurCompatibilityFirstItemIsCounterpartBirthData:
+        productionOurCompatibility
+          .clarification
+          ?.items[0]
+          ?.key
+        === "counterpartBirthData",
+
+      productionOurCompatibilityDoesNotAskConcreteDecisionTarget:
+        productionOurCompatibility
+          .clarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "concreteDecisionTarget",
+          )
+        === true,
+
+      productionOurCompatibilityDoesNotAskDecisionDeadline:
+        productionOurCompatibility
+          .clarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "decisionDeadline",
+          )
+        === true,
+
+      compatibilityRelationshipDoesNotAskDecisionDeadline:
+        compatibilityRelationshipClarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "decisionDeadline",
+          )
+        === true,
+
+      decisionModeCompatibilityDoesNotAskDecisionDeadline:
+        decisionModeCompatibilityClarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "decisionDeadline",
+          )
+        === true,
+
+      boyfriendDoesNotAutoAskDecisionDeadline:
+        boyfriendClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "decisionDeadline",
+          )
+        !== true,
+
+      marriageDoesNotAutoAskDecisionDeadline:
+        marriageClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "decisionDeadline",
+          )
+        !== true,
+
+      internetAdDoesNotAutoAskDecisionDeadline:
+        internetAdClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "decisionDeadline",
+          )
+        !== true,
+
+      boyfriendDoesNotAutoAskCounterpartIdentity:
+        boyfriendClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "counterpartIdentity",
+          )
+        !== true,
+
+      boyfriendDoesNotAutoAskCurrentRelationshipSituation:
+        boyfriendClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "currentRelationshipSituation",
+          )
+        !== true,
+
+      marriageDoesNotAutoAskCounterpartIdentity:
+        marriageClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "counterpartIdentity",
+          )
+        !== true,
+
+      marriageDoesNotAutoAskCurrentRelationshipSituation:
+        marriageClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "currentRelationshipSituation",
+          )
+        !== true,
+
+      internetAdDoesNotAutoAskFinancialExecutionCapacity:
+        internetAdClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "financialExecutionCapacity",
+          )
+        !== true,
+
+      decisionModeCompatibilityDoesNotAskCurrentRelationshipSituation:
+        decisionModeCompatibilityClarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "currentRelationshipSituation",
+          )
+        === true,
+
+      decisionModeCompatibilityDoesNotAskCounterpartIdentity:
+        decisionModeCompatibilityClarification
+          ?.items
+          .every(
+            (item) =>
+              item.key
+              !== "counterpartIdentity",
+          )
+        === true,
+
+      decisionModeCompatibilityStillAsksCounterpartBirthData:
+        decisionModeCompatibilityClarification
+          ?.items
+          .some(
+            (item) =>
+              item.key
+              === "counterpartBirthData",
+          )
+        === true,
+
+      clarificationFactsBirthDataDoesNotReaskCounterpartBirthData:
+        clarificationFactsBirthDataClarification
+        === null
+        || clarificationFactsBirthDataClarification
+          .items
+          .every(
+            (item) =>
+              item.key
+              !== "counterpartBirthData",
+          )
+        === true,
     };
 
     return {

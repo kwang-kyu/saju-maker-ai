@@ -1,27 +1,27 @@
 ﻿import {
     buildV3ConsultingRequest,
-  } from "../../../api/v3Consulting";
+  } from "../../../api/v3Consulting.js";
 
   import {
     buildHumanDestinyContextPipeline,
-  } from "../builders/humanDestinyContextPipelineBuilder";
+  } from "../builders/humanDestinyContextPipelineBuilder.js";
 
   import {
     readHumanLifeContext,
-  } from "../readers/humanLifeContextReader";
+  } from "../readers/humanLifeContextReader.js";
 
   import {
     runConsulting,
-  } from "./consultingRunner";
+  } from "./consultingRunner.js";
 
   import {
     buildConsultingOpenAIRequest,
     type ConsultingOpenAIRequest,
-  } from "./openai/consultingOpenAIAdapter";
+  } from "./openai/consultingOpenAIAdapter.js";
 
   import type {
     V3ConsultingRequest,
-  } from "./v3ConsultingRequest";
+  } from "./v3ConsultingRequest.js";
 
   export type V3ConsultingPipelineIntegrationVerificationResult = {
     request:

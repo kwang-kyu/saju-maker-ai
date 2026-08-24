@@ -1,32 +1,32 @@
 import {
     buildBlessingAreaInterpretation,
-  } from "../../builders/blessingAreaInterpretationBuilder";
+  } from "../../builders/blessingAreaInterpretationBuilder.js";
   import {
     buildBlessingConfidence,
-  } from "../../builders/blessingConfidenceBuilder";
+  } from "../../builders/blessingConfidenceBuilder.js";
   import {
     buildBlessingEvidence,
-  } from "../../builders/blessingEvidenceBuilder";
+  } from "../../builders/blessingEvidenceBuilder.js";
   import {
     buildBlessingInterpretation,
-  } from "../../builders/blessingInterpretationBuilder";
+  } from "../../builders/blessingInterpretationBuilder.js";
   import type {
     SajuStructureFact,
-  } from "../../types/sajuFacts";
+  } from "../../types/sajuFacts.js";
   import type {
     BlessingArea,
     BlessingEvidence,
     BlessingJudgement,
     BlessingResult,
-  } from "../types/blessing";
+  } from "../types/blessing.js";
   import {
     scoreBlessingAreas,
     type BlessingAreaScore,
-  } from "./blessingScorer";
+  } from "./blessingScorer.js";
   import {
     selectBlessingAreas,
     type BlessingAreaSelection,
-  } from "./blessingSelector";
+  } from "./blessingSelector.js";
   
   const BLESSING_AREAS: BlessingArea[] = [
     "opportunityReception",

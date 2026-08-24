@@ -1,21 +1,21 @@
 import type {
   SajuFactsPipelineResult,
-} from "../builders/sajuFactsPipelineBuilder";
+} from "../builders/sajuFactsPipelineBuilder.js";
 import type {
   HumanDestinyContext,
-} from "../types/humanDestinyContext";
+} from "../types/humanDestinyContext.js";
 import type {
   HumanLifeContext,
-} from "../types/humanLifeContext";
+} from "../types/humanLifeContext.js";
 import type {
   MasterReaderEvidenceBundle,
-} from "../types/masterReaderEvidenceBundle";
+} from "../types/masterReaderEvidenceBundle.js";
 import type {
   CounterpartSajuCalculation,
-} from "./decision/counterpartSajuCalculationBuilder";
+} from "./decision/counterpartSajuCalculationBuilder.js";
 import type {
   QuestionReaderResult,
-} from "./question/questionReader";
+} from "./question/questionReader.js";
 
 export type ConsultingClarificationFactField = {
   key:

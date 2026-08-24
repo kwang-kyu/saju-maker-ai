@@ -1,14 +1,14 @@
 ﻿import type {
   V3ConsultingRequest,
-} from "../src/v3/consulting/v3ConsultingRequest";
+} from "../src/v3/consulting/v3ConsultingRequest.js";
 
 import {
   buildInitialConsultingExecution,
-} from "../src/v3/consulting/initialConsultingExecutionBuilder";
+} from "../src/v3/consulting/initialConsultingExecutionBuilder.js";
 
 import {
   buildConsultingOpenAIRequest,
-} from "../src/v3/consulting/openai/consultingOpenAIAdapter";
+} from "../src/v3/consulting/openai/consultingOpenAIAdapter.js";
 
 /**
  * 원천 생년월일시에서 사람을 먼저 읽은 뒤
