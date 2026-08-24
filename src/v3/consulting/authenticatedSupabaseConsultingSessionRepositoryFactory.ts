@@ -4,26 +4,26 @@ import type {
 
   import {
     parseConsultingSessionBearerToken,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     ConsultingSessionAuthorizationHeader,
     ConsultingSessionOwnerResolver,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import {
     GatewayConsultingSessionRepository,
-  } from "./gatewayConsultingSessionRepository";
+  } from "./gatewayConsultingSessionRepository.js";
   import {
     SupabaseConsultingSessionPersistenceGateway,
-  } from "./supabaseConsultingSessionPersistenceGateway";
+  } from "./supabaseConsultingSessionPersistenceGateway.js";
   import {
     createSupabaseConsultingSessionServerClient,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
   import {
     SupabaseConsultingSessionOwnerResolver,
-  } from "./supabaseConsultingSessionOwnerResolver";
+  } from "./supabaseConsultingSessionOwnerResolver.js";
 
   export type CreateAuthenticatedSupabaseConsultingSessionRepositoryInput = {
     authorizationHeader:
