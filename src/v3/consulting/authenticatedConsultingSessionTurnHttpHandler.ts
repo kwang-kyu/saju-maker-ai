@@ -2,29 +2,29 @@ import type {
     ConsultingSession,
     ConsultingSessionStatus,
     ConsultingTurnKind,
-  } from "./consultingSession";
+  } from "./consultingSession.js";
   import {
     InvalidAuthenticatedConsultingSessionTurnRequestError,
-  } from "./authenticatedConsultingSessionTurnRequest";
+  } from "./authenticatedConsultingSessionTurnRequest.js";
   import {
     ConsultingSessionAuthenticationError,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import {
     ConsultingSessionConflictError,
     ConsultingSessionNotFoundError,
-  } from "./persistedConsultingSessionTurnService";
+  } from "./persistedConsultingSessionTurnService.js";
   import {
     executeAuthenticatedConsultingSessionTurnRequest,
-  } from "./authenticatedConsultingSessionTurnService";
+  } from "./authenticatedConsultingSessionTurnService.js";
   import type {
     ExecuteAuthenticatedConsultingSessionTurnRequestInput,
-  } from "./authenticatedConsultingSessionTurnService";
+  } from "./authenticatedConsultingSessionTurnService.js";
   import type {
     ConsultingSessionAuthorizationHeader,
-  } from "./consultingSessionOwnerResolver";
+  } from "./consultingSessionOwnerResolver.js";
   import type {
     SupabaseServerEnvironment,
-  } from "./supabaseConsultingSessionRepositoryFactory";
+  } from "./supabaseConsultingSessionRepositoryFactory.js";
 
   export type AuthenticatedConsultingSessionTurnHttpRequest = {
     method:
