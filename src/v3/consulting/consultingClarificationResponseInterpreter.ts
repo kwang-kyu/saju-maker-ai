@@ -2,11 +2,11 @@ import OpenAI from "openai";
 
 import {
   getConsultingClarificationFieldDefinition,
-} from "./consultingClarificationFieldDefinitions";
+} from "./consultingClarificationFieldDefinitions.js";
 import type {
   ConsultingClarificationRequest,
   ConsultingConfirmedField,
-} from "./consultingSession";
+} from "./consultingSession.js";
 
 export type InterpretedClarificationFact = {
   key: string;
@@ -19,9 +19,37 @@ export type InterpretedClarificationFact = {
   confidence: number;
 };
 
+export type InterpretedClarificationObservation = {
+  key: string;
+
+  description: string;
+
+  rawValue: string;
+
+  evidence: string[];
+};
+
+export type ClarificationItemResponseStatus =
+  | "answered"
+  | "unavailable"
+  | "redirected";
+
+export type InterpretedClarificationItemState = {
+  key: string;
+
+  status:
+    ClarificationItemResponseStatus;
+};
+
 export type ConsultingClarificationResponseInterpretation = {
   confirmedFacts:
     InterpretedClarificationFact[];
+
+  observations:
+    InterpretedClarificationObservation[];
+
+  itemStates:
+    InterpretedClarificationItemState[];
 
   hasUnresolvedResponse:
     boolean;
@@ -237,6 +265,369 @@ function normalizeComparableToken(
       /\s+/g,
       "",
     );
+}
+
+const INCOMPLETE_BIRTH_DATE_PATTERN =
+  /(\d{4})\s*년\s*(\d{1,2})\s*월(?!\s*\d{1,2}\s*일)/g;
+
+const INCOMPLETE_BIRTH_DATE_OBSERVATION_KEY =
+  "incompleteBirthDate";
+
+/**
+ * 사용자 답변에서 confirmedFacts와 별도로
+ * 관찰만 추출한다.
+ *
+ * 연·월만 있는 날짜는 birthDate로 변환하지 않는다.
+ */
+export function extractClarificationObservations(
+  response:
+    string,
+): InterpretedClarificationObservation[] {
+  const observations:
+    InterpretedClarificationObservation[] =
+      [];
+
+  const seenIdentities =
+    new Set<string>();
+
+  const pattern =
+    new RegExp(
+      INCOMPLETE_BIRTH_DATE_PATTERN.source,
+      INCOMPLETE_BIRTH_DATE_PATTERN.flags,
+    );
+
+  let match:
+    RegExpExecArray | null =
+      pattern.exec(
+        response,
+      );
+
+  while (
+    match
+  ) {
+    const rawValue =
+      match[0];
+
+    const identity =
+      [
+        INCOMPLETE_BIRTH_DATE_OBSERVATION_KEY,
+
+        normalizeComparableToken(
+          rawValue,
+        ),
+      ].join(
+        ":",
+      );
+
+    if (
+      !seenIdentities.has(
+        identity,
+      )
+    ) {
+      seenIdentities.add(
+        identity,
+      );
+
+      observations.push(
+        {
+          key:
+            INCOMPLETE_BIRTH_DATE_OBSERVATION_KEY,
+
+          description:
+            "출생 연월만 언급되었고 일은 확인되지 않았다.",
+
+          rawValue,
+
+          evidence: [
+            rawValue,
+          ],
+        },
+      );
+    }
+
+    match =
+      pattern.exec(
+        response,
+      );
+  }
+
+  return observations;
+}
+
+const UNAVAILABLE_CLARIFICATION_RESPONSE_PATTERNS =
+  [
+    /아직\s*정하지/,
+    /정하지\s*않았/,
+    /정해지지\s*않/,
+    /답할\s*수\s*없/,
+    /지금은\s*답할/,
+    /아직\s*결정하지/,
+    /아직\s*구체적으로/,
+    /구체적으로\s*정하지/,
+    /아직\s*모르/,
+    /지금은\s*모르/,
+    /말할\s*수\s*없/,
+    /알려줄\s*수\s*없/,
+    /정해\s*놓지/,
+    /아직\s*안\s*정/,
+    /아직\s*못\s*정/,
+  ] as const;
+
+const REDIRECTED_CLARIFICATION_RESPONSE_PATTERNS =
+  [
+    /자체가[\s\S]{0,24}맞는지/,
+    /그게\s*아니라/,
+    /궁금한\s*(건|것은|게|거)/,
+    /알고\s*싶은\s*(건|것은|게|거)/,
+    /맞는지가\s*궁금/,
+    /수익을\s*만들\s*수\s*있는지/,
+    /원래\s*질문이\s*아니라/,
+    /자금(?:\s*규모)?(?:이|가|은|는)?\s*아니라/,
+    /다른\s*(판단|것|걸)\s*(을\s*)?(알고\s*싶|원하)/,
+  ] as const;
+
+const CLARIFICATION_ITEM_TOPIC_PATTERNS:
+  Record<
+    string,
+    readonly RegExp[]
+  > = {
+    financialExecutionCapacity: [
+      /자금/,
+      /자기자금/,
+      /대출/,
+      /비상금/,
+    ],
+    decisionDeadline: [
+      /기한/,
+      /마감/,
+      /언제까지/,
+      /예정일/,
+    ],
+  };
+
+function matchesAnyPattern(
+  value:
+    string,
+  patterns:
+    readonly RegExp[],
+): boolean {
+  return patterns.some(
+    (pattern) =>
+      pattern.test(
+        value,
+      ),
+  );
+}
+
+function isUnavailableClarificationResponse(
+  response:
+    string,
+): boolean {
+  return matchesAnyPattern(
+    response,
+    UNAVAILABLE_CLARIFICATION_RESPONSE_PATTERNS,
+  );
+}
+
+function isRedirectedClarificationResponse(
+  response:
+    string,
+): boolean {
+  return matchesAnyPattern(
+    response,
+    REDIRECTED_CLARIFICATION_RESPONSE_PATTERNS,
+  );
+}
+
+function resolveSpecificClarificationItemStatus(
+  itemKey:
+    string,
+  response:
+    string,
+): ClarificationItemResponseStatus | null {
+  if (
+    itemKey
+    === "concreteDecisionTarget"
+  ) {
+    if (
+      isRedirectedClarificationResponse(
+        response,
+      )
+    ) {
+      return "redirected";
+    }
+
+    return null;
+  }
+
+  const topicPatterns =
+    CLARIFICATION_ITEM_TOPIC_PATTERNS[
+      itemKey
+    ];
+
+  if (
+    !topicPatterns
+    || !matchesAnyPattern(
+      response,
+      topicPatterns,
+    )
+  ) {
+    return null;
+  }
+
+  if (
+    isUnavailableClarificationResponse(
+      response,
+    )
+  ) {
+    return "unavailable";
+  }
+
+  if (
+    isRedirectedClarificationResponse(
+      response,
+    )
+  ) {
+    return "redirected";
+  }
+
+  return null;
+}
+
+/**
+ * confirmedFacts와 별도로
+ * 이번 답변이 값 제공 / 답할 수 없음 / 전제 수정인지 구분한다.
+ *
+ * 실제로 언급된 항목만 unavailable / redirected로 두고,
+ * GPT matches가 있어도 원문이 명백히 거절·전제 수정이면
+ * answered로 덮어쓰지 않는다.
+ * 값이 불명확한 답변은 상태를 만들지 않아 기존 재질문 경로를 유지한다.
+ */
+export function resolveClarificationItemStates(
+  clarification:
+    ConsultingClarificationRequest,
+  response:
+    string,
+  confirmedFacts:
+    readonly InterpretedClarificationFact[],
+): InterpretedClarificationItemState[] {
+  const itemStates:
+    InterpretedClarificationItemState[] =
+      [];
+
+  const settledKeys =
+    new Set<
+      string
+    >();
+
+  for (
+    const item
+    of clarification.items
+  ) {
+    const specificStatus =
+      resolveSpecificClarificationItemStatus(
+        item.key,
+        response,
+      );
+
+    if (
+      specificStatus
+      === "unavailable"
+      || specificStatus
+      === "redirected"
+    ) {
+      itemStates.push(
+        {
+          key:
+            item.key,
+
+          status:
+            specificStatus,
+        },
+      );
+
+      settledKeys.add(
+        item.key,
+      );
+    }
+  }
+
+  const askedItem =
+    clarification
+      .items[0];
+
+  if (
+    askedItem
+    && settledKeys.size
+    === 0
+  ) {
+    if (
+      isRedirectedClarificationResponse(
+        response,
+      )
+    ) {
+      itemStates.push(
+        {
+          key:
+            askedItem.key,
+
+          status:
+            "redirected",
+        },
+      );
+
+      settledKeys.add(
+        askedItem.key,
+      );
+    } else if (
+      isUnavailableClarificationResponse(
+        response,
+      )
+    ) {
+      itemStates.push(
+        {
+          key:
+            askedItem.key,
+
+          status:
+            "unavailable",
+        },
+      );
+
+      settledKeys.add(
+        askedItem.key,
+      );
+    }
+  }
+
+  for (
+    const fact
+    of confirmedFacts
+  ) {
+    if (
+      settledKeys.has(
+        fact.key,
+      )
+    ) {
+      continue;
+    }
+
+    itemStates.push(
+      {
+        key:
+          fact.key,
+
+        status:
+          "answered",
+      },
+    );
+
+    settledKeys.add(
+      fact.key,
+    );
+  }
+
+  return itemStates;
 }
 
 function isValidNormalizedBirthDate(
@@ -1376,11 +1767,34 @@ export async function interpretConsultingClarificationResponse(
           >= 0.85,
       );
 
+  const observations =
+    extractClarificationObservations(
+      originalResponse,
+    );
+
+  const itemStates =
+    resolveClarificationItemStates(
+      input.clarification,
+      originalResponse,
+      confirmedFacts,
+    );
+
   return {
     confirmedFacts,
 
+    observations,
+
+    itemStates,
+
     hasUnresolvedResponse:
       confirmedFacts.length
-      === 0,
+      === 0
+      && !itemStates.some(
+        (state) =>
+          state.status
+          === "unavailable"
+          || state.status
+          === "redirected",
+      ),
   };
 }
