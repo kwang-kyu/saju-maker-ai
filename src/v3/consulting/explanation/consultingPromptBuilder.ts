@@ -354,6 +354,483 @@ function resolvePromptExplanationFocus(
   );
 }
 
+function isSpecialExplanationKind(
+  explanationKind:
+    DecisionExplanationPayload["explanationKind"],
+): boolean {
+  return (
+    explanationKind
+    === "roleRecommendation"
+    || explanationKind
+    === "lifeFlowInterpretation"
+  );
+}
+
+export type ConsultingAnswerMode =
+  | "question"
+  | "report";
+
+const EXECUTION_ACTION_WHEN_PATTERNS:
+  readonly RegExp[] = [
+    /언제.*(?:시작|개업|창업|매수|이직|동업|투자|결혼|그만|퇴사|헤어|매도|이사)/,
+    /(?:시작|개업|창업|매수|이직|동업|투자|그만|퇴사|헤어|매도|이사).*언제/,
+    /결혼(?:을|은|이|는)\s*언제/,
+  ];
+
+const EXECUTION_JUDGMENT_PATTERNS:
+  readonly RegExp[] = [
+    /해도\s*(?:될|좋|괜)/,
+    /해야\s*(?:하|되|할|하나)/,
+    /할까요/,
+    /계속\s*(?:만나|이어|유지)/,
+    /받을\s*수\s*있/,
+    /시작(?:해도|해야|할까|하면)/,
+    /투자(?:해도|해야|할까|하면)/,
+    /(?:개업|창업|매수|이직|동업)/,
+    /성공할까|맞을까|어울릴까/,
+    /궁합/,
+    /어떤\s*역할|역할일까요/,
+  ];
+
+const AREA_OR_PERIOD_FLOW_PATTERNS:
+  readonly RegExp[] = [
+    /총운|연애운|재물운|직업운|사업운|건강운|결혼운|애정운/,
+    /운세/,
+    /대운/,
+    /(?:올해|금년|내년|작년|\d{4}\s*년).*(?:운|운세)/,
+    /\d{1,2}\s*월\s*운/,
+    /(?:운은|운이)\s*언제/,
+  ];
+
+function hasExecutionActionWhenIntent(
+  originalQuestion:
+    string,
+): boolean {
+  return EXECUTION_ACTION_WHEN_PATTERNS.some(
+    (pattern) =>
+      pattern.test(
+        originalQuestion,
+      ),
+  );
+}
+
+function hasPeriodOrFortuneWhenIntent(
+  originalQuestion:
+    string,
+): boolean {
+  if (
+    !/언제/.test(
+      originalQuestion,
+    )
+  ) {
+    return false;
+  }
+
+  return hasAreaOrPeriodFlowIntent(
+    originalQuestion,
+  );
+}
+
+function hasExecutionJudgmentIntent(
+  originalQuestion:
+    string,
+): boolean {
+  if (
+    hasPeriodOrFortuneWhenIntent(
+      originalQuestion,
+    )
+    && !hasExecutionActionWhenIntent(
+      originalQuestion,
+    )
+  ) {
+    return false;
+  }
+
+  return (
+    EXECUTION_JUDGMENT_PATTERNS.some(
+      (pattern) =>
+        pattern.test(
+          originalQuestion,
+        ),
+    )
+    || hasExecutionActionWhenIntent(
+      originalQuestion,
+    )
+  );
+}
+
+function hasAreaOrPeriodFlowIntent(
+  originalQuestion:
+    string,
+): boolean {
+  return AREA_OR_PERIOD_FLOW_PATTERNS.some(
+    (pattern) =>
+      pattern.test(
+        originalQuestion,
+      ),
+  );
+}
+
+function isPartnershipExecutionQuestion(
+  originalQuestion:
+    string,
+): boolean {
+  return /동업/.test(
+    originalQuestion,
+  );
+}
+
+export function resolveConsultingAnswerMode(
+  payload:
+    DecisionExplanationPayload,
+): ConsultingAnswerMode {
+  if (
+    payload.explanationKind
+    === "roleRecommendation"
+  ) {
+    return "question";
+  }
+
+  if (
+    payload.explanationKind
+    === "lifeFlowInterpretation"
+  ) {
+    return "report";
+  }
+
+  if (
+    hasPeriodOrFortuneWhenIntent(
+      payload.originalQuestion,
+    )
+    && !hasExecutionActionWhenIntent(
+      payload.originalQuestion,
+    )
+  ) {
+    return "report";
+  }
+
+  if (
+    hasExecutionJudgmentIntent(
+      payload.originalQuestion,
+    )
+  ) {
+    return "question";
+  }
+
+  if (
+    hasAreaOrPeriodFlowIntent(
+      payload.originalQuestion,
+    )
+  ) {
+    return "report";
+  }
+
+  return "question";
+}
+
+function buildDirectAnswerPrioritySystemRules():
+  string {
+  return [
+    "직답 우선 원칙",
+    "",
+    "- 이것은 고정 문장 템플릿이 아니라 답변 생성의 우선순위다.",
+    "- 사용자가 묻는 행동과 판단 대상을 먼저 파악한다.",
+    "- 엔진 verdict와 최종 결론의 의미를 그 대상에 적용해서 설명한다.",
+    "- 질문에 대한 판단을 제시하지 않은 채 사주 성향이나 인생 일반론부터 길게 설명하지 않는다.",
+    "- evidence는 직답을 뒷받침하는 데 사용한다.",
+    "- 조건과 위험은 판단에 실제로 필요한 경우에만 사용한다.",
+    "- 질문과 직접 관련 없는 Reader 설명은 생략한다.",
+    "- 엔진 판단을 새로 만들거나 뒤집지 않는다.",
+    "- 최종 결론 원문을 기계적으로 반복하지 않는다. 그 의미를 원래 질문의 대상과 행동에 적용해서 자연스럽게 설명한다.",
+    "- 질문의 실제 행동 대상이 동업이라면 궁합 설명이 답변 전체를 지배하지 않게 한다.",
+    "- 필요한 경우 상대 궁합은 동업 판단의 근거 중 하나로 사용한다.",
+  ].join("\n");
+}
+
+function buildEvidenceSufficiencySystemRules(
+  verdict:
+    DecisionExplanationPayload["verdict"],
+): string {
+  const commonRules = [
+    "정보 부족 표현 원칙",
+    "",
+    "- 정보 부족 표현은 엔진 판단이 현재 정보만으로는 결론을 확정하기 어려운 경우에만 사용할 수 있다.",
+    "- 기다리며 지켜보라는 판단, 진행 권고, 조건부 진행, 진행하지 않음, 해석 판단에서는 정보 부족을 이유로 답변을 회피하지 않는다.",
+    "- 기다리며 지켜보라는 판단을 판단할 수 없다 또는 정보가 부족하다로 바꾸지 않는다.",
+    "- 엔진이 기다리며 지켜보라고 판단했다면 그 의미를 질문 대상에 적용해서 설명한다.",
+  ];
+
+  if (
+    verdict
+    === "insufficientEvidence"
+  ) {
+    return [
+      ...commonRules,
+      buildInsufficientEvidenceApplicationRules(),
+    ].join("\n");
+  }
+
+  return [
+    ...commonRules,
+    "- 현재 엔진 판단은 정보 부족이 아니므로 정보 부족을 이유로 답변을 회피하지 않는다.",
+  ].join("\n");
+}
+
+function buildGroundingUsageSystemRules():
+  string {
+  return [
+    "확인 원자료 사용 원칙",
+    "",
+    "- 확인 원자료는 질문의 직답을 설명하는 데 필요한 경우에만 사용한다.",
+    "- 확인 원자료 전체를 답변의 시작점이나 공통 설명의 근거로 사용하지 않는다.",
+    "- 원국 사실은 직답의 판단 근거와 직접 연결될 때 우선 사용한다.",
+    "- 현실 정보는 질문의 실행 조건, 현실 제약 또는 현재 상황과 직접 연결될 때만 사용한다.",
+    "- 현재 운 국면은 질문한 행동이나 시기의 판단에 직접 영향을 주는 경우에만 보조 근거로 사용한다.",
+    "- 현재 운이 존재한다는 이유만으로 '확장기', '성장 국면', '책임 증가', '활동 범위 확대' 같은 공통 문장을 반복하지 않는다.",
+    "- 삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면도 질문의 직답을 설명하는 데 실제로 기여하는 경우에만 사용한다.",
+    "- 질문과 직접 연결되지 않는 원자료는 존재하더라도 답변에 사용하지 않는다.",
+    "- 같은 사람의 공통 성향이 여러 질문에 존재하더라도 질문별 판단에 기여하지 않으면 반복하지 않는다.",
+    "- 질문에 직접 필요한 원자료가 이미 충분하면 다른 원자료를 추가하지 않는다.",
+  ].join("\n");
+}
+
+function buildReportGroundingUsageSystemRules():
+  string {
+  return [
+    "확인 원자료 사용 원칙",
+    "",
+    "- 확인 원자료는 질문한 영역과 기간의 전체 흐름을 설명하는 데 필요한 경우에만 사용한다.",
+    "- 확인 원자료 전체를 답변의 시작점이나 공통 설명의 근거로 사용하지 않는다.",
+    "- 질문한 영역과 기간에 직접 연결되는 원국 사실과 현재 흐름을 우선 사용한다.",
+    "- 현재 운 국면은 질문한 영역 또는 기간의 흐름을 설명하는 데 직접 기여할 때 사용한다.",
+    "- 대운, 연운, 월운, 일운처럼 운의 흐름 자체를 묻는 질문에서는 해당 운 자료를 핵심 근거로 사용할 수 있다.",
+    "- 운의 흐름 자체를 묻지 않는 영역에서는 현재 운을 자동으로 중심 근거로 사용하지 않는다.",
+    "- 삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면은 질문한 영역의 흐름을 설명하는 데 실제 기여할 때만 사용한다.",
+    "- 질문한 영역과 직접 관련 없는 Reader나 공통 성향은 자동으로 추가하지 않는다.",
+    "- 같은 공통 성향이 여러 영역에서 확인되더라도 질문한 영역의 설명에 기여하지 않으면 반복하지 않는다.",
+    "- 필요한 근거가 있으면 충분히 설명하되, 원자료가 많다는 이유로 모든 자료를 같은 비중으로 설명하지 않는다.",
+  ].join("\n");
+}
+
+function buildReportAnswerSystemRules():
+  string {
+  return [
+    "영역·기간 흐름 해석 원칙",
+    "",
+    "- 이 질문은 특정 행동을 해도 되는지 묻는 질문이 아니라, 질문한 영역이나 기간의 전체 흐름을 설명하는 질문이다.",
+    "- 질문한 영역과 기간의 전체 흐름을 우선 설명한다.",
+    "- 해당 영역의 관련 evidence를 활용한다.",
+    "- 강점, 가능성, 주의점, 변화 흐름을 설명한다.",
+    "- 특정 행동 판단을 억지로 만들지 않는다.",
+    "- \"정보가 부족하다\"를 기본 시작 문장으로 사용하지 않는다.",
+    "- 현재 자료로 설명 가능한 범위는 충분히 설명한다.",
+    "- 엔진 판단이 현재 정보만으로는 결론을 확정하기 어려운 경우가 아니면, 정보 부족을 이유로 흐름 설명을 중단하지 않는다.",
+    "- 전문적인 절기·대운 기준은 사용자가 이해할 수 있는 방식으로 설명한다.",
+    "- 1/1~2/3 편재, 2/4~12/31 정관처럼 구간과 용어만 나열하지 않는다.",
+    "- 한 해의 운이 달력 1월 1일이 아니라 입춘을 기준으로 바뀐다는 의미를 먼저 설명하고, 필요한 경우에만 세부 구간을 설명한다.",
+    "- 엔진 판단을 새로 만들거나 뒤집지 않는다.",
+    "- 최종 결론 원문을 기계적으로 반복하지 않는다. 그 의미를 질문한 영역과 기간의 흐름에 적용해서 자연스럽게 설명한다.",
+    "- 질문과 직접 관련 없는 Reader 설명은 생략한다.",
+  ].join("\n");
+}
+
+function buildInsufficientEvidenceApplicationRules():
+  string {
+  return [
+    "- 공통 회피 문장만 반복하지 않는다.",
+    "- 이미 존재하는 evidence를 무시하지 않는다.",
+    "- 질문 자체에 대한 현재 판단 가능한 범위를 먼저 설명한다.",
+    "- 무엇이 부족한지 구체적으로 설명한다.",
+    "- 가능한 방향, 조건, 위험을 설명한다.",
+    "- 공통 정보 부족 문장으로 길게 끝내지 않는다.",
+    "- 지금 질문에 대해 무엇을 말할 수 있는지를 먼저 설명한다.",
+    "- 현재 evidence가 어떤 방향을 보여주는지를 설명한다.",
+    "- 무엇이 부족해서 확정할 수 없는지를 설명한다.",
+    "- 필요한 조건은 무엇인지를 설명한다.",
+    "- 현재 말할 수 있는 범위를 설명하되, 실제 evidence에 없는 사실을 새로 만들지 않는다.",
+  ].join("\n");
+}
+
+function buildEvidenceSelectionSystemRules():
+  string {
+  return [
+    "근거 선택 원칙",
+    "",
+    "- 자료가 있다는 이유만으로 설명하지 않는다. 질문에 필요하므로 설명한다.",
+    "- 원국 전체 설명, 인생 전체 성향, 전체 Reader 설명, 질문과 직접 관계없는 영역을 자동으로 본문에 모두 사용하지 않는다.",
+    "- 근거를 핵심 근거, 보조 근거, 비관련 근거로 구분한다.",
+    "- 핵심 근거는 질문의 판단에 직접 영향을 주는 근거이며 반드시 우선 사용한다.",
+    "- 보조 근거는 핵심 판단을 이해하는 데 도움이 되지만 없어도 답변이 가능한 근거이며 필요한 경우에만 사용한다.",
+    "- 비관련 근거는 질문과 직접 관계없는 근거이며 사용하지 않는다.",
+    "- 근거의 강도만 보고 선택하지 않는다. 질문과의 관련성을 먼저 본다.",
+    "- 강한 근거라도 질문과 관계없으면 사용하지 않는다.",
+    "- 약한 근거라도 질문의 핵심 판단과 직접 연결된다면 필요한 만큼 사용할 수 있다.",
+    "- 공통으로 반복되기 쉬운 근거인 삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운, 질문과 무관한 Reader는 그 질문에 실제 기여할 때만 사용한다.",
+    "- 같은 사람의 공통 성향을 질문마다 자동으로 반복하지 않는다.",
+    "- originalQuestion, asksWhat, asksWhy, decisionQuestion, analysisMode, actionObject, counterpart, reality, explanationFocus, verdict, finalDecision, evidence, conditions, risks, recommendedDirection, prohibitedDirection을 근거 선택에 사용한다.",
+    "- 엔진 판단을 새로 만들거나 뒤집지 않는다.",
+  ].join("\n");
+}
+
+function buildQuestionEvidencePriorityRules():
+  string {
+  return [
+    "질문형 근거 사용 원칙",
+    "",
+    "- 질문형에서는 근거를 최대한 선택적으로 사용한다.",
+    "- 우선순위는 질문에 대한 직접 판단, 그 판단을 뒷받침하는 가장 중요한 근거, 판단에 영향을 주는 조건, 필요한 위험, 권장 방향과 금지 방향이다.",
+    "- 질문형의 설명 순서는 질문, 직답, 핵심 근거, 필요한 조건과 위험, 방향이다. 이 순서를 번호 목차처럼 출력하지 않는다.",
+    "- evidence, conditions, risks, recommendedDirection, prohibitedDirection은 질문과 관련 있을 때 우선 사용한다.",
+    "- 나머지 근거는 사용하지 않는다.",
+    "- 같은 사람의 삶의 동력을 매번 처음부터 설명하지 않는다.",
+    "- 생존 방식을 질문과 관계없이 반복하지 않는다.",
+    "- 반복 패턴을 질문과 관계없이 반복하지 않는다.",
+    "- 현재 운을 질문과 관계없이 반복하지 않는다.",
+    "- 정체성과 인생 국면을 질문과 관계없이 반복하지 않는다.",
+    "- 삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운, 무관한 Reader는 질문에 실제 기여할 때만 사용한다. 질문마다 자동 반복하지 않는다.",
+    "- 재물 질문이 아닌데 재물 흐름을 장황하게 설명하지 않는다.",
+    "- 관계 질문이 아닌데 관계 특성을 장황하게 설명하지 않는다.",
+    "- 질문과 직접 관계없는 건강, 직업, 인생 Reader 설명을 자동으로 모두 사용하지 않는다.",
+    "- 근거가 많다는 이유로 모든 근거를 설명하지 않는다.",
+    "- 관련 없는 근거는 사용하지 않는다.",
+    "- 질문에 따라 사용하는 근거 범위가 달라져야 한다. 아래는 출력 목차가 아니라 해당 질문일 때의 선택 우선순위다.",
+    "- 동업 질문이라면 동업 진행 판단, 역할·책임·권한, 금전 부담과 위험, 갈등 조정, 필요한 조건을 우선한다. 상대와의 협업과 궁합 관련 근거는 보조로만 사용한다. 질문자의 전체 인생 성향, 전체 재물운, 관계·건강·직업 설명 전체는 사용하지 않는다.",
+    "- 돈 회수 질문이라면 회수 가능성에 대한 엔진 판단, 회수 조건, 제한 요소, 위험, 실행 조건을 우선한다. 현재 판단 가능한 근거는 회수 판단에 기여할 때만 사용한다. 일반 재물운, 전체 사업운, 전체 직업운, 인생운, 전체 인간관계, 장황한 인생 성향 설명을 자동으로 길게 쓰지 않는다.",
+    "- 관계 지속 질문이라면 유지 여부와 기다리며 지켜보라는 판단의 의미, 유지·기다리며 지켜봄·변경 판단, 갈등, 신뢰, 대기 중 확인사항, 관계 지속에 영향을 주는 근거, 유지 조건, 이탈·변경 신호, 관계 위험을 우선한다. 기다리며 지켜보라는 판단을 정보가 부족하다로 바꾸지 않는다. 전체 재물운, 전체 사업운, 관계와 직접 연결되지 않는 Reader 설명은 사용하지 않는다.",
+    "- 사업 시작 질문이라면 시작 가능 여부를 중심으로 한다. 자금, 책임, 실행 조건과 위험을 사용한다. 현재 확장 흐름은 필요할 때만 보조한다. 질문자의 전체 인생 성향과 현재 운 전체를 자동으로 길게 쓰지 않는다.",
+  ].join("\n");
+}
+
+function buildReportEvidencePriorityRules():
+  string {
+  return [
+    "리포트형 근거 사용 원칙",
+    "",
+    "- 리포트형은 질문형보다 더 많은 근거를 사용할 수 있다.",
+    "- 그러나 모든 Reader를 설명한다는 뜻이 아니다.",
+    "- 질문한 영역에 해당하는 자료를 중심으로 선택한다.",
+    "- 질문 영역과 관계없는 Reader 설명을 과도하게 사용하지 않는다.",
+    "- 모든 Reader를 같은 비중으로 나열하지 않는다.",
+    "- 필요한 근거가 많으면 충분히 설명한다. 억지로 짧게 만들지 않는다.",
+    "- 리포트형의 설명 순서는 질문 영역의 전체 흐름, 핵심 근거, 변화와 강점과 주의, 활용 방향이다. 이 순서를 번호 목차처럼 출력하지 않는다.",
+    "- 연애운, 재물운, 사업운, 총운의 기존 충분한 설명력을 유지한다. 과도하게 압축하지 않는다.",
+    "- 삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운, 무관한 Reader는 질문한 영역에 실제 기여할 때만 사용한다. 질문마다 자동 반복하지 않는다.",
+    "- evidence, conditions, risks, recommendedDirection, prohibitedDirection은 질문한 영역과 관련 있을 때 우선 사용한다.",
+    "- 관련 없는 근거는 사용하지 않는다.",
+    "- 아래는 출력 목차가 아니라 해당 영역일 때의 선택 우선순위다.",
+    "- 연애운 질문이라면 관계 확장, 친밀 관계 유지, 감정과 책임 부담, 관계 경계, 갈등 조정, 신뢰 회복, 현재 흐름과의 연결을 우선한다. 사업·투자 전체, 직업 Reader 전체, 질문과 무관한 재물 세부 설명은 사용하지 않는다.",
+    "- 재물운 질문이라면 재물 생성, 재물 보존, 현금흐름, 부채, 손실 대응, 자산 전환, 현재 운과 재물 흐름을 우선한다. 관계 Reader 전체, 건강 Reader 전체, 직업 Reader 전체는 사용하지 않는다.",
+    "- 사업운 질문이라면 사업 확장, 실행력, 재물 흐름, 역할과 업무, 책임 감당력, 조직과 관계, 위험을 우선한다. 연애·결혼 Reader 전체, 질문과 관계없는 건강 설명은 사용하지 않는다.",
+    "- 총운·기간운 질문이라면 큰 흐름, 주요 변화, 영역별 핵심, 주의점, 활용 방향 순으로 필요한 자료를 선택한다. 모든 Reader를 같은 비중으로 나열하지 않는다.",
+  ].join("\n");
+}
+
+function buildEvidenceCompressionSystemRules():
+  string {
+  return [
+    "반복 근거 압축 원칙",
+    "",
+    "- 답변을 기계적으로 몇 자 이하로 제한하지 않는다.",
+    "- 문단 수를 고정하지 않는다.",
+    "- 정해진 문단 구조를 강제하지 않는다.",
+    "- 핵심은 길이가 아니라 정보 밀도다.",
+    "- 짧은 답변이 목표가 아니라, 질문과 관계없는 설명이 없는 답변이 목표다.",
+    "- 짧게 만드는 것이 목표가 아니다.",
+    "- 같은 성향, 현재 운, 책임, 부담, 현금흐름 설명을 질문마다 같은 순서와 같은 분량으로 반복하지 않는다.",
+    "- 삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운을 질문마다 같은 분량으로 자동 반복하지 않는다.",
+    "- 안정형, 독립형, 재물형, 현재 확장기, 책임을 혼자 떠안음, 번아웃, 현금흐름, 부채, 역할·책임·권한·경계 같은 자료가 실제 질문의 근거라면 사용할 수 있다.",
+    "- 성장 국면, 작게 시작, 재무 점검, 초기 성과 후 확장 같은 공통 표현은 실제 질문의 근거일 때만, 그 질문에 필요한 의미로만 사용한다.",
+    "- 그러나 질문마다 같은 순서와 같은 분량으로 반복하지 않는다.",
+    "- 같은 근거가 여러 질문에 필요하더라도 질문에 필요한 의미만 사용한다.",
+    "- 핵심 설명 이후에도 질문과 관계없는 일반론을 길게 이어가지 않는다.",
+    "- 리포트형에서 연애운, 재물운, 사업운, 총운의 설명력을 과도하게 줄이지 않는다.",
+  ].join("\n");
+}
+
+function buildRoleEvidenceGuardRules():
+  string {
+  return [
+    "역할 추천 근거 사용 원칙",
+    "",
+    "- 역할 추천 전용 답변 원칙을 일반 근거 압축 규칙으로 바꾸지 않는다.",
+    "- 제공된 배역 후보와 역할 근거만 사용한다.",
+    "- 역할과 직접 관계없는 Reader 설명을 무분별하게 추가하지 않는다.",
+  ].join("\n");
+}
+
+function buildPartnershipQuestionSystemRules():
+  string {
+  return [
+    "동업 질문 답변 원칙",
+    "",
+    "- 이 질문은 상대와의 궁합 질문이 아니라 동업해도 되는지에 대한 실행 판단 질문이다.",
+    "- 사업·동업 판단을 중심으로 답한다.",
+    "- 상대 궁합은 동업 판단의 보조 근거로만 사용한다.",
+    "- 궁합 설명이 답변 전체를 지배하지 않게 한다.",
+    "- 일반적인 사주 성향 설명을 길게 반복하지 않는다.",
+    "- 엔진 verdict와 최종 결론의 의미를 동업 여부에 적용해서 설명한다.",
+    "- 동업 진행 판단, 상대와의 협업 가능성, 역할·책임·권한, 금전 부담과 위험, 필요한 조건을 중심으로 근거를 선택한다.",
+    "- 역할, 책임, 권한, 금전, 갈등 조정을 우선한다.",
+    "- 궁합은 동업 판단의 보조 근거이며 답변의 중심이 아니다.",
+    "- 현재 운 국면은 동업 판단에 실제로 필요할 때만 보조로 사용한다.",
+    "- 질문자의 전체 인생 성향, 전체 재물운 장문, 관계·건강·직업 Reader 전체를 자동으로 사용하지 않는다.",
+  ].join("\n");
+}
+
+function buildPromptQuestionFocusSystemRules(
+  answerMode:
+    ConsultingAnswerMode,
+  partnershipQuestion:
+    boolean,
+  focus:
+    DecisionExplanationFocus
+    | null,
+): string {
+  if (
+    answerMode
+    === "report"
+  ) {
+    return "";
+  }
+
+  if (
+    partnershipQuestion
+  ) {
+    const partnershipRules =
+      buildPartnershipQuestionSystemRules();
+
+    if (
+      focus
+      === "compatibility"
+    ) {
+      return partnershipRules;
+    }
+
+    const otherFocusRules =
+      buildQuestionFocusSystemRules(
+        focus,
+      );
+
+    if (
+      otherFocusRules.length
+      === 0
+    ) {
+      return partnershipRules;
+    }
+
+    return [
+      partnershipRules,
+      otherFocusRules,
+    ].join(
+      "\n\n",
+    );
+  }
+
+  return buildQuestionFocusSystemRules(
+    focus,
+  );
+}
+
 function buildQuestionFocusSystemRules(
   focus:
     DecisionExplanationFocus
@@ -367,9 +844,13 @@ function buildQuestionFocusSystemRules(
       "궁합 질문 답변 원칙",
       "",
       "- 두 사람의 궁합에 직접 답한다.",
+      "- 두 사람 관계에 대한 판단을 중심으로 설명한다.",
       "- 잘 맞는 부분과 충돌하는 부분을 필요한 근거와 함께 설명한다.",
       "- 일반적인 인생 성향 설명을 길게 반복하지 않는다.",
       "- 사업이나 실행 조언을 억지로 붙이지 않는다.",
+      "- 사업이나 부동산, 일반 인생 설명을 먼저 하지 않는다.",
+      "- 상대 출생정보가 부족하면 인생 진행 여부를 판단할 수 없다고 말하지 않는다.",
+      "- 상대 출생정보가 부족하면 이 상대와의 궁합을 어느 범위까지 판단할 수 있는지를 설명한다.",
     ].join("\n");
   }
 
@@ -381,8 +862,13 @@ function buildQuestionFocusSystemRules(
       "유지 여부 질문 답변 원칙",
       "",
       "- 계속 유지하는 것이 맞는지 중심으로 답한다.",
+      "- 유지 여부 또는 현재 기다리며 지켜보라는 판단을 중심으로 설명한다.",
       "- 유지해야 할 이유와 조건을 설명한다.",
       "- 변화 또는 이탈 신호가 있을 때만 설명한다.",
+      "- 갈등, 신뢰, 대기 중 확인사항이 있으면 유지 판단을 설명하는 데 사용한다.",
+      "- 전체 재물운이나 사업운으로 관계 유지 질문을 바꾸지 않는다.",
+      "- 엔진이 기다리며 지켜보라고 판단했다면 그 의미를 질문 대상에 적용해서 설명한다.",
+      "- 기다리며 지켜보라는 판단을 정보가 부족하다로 바꾸지 않는다.",
     ].join("\n");
   }
 
@@ -394,6 +880,7 @@ function buildQuestionFocusSystemRules(
       "정리·변경 질문 답변 원칙",
       "",
       "- 계속할지 떠날지 또는 변경할지에 직접 답한다.",
+      "- 떠날지, 옮길지, 변경할지에 대한 판단을 중심으로 한다.",
       "- 필요한 근거와 실행 조건, 위험을 중심으로 설명한다.",
     ].join("\n");
   }
@@ -406,8 +893,14 @@ function buildQuestionFocusSystemRules(
       "사업 시작 질문 답변 원칙",
       "",
       "- 사업을 시작하는 것이 맞는지 중심으로 답한다.",
+      "- 사업 시작 여부를 먼저 답한다.",
+      "- 시작 가능 여부를 중심으로 한다.",
       "- 현재 시점, 성공 조건, 사업 위험, 실행 방향을 필요한 만큼 설명한다.",
+      "- 자금, 책임, 실행 조건과 위험을 사용한다.",
+      "- 현재 확장 흐름은 필요할 때만 보조한다.",
       "- 일반적인 사주 성향 설명을 길게 반복하지 않는다.",
+      "- 동업 질문이라도 질문의 실제 행동 대상이 동업이라면 궁합 설명이 답변 전체를 지배하지 않게 한다.",
+      "- 필요한 경우 상대 궁합은 동업 판단의 근거 중 하나로 사용한다.",
     ].join("\n");
   }
 
@@ -434,6 +927,10 @@ function buildQuestionFocusSystemRules(
       "- 질문 자체에 직접 답한다.",
       "- 필요한 근거와 조건, 위험만 사용한다.",
       "- 질문과 관계없는 설명을 억지로 붙이지 않는다.",
+      "- 질문 자체를 일반적인 재물운 설명으로 바꾸지 않는다.",
+      "- 돈 회수처럼 특정 실행 결과를 묻는 질문이면 회수 가능성, 회수 조건, 제한 요소, 위험, 실행 조건을 우선한다.",
+      "- 일반 재물운, 사업운, 인생운을 자동으로 길게 쓰지 않는다.",
+      "- 엔진이 현재 정보만으로 결론을 확정하기 어려우면, 현재 무엇까지 말할 수 있는지, 왜 확정할 수 없는지, 어떤 조건이 필요한지 순으로 자연스럽게 설명한다.",
     ].join("\n");
   }
 
@@ -537,6 +1034,8 @@ function buildQuestionContextUserSection(
 function buildExplanationMaterialSections(
   payload:
     DecisionExplanationPayload,
+  answerMode:
+    ConsultingAnswerMode,
 ): string[] {
   const materialSections =
     payload.explanationOrder.map(
@@ -547,10 +1046,116 @@ function buildExplanationMaterialSections(
         ].join("\n"),
     );
 
+  const usageLine =
+    answerMode
+    === "report"
+      ? "아래 자료는 그대로 번호 매겨 출력해야 하는 목차가 아닙니다. 질문한 영역과 기간의 흐름에 맞게 중심과 순서를 정하고, 그 흐름을 설명하는 근거와 설명 요소로 사용하세요. 자료가 있다는 이유만으로 모든 근거를 사용하지 마세요. 질문한 영역의 핵심 근거를 먼저 선택하고, 모든 Reader를 같은 비중으로 나열하지 마세요."
+      : "아래 자료는 그대로 번호 매겨 출력해야 하는 목차가 아닙니다. 질문 유형에 맞게 중심과 순서를 정하고, 직답을 뒷받침하는 근거와 설명 요소로 사용하세요. 자료가 있다는 이유만으로 모든 근거를 사용하지 마세요. 질문에 필요한 핵심 근거만 선택하고, 보조 근거는 필요할 때만, 관련 없는 근거는 사용하지 마세요.";
+
   return [
     "답변에 필요한 판단 근거와 설명 요소",
-    "아래 자료는 그대로 번호 매겨 출력해야 하는 목차가 아닙니다. 질문 유형에 맞게 중심과 순서를 정하고, 필요한 근거와 설명 요소로 사용하세요.",
+    usageLine,
     ...materialSections,
+  ];
+}
+
+function buildDirectAnswerApplicationUserSection():
+  string {
+  return [
+    "질문에 판단을 적용하는 우선순위",
+    "- 위 엔진 판단을 원래 질문의 대상과 행동에 적용해서 설명하세요.",
+    "- 엔진이 확정한 결론 원문을 기계적으로 복사하지 말고, 그 의미를 질문에 맞게 자연스럽게 설명하세요.",
+    "- 사주 성향이나 인생 일반론부터 길게 시작하지 마세요.",
+    "- 확인 원자료 전체를 답변의 시작점으로 사용하지 마세요.",
+    "- 질문의 직답을 설명하는 데 필요한 근거만 사용하세요.",
+    "- 자료가 있다는 이유만으로 모든 근거를 사용하지 마세요.",
+    "- 질문에 필요한 핵심 근거만 선택하세요.",
+    "- 보조 근거는 필요할 때만 사용하고, 질문과 관계없는 근거는 사용하지 마세요.",
+    "- 같은 성향이나 현재 운 설명을 질문과 관계없이 반복하지 마세요.",
+    "- 삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운은 질문에 실제 기여할 때만 사용하세요.",
+    "- 질문마다 같은 공통 성향 설명을 자동으로 반복하지 마세요.",
+    "- 직답 다음에 핵심 근거, 필요한 조건과 위험, 방향을 사용하세요.",
+  ].join("\n");
+}
+
+function buildReportApplicationUserSection():
+  string {
+  return [
+    "영역·기간 흐름을 설명하는 우선순위",
+    "- 위 엔진 판단을 질문한 영역과 기간의 전체 흐름에 적용해서 설명하세요.",
+    "- 엔진이 확정한 결론 원문을 기계적으로 복사하지 말고, 그 의미를 흐름 설명에 맞게 자연스럽게 설명하세요.",
+    "- 특정 행동을 해도 되는지로 바꾸지 마세요.",
+    "- 정보가 부족하다로 답변을 시작하지 마세요.",
+    "- 현재 자료로 설명 가능한 범위는 충분히 설명하세요.",
+    "- 확인 원자료 전체를 답변의 시작점으로 사용하지 마세요.",
+    "- 입춘 기준처럼 전문 구간은 사용자가 이해할 수 있게 설명하고, 필요한 경우에만 세부 구간을 적으세요.",
+    "- 아래 질문 분류가 실행 결정처럼 보여도, 원문이 영역·기간 흐름을 묻는 경우에는 그 흐름 설명에 우선하세요.",
+    "- 질문한 영역에 해당하는 자료를 중심으로 선택하세요.",
+    "- 모든 Reader를 같은 비중으로 나열하지 마세요.",
+    "- 필요한 근거가 많으면 충분히 설명하고, 억지로 짧게 만들지 마세요.",
+    "- 질문 영역과 관계없는 Reader 설명을 과도하게 사용하지 마세요.",
+  ].join("\n");
+}
+
+function buildInsufficientEvidenceApplicationUserSection():
+  string {
+  return [
+    "정보 부족 판단을 설명하는 우선순위",
+    "- 지금 질문에 대해 무엇을 말할 수 있는지를 먼저 설명하세요.",
+    "- 현재 근거가 어떤 방향을 보여주는지를 설명하세요.",
+    "- 무엇이 부족해서 확정할 수 없는지를 설명하세요.",
+    "- 필요한 조건을 설명하세요.",
+    "- 공통 정보 부족 문장으로 길게 끝내지 마세요.",
+    "- 실제 근거에 없는 사실을 새로 만들지 마세요.",
+  ].join("\n");
+}
+
+function buildGroundingUserSections(
+  groundingContext?:
+    ConsultingGroundingContext,
+  answerMode:
+    ConsultingAnswerMode = "question",
+): string[] {
+  if (
+    !groundingContext
+  ) {
+    return [];
+  }
+
+  const usageLines =
+    answerMode
+    === "report"
+      ? [
+          "확인 원자료는 답변의 시작 재료가 아닙니다.",
+          "확인 원자료 전체를 답변의 시작점으로 사용하지 마세요.",
+          "질문한 영역과 기간의 전체 흐름에 직접 필요한 원자료만 선택하세요.",
+          "대운·연운·월운·일운처럼 운의 흐름 자체를 묻는 경우에는 해당 운 자료를 핵심 근거로 사용할 수 있습니다.",
+          "운의 흐름 자체를 묻지 않는 영역에서는 현재 운 국면을 자동으로 답변의 중심에 놓지 마세요.",
+          "삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면은 질문한 영역의 흐름을 설명하는 데 실제로 기여할 때만 사용하세요.",
+          "질문과 직접 관련 없는 Reader나 공통 성향을 자동으로 추가하지 마세요.",
+          "같은 공통 성향이 여러 질문에 존재하더라도 질문한 영역에 기여하지 않으면 반복하지 마세요.",
+          "필요한 근거는 충분히 사용하되, 원자료가 많다는 이유로 모든 자료를 같은 비중으로 설명하지 마세요.",
+        ]
+      : [
+          "확인 원자료는 답변의 시작 재료가 아닙니다.",
+          "확인 원자료 전체를 답변의 시작점으로 사용하지 마세요.",
+          "질문의 직답과 직접 연결되는 원국 사실을 우선 사용하세요.",
+          "현실 정보는 질문의 실행 조건이나 현실 제약과 직접 연결될 때만 사용하세요.",
+          "현재 운 국면은 질문한 행동이나 시기의 판단에 직접 영향을 줄 때만 보조 근거로 사용하세요.",
+          "현재 운이 있다는 이유만으로 '확장기', '성장 국면', '책임 증가', '활동 범위 확대' 같은 공통 문장을 반복하지 마세요.",
+          "삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면도 직답에 실제로 기여할 때만 사용하세요.",
+          "질문과 직접 연결되지 않는 원자료는 존재하더라도 사용하지 마세요.",
+          "직답에 필요한 원자료가 이미 충분하면 다른 원자료를 추가하지 마세요.",
+        ];
+
+  return [
+    "확인 원자료 — 원국·현재 운 국면·현실 정보",
+    usageLines.join("\n"),
+    JSON.stringify(
+      groundingContext,
+      null,
+      2,
+    ),
   ];
 }
 
@@ -712,6 +1317,7 @@ export function buildConsultingPrompt(
 - 같은 문장 구조를 모든 사용자에게 반복하지 않는다.
 - 다음 뜻의 회피형 보류 표현과 그와 같은 의미의 문장을 절대 사용하지 않는다: 당장 정하지 말고, 준비한 뒤, 조건을 갖춘 뒤, 보류, 나중에 판단, 먼저 연습하고, 지금은 특정 배역을 고르지 말라.
 - 실행 준비, 자금, 시기, 기다림, 보류 조건을 추가하지 않는다.
+- 역할과 직접 관계없는 Reader 설명을 무분별하게 추가하지 않는다.
 `.trim()
       : "";
 
@@ -730,12 +1336,25 @@ export function buildConsultingPrompt(
 - 총운·연운·월운·일운을 구분해서 설명한다.
 - 연도가 명시되지 않은 월 질문에 적용된 연도가 Evidence에 있으면 답변에 명시한다.
 - 절기 경계로 월주·연주가 바뀌는 경우 Evidence의 구간 설명을 반영한다.
+- 모든 Reader를 같은 비중으로 나열하지 않는다.
+- 큰 흐름, 주요 변화, 영역별 핵심, 주의점, 활용 방향 순으로 필요한 자료를 선택한다.
+- 위 순서를 번호 목차처럼 강제하지 않는다.
 `.trim()
       : "";
 
   const topicSafetySystemRules =
     buildTopicSafetySystemRules(
       payload.topic,
+    );
+
+  const answerMode =
+    resolveConsultingAnswerMode(
+      payload,
+    );
+
+  const partnershipQuestion =
+    isPartnershipExecutionQuestion(
+      payload.originalQuestion,
     );
 
   const questionFocus =
@@ -745,9 +1364,67 @@ export function buildConsultingPrompt(
     );
 
   const questionFocusSystemRules =
-    buildQuestionFocusSystemRules(
+    buildPromptQuestionFocusSystemRules(
+      answerMode,
+      partnershipQuestion,
       questionFocus,
     );
+
+  const specialExplanation =
+    isSpecialExplanationKind(
+      payload.explanationKind,
+    );
+
+  const directAnswerPriorityRules =
+    answerMode
+    === "question"
+      ? buildDirectAnswerPrioritySystemRules()
+      : "";
+
+  const reportAnswerRules =
+    answerMode
+    === "report"
+      ? buildReportAnswerSystemRules()
+      : "";
+
+  const evidenceSufficiencyRules =
+    specialExplanation
+      ? ""
+      : buildEvidenceSufficiencySystemRules(
+          payload.verdict,
+        );
+
+  const groundingUsageRules =
+    answerMode
+    === "report"
+      ? buildReportGroundingUsageSystemRules()
+      : buildGroundingUsageSystemRules();
+
+  const evidenceSelectionRules =
+    payload.explanationKind
+    === "roleRecommendation"
+      ? buildRoleEvidenceGuardRules()
+      : buildEvidenceSelectionSystemRules();
+
+  const questionEvidencePriorityRules =
+    answerMode
+    === "question"
+    && payload.explanationKind
+    !== "roleRecommendation"
+      ? buildQuestionEvidencePriorityRules()
+      : "";
+
+  const reportEvidencePriorityRules =
+    answerMode
+    === "report"
+      ? buildReportEvidencePriorityRules()
+      : "";
+
+  const evidenceCompressionRules =
+    payload.explanationKind
+    === "roleRecommendation"
+      ? ""
+      : buildEvidenceCompressionSystemRules();
 
   const systemPrompt = `
 당신은 천운문 상담 엔진의 판단을 사용자가 이해하기 쉬운 한국어 상담문으로 전달하는 전문 상담가이다.
@@ -761,6 +1438,15 @@ export function buildConsultingPrompt(
 - 일반적인 처세 조언을 새로운 판단 근거로 추가하지 않는다.
 - GPT는 판단을 새로 만들지 않고 엔진 판단을 사람이 이해할 수 있게 설명한다.
 - 엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다.
+
+${directAnswerPriorityRules}
+${reportAnswerRules ? `\n${reportAnswerRules}` : ""}
+${evidenceSelectionRules ? `\n${evidenceSelectionRules}` : ""}
+${questionEvidencePriorityRules ? `\n${questionEvidencePriorityRules}` : ""}
+${reportEvidencePriorityRules ? `\n${reportEvidencePriorityRules}` : ""}
+${evidenceCompressionRules ? `\n${evidenceCompressionRules}` : ""}
+${evidenceSufficiencyRules ? `\n${evidenceSufficiencyRules}` : ""}
+${groundingUsageRules ? `\n${groundingUsageRules}` : ""}
 
 설명 구성 원칙
 
@@ -838,22 +1524,92 @@ ${lifeFlowInterpretationRules ? `\n${lifeFlowInterpretationRules}` : ""}
 ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
 `.trim();
 
-    const groundingSections =
-    groundingContext
+  const userLeadInstruction =
+    answerMode
+    === "report"
+      ? "질문한 영역과 기간의 전체 흐름을 우선으로 작성하세요. 원국과 현재 운은 그 흐름을 설명하는 확인 원자료로만 사용하세요."
+      : "질문에 대한 직답을 우선으로 작성하세요. 원국과 현재 운은 직답을 설명하는 확인 원자료로만 사용하세요.";
+
+  const applicationSection =
+    answerMode
+    === "report"
+      ? buildReportApplicationUserSection()
+      : buildDirectAnswerApplicationUserSection();
+
+  const insufficientEvidenceApplicationSection =
+    !specialExplanation
+    && payload.verdict
+    === "insufficientEvidence"
+      ? buildInsufficientEvidenceApplicationUserSection()
+      : "";
+
+  const evidenceSelectionFinalChecks =
+    payload.explanationKind
+    === "roleRecommendation"
       ? [
-          "개인별 사주 근거 — 원국·대운·세운·Master Reader가 확정한 자료",
-          JSON.stringify(
-            groundingContext,
-            null,
-            2,
-          ),
-          "",
+          "- 역할과 직접 관계없는 Reader 설명을 무분별하게 추가하지 않았는가?",
+        ]
+      : answerMode
+        === "report"
+        ? [
+            "- 질문에 필요하므로 설명했는가, 자료가 있다는 이유만으로 설명하지 않았는가?",
+            "- 질문한 영역의 핵심 근거를 중심으로 선택했는가?",
+            "- 질문 영역과 관계없는 Reader 설명을 과도하게 사용하지 않았는가?",
+            "- 모든 Reader를 같은 비중으로 나열하지 않았는가?",
+            "- 필요한 근거가 있으면 충분히 설명했는가?",
+            "- 질문 영역의 전체 흐름과 핵심 근거를 충분히 설명했는가?",
+            "- 연애운·재물운·사업운·총운의 설명력을 과도하게 줄이지 않았는가?",
+          ]
+        : [
+            "- 질문에 필요하므로 설명했는가, 자료가 있다는 이유만으로 설명하지 않았는가?",
+            "- 질문에 필요한 근거만 선택했는가?",
+            "- 질문과 관계없는 Reader 설명을 자동으로 모두 사용하지 않았는가?",
+            "- 같은 성향·운·책임 설명을 질문과 관계없이 반복하지 않았는가?",
+            "- 근거가 많다는 이유로 모든 근거를 설명하지 않았는가?",
+            "- 삶의 동력·생존 방식·반복 패턴·정체성·인생 국면·현재 운을 질문마다 자동 반복하지 않았는가?",
+            "- 질문에 실제 기여하는 근거만 사용했는가?",
+          ];
+
+  const insufficientEvidenceFinalChecks =
+    !specialExplanation
+    && payload.verdict
+    === "insufficientEvidence"
+      ? [
+          "- 현재 말할 수 있는 범위를 먼저 설명했는가?",
+          "- 공통 정보 부족 문장으로 길게 끝내지 않았는가?",
+        ]
+      : [];
+
+  const modeSpecificFinalChecks =
+    answerMode
+    === "report"
+      ? [
+          "- 질문한 영역과 기간의 전체 흐름을 우선했는가?",
+          "- 특정 행동 판단을 억지로 만들지 않았는가?",
+          "- 정보가 부족하다를 기본 시작 문장으로 사용하지 않았는가?",
+          "- 현재 자료로 설명 가능한 범위는 충분히 설명했는가?",
+          "- 절기·대운 기준을 사용자가 이해할 수 있게 설명했는가?",
+        ]
+      : [
+          "- 질문에 나온 구체적인 대상과 행동을 사용했는가?",
+          "- 질문에 대한 직답을 사주 성향이나 인생 일반론보다 우선했는가?",
+          "- 기다리며 지켜보라는 판단을 정보 부족으로 바꾸지 않았는가?",
+          "- 정보 부족 표현은 엔진이 현재 정보만으로 결론을 확정하기 어렵다고 한 경우에만 사용했는가?",
+        ];
+
+  const partnershipFinalChecks =
+    partnershipQuestion
+      ? [
+          "- 동업 판단을 중심으로 답하고 궁합 설명으로 대체하지 않았는가?",
+          "- 동업에 필요한 근거만 선택하고 전체 인생 성향이나 전체 재물운으로 바꾸지 않았는가?",
+          "- 역할·책임·권한·금전·갈등 조정을 우선하고 궁합으로 대체하지 않았는가?",
         ]
       : [];
 
   const userPrompt = [
     "다음은 천운문 판단 엔진이 확정한 상담 자료입니다.",
     "원래 질문을 중심으로, 이 사람에게만 해당하는 완성된 한국어 상담문을 작성하세요.",
+    userLeadInstruction,
     "자료의 판단을 변경하지 말고 서로 다른 질문에 동일한 답변을 반복하지 마세요.",
     "",
     "사용자의 원래 질문",
@@ -873,13 +1629,29 @@ ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
     "판단 근거의 충분도",
     confidenceLabel,
     "",
-    ...groundingSections,
-    ...buildExplanationMaterialSections(
-      payload,
-    ),
-    "",
     "엔진이 확정한 최종 결론",
     payload.finalDecision,
+    "",
+    applicationSection,
+    "",
+    ...(
+      insufficientEvidenceApplicationSection.length
+      > 0
+        ? [
+            insufficientEvidenceApplicationSection,
+            "",
+          ]
+        : []
+    ),
+    ...buildExplanationMaterialSections(
+      payload,
+      answerMode,
+    ),
+    "",
+    ...buildGroundingUserSections(
+      groundingContext,
+      answerMode,
+    ),
     "",
     [
       "근거 구체성 상한선",
@@ -893,7 +1665,10 @@ ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
     "",
     "작성 전 최종 확인",
     "- 질문 유형의 중심에 맞게 답했는가?",
-    "- 질문에 나온 구체적인 대상과 행동을 사용했는가?",
+    ...modeSpecificFinalChecks,
+    ...evidenceSelectionFinalChecks,
+    ...insufficientEvidenceFinalChecks,
+    "- 확인 원자료 전체를 답변의 시작점으로 사용하지 않았는가?",
     "- 다른 사람이나 다른 질문에도 그대로 붙일 수 있는 상투적인 문장을 제거했는가?",
     "- 영문 내부 코드와 마크다운 기호를 제거했는가?",
     "- 엔진이 확정한 판단을 뒤집거나 약화하지 않았는가?",
@@ -904,6 +1679,7 @@ ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
     "- 제공 자료에 없는 조건을 확인해야 한다, 계산해야 한다, 주의해야 한다 형태로 추가하지 않았는가?",
     "- 연결어, 존칭, 자연스러운 문장 변환 외에 새로운 판단 사실이나 명사를 추가하지 않았는가?",
     "- 근거 대응 여부가 불분명한 문장은 쓰지 않고 생략했는가?",
+    ...partnershipFinalChecks,
     ...buildTopicSafetyUserChecks(
       payload.topic,
     ),

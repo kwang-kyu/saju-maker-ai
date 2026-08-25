@@ -11,7 +11,7 @@
   } from "../readers/humanLifeContextReader.js";
 
   import {
-    runConsulting,
+    runConsultingTurn,
   } from "./consultingRunner.js";
 
   import {
@@ -49,7 +49,13 @@
       questionRealityEvidenceIsDelivered:
         boolean;
 
-      readerEvidenceIsDelivered:
+      groundingFactsAreDelivered:
+        boolean;
+
+      fullReaderDumpIsNotDelivered:
+        boolean;
+
+      selectedPayloadEvidenceIsDelivered:
         boolean;
 
       decisionVerdictIsDelivered:
@@ -181,8 +187,16 @@
           ),
       });
 
-    const canonicalPrompt =
-      runConsulting({
+    const canonicalTurn =
+      runConsultingTurn({
+        sajuFacts:
+          pipeline
+            .sajuFactsPipeline,
+
+        readerEvidence:
+          pipeline
+            .evidenceBundle,
+
         humanContext:
           pipeline.humanContext,
 
@@ -191,6 +205,10 @@
         question:
           sourceRequest.question,
       });
+
+    const canonicalPrompt =
+      canonicalTurn
+        .prompt;
 
     const canonicalRequest =
       buildConsultingOpenAIRequest(
@@ -237,7 +255,7 @@
       questionMeaningIsDelivered:
         request.userPrompt
           .includes(
-            "자금이나 자산을 투입할 것인가",
+            "자금이나 자산을 투자할 것인가",
           ),
 
       questionRealityEvidenceIsDelivered:
@@ -250,30 +268,106 @@
             "질문에서 확인된 표현: 대출",
           ),
 
-      readerEvidenceIsDelivered:
+      groundingFactsAreDelivered:
         request.userPrompt
           .includes(
-            "안정형",
+            JSON.stringify(
+              canonicalTurn
+                .groundingContext,
+              null,
+              2,
+            ),
           )
-        && request.userPrompt
-          .includes(
-            "독립형",
-          )
-        && request.userPrompt
-          .includes(
-            "재물 보존력",
+        && canonicalTurn
+          .groundingContext
+          .sourceLocked
+        === true
+        && canonicalTurn
+          .groundingContext
+          .sajuFacts
+        === pipeline
+          .sajuFactsPipeline
+          .facts
+        && canonicalTurn
+          .groundingContext
+          .currentLuckPhase
+        === pipeline
+          .humanContext
+          .currentPhase
+        && canonicalTurn
+          .groundingContext
+          .currentLifeReality
+        === lifeContext,
+
+      fullReaderDumpIsNotDelivered:
+        [
+          "humanIdentity",
+          "readerEvidence",
+          "masterReaderInput",
+          "lifePhaseInput",
+          "lifeDriver",
+          "survivalStyle",
+          "repeatedPattern",
+          "capacity",
+          "money",
+          "career",
+          "relationship",
+          "health",
+          "blessing",
+          "destiny",
+        ].every(
+          (key) =>
+            !request
+              .userPrompt
+              .includes(
+                `"${key}"`,
+              ),
+        )
+        && !(
+          "humanIdentity"
+            in canonicalTurn
+              .groundingContext
+        )
+        && !(
+          "readerEvidence"
+            in canonicalTurn
+              .groundingContext
+        ),
+
+      selectedPayloadEvidenceIsDelivered:
+        canonicalTurn
+          .explanationPayload
+          .explanationOrder
+          .length
+        > 0
+        && canonicalTurn
+          .explanationPayload
+          .explanationOrder
+          .every(
+            (item) =>
+              request
+                .userPrompt
+                .includes(
+                  item.content,
+                ),
           ),
 
       decisionVerdictIsDelivered:
         request.userPrompt
           .includes(
-            "판단 결과:",
+            "확정된 판단",
           ),
 
       finalDecisionIsDeliveredOnce:
         countOccurrences(
           request.userPrompt,
-          "최종 판단",
+          "엔진이 확정한 최종 결론",
+        ) === 1
+        && countOccurrences(
+          request.userPrompt,
+          canonicalTurn
+            .explanationPayload
+            .finalDecision,
         ) === 1,
 
       systemPromptLocksEngineVerdict:
@@ -285,7 +379,7 @@
       systemPromptForbidsNewSajuJudgement:
         request.systemPrompt
           .includes(
-            "새로운 사주 판단을 만들지 않는다.",
+            "엔진에 없는 사주 판단이나 미래 예측을 새로 만들지 않는다.",
           ),
 
       apiRequestMatchesCanonicalPipeline:

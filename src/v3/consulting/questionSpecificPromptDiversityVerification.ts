@@ -188,19 +188,19 @@ import {
               .sajuFacts
             !== null,
 
-          groundingIncludesMasterReaderEvidence:
-            runResult
-              .groundingContext
-              .readerEvidence
-            !== null,
+          groundingOmitsReaderEvidence:
+            !(
+              "readerEvidence"
+                in runResult
+                  .groundingContext
+            ),
 
-          groundingUsesCalculatedHumanIdentity:
-            runResult
-              .groundingContext
-              .humanIdentity
-            === humanDestinyPipeline
-              .humanContext
-              .identity,
+          groundingOmitsHumanIdentity:
+            !(
+              "humanIdentity"
+                in runResult
+                  .groundingContext
+            ),
 
           groundingUsesCurrentLuckPhase:
             runResult
@@ -226,6 +226,45 @@ import {
                 2,
               ),
             ),
+
+          promptExcludesFullReaderJson:
+            [
+              "humanIdentity",
+              "readerEvidence",
+              "masterReaderInput",
+              "lifePhaseInput",
+              "lifeDriver",
+              "survivalStyle",
+              "repeatedPattern",
+              "capacity",
+              "money",
+              "career",
+              "relationship",
+              "health",
+              "blessing",
+              "destiny",
+            ].every(
+              (key) =>
+                !prompt.includes(
+                  `"${key}"`,
+                ),
+            ),
+
+          payloadSelectedEvidenceIsDelivered:
+            runResult
+              .explanationPayload
+              .explanationOrder
+              .length
+            > 0
+            && runResult
+              .explanationPayload
+              .explanationOrder
+              .every(
+                (item) =>
+                  prompt.includes(
+                    item.content,
+                  ),
+              ),
             originalQuestionPreservedByReader:
               runResult
                 .questionReaderResult
@@ -330,6 +369,10 @@ import {
             runResult
               .groundingContext,
 
+            explanationPayload:
+              runResult
+                .explanationPayload,
+
             checks,
 
             passed:
@@ -361,28 +404,15 @@ import {
         ).size
         === 1,
 
-      allCasesUseSameReaderEvidence:
-        new Set(
-          caseResults.map(
-            (result) =>
-              JSON.stringify(
-                result
-                  .groundingContext
-                  .readerEvidence,
-              ),
-          ),
-        ).size
-        === 1,
-
-      allCasesUseSameHumanIdentity:
+      allCasesUseSameLuckPhase:
         caseResults.every(
           (result) =>
             result
               .groundingContext
-              .humanIdentity
+              .currentLuckPhase
             === humanDestinyPipeline
               .humanContext
-              .identity,
+              .currentPhase,
         ),
 
       allCasesUseSameLifeReality:
@@ -394,8 +424,57 @@ import {
             === initialExecution
               .lifeContext,
         ),
+
+      noCaseIncludesFullReaderJson:
+        caseResults.every(
+          (result) =>
+            result.checks
+              .promptExcludesFullReaderJson
+            === true
+            && result.checks
+              .groundingOmitsReaderEvidence
+            === true
+            && result.checks
+              .groundingOmitsHumanIdentity
+            === true,
+        ),
+
+      allCasesKeepSelectedPayloadEvidence:
+        caseResults.every(
+          (result) =>
+            result.checks
+              .payloadSelectedEvidenceIsDelivered
+            === true,
+        ),
+
+      payloadEvidenceStaysQuestionSpecific:
+        new Set(
+          caseResults.map(
+            (result) =>
+              JSON.stringify(
+                result
+                  .explanationPayload
+                  .explanationOrder,
+              ),
+          ),
+        ).size
+        === QUESTION_SPECIFIC_PROMPT_CASES
+          .length,
       allQuestionsProduceDifferentPrompts:
         new Set(
+          prompts,
+        ).size
+        === QUESTION_SPECIFIC_PROMPT_CASES
+          .length,
+
+      groundingDoesNotBlockQuestionSpecificAnswers:
+        caseResults.every(
+          (result) =>
+            result.checks
+              .promptIncludesQuestionSpecificPhrases
+            === true,
+        )
+        && new Set(
           prompts,
         ).size
         === QUESTION_SPECIFIC_PROMPT_CASES
@@ -444,6 +523,9 @@ import {
 
                 groundingContext:
                   _groundingContext,
+
+                explanationPayload:
+                  _explanationPayload,
 
                 ...result
               }) =>

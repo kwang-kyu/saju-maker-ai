@@ -242,6 +242,7 @@ export function runConsultingTurn(
     buildConsultingPrompt(
       explanationPayload,
       groundingContext,
+      questionContext,
     );
 
   return {

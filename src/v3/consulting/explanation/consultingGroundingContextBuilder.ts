@@ -38,12 +38,6 @@ export type ConsultingGroundingContext = {
   counterpartSource:
     ConsultingGroundingCounterpartSource | null;
 
-  readerEvidence:
-    ConsultingInput["readerEvidence"] | null;
-
-  humanIdentity:
-    ConsultingInput["humanContext"]["identity"];
-
   currentLuckPhase:
     ConsultingInput["humanContext"]["currentPhase"];
 
@@ -84,16 +78,26 @@ function buildCounterpartSource(
 }
 
 /**
- * 질문에 답할 때 사용할 개인별 사주 근거를 구성한다.
+ * 질문에 답할 때 사용할 사람 단위 최소 사실 확인 자료를 구성한다.
  *
  * 특정 질문이나 키워드별 문장을 만들지 않는다.
- * 이미 계산된 원국·대운·세운, Master Reader 결과,
- * 현재 운의 국면과 현실 정보만 전달한다.
+ * 이미 계산된 최소 원국 사실, 현재 대운·세운 국면,
+ * 현실 정보, 상대의 확인된 source만 전달한다.
+ *
+ * humanIdentity.profile / explanation / humanSummary와
+ * readerEvidence.masterReaderInput / lifePhaseInput은
+ * Grounding에 넣지 않는다.
+ * 전 영역 Master Reader 설명은 DecisionResult → Explanation
+ * → Payload 경로의 선택된 근거로만 전달한다.
  *
  * 상대방 출생정보는 확인된 source와 precision만 전달한다.
  * dateOnly 계산의 내부 기준시각 영향을 받은 calculated 결과,
  * ganZhi, dayMaster, 오행 분포는 Grounding Context에 넣지 않는다.
  * 계산된 궁합 정보는 DecisionEvidence → Explanation → Prompt 경로로만 전달한다.
+ *
+ * Grounding은 판단을 만들지 않는다.
+ * verdict, finalDecision, conditions, risks, direction,
+ * QuestionContext, explanationFocus, explanationOrder를 넣지 않는다.
  *
  * GPT는 이 자료를 질문에 맞게 해석할 수 있지만
  * 계산 결과나 Reader 사실을 변경하거나 새로 만들 수 없다.
@@ -133,14 +137,6 @@ export function buildConsultingGroundingContext(
             input.counterpartSaju,
           )
         : null,
-
-    readerEvidence:
-      input.readerEvidence
-      ?? null,
-
-    humanIdentity:
-      input.humanContext
-        .identity,
 
     currentLuckPhase:
       input.humanContext

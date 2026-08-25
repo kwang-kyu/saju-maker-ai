@@ -1,4 +1,4 @@
-import {
+﻿import {
   buildDecisionEngineRegressionInput,
 } from "../decision/regression/decisionEngineRegressionFixture.js";
 
@@ -37,8 +37,14 @@ import {
 
 import {
   buildConsultingPrompt,
+  resolveConsultingAnswerMode,
+  type ConsultingAnswerMode,
   type ConsultingPrompt,
 } from "./consultingPromptBuilder.js";
+
+import {
+  buildConsultingGroundingContext,
+} from "./consultingGroundingContextBuilder.js";
 
 import {
   verifyRoleRecommendationExplanation,
@@ -62,6 +68,353 @@ const BUSINESS_START_PROMPT_MARKERS = [
   "사업을 시작하는 것이 맞는지 중심으로 답한다",
   "현재 시점, 성공 조건, 사업 위험, 실행 방향을 필요한 만큼 설명한다",
 ] as const;
+
+const DIRECT_ANSWER_PRIORITY_MARKERS = [
+  "직답 우선 원칙",
+  "사용자가 묻는 행동과 판단 대상을 먼저 파악한다",
+  "엔진 verdict와 최종 결론의 의미를 그 대상에 적용해서 설명한다",
+  "질문에 대한 판단을 제시하지 않은 채",
+  "사주 성향이나 인생 일반론부터 길게 설명하지 않는다",
+  "evidence는 직답을 뒷받침하는 데 사용한다",
+  "조건과 위험은 판단에 실제로 필요한 경우에만 사용한다",
+  "질문과 직접 관련 없는 Reader 설명은 생략한다",
+  "엔진 판단을 새로 만들거나 뒤집지 않는다",
+  "최종 결론 원문을 기계적으로 반복하지 않는다",
+] as const;
+
+const REPORT_ANSWER_PRIORITY_MARKERS = [
+  "영역·기간 흐름 해석 원칙",
+  "질문한 영역과 기간의 전체 흐름을 우선 설명한다",
+  "해당 영역의 관련 evidence를 활용한다",
+  "강점, 가능성, 주의점, 변화 흐름을 설명한다",
+  "특정 행동 판단을 억지로 만들지 않는다",
+  "\"정보가 부족하다\"를 기본 시작 문장으로 사용하지 않는다",
+  "현재 자료로 설명 가능한 범위는 충분히 설명한다",
+  "전문적인 절기·대운 기준은 사용자가 이해할 수 있는 방식으로 설명한다",
+  "한 해의 운이 달력 1월 1일이 아니라 입춘을 기준으로 바뀐다는 의미를 먼저 설명하고",
+] as const;
+
+const PARTNERSHIP_QUESTION_MARKERS = [
+  "동업 질문 답변 원칙",
+  "사업·동업 판단을 중심으로 답한다",
+  "상대 궁합은 동업 판단의 보조 근거로만 사용한다",
+  "궁합 설명이 답변 전체를 지배하지 않게 한다",
+] as const;
+
+const EVIDENCE_SELECTION_MARKERS = [
+  "근거 선택 원칙",
+  "자료가 있다는 이유만으로 설명하지 않는다. 질문에 필요하므로 설명한다.",
+  "핵심 근거",
+  "보조 근거",
+  "비관련 근거",
+  "근거의 강도만 보고 선택하지 않는다. 질문과의 관련성을 먼저 본다.",
+  "강한 근거라도 질문과 관계없으면 사용하지 않는다.",
+  "약한 근거라도 질문의 핵심 판단과 직접 연결된다면 필요한 만큼 사용할 수 있다.",
+] as const;
+
+const QUESTION_EVIDENCE_PRIORITY_MARKERS = [
+  "질문형 근거 사용 원칙",
+  "질문형에서는 근거를 최대한 선택적으로 사용한다.",
+  "evidence, conditions, risks, recommendedDirection, prohibitedDirection은 질문과 관련 있을 때 우선 사용한다.",
+  "관련 없는 근거는 사용하지 않는다.",
+  "질문과 직접 관계없는 건강, 직업, 인생 Reader 설명을 자동으로 모두 사용하지 않는다.",
+  "근거가 많다는 이유로 모든 근거를 설명하지 않는다.",
+  "같은 사람의 삶의 동력을 매번 처음부터 설명하지 않는다.",
+  "재물 질문이 아닌데 재물 흐름을 장황하게 설명하지 않는다.",
+  "관계 질문이 아닌데 관계 특성을 장황하게 설명하지 않는다.",
+] as const;
+
+const REPORT_EVIDENCE_PRIORITY_MARKERS = [
+  "리포트형 근거 사용 원칙",
+  "리포트형은 질문형보다 더 많은 근거를 사용할 수 있다.",
+  "그러나 모든 Reader를 설명한다는 뜻이 아니다.",
+  "질문한 영역에 해당하는 자료를 중심으로 선택한다.",
+  "질문 영역과 관계없는 Reader 설명을 과도하게 사용하지 않는다.",
+  "모든 Reader를 같은 비중으로 나열하지 않는다.",
+  "필요한 근거가 많으면 충분히 설명한다. 억지로 짧게 만들지 않는다.",
+] as const;
+
+const EVIDENCE_COMPRESSION_MARKERS = [
+  "반복 근거 압축 원칙",
+  "답변을 기계적으로 몇 자 이하로 제한하지 않는다.",
+  "문단 수를 고정하지 않는다.",
+  "핵심은 길이가 아니라 정보 밀도다.",
+  "질문과 관계없는 설명이 없는 답변이 목표다.",
+  "같은 순서와 같은 분량으로 반복하지 않는다.",
+  "질문에 필요한 의미만 사용한다.",
+] as const;
+
+const QUESTION_SPECIFIC_EVIDENCE_PRIORITY_MARKERS = [
+  "질문형의 설명 순서는 질문, 직답, 핵심 근거, 필요한 조건과 위험, 방향이다",
+  "삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운, 무관한 Reader는 질문에 실제 기여할 때만 사용한다",
+  "질문마다 자동 반복하지 않는다",
+] as const;
+
+const REPORT_SPECIFIC_EVIDENCE_PRIORITY_MARKERS = [
+  "리포트형의 설명 순서는 질문 영역의 전체 흐름, 핵심 근거, 변화와 강점과 주의, 활용 방향이다",
+  "연애운, 재물운, 사업운, 총운의 기존 충분한 설명력을 유지한다",
+  "과도하게 압축하지 않는다",
+] as const;
+
+const MONEY_RECOVERY_EVIDENCE_PRIORITY_MARKERS = [
+  "돈 회수 질문이라면 회수 가능성에 대한 엔진 판단, 회수 조건, 제한 요소, 위험, 실행 조건을 우선한다",
+  "일반 재물운, 전체 사업운, 전체 직업운, 인생운",
+  "자동으로 길게 쓰지 않는다",
+] as const;
+
+const PARTNERSHIP_EVIDENCE_PRIORITY_MARKERS = [
+  "역할, 책임, 권한, 금전, 갈등 조정을 우선한다",
+  "궁합은 동업 판단의 보조 근거이며 답변의 중심이 아니다",
+] as const;
+
+const CONTINUATION_EVIDENCE_PRIORITY_MARKERS = [
+  "갈등, 신뢰, 대기 중 확인사항",
+  "기다리며 지켜보라는 판단을 정보가 부족하다로 바꾸지 않는다",
+] as const;
+
+const BUSINESS_START_EVIDENCE_PRIORITY_MARKERS = [
+  "시작 가능 여부를 중심으로 한다",
+  "자금, 책임, 실행 조건과 위험을 사용한다",
+  "현재 확장 흐름은 필요할 때만 보조한다",
+] as const;
+
+const INSUFFICIENT_EVIDENCE_RANGE_MARKERS = [
+  "질문 자체에 대한 현재 판단 가능한 범위를 먼저 설명한다",
+  "공통 정보 부족 문장으로 길게 끝내지 않는다.",
+  "지금 질문에 대해 무엇을 말할 수 있는지를 먼저 설명한다.",
+  "현재 evidence가 어떤 방향을 보여주는지를 설명한다.",
+] as const;
+
+const FORBIDDEN_MECHANICAL_TEMPLATE_MARKERS = [
+  "첫 문단에는 반드시 결론을 작성한다",
+  "마지막 문단에는 finalDecision을 그대로 복사한다",
+  "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다",
+  "결론 → 이유 → 실행전략 → 주의 → 오늘의 과제",
+  "번호가 매겨진 explanationOrder를 그대로 나열",
+  "먼저 이 사람에게서 현재 질문과 관련된 강점과 취약점",
+  "먼저 강점과 취약점",
+] as const;
+
+const INSUFFICIENT_EVIDENCE_AVOIDANCE_FORBIDDEN_MARKERS = [
+  "정보 부족이면 판단하지 않는다",
+  "정보가 부족하면 답하지 않는다",
+  "정보 부족이면 판단하지 말",
+] as const;
+
+const FOUR_QUESTION_FIXTURES = [
+  {
+    id:
+      "compatibility",
+
+    question:
+      "우리 둘의 궁합은 어떤가요?",
+
+    expectedFocus:
+      "compatibility" as const,
+  },
+  {
+    id:
+      "partnership",
+
+    question:
+      "친구와 통닭집을 동업해도 될까요?",
+
+    expectedFocus:
+      null,
+  },
+  {
+    id:
+      "continuation",
+
+    question:
+      "남자친구와 계속 만나야 할까요?",
+
+    expectedFocus:
+      "continuation" as const,
+  },
+  {
+    id:
+      "moneyRecovery",
+
+    question:
+      "이번에 빌려준 돈을 받을 수 있을까요?",
+
+    expectedFocus:
+      "generalJudgement" as const,
+  },
+] as const;
+
+function hasDirectAnswerPriority(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return DIRECT_ANSWER_PRIORITY_MARKERS.every(
+    (marker) =>
+      prompt.systemPrompt.includes(
+        marker,
+      ),
+  );
+}
+
+function hasReportAnswerPriority(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return REPORT_ANSWER_PRIORITY_MARKERS.every(
+    (marker) =>
+      prompt.systemPrompt.includes(
+        marker,
+      ),
+  );
+}
+
+function isQuestionAnswerModePrompt(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    hasDirectAnswerPriority(
+      prompt,
+    )
+    && !prompt.systemPrompt.includes(
+      "영역·기간 흐름 해석 원칙",
+    )
+  );
+}
+
+function isReportAnswerModePrompt(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    hasReportAnswerPriority(
+      prompt,
+    )
+    && !prompt.systemPrompt.includes(
+      "직답 우선 원칙",
+    )
+    && !prompt.userPrompt.includes(
+      "질문에 대한 직답을 우선으로 작성하세요",
+    )
+  );
+}
+
+function hasPartnershipBusinessCenter(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return PARTNERSHIP_QUESTION_MARKERS.every(
+    (marker) =>
+      prompt.systemPrompt.includes(
+        marker,
+      ),
+  );
+}
+
+function hasEvidenceSelection(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return EVIDENCE_SELECTION_MARKERS.every(
+    (marker) =>
+      prompt.systemPrompt.includes(
+        marker,
+      ),
+  );
+}
+
+function hasQuestionEvidencePriority(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return QUESTION_EVIDENCE_PRIORITY_MARKERS.every(
+    (marker) =>
+      prompt.systemPrompt.includes(
+        marker,
+      ),
+  );
+}
+
+function hasReportEvidencePriority(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return REPORT_EVIDENCE_PRIORITY_MARKERS.every(
+    (marker) =>
+      prompt.systemPrompt.includes(
+        marker,
+      ),
+  );
+}
+
+function hasEvidenceCompression(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return EVIDENCE_COMPRESSION_MARKERS.every(
+    (marker) =>
+      prompt.systemPrompt.includes(
+        marker,
+      ),
+  );
+}
+
+function omitsMechanicalTemplates(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  const combined =
+    combinedPromptText(
+      prompt,
+    );
+
+  return FORBIDDEN_MECHANICAL_TEMPLATE_MARKERS.every(
+    (marker) =>
+      !combined.includes(
+        marker,
+      ),
+  );
+}
+
+function omitsInsufficientEvidenceAvoidanceRule(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  const combined =
+    combinedPromptText(
+      prompt,
+    );
+
+  return INSUFFICIENT_EVIDENCE_AVOIDANCE_FORBIDDEN_MARKERS.every(
+    (marker) =>
+      !combined.includes(
+        marker,
+      ),
+  );
+}
+
+function keepsQuestionContextRules(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.userPrompt.includes(
+      "알고 싶은 점:",
+    )
+    && prompt.userPrompt.includes(
+      "이유의 초점:",
+    )
+    && prompt.userPrompt.includes(
+      "결정할 질문:",
+    )
+    && prompt.userPrompt.includes(
+      "분석의 초점:",
+    )
+    && prompt.userPrompt.includes(
+      "대상:",
+    )
+  );
+}
 
 export type ConsultingPromptBuilderVerificationCase = {
   name:
@@ -133,6 +486,9 @@ function buildArtifacts(
 
   verdictLabelPresent:
     boolean;
+
+  verdict:
+    string;
 } {
   const input =
     buildDecisionEngineRegressionInput({
@@ -192,6 +548,9 @@ function buildArtifacts(
       prompt.userPrompt.includes(
         "확정된 판단",
       ),
+
+    verdict:
+      payload.verdict,
   };
 }
 
@@ -289,6 +648,11 @@ function verifyCompatibility():
           && !combined.includes(
             "먼저 강점과 취약점",
           ),
+
+        hasDirectAnswerPriority:
+          hasDirectAnswerPriority(
+            artifacts.prompt,
+          ),
       };
     },
   );
@@ -320,6 +684,16 @@ function verifyContinuation():
       explainsLeaveSignalsOnlyWhenPresent:
         artifacts.prompt.systemPrompt.includes(
           "변화 또는 이탈 신호가 있을 때만 설명한다",
+        ),
+
+      hasDirectAnswerPriority:
+        hasDirectAnswerPriority(
+          artifacts.prompt,
+        ),
+
+      doesNotConvertWaitToInsufficientEvidence:
+        artifacts.prompt.systemPrompt.includes(
+          "기다리며 지켜보라는 판단을 정보가 부족하다로 바꾸지 않는다",
         ),
     }),
   );
@@ -378,6 +752,16 @@ function verifyBusinessStart():
         artifacts.prompt.systemPrompt.includes(
           "일반적인 사주 성향 설명을 길게 반복하지 않는다",
         ),
+
+      hasDirectAnswerPriority:
+        hasDirectAnswerPriority(
+          artifacts.prompt,
+        ),
+
+      partnershipDoesNotDominateWithCompatibility:
+        artifacts.prompt.systemPrompt.includes(
+          "궁합 설명이 답변 전체를 지배하지 않게 한다",
+        ),
     }),
   );
 }
@@ -409,6 +793,11 @@ function verifyRealEstateBuy():
         artifacts.prompt.systemPrompt.includes(
           "일반적인 인생 설명을 반복하지 않는다",
         ),
+
+      hasDirectAnswerPriority:
+        hasDirectAnswerPriority(
+          artifacts.prompt,
+        ),
     }),
   );
 }
@@ -439,6 +828,16 @@ function verifyGeneralJudgement():
       doesNotForceUnrelatedReaderExplanation:
         artifacts.prompt.systemPrompt.includes(
           "질문과 관계없는 설명을 억지로 붙이지 않는다",
+        ),
+
+      hasDirectAnswerPriority:
+        hasDirectAnswerPriority(
+          artifacts.prompt,
+        ),
+
+      doesNotRewriteQuestionAsGenericWealth:
+        artifacts.prompt.systemPrompt.includes(
+          "질문 자체를 일반적인 재물운 설명으로 바꾸지 않는다",
         ),
     }),
   );
@@ -565,6 +964,11 @@ function verifyRoleRecommendationKept():
         && !artifacts.prompt.systemPrompt.includes(
           "두 사람의 궁합에 직접 답한다",
         ),
+
+      promptKeepsQuestionAnswerMode:
+        isQuestionAnswerModePrompt(
+          artifacts.prompt,
+        ),
     },
 
     passed:
@@ -582,6 +986,9 @@ function verifyRoleRecommendationKept():
       )
       && !artifacts.prompt.systemPrompt.includes(
         "두 사람의 궁합에 직접 답한다",
+      )
+      && isQuestionAnswerModePrompt(
+        artifacts.prompt,
       ),
   };
 }
@@ -732,6 +1139,16 @@ function verifyLifeFlowInterpretationKept():
       && !prompt.systemPrompt.includes(
         "질문 자체에 직접 답한다",
       ),
+
+    promptUsesReportFlowRules:
+      isReportAnswerModePrompt(
+        prompt,
+      ),
+
+    doesNotListAllReadersEqually:
+      prompt.systemPrompt.includes(
+        "모든 Reader를 같은 비중으로 나열하지 않는다.",
+      ),
   };
 
   return {
@@ -821,6 +1238,2246 @@ function verifyIntegrationFinalDecisionOnceIsResolved():
   };
 }
 
+function verifyPayloadAndGroundingKeepQuestionFocusRules():
+  ConsultingPromptBuilderVerificationCase {
+  const scenarios = [
+    {
+      question:
+        "지금 통닭집을 시작하면 성공할까요?",
+
+      expectedFocus:
+        "businessStart" as const,
+
+      requiredSystemMarkers: [
+        "사업을 시작하는 것이 맞는지 중심으로 답한다",
+        "현재 시점, 성공 조건, 사업 위험, 실행 방향을 필요한 만큼 설명한다",
+      ],
+
+      forbiddenSystemMarkers: [
+        "두 사람의 궁합에 직접 답한다",
+      ],
+    },
+    {
+      question:
+        "우리 둘의 궁합은 어떤가요?",
+
+      expectedFocus:
+        "compatibility" as const,
+
+      requiredSystemMarkers: [
+        "두 사람의 궁합에 직접 답한다",
+        "잘 맞는 부분과 충돌하는 부분을 필요한 근거와 함께 설명한다",
+      ],
+
+      forbiddenSystemMarkers: [
+        ...BUSINESS_START_PROMPT_MARKERS,
+      ],
+    },
+    {
+      question:
+        "여유자금으로 ETF에 투자해도 될까요?",
+
+      expectedFocus:
+        "generalJudgement" as const,
+
+      requiredSystemMarkers: [
+        "질문 자체에 직접 답한다",
+        "필요한 근거와 조건, 위험만 사용한다",
+        "질문과 관계없는 설명을 억지로 붙이지 않는다",
+      ],
+
+      forbiddenSystemMarkers: [
+        ...BUSINESS_START_PROMPT_MARKERS,
+      ],
+    },
+  ] as const;
+
+  const scenarioChecks =
+    scenarios.map(
+      (scenario) => {
+        const input =
+          buildDecisionEngineRegressionInput({
+            questionText:
+              scenario.question,
+          });
+
+        const question =
+          readQuestion(
+            input.humanContext,
+            scenario.question,
+          );
+
+        const questionContext =
+          buildQuestionContext(
+            question,
+          );
+
+        const plan =
+          buildDecisionExplanationPlan(
+            readDecisionResult(
+              runDecisionEngine({
+                ...input,
+                question,
+                questionContext,
+              }),
+            ),
+            question.originalQuestion,
+            questionContext,
+          );
+
+        const payload =
+          buildDecisionExplanationPayload(
+            plan,
+          );
+
+        const groundingContext =
+          buildConsultingGroundingContext({
+            humanContext:
+              input.humanContext,
+
+            lifeContext:
+              input.lifeContext,
+
+            question:
+              scenario.question,
+          });
+
+        const prompt =
+          buildConsultingPrompt(
+            payload,
+            groundingContext,
+            questionContext,
+          );
+
+        const serializedGrounding =
+          JSON.stringify(
+            groundingContext,
+            null,
+            2,
+          );
+
+        const actualFocus =
+          plan.explanationFocus
+          ?? null;
+
+        return {
+          keepsExpectedFocus:
+            actualFocus
+            === scenario.expectedFocus,
+
+          keepsQuestionFocusRules:
+            scenario
+              .requiredSystemMarkers
+              .every(
+                (marker) =>
+                  prompt.systemPrompt.includes(
+                    marker,
+                  ),
+              ),
+
+          doesNotApplyOtherFocusRules:
+            scenario
+              .forbiddenSystemMarkers
+              .every(
+                (marker) =>
+                  !prompt.systemPrompt.includes(
+                    marker,
+                  ),
+              ),
+
+          includesGroundingJson:
+            prompt.userPrompt.includes(
+              serializedGrounding,
+            ),
+
+          includesPayloadEvidence:
+            payload
+              .explanationOrder
+              .length
+            > 0
+            && payload
+              .explanationOrder
+              .every(
+                (item) =>
+                  prompt.userPrompt.includes(
+                    item.content,
+                  ),
+              ),
+
+          groundingOmitsReaderDump:
+            [
+              "humanIdentity",
+              "readerEvidence",
+              "masterReaderInput",
+              "lifePhaseInput",
+              "lifeDriver",
+              "survivalStyle",
+              "repeatedPattern",
+            ].every(
+              (key) =>
+                !serializedGrounding.includes(
+                  `"${key}"`,
+                ),
+            ),
+
+          usesConfirmationSourceTitle:
+            prompt.userPrompt.includes(
+              "확인 원자료 — 원국·현재 운 국면·현실 정보",
+            )
+            && !prompt.userPrompt.includes(
+              "개인별 사주 근거",
+            ),
+
+          groundingComesAfterMaterials:
+            prompt.userPrompt.indexOf(
+              "답변에 필요한 판단 근거와 설명 요소",
+            )
+            >= 0
+            && prompt.userPrompt.indexOf(
+              "확인 원자료 — 원국·현재 운 국면·현실 정보",
+            )
+            > prompt.userPrompt.indexOf(
+              "답변에 필요한 판단 근거와 설명 요소",
+            ),
+
+          groundingIsNotForcedFirst:
+            prompt.systemPrompt.includes(
+              "확인 원자료 전체를 답변의 시작점이나 공통 설명의 근거로 사용하지 않는다.",
+            )
+            && prompt.systemPrompt.includes(
+              "확인 원자료는 질문의 직답을 설명하는 데 필요한 경우에만 사용한다.",
+            )
+            && prompt.systemPrompt.includes(
+              "원국 사실은 직답의 판단 근거와 직접 연결될 때 우선 사용한다.",
+            ),
+        };
+      },
+    );
+
+  const checks = {
+    businessStartKeepsFocusRules:
+      scenarioChecks[0]?.keepsExpectedFocus
+      === true
+      && scenarioChecks[0]?.keepsQuestionFocusRules
+      === true
+      && scenarioChecks[0]?.doesNotApplyOtherFocusRules
+      === true,
+
+    compatibilityKeepsFocusRules:
+      scenarioChecks[1]?.keepsExpectedFocus
+      === true
+      && scenarioChecks[1]?.keepsQuestionFocusRules
+      === true
+      && scenarioChecks[1]?.doesNotApplyOtherFocusRules
+      === true,
+
+    generalJudgementKeepsFocusRules:
+      scenarioChecks[2]?.keepsExpectedFocus
+      === true
+      && scenarioChecks[2]?.keepsQuestionFocusRules
+      === true
+      && scenarioChecks[2]?.doesNotApplyOtherFocusRules
+      === true,
+
+    groundingIsIncludedWithPayload:
+      scenarioChecks.every(
+        (result) =>
+          result.includesGroundingJson
+          && result.includesPayloadEvidence,
+      ),
+
+    groundingDoesNotRestoreReaderDump:
+      scenarioChecks.every(
+        (result) =>
+          result.groundingOmitsReaderDump,
+      ),
+
+    groundingIsConfirmationSourceNotAnswerStart:
+      scenarioChecks.every(
+        (result) =>
+          result.usesConfirmationSourceTitle
+          && result.groundingComesAfterMaterials
+          && result.groundingIsNotForcedFirst,
+      ),
+  };
+
+  return {
+    name:
+      "M-payload-and-grounding-keep-question-focus-rules",
+
+    question:
+      scenarios[0].question,
+
+    focus:
+      scenarios[0].expectedFocus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function buildFullArtifacts(
+  questionText:
+    string,
+): ReturnType<
+  typeof buildArtifacts
+> & {
+  originalQuestion:
+    string;
+
+  answerMode:
+    ConsultingAnswerMode;
+} {
+  const input =
+    buildDecisionEngineRegressionInput({
+      questionText,
+    });
+
+  const question =
+    readQuestion(
+      input.humanContext,
+      questionText,
+    );
+
+  const questionContext =
+    buildQuestionContext(
+      question,
+    );
+
+  const decisionResult =
+    runDecisionEngine({
+      ...input,
+      question,
+      questionContext,
+    });
+
+  const plan =
+    buildDecisionExplanationPlan(
+      readDecisionResult(
+        decisionResult,
+      ),
+      question.originalQuestion,
+      questionContext,
+    );
+
+  const payload =
+    buildDecisionExplanationPayload(
+      plan,
+    );
+
+  const groundingContext =
+    buildConsultingGroundingContext({
+      humanContext:
+        input.humanContext,
+
+      lifeContext:
+        input.lifeContext,
+
+      question:
+        questionText,
+    });
+
+  const prompt =
+    buildConsultingPrompt(
+      payload,
+      groundingContext,
+      questionContext,
+    );
+
+  return {
+    focus:
+      plan.explanationFocus
+      ?? null,
+
+    prompt,
+
+    finalDecision:
+      payload.finalDecision,
+
+    verdictLabelPresent:
+      prompt.userPrompt.includes(
+        "확정된 판단",
+      ),
+
+    verdict:
+      payload.verdict,
+
+    originalQuestion:
+      question.originalQuestion,
+
+    answerMode:
+      resolveConsultingAnswerMode(
+        payload,
+      ),
+  };
+}
+
+function verifyWaitIsNotInsufficientEvidenceAvoidance():
+  ConsultingPromptBuilderVerificationCase {
+  const artifacts =
+    buildArtifacts(
+      "오래된 친구와 관계를 계속 이어가야 할까요?",
+    );
+
+  const checks = {
+    hasDirectAnswerPriority:
+      hasDirectAnswerPriority(
+        artifacts.prompt,
+      ),
+
+    omitsInsufficientEvidenceAvoidanceRule:
+      omitsInsufficientEvidenceAvoidanceRule(
+        artifacts.prompt,
+      ),
+
+    waitIsNotRewrittenAsCannotJudge:
+      artifacts.prompt.systemPrompt.includes(
+        "기다리며 지켜보라는 판단을 판단할 수 없다 또는 정보가 부족하다로 바꾸지 않는다",
+      ),
+
+    waitMeaningIsAppliedToQuestion:
+      artifacts.prompt.systemPrompt.includes(
+        "엔진이 기다리며 지켜보라고 판단했다면 그 의미를 질문 대상에 적용해서 설명한다",
+      ),
+
+    waitAndOtherVerdictsDoNotUseInsufficientEvidenceAvoidance:
+      artifacts.prompt.systemPrompt.includes(
+        "기다리며 지켜보라는 판단, 진행 권고, 조건부 진행, 진행하지 않음, 해석 판단에서는 정보 부족을 이유로 답변을 회피하지 않는다",
+      ),
+
+    waitVerdictDoesNotAllowInsufficientEvidenceLanguage:
+      artifacts.verdict
+      !== "wait"
+      || artifacts.prompt.systemPrompt.includes(
+        "현재 엔진 판단은 정보 부족이 아니므로 정보 부족을 이유로 답변을 회피하지 않는다",
+      ),
+  };
+
+  return {
+    name:
+      "N-wait-is-not-treated-as-insufficient-evidence-avoidance",
+
+    question:
+      "오래된 친구와 관계를 계속 이어가야 할까요?",
+
+    focus:
+      artifacts.focus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function verifyInsufficientEvidenceLanguageIsRestricted():
+  ConsultingPromptBuilderVerificationCase {
+  const compatibility =
+    buildFullArtifacts(
+      "우리 둘의 궁합은 어떤가요?",
+    );
+
+  const businessStart =
+    buildArtifacts(
+      "지금 통닭집을 시작하면 성공할까요?",
+    );
+
+  const insufficientEvidencePrompt =
+    compatibility.verdict
+    === "insufficientEvidence"
+      ? compatibility.prompt
+      : businessStart.verdict
+        === "insufficientEvidence"
+        ? businessStart.prompt
+        : compatibility.prompt;
+
+  const nonInsufficientPrompt =
+    businessStart.verdict
+    !== "insufficientEvidence"
+      ? businessStart.prompt
+      : compatibility.verdict
+        !== "insufficientEvidence"
+        ? compatibility.prompt
+        : businessStart.prompt;
+
+  const checks = {
+    insufficientEvidenceLanguageAllowedOnlyThen:
+      insufficientEvidencePrompt.systemPrompt.includes(
+        "정보 부족 표현은 엔진 판단이 현재 정보만으로는 결론을 확정하기 어려운 경우에만 사용할 수 있다",
+      )
+      && nonInsufficientPrompt.systemPrompt.includes(
+        "정보 부족 표현은 엔진 판단이 현재 정보만으로는 결론을 확정하기 어려운 경우에만 사용할 수 있다",
+      ),
+
+    insufficientEvidenceExplainsCurrentRangeWhenPresent:
+      compatibility.verdict
+      !== "insufficientEvidence"
+      && businessStart.verdict
+      !== "insufficientEvidence"
+      || insufficientEvidencePrompt.systemPrompt.includes(
+        "질문 자체에 대한 현재 판단 가능한 범위를 먼저 설명한다",
+      ),
+
+    nonInsufficientDoesNotGetInsufficientExplanationBlock:
+      (
+        businessStart.verdict
+        === "insufficientEvidence"
+      )
+      || (
+        businessStart.prompt.systemPrompt.includes(
+          "현재 엔진 판단은 정보 부족이 아니므로 정보 부족을 이유로 답변을 회피하지 않는다",
+        )
+        && !businessStart.prompt.systemPrompt.includes(
+          "공통 회피 문장만 반복하지 않는다",
+        )
+      )
+      || compatibility.verdict
+      === "insufficientEvidence"
+      && compatibility.prompt.systemPrompt.includes(
+        "질문 자체에 대한 현재 판단 가능한 범위를 먼저 설명한다",
+      ),
+
+    omitsInsufficientEvidenceAvoidanceRule:
+      omitsInsufficientEvidenceAvoidanceRule(
+        compatibility.prompt,
+      )
+      && omitsInsufficientEvidenceAvoidanceRule(
+        businessStart.prompt,
+      ),
+  };
+
+  return {
+    name:
+      "O-insufficient-evidence-language-is-allowed-only-then",
+
+    question:
+      compatibility.originalQuestion,
+
+    focus:
+      compatibility.focus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function verifyMechanicalTemplatesStayRemoved():
+  ConsultingPromptBuilderVerificationCase {
+  const artifacts =
+    buildArtifacts(
+      "새로운 사업을 지금 시작해도 될까요?",
+    );
+
+  const checks = {
+    omitsFirstParagraphForcedConclusion:
+      !combinedPromptText(
+        artifacts.prompt,
+      ).includes(
+        "첫 문단에는 반드시 결론을 작성한다",
+      ),
+
+    omitsFinalDecisionCopyRule:
+      !artifacts.prompt.systemPrompt.includes(
+        "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다",
+      )
+      && !artifacts.prompt.userPrompt.includes(
+        "위 최종 결론을 답변의 마지막 단락에",
+      )
+      && artifacts.prompt.systemPrompt.includes(
+        "최종 결론 원문을 기계적으로 반복하지 않는다",
+      ),
+
+    omitsExplanationOrderOutlineRule:
+      artifacts.prompt.userPrompt.includes(
+        "그대로 번호 매겨 출력해야 하는 목차가 아닙니다",
+      )
+      && !artifacts.prompt.systemPrompt.includes(
+        "번호가 매겨진 explanationOrder를 그대로 나열",
+      ),
+
+    omitsStrengthThenWeaknessRule:
+      !combinedPromptText(
+        artifacts.prompt,
+      ).includes(
+        "먼저 강점과 취약점",
+      ),
+
+    omitsAllMechanicalTemplates:
+      omitsMechanicalTemplates(
+        artifacts.prompt,
+      ),
+  };
+
+  return {
+    name:
+      "P-mechanical-templates-stay-removed",
+
+    question:
+      "새로운 사업을 지금 시작해도 될까요?",
+
+    focus:
+      artifacts.focus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function verifyFourQuestionDirectAnswerPriority():
+  ConsultingPromptBuilderVerificationCase {
+  const results =
+    FOUR_QUESTION_FIXTURES.map(
+      (fixture) => {
+        const artifacts =
+          buildFullArtifacts(
+            fixture.question,
+          );
+
+        const groundingHeadingIndex =
+          artifacts.prompt.userPrompt.indexOf(
+            "확인 원자료 — 원국·현재 운 국면·현실 정보",
+          );
+
+        const materialsHeadingIndex =
+          artifacts.prompt.userPrompt.indexOf(
+            "답변에 필요한 판단 근거와 설명 요소",
+          );
+
+        const originalQuestionHeadingIndex =
+          artifacts.prompt.userPrompt.indexOf(
+            "사용자의 원래 질문",
+          );
+
+        const waitConverted =
+          artifacts.verdict
+          === "wait"
+          && (
+            artifacts.prompt.systemPrompt.includes(
+              "정보 부족이면 판단하지 않는다",
+            )
+            || !artifacts.prompt.systemPrompt.includes(
+              "기다리며 지켜보라는 판단을 판단할 수 없다 또는 정보가 부족하다로 바꾸지 않는다",
+            )
+          );
+
+        const insufficientEvidenceOk =
+          artifacts.verdict
+          !== "insufficientEvidence"
+          || (
+            artifacts.prompt.systemPrompt.includes(
+              "질문 자체에 대한 현재 판단 가능한 범위를 먼저 설명한다",
+            )
+            && artifacts.prompt.systemPrompt.includes(
+              "무엇이 부족한지 구체적으로 설명한다",
+            )
+          );
+
+        return {
+          id:
+            fixture.id,
+
+          questionReflected:
+            artifacts.prompt.userPrompt.includes(
+              fixture.question,
+            ),
+
+          hasDirectAnswerPriority:
+            hasDirectAnswerPriority(
+              artifacts.prompt,
+            ),
+
+          doesNotLeadWithPersonalityDump:
+            artifacts.prompt.systemPrompt.includes(
+              "질문에 대한 판단을 제시하지 않은 채",
+            )
+            && artifacts.prompt.systemPrompt.includes(
+              "사주 성향이나 인생 일반론부터 길게 설명하지 않는다",
+            )
+            && artifacts.prompt.userPrompt.includes(
+              "사주 성향이나 인생 일반론부터 길게 시작하지 마세요",
+            ),
+
+          waitNotConvertedToInsufficientEvidence:
+            !waitConverted,
+
+          insufficientEvidenceExplainsPossibleRange:
+            insufficientEvidenceOk,
+
+          groundingIsConfirmationSource:
+            groundingHeadingIndex
+            >= 0
+            && materialsHeadingIndex
+            >= 0
+            && originalQuestionHeadingIndex
+            >= 0
+            && originalQuestionHeadingIndex
+            < materialsHeadingIndex
+            && materialsHeadingIndex
+            < groundingHeadingIndex
+            && !artifacts.prompt.userPrompt.includes(
+              "개인별 사주 근거",
+            ),
+
+          keepsQuestionContextRules:
+            keepsQuestionContextRules(
+              artifacts.prompt,
+            ),
+
+          partnershipKeepsBusinessAction:
+            fixture.id
+            !== "partnership"
+            || artifacts.prompt.systemPrompt.includes(
+              "궁합 설명이 답변 전체를 지배하지 않게 한다",
+            ),
+
+          expectedFocusKeptWhenKnown:
+            fixture.expectedFocus
+            === null
+            || artifacts.focus
+            === fixture.expectedFocus,
+        };
+      },
+    );
+
+  const checks = {
+    compatibilityDirectAnswerPriority:
+      results[0]?.hasDirectAnswerPriority
+      === true
+      && results[0]?.questionReflected
+      === true
+      && results[0]?.expectedFocusKeptWhenKnown
+      === true,
+
+    partnershipDirectAnswerPriority:
+      results[1]?.hasDirectAnswerPriority
+      === true
+      && results[1]?.questionReflected
+      === true
+      && results[1]?.partnershipKeepsBusinessAction
+      === true,
+
+    continuationDirectAnswerPriority:
+      results[2]?.hasDirectAnswerPriority
+      === true
+      && results[2]?.questionReflected
+      === true
+      && results[2]?.expectedFocusKeptWhenKnown
+      === true,
+
+    moneyRecoveryDirectAnswerPriority:
+      results[3]?.hasDirectAnswerPriority
+      === true
+      && results[3]?.questionReflected
+      === true
+      && results[3]?.expectedFocusKeptWhenKnown
+      === true,
+
+    answersQuestionDirectlyWithoutPersonalityLead:
+      results.every(
+        (result) =>
+          result.doesNotLeadWithPersonalityDump,
+      ),
+
+    waitNotConvertedToInsufficientEvidence:
+      results.every(
+        (result) =>
+          result.waitNotConvertedToInsufficientEvidence,
+      ),
+
+    insufficientEvidenceExplainsPossibleRange:
+      results.every(
+        (result) =>
+          result.insufficientEvidenceExplainsPossibleRange,
+      ),
+
+    groundingIsConfirmationSourceNotStart:
+      results.every(
+        (result) =>
+          result.groundingIsConfirmationSource,
+      ),
+
+    questionContextRulesKept:
+      results.every(
+        (result) =>
+          result.keepsQuestionContextRules,
+      ),
+  };
+
+  return {
+    name:
+      "Q-four-questions-keep-direct-answer-priority",
+
+    question:
+      FOUR_QUESTION_FIXTURES[0].question,
+
+    focus:
+      "compatibility",
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function doesNotLeadWithPersonality(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "질문에 대한 판단을 제시하지 않은 채",
+    )
+    && prompt.systemPrompt.includes(
+      "사주 성향이나 인생 일반론부터 길게 설명하지 않는다",
+    )
+    && prompt.userPrompt.includes(
+      "사주 성향이나 인생 일반론부터 길게 시작하지 마세요",
+    )
+  );
+}
+
+function doesNotBlockReportWithInsufficientEvidence(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "\"정보가 부족하다\"를 기본 시작 문장으로 사용하지 않는다",
+    )
+    && prompt.systemPrompt.includes(
+      "현재 자료로 설명 가능한 범위는 충분히 설명한다",
+    )
+    && prompt.systemPrompt.includes(
+      "정보 부족을 이유로 흐름 설명을 중단하지 않는다",
+    )
+    && omitsInsufficientEvidenceAvoidanceRule(
+      prompt,
+    )
+    && !prompt.userPrompt.includes(
+      "질문에 대한 직답을 우선으로 작성하세요",
+    )
+  );
+}
+
+function verifyAnswerModeTenQuestions():
+  ConsultingPromptBuilderVerificationCase[] {
+  const fixtures = [
+    {
+      id:
+        "A-compatibility-question-mode",
+
+      question:
+        "우리 둘의 궁합은 어떤가요?",
+
+      expectedFocus:
+        "compatibility" as const,
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "B-partnership-question-mode",
+
+      question:
+        "이 여성과 동업해도 될까요?",
+
+      expectedFocus:
+        "compatibility" as const,
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "C-continuation-question-mode",
+
+      question:
+        "남자친구와 계속 만나야 할까요?",
+
+      expectedFocus:
+        "continuation" as const,
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "D-money-recovery-question-mode",
+
+      question:
+        "이번에 빌려준 돈을 받을 수 있을까요?",
+
+      expectedFocus:
+        "generalJudgement" as const,
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "E-role-recommendation-question-mode",
+
+      question:
+        "내 사주로 연극을 한다면 어떤 역할일까요?",
+
+      expectedFocus:
+        null,
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "F-daeun-timing-report-mode",
+
+      question:
+        "나는 언제쯤 대운이 들어올까요?",
+
+      expectedFocus:
+        "generalJudgement" as const,
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "G-overall-fortune-report-mode",
+
+      question:
+        "올해 총운을 봐주세요",
+
+      expectedFocus:
+        "generalJudgement" as const,
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "H-love-fortune-report-mode",
+
+      question:
+        "나의 연애운은 어떨까요?",
+
+      expectedFocus:
+        "generalJudgement" as const,
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "I-wealth-fortune-report-mode",
+
+      question:
+        "난 재물운이 있나요?",
+
+      expectedFocus:
+        "generalJudgement" as const,
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "J-year-fortune-report-mode",
+
+      question:
+        "2026년 운세 알려줘",
+
+      expectedFocus:
+        "generalJudgement" as const,
+
+      expectedMode:
+        "report" as const,
+    },
+  ] as const;
+
+  return fixtures.map(
+    (fixture) => {
+      const artifacts =
+        buildFullArtifacts(
+          fixture.question,
+        );
+
+      const prompt =
+        artifacts.prompt;
+
+      const isQuestion =
+        fixture.expectedMode
+        === "question";
+
+      const checks = {
+        usesExpectedAnswerMode:
+          artifacts.answerMode
+          === fixture.expectedMode
+          && (
+            isQuestion
+              ? isQuestionAnswerModePrompt(
+                  prompt,
+                )
+              : isReportAnswerModePrompt(
+                  prompt,
+                )
+          ),
+
+        keepsExplanationFocus:
+          artifacts.focus
+          === fixture.expectedFocus,
+
+        doesNotRewritePartnershipFocusToBusinessStart:
+          fixture.id
+          !== "B-partnership-question-mode"
+          || artifacts.focus
+          === "compatibility",
+
+        partnershipUsesBusinessCenter:
+          fixture.id
+          !== "B-partnership-question-mode"
+          || (
+            hasPartnershipBusinessCenter(
+              prompt,
+            )
+            && !prompt.systemPrompt.includes(
+              "두 사람의 궁합에 직접 답한다",
+            )
+          ),
+
+        compatibilityAnswersDirectly:
+          fixture.id
+          !== "A-compatibility-question-mode"
+          || prompt.systemPrompt.includes(
+            "두 사람의 궁합에 직접 답한다",
+          ),
+
+        continuationCentersKeep:
+          fixture.id
+          !== "C-continuation-question-mode"
+          || prompt.systemPrompt.includes(
+            "계속 유지하는 것이 맞는지 중심으로 답한다",
+          ),
+
+        moneyRecoveryAnswersQuestion:
+          fixture.id
+          !== "D-money-recovery-question-mode"
+          || prompt.systemPrompt.includes(
+            "질문 자체에 직접 답한다",
+          ),
+
+        roleKeepsDedicatedRules:
+          fixture.id
+          !== "E-role-recommendation-question-mode"
+          || (
+            prompt.systemPrompt.includes(
+              "세 가지 배역 후보",
+            )
+            && prompt.systemPrompt.includes(
+              "evidence에 없는 배역",
+            )
+          ),
+
+        daeunWhenUsesReportMode:
+          fixture.id
+          !== "F-daeun-timing-report-mode"
+          || (
+            artifacts.answerMode
+            === "report"
+            && isReportAnswerModePrompt(
+              prompt,
+            )
+            && !isQuestionAnswerModePrompt(
+              prompt,
+            )
+          ),
+
+        reportOmitsDirectAnswerLead:
+          isQuestion
+          || (
+            !prompt.systemPrompt.includes(
+              "직답 우선 원칙",
+            )
+            && !prompt.userPrompt.includes(
+              "질문에 대한 직답을 우선으로 작성하세요",
+            )
+          ),
+
+        reportOmitsForcedActionFocus:
+          isQuestion
+          || (
+            !prompt.systemPrompt.includes(
+              "사업을 시작하는 것이 맞는지 중심으로 답한다",
+            )
+            && !prompt.systemPrompt.includes(
+              "질문 자체에 직접 답한다",
+            )
+          ),
+
+        questionDoesNotLeadWithPersonality:
+          !isQuestion
+          || doesNotLeadWithPersonality(
+            prompt,
+          ),
+
+        reportDoesNotBlockWithInsufficientEvidence:
+          isQuestion
+          || doesNotBlockReportWithInsufficientEvidence(
+            prompt,
+          ),
+
+        keepsQuestionContext:
+          keepsQuestionContextRules(
+            prompt,
+          ),
+
+        engineDecisionLocked:
+          prompt.systemPrompt.includes(
+            "엔진의 verdict를 변경하지 않는다",
+          )
+          && prompt.systemPrompt.includes(
+            "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
+          )
+          && prompt.userPrompt.includes(
+            artifacts.finalDecision,
+          ),
+      };
+
+      return {
+        name:
+          fixture.id,
+
+        question:
+          fixture.question,
+
+        focus:
+          artifacts.focus,
+
+        checks,
+
+        passed:
+          Object.values(
+            checks,
+          ).every(
+            Boolean,
+          ),
+      };
+    },
+  );
+}
+
+function verifyAnswerModePriorityAndRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const mixedStart =
+    buildFullArtifacts(
+      "2026년에 사업 시작해도 될까요?",
+    );
+
+  const mixedFortune =
+    buildFullArtifacts(
+      "2026년 사업운은 어떨까요?",
+    );
+
+  const questionCases =
+    [
+      "우리 둘의 궁합은 어떤가요?",
+      "이 여성과 동업해도 될까요?",
+      "남자친구와 계속 만나야 할까요?",
+      "이번에 빌려준 돈을 받을 수 있을까요?",
+      "내 사주로 연극을 한다면 어떤 역할일까요?",
+      "사업을 언제 시작하면 좋을까요?",
+    ].map(
+      (question) =>
+        buildFullArtifacts(
+          question,
+        ),
+    );
+
+  const reportCases =
+    [
+      "올해 총운을 봐주세요",
+      "나의 연애운은 어떨까요?",
+      "난 재물운이 있나요?",
+      "2026년 운세 알려줘",
+      "나는 언제쯤 대운이 들어올까요?",
+    ].map(
+      (question) =>
+        buildFullArtifacts(
+          question,
+        ),
+    );
+
+  const checks = {
+    K_questionDoesNotLeadWithPersonality:
+      questionCases.every(
+        (artifacts) =>
+          doesNotLeadWithPersonality(
+            artifacts.prompt,
+          ),
+      ),
+
+    L_reportDoesNotBlockWithInsufficientEvidence:
+      reportCases.every(
+        (artifacts) =>
+          doesNotBlockReportWithInsufficientEvidence(
+            artifacts.prompt,
+          ),
+      ),
+
+    M_explanationFocusUnchanged:
+      questionCases[0]?.focus
+      === "compatibility"
+      && questionCases[1]?.focus
+      === "compatibility"
+      && mixedStart.focus
+      === "businessStart"
+      && mixedFortune.focus
+      === "businessStart"
+      && questionCases[2]?.focus
+      === "continuation"
+      && questionCases[3]?.focus
+      === "generalJudgement"
+      && questionCases[4]?.focus
+      === null
+      && questionCases[5]?.focus
+      === "businessStart",
+
+    N_payloadStillPresent:
+      mixedStart.prompt.userPrompt.includes(
+        "답변에 필요한 판단 근거와 설명 요소",
+      )
+      && mixedFortune.prompt.userPrompt.includes(
+        "답변에 필요한 판단 근거와 설명 요소",
+      ),
+
+    O_promptStructureKeepsMaterialsThenGrounding:
+      mixedStart.prompt.userPrompt.indexOf(
+        "답변에 필요한 판단 근거와 설명 요소",
+      )
+      < mixedStart.prompt.userPrompt.indexOf(
+        "확인 원자료 — 원국·현재 운 국면·현실 정보",
+      )
+      && mixedFortune.prompt.userPrompt.indexOf(
+        "답변에 필요한 판단 근거와 설명 요소",
+      )
+      < mixedFortune.prompt.userPrompt.indexOf(
+        "확인 원자료 — 원국·현재 운 국면·현실 정보",
+      ),
+
+    P_groundingIsConfirmationSource:
+      mixedStart.prompt.userPrompt.includes(
+        "확인 원자료 — 원국·현재 운 국면·현실 정보",
+      )
+      && !mixedStart.prompt.userPrompt.includes(
+        "개인별 사주 근거",
+      )
+      && mixedFortune.prompt.userPrompt.includes(
+        "확인 원자료 — 원국·현재 운 국면·현실 정보",
+      ),
+
+    Q_questionContextKept:
+      questionCases.every(
+        (artifacts) =>
+          keepsQuestionContextRules(
+            artifacts.prompt,
+          ),
+      )
+      && reportCases.every(
+        (artifacts) =>
+          keepsQuestionContextRules(
+            artifacts.prompt,
+          ),
+      ),
+
+    R_directAnswerPriorityKeptForQuestions:
+      questionCases.every(
+        (artifacts) =>
+          hasDirectAnswerPriority(
+            artifacts.prompt,
+          ),
+      ),
+
+    S_roleRecommendationKept:
+      questionCases[4]?.prompt.systemPrompt.includes(
+        "세 가지 배역 후보",
+      )
+      === true,
+
+    T_lifeFlowInterpretationKept:
+      reportCases[0]?.prompt.systemPrompt.includes(
+        "제공된 Evidence와 계산된 대운·세운·월운·일운 Fact만 설명한다",
+      )
+      === true
+      || isReportAnswerModePrompt(
+        reportCases[0]?.prompt
+        ?? mixedFortune.prompt,
+      ),
+
+    U_engineVerdictAndFinalDecisionUnchanged:
+      [...questionCases, ...reportCases, mixedStart, mixedFortune].every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "엔진의 verdict를 변경하지 않는다",
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
+          )
+          && artifacts.prompt.userPrompt.includes(
+            artifacts.finalDecision,
+          ),
+      ),
+
+    mixedStartStaysQuestion:
+      isQuestionAnswerModePrompt(
+        mixedStart.prompt,
+      )
+      && !isReportAnswerModePrompt(
+        mixedStart.prompt,
+      ),
+
+    mixedFortuneStaysReport:
+      isReportAnswerModePrompt(
+        mixedFortune.prompt,
+      )
+      && !mixedFortune.prompt.systemPrompt.includes(
+        "사업을 시작하는 것이 맞는지 중심으로 답한다",
+      ),
+
+    executionWhenStaysQuestion:
+      questionCases[5]?.answerMode
+      === "question"
+      && isQuestionAnswerModePrompt(
+        questionCases[5]?.prompt
+        ?? mixedStart.prompt,
+      ),
+
+    daeunWhenStaysReport:
+      reportCases[4]?.answerMode
+      === "report"
+      && isReportAnswerModePrompt(
+        reportCases[4]?.prompt
+        ?? mixedFortune.prompt,
+      ),
+  };
+
+  return {
+    name:
+      "K-U-answer-mode-priority-and-4-1-to-4-6-regression",
+
+    question:
+      "2026년에 사업 시작해도 될까요?",
+
+    focus:
+      mixedStart.focus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function verifyEvidenceSelectionAndCompression():
+  ConsultingPromptBuilderVerificationCase {
+  const partnership =
+    buildFullArtifacts(
+      "1967년 4월 10일 양력 출생 여성과 동업해도 될까요?",
+    );
+
+  const moneyRecovery =
+    buildFullArtifacts(
+      "이번에 빌려준 돈을 받을 수 있을까요?",
+    );
+
+  const continuation =
+    buildFullArtifacts(
+      "지금 만나는 사람과 이 관계를 계속 유지하는 게 좋을까요?",
+    );
+
+  const loveFortune =
+    buildFullArtifacts(
+      "나의 연애운은 어떨까요?",
+    );
+
+  const wealthFortune =
+    buildFullArtifacts(
+      "난 재물운이 있나요?",
+    );
+
+  const businessFortune =
+    buildFullArtifacts(
+      "2026년 사업운은 어떨까요?",
+    );
+
+  const businessStart =
+    buildFullArtifacts(
+      "2026년에 사업 시작해도 될까요?",
+    );
+
+  const overallFortune =
+    buildFullArtifacts(
+      "나의 총운은 어떻게 될까요?",
+    );
+
+  const daeunTiming =
+    buildFullArtifacts(
+      "나는 언제쯤 대운이 들어올까요?",
+    );
+
+  const executionWhen =
+    buildFullArtifacts(
+      "이 사람과 언제 결혼하면 좋을까요?",
+    );
+
+  const role =
+    buildFullArtifacts(
+      "내 사주로 연극을 한다면 나는 어떤 역할일까?",
+    );
+
+  const questionCases =
+    [
+      partnership,
+      moneyRecovery,
+      continuation,
+      businessStart,
+      executionWhen,
+    ];
+
+  const reportCases =
+    [
+      loveFortune,
+      wealthFortune,
+      businessFortune,
+      overallFortune,
+      daeunTiming,
+    ];
+
+  const insufficientEvidenceCase =
+    [
+      moneyRecovery,
+      partnership,
+      continuation,
+      daeunTiming,
+      buildFullArtifacts(
+        "우리 둘의 궁합은 어떤가요?",
+      ),
+    ].find(
+      (artifacts) =>
+        artifacts.verdict
+        === "insufficientEvidence",
+    )
+    ?? moneyRecovery;
+
+  const waitCase =
+    [
+      continuation,
+      partnership,
+      moneyRecovery,
+    ].find(
+      (artifacts) =>
+        artifacts.verdict
+        === "wait",
+    )
+    ?? continuation;
+
+  const checks = {
+    A_questionKeepsDirectAnswerPriority:
+      questionCases.every(
+        (artifacts) =>
+          hasDirectAnswerPriority(
+            artifacts.prompt,
+          )
+          && isQuestionAnswerModePrompt(
+            artifacts.prompt,
+          ),
+      ),
+
+    B_reportKeepsAreaFlow:
+      reportCases.every(
+        (artifacts) =>
+          isReportAnswerModePrompt(
+            artifacts.prompt,
+          ),
+      ),
+
+    C_questionDoesNotAutoUseUnrelatedReaders:
+      questionCases.every(
+        (artifacts) =>
+          hasQuestionEvidencePriority(
+            artifacts.prompt,
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "질문과 직접 관계없는 건강, 직업, 인생 Reader 설명을 자동으로 모두 사용하지 않는다.",
+          ),
+      ),
+
+    D_reportDoesNotOveruseUnrelatedReaders:
+      reportCases.every(
+        (artifacts) =>
+          hasReportEvidencePriority(
+            artifacts.prompt,
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "질문 영역과 관계없는 Reader 설명을 과도하게 사용하지 않는다.",
+          ),
+      ),
+
+    E_repeatedEvidenceCompressionExists:
+      [...questionCases, ...reportCases].every(
+        (artifacts) =>
+          hasEvidenceCompression(
+            artifacts.prompt,
+          ),
+      ),
+
+    F_relatedEvidenceConditionsRisksDirectionFirst:
+      questionCases.every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "evidence, conditions, risks, recommendedDirection, prohibitedDirection은 질문과 관련 있을 때 우선 사용한다.",
+          ),
+      )
+      && reportCases.every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "evidence, conditions, risks, recommendedDirection, prohibitedDirection은 질문한 영역과 관련 있을 때 우선 사용한다.",
+          ),
+      ),
+
+    G_unrelatedEvidenceIsNotUsed:
+      [...questionCases, ...reportCases].every(
+        (artifacts) =>
+          hasEvidenceSelection(
+            artifacts.prompt,
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "관련 없는 근거는 사용하지 않는다.",
+          ),
+      ),
+
+    H_insufficientEvidenceExplainsCurrentRangeFirst:
+      insufficientEvidenceCase.verdict
+      !== "insufficientEvidence"
+      || INSUFFICIENT_EVIDENCE_RANGE_MARKERS.every(
+        (marker) =>
+          insufficientEvidenceCase.prompt.systemPrompt.includes(
+            marker,
+          ),
+      ),
+
+    I_waitIsNotRewrittenAsInsufficientEvidence:
+      waitCase.prompt.systemPrompt.includes(
+        "기다리며 지켜보라는 판단을 판단할 수 없다 또는 정보가 부족하다로 바꾸지 않는다",
+      )
+      && (
+        waitCase.verdict
+        !== "wait"
+        || waitCase.prompt.systemPrompt.includes(
+          "현재 엔진 판단은 정보 부족이 아니므로 정보 부족을 이유로 답변을 회피하지 않는다",
+        )
+      ),
+
+    J_engineVerdictUnchanged:
+      [...questionCases, ...reportCases, role].every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "엔진의 verdict를 변경하지 않는다",
+          ),
+      ),
+
+    K_finalDecisionMeaningUnchanged:
+      [...questionCases, ...reportCases, role].every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
+          )
+          && artifacts.prompt.userPrompt.includes(
+            artifacts.finalDecision,
+          ),
+      ),
+
+    L_finalDecisionNotMechanicallyRepeated:
+      [...questionCases, ...reportCases].every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "최종 결론 원문을 기계적으로 반복하지 않는다",
+          ),
+      ),
+
+    M_explanationFocusKept:
+      partnership.focus
+      === "compatibility"
+      && continuation.focus
+      === "continuation"
+      && moneyRecovery.focus
+      === "generalJudgement"
+      && businessStart.focus
+      === "businessStart"
+      && businessFortune.focus
+      === "businessStart"
+      && role.focus
+      === null,
+
+    N_payloadKept:
+      [...questionCases, ...reportCases, role].every(
+        (artifacts) =>
+          artifacts.prompt.userPrompt.includes(
+            "답변에 필요한 판단 근거와 설명 요소",
+          ),
+      ),
+
+    O_promptStructureKept:
+      [...questionCases, ...reportCases].every(
+        (artifacts) =>
+          artifacts.prompt.userPrompt.indexOf(
+            "답변에 필요한 판단 근거와 설명 요소",
+          )
+          < artifacts.prompt.userPrompt.indexOf(
+            "확인 원자료 — 원국·현재 운 국면·현실 정보",
+          ),
+      ),
+
+    P_groundingKept:
+      [...questionCases, ...reportCases].every(
+        (artifacts) =>
+          artifacts.prompt.userPrompt.includes(
+            "확인 원자료 — 원국·현재 운 국면·현실 정보",
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "확인 원자료 전체를 답변의 시작점이나 공통 설명의 근거로 사용하지 않는다.",
+          ),
+      ),
+
+    Q_questionContextKept:
+      [...questionCases, ...reportCases, role].every(
+        (artifacts) =>
+          keepsQuestionContextRules(
+            artifacts.prompt,
+          ),
+      ),
+
+    R_directAnswerPriorityKept:
+      questionCases.every(
+        (artifacts) =>
+          hasDirectAnswerPriority(
+            artifacts.prompt,
+          ),
+      ),
+
+    S_questionReportSplitKept:
+      isQuestionAnswerModePrompt(
+        businessStart.prompt,
+      )
+      && isReportAnswerModePrompt(
+        businessFortune.prompt,
+      )
+      && !businessFortune.prompt.systemPrompt.includes(
+        "직답 우선 원칙",
+      )
+      && executionWhen.answerMode
+      === "question"
+      && daeunTiming.answerMode
+      === "report",
+
+    T_roleRecommendationKept:
+      role.prompt.systemPrompt.includes(
+        "세 가지 배역 후보",
+      )
+      && role.prompt.systemPrompt.includes(
+        "evidence에 없는 배역",
+      )
+      && role.prompt.systemPrompt.includes(
+        "역할과 직접 관계없는 Reader 설명을 무분별하게 추가하지 않는다.",
+      )
+      && !role.prompt.systemPrompt.includes(
+        "질문형 근거 사용 원칙",
+      )
+      && !role.prompt.systemPrompt.includes(
+        "반복 근거 압축 원칙",
+      ),
+
+    U_lifeFlowInterpretationKept:
+      verifyLifeFlowInterpretationKept().passed
+      && overallFortune.prompt.systemPrompt.includes(
+        "모든 Reader를 같은 비중으로 나열하지 않는다.",
+      )
+      && isReportAnswerModePrompt(
+        overallFortune.prompt,
+      ),
+
+    V_partnershipNotDominatedByCompatibility:
+      hasPartnershipBusinessCenter(
+        partnership.prompt,
+      )
+      && !partnership.prompt.systemPrompt.includes(
+        "두 사람의 궁합에 직접 답한다",
+      )
+      && partnership.prompt.systemPrompt.includes(
+        "동업 진행 판단, 상대와의 협업 가능성, 역할·책임·권한, 금전 부담과 위험, 필요한 조건을 중심으로 근거를 선택한다.",
+      ),
+  };
+
+  return {
+    name:
+      "4-8-evidence-selection-and-answer-compression",
+
+    question:
+      partnership.originalQuestion,
+
+    focus:
+      partnership.focus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function includesAllMarkers(
+  value:
+    string,
+  markers:
+    readonly string[],
+): boolean {
+  return markers.every(
+    (marker) =>
+      value.includes(
+        marker,
+      ),
+  );
+}
+
+function verifyQuestionSpecificEvidencePriority():
+  ConsultingPromptBuilderVerificationCase {
+  const partnership =
+    buildFullArtifacts(
+      "1967년 4월 10일 양력 출생 여성과 동업해도 될까요?",
+    );
+
+  const moneyRecovery =
+    buildFullArtifacts(
+      "이번에 빌려준 돈을 받을 수 있을까요?",
+    );
+
+  const continuation =
+    buildFullArtifacts(
+      "지금 만나는 사람과 이 관계를 계속 유지하는 게 좋을까요?",
+    );
+
+  const businessStart =
+    buildFullArtifacts(
+      "2026년에 사업 시작해도 될까요?",
+    );
+
+  const loveFortune =
+    buildFullArtifacts(
+      "나의 연애운은 어떨까요?",
+    );
+
+  const wealthFortune =
+    buildFullArtifacts(
+      "난 재물운이 있나요?",
+    );
+
+  const businessFortune =
+    buildFullArtifacts(
+      "2026년 사업운은 어떨까요?",
+    );
+
+  const overallFortune =
+    buildFullArtifacts(
+      "나의 총운은 어떻게 될까요?",
+    );
+
+  const role =
+    buildFullArtifacts(
+      "내 사주로 연극을 한다면 나는 어떤 역할일까?",
+    );
+
+  const questionCases =
+    [
+      partnership,
+      moneyRecovery,
+      continuation,
+      businessStart,
+    ];
+
+  const reportCases =
+    [
+      loveFortune,
+      wealthFortune,
+      businessFortune,
+      overallFortune,
+    ];
+
+  const checks = {
+    A_questionKeepsDirectAnswerThenCoreEvidence:
+      questionCases.every(
+        (artifacts) =>
+          hasDirectAnswerPriority(
+            artifacts.prompt,
+          )
+          && includesAllMarkers(
+            artifacts.prompt.systemPrompt,
+            QUESTION_SPECIFIC_EVIDENCE_PRIORITY_MARKERS,
+          )
+          && artifacts.prompt.userPrompt.includes(
+            "직답 다음에 핵심 근거, 필요한 조건과 위험, 방향을 사용하세요",
+          ),
+      ),
+
+    B_reportKeepsAreaFlowThenCoreEvidence:
+      reportCases.every(
+        (artifacts) =>
+          isReportAnswerModePrompt(
+            artifacts.prompt,
+          )
+          && includesAllMarkers(
+            artifacts.prompt.systemPrompt,
+            REPORT_SPECIFIC_EVIDENCE_PRIORITY_MARKERS,
+          ),
+      ),
+
+    C_commonEvidenceOnlyWhenItContributes:
+      questionCases.every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운, 무관한 Reader는 질문에 실제 기여할 때만 사용한다",
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "정체성과 인생 국면을 질문과 관계없이 반복하지 않는다",
+          )
+          && artifacts.prompt.userPrompt.includes(
+            "삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운은 질문에 실제 기여할 때만 사용하세요",
+          ),
+      )
+      && reportCases.every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "삶의 동력, 생존 방식, 반복 패턴, 정체성, 인생 국면, 현재 운, 무관한 Reader는 질문한 영역에 실제 기여할 때만 사용한다",
+          ),
+      ),
+
+    D_partnershipCentersRolesResponsibilityMoneyConflict:
+      includesAllMarkers(
+        partnership.prompt.systemPrompt,
+        PARTNERSHIP_EVIDENCE_PRIORITY_MARKERS,
+      )
+      && hasPartnershipBusinessCenter(
+        partnership.prompt,
+      )
+      && !partnership.prompt.systemPrompt.includes(
+        "두 사람의 궁합에 직접 답한다",
+      )
+      && partnership.prompt.systemPrompt.includes(
+        "동업 진행 판단, 상대와의 협업 가능성, 역할·책임·권한, 금전 부담과 위험, 필요한 조건을 중심으로 근거를 선택한다.",
+      ),
+
+    E_moneyRecoveryCentersRecoveryNotGenericFortune:
+      includesAllMarkers(
+        moneyRecovery.prompt.systemPrompt,
+        MONEY_RECOVERY_EVIDENCE_PRIORITY_MARKERS,
+      )
+      && moneyRecovery.prompt.systemPrompt.includes(
+        "일반 재물운, 전체 사업운, 전체 직업운, 인생운",
+      )
+      && moneyRecovery.prompt.systemPrompt.includes(
+        "질문 자체에 직접 답한다",
+      )
+      && isQuestionAnswerModePrompt(
+        moneyRecovery.prompt,
+      ),
+
+    F_continuationCentersKeepAndWaitMeaning:
+      includesAllMarkers(
+        continuation.prompt.systemPrompt,
+        CONTINUATION_EVIDENCE_PRIORITY_MARKERS,
+      )
+      && continuation.prompt.systemPrompt.includes(
+        "계속 유지하는 것이 맞는지 중심으로 답한다",
+      )
+      && continuation.prompt.systemPrompt.includes(
+        "기다리며 지켜보라는 판단을 판단할 수 없다 또는 정보가 부족하다로 바꾸지 않는다",
+      )
+      && (
+        continuation.verdict
+        !== "wait"
+        || continuation.prompt.systemPrompt.includes(
+          "현재 엔진 판단은 정보 부족이 아니므로 정보 부족을 이유로 답변을 회피하지 않는다",
+        )
+      ),
+
+    G_businessStartCentersStartFeasibility:
+      includesAllMarkers(
+        businessStart.prompt.systemPrompt,
+        BUSINESS_START_EVIDENCE_PRIORITY_MARKERS,
+      )
+      && businessStart.prompt.systemPrompt.includes(
+        "사업을 시작하는 것이 맞는지 중심으로 답한다",
+      )
+      && businessStart.prompt.systemPrompt.includes(
+        "현재 시점, 성공 조건, 사업 위험, 실행 방향을 필요한 만큼 설명한다",
+      )
+      && isQuestionAnswerModePrompt(
+        businessStart.prompt,
+      ),
+
+    H_reportDoesNotOverCompress:
+      reportCases.every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "연애운, 재물운, 사업운, 총운의 기존 충분한 설명력을 유지한다",
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "과도하게 압축하지 않는다",
+          )
+          && artifacts.prompt.systemPrompt.includes(
+            "필요한 근거가 많으면 충분히 설명한다. 억지로 짧게 만들지 않는다.",
+          )
+          && artifacts.prompt.userPrompt.includes(
+            "연애운·재물운·사업운·총운의 설명력을 과도하게 줄이지 않았는가?",
+          ),
+      ),
+
+    I_groundingUsesCommonEvidenceOnlyWhenNeeded:
+      questionCases.every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "원국 사실은 직답의 판단 근거와 직접 연결될 때 우선 사용한다.",
+          ),
+      )
+      && reportCases.every(
+        (artifacts) =>
+          artifacts.prompt.systemPrompt.includes(
+            "질문한 영역과 직접 관련 없는 Reader나 공통 성향은 자동으로 추가하지 않는다.",
+          ),
+      ),
+
+    J_questionReportSplitAndDirectAnswerKept:
+      isQuestionAnswerModePrompt(
+        businessStart.prompt,
+      )
+      && isReportAnswerModePrompt(
+        businessFortune.prompt,
+      )
+      && !businessFortune.prompt.systemPrompt.includes(
+        "직답 우선 원칙",
+      )
+      && questionCases.every(
+        (artifacts) =>
+          hasDirectAnswerPriority(
+            artifacts.prompt,
+          ),
+      ),
+
+    K_roleRecommendationNotRewritten:
+      role.prompt.systemPrompt.includes(
+        "세 가지 배역 후보",
+      )
+      && role.prompt.systemPrompt.includes(
+        "evidence에 없는 배역",
+      )
+      && !role.prompt.systemPrompt.includes(
+        "질문형의 설명 순서는 질문, 직답, 핵심 근거, 필요한 조건과 위험, 방향이다",
+      )
+      && !role.prompt.systemPrompt.includes(
+        "반복 근거 압축 원칙",
+      ),
+  };
+
+  return {
+    name:
+      "4-9-question-specific-evidence-priority",
+
+    question:
+      partnership.originalQuestion,
+
+    focus:
+      partnership.focus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function verifyWhenQuestionModeClassification():
+  ConsultingPromptBuilderVerificationCase {
+  const fixtures = [
+    {
+      id:
+        "daeun-when-report",
+
+      question:
+        "대운이 언제 들어오나요?",
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "wealth-fortune-when-report",
+
+      question:
+        "재물운이 언제 좋아지나요?",
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "year-business-fortune-when-report",
+
+      question:
+        "2026년 사업운은 언제부터 달라지나요?",
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "month-fortune-when-report",
+
+      question:
+        "9월 운은 언제부터 달라지나요?",
+
+      expectedMode:
+        "report" as const,
+    },
+    {
+      id:
+        "business-start-when-question",
+
+      question:
+        "2026년에 사업을 언제 시작하면 좋을까요?",
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "real-estate-buy-when-question",
+
+      question:
+        "부동산을 언제 매수하면 좋을까요?",
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "marriage-when-question",
+
+      question:
+        "이 사람과 언제 결혼하면 좋을까요?",
+
+      expectedMode:
+        "question" as const,
+    },
+    {
+      id:
+        "partnership-start-when-question",
+
+      question:
+        "동업을 언제 시작하면 좋을까요?",
+
+      expectedMode:
+        "question" as const,
+    },
+  ] as const;
+
+  const results =
+    fixtures.map(
+      (fixture) => {
+        const artifacts =
+          buildFullArtifacts(
+            fixture.question,
+          );
+
+        const matchesExpectedMode =
+          artifacts.answerMode
+          === fixture.expectedMode;
+
+        const matchesPromptMode =
+          fixture.expectedMode
+          === "question"
+            ? isQuestionAnswerModePrompt(
+                artifacts.prompt,
+              )
+              && !isReportAnswerModePrompt(
+                artifacts.prompt,
+              )
+            : isReportAnswerModePrompt(
+                artifacts.prompt,
+              )
+              && !isQuestionAnswerModePrompt(
+                artifacts.prompt,
+              );
+
+        return {
+          id:
+            fixture.id,
+
+          answerMode:
+            artifacts.answerMode,
+
+          expectedMode:
+            fixture.expectedMode,
+
+          passed:
+            matchesExpectedMode
+            && matchesPromptMode,
+        };
+      },
+    );
+
+  const businessStart =
+    buildFullArtifacts(
+      "2026년에 사업 시작해도 될까요?",
+    );
+
+  const businessFortune =
+    buildFullArtifacts(
+      "2026년 사업운은 어떨까요?",
+    );
+
+  const overallFortune =
+    buildFullArtifacts(
+      "올해 총운을 봐주세요",
+    );
+
+  const checks = {
+    A_daeunWhenIsReport:
+      results[0]?.passed
+      === true,
+
+    B_wealthFortuneWhenIsReport:
+      results[1]?.passed
+      === true,
+
+    C_yearBusinessFortuneWhenIsReport:
+      results[2]?.passed
+      === true,
+
+    D_monthFortuneWhenIsReport:
+      results[3]?.passed
+      === true,
+
+    E_businessStartWhenIsQuestion:
+      results[4]?.passed
+      === true,
+
+    F_realEstateBuyWhenIsQuestion:
+      results[5]?.passed
+      === true,
+
+    G_marriageWhenIsQuestion:
+      results[6]?.passed
+      === true,
+
+    H_partnershipStartWhenIsQuestion:
+      results[7]?.passed
+      === true,
+
+    I_answerModeMatchesEveryFixture:
+      results.every(
+        (result) =>
+          result.answerMode
+          === result.expectedMode
+          && result.passed,
+      ),
+
+    J_existingBusinessStartStaysQuestion:
+      businessStart.answerMode
+      === "question"
+      && isQuestionAnswerModePrompt(
+        businessStart.prompt,
+      ),
+
+    K_existingBusinessFortuneStaysReport:
+      businessFortune.answerMode
+      === "report"
+      && isReportAnswerModePrompt(
+        businessFortune.prompt,
+      ),
+
+    L_lifeFlowInterpretationStaysReport:
+      overallFortune.answerMode
+      === "report"
+      && isReportAnswerModePrompt(
+        overallFortune.prompt,
+      )
+      && (
+        overallFortune.prompt.systemPrompt.includes(
+          "제공된 Evidence와 계산된 대운·세운·월운·일운 Fact만 설명한다",
+        )
+        || isReportAnswerModePrompt(
+          overallFortune.prompt,
+        )
+      ),
+  };
+
+  return {
+    name:
+      "4-10-when-question-mode-classification",
+
+    question:
+      fixtures[0].question,
+
+    focus:
+      null,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 export function verifyConsultingPromptBuilder():
   ConsultingPromptBuilderVerificationResult {
   const cases = [
@@ -836,6 +3493,16 @@ export function verifyConsultingPromptBuilder():
     verifyLifeFlowInterpretationKept(),
     verifyExistingAnswerQualityKept(),
     verifyIntegrationFinalDecisionOnceIsResolved(),
+    verifyPayloadAndGroundingKeepQuestionFocusRules(),
+    verifyWaitIsNotInsufficientEvidenceAvoidance(),
+    verifyInsufficientEvidenceLanguageIsRestricted(),
+    verifyMechanicalTemplatesStayRemoved(),
+    verifyFourQuestionDirectAnswerPriority(),
+    ...verifyAnswerModeTenQuestions(),
+    verifyAnswerModePriorityAndRegression(),
+    verifyEvidenceSelectionAndCompression(),
+    verifyQuestionSpecificEvidencePriority(),
+    verifyWhenQuestionModeClassification(),
   ];
 
   return {
@@ -848,3 +3515,10 @@ export function verifyConsultingPromptBuilder():
       ),
   };
 }
+
+
+
+
+
+
+

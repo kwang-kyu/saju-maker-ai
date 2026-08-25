@@ -292,16 +292,40 @@ import {
       sameHumanContextIsUsedAcrossRoutes:
         nonTimingTurn
           .groundingContext
-          .humanIdentity
+          .currentLuckPhase
         === timingDecisionTurn
           .groundingContext
-          .humanIdentity
+          .currentLuckPhase
         && timingDecisionTurn
           .groundingContext
-          .humanIdentity
+          .currentLuckPhase
         === pureLifeFlowTurn
           .groundingContext
-          .humanIdentity,
+          .currentLuckPhase
+        && nonTimingTurn
+          .groundingContext
+          .currentLifeReality
+        === timingDecisionTurn
+          .groundingContext
+          .currentLifeReality
+        && timingDecisionTurn
+          .groundingContext
+          .currentLifeReality
+        === pureLifeFlowTurn
+          .groundingContext
+          .currentLifeReality
+        && nonTimingTurn
+          .groundingContext
+          .sajuFacts
+        === timingDecisionTurn
+          .groundingContext
+          .sajuFacts
+        && timingDecisionTurn
+          .groundingContext
+          .sajuFacts
+        === pureLifeFlowTurn
+          .groundingContext
+          .sajuFacts,
   
       /*
        * Timing 의사결정 결과도

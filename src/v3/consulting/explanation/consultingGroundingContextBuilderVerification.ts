@@ -1,4 +1,10 @@
 import {
+  buildInitialConsultingExecution,
+} from "../initialConsultingExecutionBuilder.js";
+import {
+  createSourceRequest,
+} from "../initialConsultingSessionBuilderVerification.js";
+import {
   buildDecisionEngineRegressionInput,
 } from "../decision/regression/decisionEngineRegressionFixture.js";
 import {
@@ -7,6 +13,51 @@ import {
 import {
   buildConsultingGroundingContext,
 } from "./consultingGroundingContextBuilder.js";
+
+const FORBIDDEN_READER_JSON_KEYS = [
+  "humanIdentity",
+  "readerEvidence",
+  "masterReaderInput",
+  "lifePhaseInput",
+  "humanSummary",
+  "identitySummary",
+  "lifeDriver",
+  "survivalStyle",
+  "repeatedPattern",
+  "capacity",
+  "money",
+  "career",
+  "relationship",
+  "health",
+  "blessing",
+  "destiny",
+] as const;
+
+const FORBIDDEN_DECISION_JSON_KEYS = [
+  "verdict",
+  "finalDecision",
+  "conditions",
+  "risks",
+  "recommendedDirection",
+  "prohibitedDirection",
+  "questionContext",
+  "explanationFocus",
+  "explanationOrder",
+] as const;
+
+function serializedExcludesQuotedKeys(
+  serialized:
+    string,
+  keys:
+    readonly string[],
+): boolean {
+  return keys.every(
+    (key) =>
+      !serialized.includes(
+        `"${key}"`,
+      ),
+  );
+}
 
 export type ConsultingGroundingContextBuilderVerificationResult = {
   checks:
@@ -53,6 +104,11 @@ export function verifyConsultingGroundingContextBuilder():
 
   const question =
     "새로 만난 사람과 결혼 궁합이 맞는지 알고 싶습니다.";
+
+  const fullExecution =
+    buildInitialConsultingExecution(
+      createSourceRequest(),
+    );
 
   const withoutCounterpartContext =
     buildConsultingGroundingContext({
@@ -103,6 +159,43 @@ export function verifyConsultingGroundingContextBuilder():
     JSON.stringify(
       dateOnlyContext
         .counterpartSource,
+    );
+
+  const fullDumpInputContext =
+    buildConsultingGroundingContext({
+      sajuFacts:
+        fullExecution
+          .humanDestinyPipeline
+          .sajuFactsPipeline,
+
+      readerEvidence:
+        fullExecution
+          .humanDestinyPipeline
+          .evidenceBundle,
+
+      humanContext:
+        fullExecution
+          .humanDestinyPipeline
+          .humanContext,
+
+      lifeContext:
+        fullExecution
+          .lifeContext,
+
+      question,
+
+      counterpartSaju:
+        dateOnlyCounterpartSaju,
+    });
+
+  const serializedFullDumpInputContext =
+    JSON.stringify(
+      fullDumpInputContext,
+    );
+
+  const fullDumpInputContextKeys =
+    Object.keys(
+      fullDumpInputContext,
     );
 
   const checks = {
@@ -262,6 +355,134 @@ export function verifyConsultingGroundingContextBuilder():
             === "calendarType"
             || key
             === "gender",
+        ),
+
+    sourceLockedIsPreserved:
+      fullDumpInputContext
+        .sourceLocked
+      === true,
+
+    fullInputKeepsMinimumSajuFacts:
+      fullDumpInputContext
+        .sajuFacts
+      === fullExecution
+        .humanDestinyPipeline
+        .sajuFactsPipeline
+        .facts,
+
+    fullInputKeepsCurrentLuckPhase:
+      fullDumpInputContext
+        .currentLuckPhase
+      === fullExecution
+        .humanDestinyPipeline
+        .humanContext
+        .currentPhase,
+
+    fullInputKeepsCurrentLifeReality:
+      fullDumpInputContext
+        .currentLifeReality
+      === fullExecution
+        .lifeContext,
+
+    fullInputKeepsCounterpartSource:
+      fullDumpInputContext
+        .counterpartSource
+        ?.precision
+      === "dateOnly"
+      && fullDumpInputContext
+        .counterpartSource
+        ?.birthDate
+      === dateOnlyCounterpartSaju
+        .source
+        .birthDate,
+
+    groundingOmitsHumanIdentityField:
+      !(
+        "humanIdentity"
+          in fullDumpInputContext
+      ),
+
+    groundingOmitsReaderEvidenceField:
+      !(
+        "readerEvidence"
+          in fullDumpInputContext
+      ),
+
+    groundingOmitsDecisionFields:
+      FORBIDDEN_DECISION_JSON_KEYS
+        .every(
+          (key) =>
+            !(
+              key
+                in fullDumpInputContext
+            ),
+        ),
+
+    serializedFullContextExcludesCalculated:
+      !serializedFullDumpInputContext
+        .includes(
+          "\"calculated\"",
+        ),
+
+    serializedFullContextExcludesHumanIdentityExplanation:
+      serializedExcludesQuotedKeys(
+        serializedFullDumpInputContext,
+        [
+          "humanIdentity",
+          "humanSummary",
+          "identitySummary",
+        ],
+      ),
+
+    serializedFullContextExcludesReaderEvidence:
+      serializedExcludesQuotedKeys(
+        serializedFullDumpInputContext,
+        [
+          "readerEvidence",
+          "masterReaderInput",
+          "lifePhaseInput",
+        ],
+      ),
+
+    serializedFullContextExcludesMasterReaderDomains:
+      serializedExcludesQuotedKeys(
+        serializedFullDumpInputContext,
+        [
+          "lifeDriver",
+          "survivalStyle",
+          "repeatedPattern",
+          "capacity",
+          "money",
+          "career",
+          "relationship",
+          "health",
+          "blessing",
+          "destiny",
+        ],
+      ),
+
+    serializedFullContextExcludesAllForbiddenReaderKeys:
+      serializedExcludesQuotedKeys(
+        serializedFullDumpInputContext,
+        FORBIDDEN_READER_JSON_KEYS,
+      ),
+
+    groundingKeysArePersonLevelFactsOnly:
+      fullDumpInputContextKeys
+        .every(
+          (key) =>
+            key
+            === "sourceLocked"
+            || key
+            === "originalQuestion"
+            || key
+            === "sajuFacts"
+            || key
+            === "counterpartSource"
+            || key
+            === "currentLuckPhase"
+            || key
+            === "currentLifeReality",
         ),
   };
 
