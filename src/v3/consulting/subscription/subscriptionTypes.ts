@@ -27,6 +27,11 @@ export type UserSubscription = {
   status:
     SubscriptionStatus;
 
+    freeUsageCount:
+
+    number;
+
+
   startedAt:
     string | null;
 
