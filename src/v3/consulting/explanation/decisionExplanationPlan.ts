@@ -23,6 +23,11 @@ import {
   deduplicateExplanationLines,
 } from "./decisionExplanationTextDeduplicator.js";
 
+import {
+  filterRelevantConditions,
+  filterRelevantRisks,
+} from "./decisionExplanationMaterialRelevance.js";
+
 export type {
   DecisionExplanationFocus,
 } from "./decisionExplanationFocus.js";
@@ -824,6 +829,8 @@ function buildDecisionExplanationMaterials(
     string,
   questionContext?:
     QuestionContext,
+  focus?:
+    DecisionExplanationFocus,
 ): DecisionExplanationMaterials {
   const readerDecisionExplanation =
     buildReaderDecisionExplanation(
@@ -850,9 +857,37 @@ function buildDecisionExplanationMaterials(
       ),
     );
 
+  const relevanceContext =
+    focus
+      ? {
+        focus,
+        questionContext,
+        actionReadiness:
+          input.actionReadiness,
+        decisionTarget:
+          input.decisionTarget,
+      }
+      : undefined;
+
+  const relevantConditions =
+    relevanceContext
+      ? filterRelevantConditions(
+        input.conditions,
+        relevanceContext,
+      )
+      : input.conditions;
+
+  const relevantRisks =
+    relevanceContext
+      ? filterRelevantRisks(
+        input.risks,
+        relevanceContext,
+      )
+      : input.risks;
+
   const conditionLines =
     deduplicateExplanationLines(
-      input.conditions.map(
+      relevantConditions.map(
         (condition) =>
           condition.description,
       ),
@@ -861,7 +896,7 @@ function buildDecisionExplanationMaterials(
 
   const riskLines =
     deduplicateExplanationLines(
-      input.risks.map(
+      relevantRisks.map(
         (risk) =>
           risk.description,
       ),
@@ -1784,6 +1819,7 @@ export function buildDecisionExplanationPlan(
       input,
       normalizedQuestion,
       questionContext,
+      explanationFocus,
     );
 
   return {
