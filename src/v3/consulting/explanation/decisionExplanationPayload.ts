@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   DecisionExplanationPlan,
 } from "./decisionExplanationPlan.js";
 
@@ -46,6 +46,8 @@ export type DecisionExplanationPayload = {
 
   explanationKind?:
     DecisionExplanationPlan["explanationKind"];
+    explanationFocus:
+    DecisionExplanationPlan["explanationFocus"];
 };
 
 export function buildDecisionExplanationPayload(
@@ -114,7 +116,11 @@ export function buildDecisionExplanationPayload(
       )?.content
       ?? "",
 
-    explanationKind:
+      explanationKind:
       plan.explanationKind,
+
+    explanationFocus:
+      plan.explanationFocus,
   };
 }
+

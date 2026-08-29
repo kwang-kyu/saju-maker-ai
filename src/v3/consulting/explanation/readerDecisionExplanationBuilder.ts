@@ -204,45 +204,45 @@
     if (insufficientEvidence) {
       return [
         sourceDescription,
-        "근거가 충분하지 않아 현재 상태만으로는 실행 가능성을 확정하지 않고, 추가 확인이 필요한 조건부 판단으로 반영했습니다.",
+        "질문에 직접 관련된 근거가 충분하지 않아 현재 상태만으로 결론을 확정하지 않고, 추가 확인이 필요한 판단에 반영했습니다.",
       ].join(" ");
     }
-
+  
     switch (input.verdict) {
       case "wait":
         return [
           sourceDescription,
-          "관련 판단에서 즉시 실행을 제한하는 근거가 확인되어, 현재는 바로 추진하지 않고 제한을 해소할 때까지 기다리는 판단에 반영했습니다.",
+          "관련 판단에서 현재 실행을 제한하는 근거가 확인되어, 최종 판단의 제한 방향과 위험 설명에 반영했습니다.",
         ].join(" ");
-
+  
       case "conditionallyRecommended":
         return [
           sourceDescription,
-          "관련 판단에서 실행 전에 확인해야 할 제한이 확인되어, 무조건적인 진행이 아니라 조건을 갖춘 뒤 제한적으로 진행하는 판단에 반영했습니다.",
+          "관련 판단에서 실행 여부에 영향을 주는 제한 근거가 확인되어, 최종 판단의 조건과 위험 설명에 반영했습니다.",
         ].join(" ");
-
+  
       case "notRecommended":
         return [
           sourceDescription,
-          "관련 판단에서 확인된 제한을 기존 비권장 판단을 상향하지 않고, 중단 또는 방향 재검토가 필요한 조건과 위험 근거에 반영했습니다.",
+          "관련 판단에서 확인된 제한을 바탕으로, 현재 진행을 권하지 않는 판단의 위험 근거에 반영했습니다.",
         ].join(" ");
-
-        case "insufficientEvidence":
-            return [
-              sourceDescription,
-              "와 질문에 직접 관련된 근거가 충분하지 않아 현재 상태만으로 결론을 확정하지 않고, 필요한 정보를 추가로 확인해야 하는 판단에 반영했습니다.",
-            ].join(" ");
-
+  
+      case "insufficientEvidence":
+        return [
+          sourceDescription,
+          "질문에 직접 관련된 근거가 충분하지 않아 현재 상태만으로 결론을 확정하지 않고, 필요한 정보를 추가로 확인해야 하는 판단에 반영했습니다.",
+        ].join(" ");
+  
       case "recommended":
         return [
           sourceDescription,
-          "관련 근거는 최종 판단을 임의로 상향하지 않으며, 현재 확정된 진행 판단의 조건과 위험 범위 안에서만 설명합니다.",
+          "관련 근거를 현재 확정된 진행 판단을 설명하는 근거로 반영했습니다.",
         ].join(" ");
-
+  
       case "interpreted":
         return [
           sourceDescription,
-          "관련 근거는 요청한 기간의 운 흐름 해석으로 반영했으며, 실행 여부를 대신 확정하지 않습니다.",
+          "관련 근거를 요청한 기간의 운 흐름을 설명하는 자료로 반영했습니다.",
         ].join(" ");
     }
   }
