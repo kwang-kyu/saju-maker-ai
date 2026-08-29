@@ -25,6 +25,7 @@ import {
 
 import {
   filterRelevantConditions,
+  filterRelevantEvidence,
   filterRelevantRisks,
 } from "./decisionExplanationMaterialRelevance.js";
 
@@ -837,10 +838,30 @@ function buildDecisionExplanationMaterials(
       input,
     );
 
+  const relevanceContext =
+    focus
+      ? {
+        focus,
+        questionContext,
+        actionReadiness:
+          input.actionReadiness,
+        decisionTarget:
+          input.decisionTarget,
+      }
+      : undefined;
+
+  const relevantEvidence =
+    relevanceContext
+      ? filterRelevantEvidence(
+        input.evidence,
+        relevanceContext,
+      )
+      : input.evidence;
+
   const evidenceContent =
     buildDecisionExplanationEvidence({
       evidence:
-        input.evidence,
+        relevantEvidence,
 
       topic:
         input.topic,
@@ -856,18 +877,6 @@ function buildDecisionExplanationMaterials(
         /\r?\n/,
       ),
     );
-
-  const relevanceContext =
-    focus
-      ? {
-        focus,
-        questionContext,
-        actionReadiness:
-          input.actionReadiness,
-        decisionTarget:
-          input.decisionTarget,
-      }
-      : undefined;
 
   const relevantConditions =
     relevanceContext

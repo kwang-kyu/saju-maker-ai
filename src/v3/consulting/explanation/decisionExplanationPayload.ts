@@ -46,7 +46,8 @@ export type DecisionExplanationPayload = {
 
   explanationKind?:
     DecisionExplanationPlan["explanationKind"];
-    explanationFocus:
+
+  explanationFocus?:
     DecisionExplanationPlan["explanationFocus"];
 };
 
@@ -116,11 +117,10 @@ export function buildDecisionExplanationPayload(
       )?.content
       ?? "",
 
-      explanationKind:
+    explanationKind:
       plan.explanationKind,
 
     explanationFocus:
       plan.explanationFocus,
   };
 }
-

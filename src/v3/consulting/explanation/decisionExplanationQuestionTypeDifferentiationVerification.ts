@@ -42,6 +42,7 @@ import {
 
 import {
   filterRelevantConditions,
+  filterRelevantEvidence,
   filterRelevantRisks,
 } from "./decisionExplanationMaterialRelevance.js";
 
@@ -133,6 +134,30 @@ export type QuestionTypeObservation = {
   evidence:
     DecisionExplanationEvidence[];
 
+  filteredEvidence:
+    DecisionExplanationEvidence[];
+
+  rawEvidenceCount:
+    number;
+
+  filteredEvidenceCount:
+    number;
+
+  rawEvidenceSources:
+    string[];
+
+  filteredEvidenceSources:
+    string[];
+
+  filteredEvidenceDescriptions:
+    string[];
+
+  promptEvidenceDescriptions:
+    string[];
+
+  uniquePromptEvidenceDescriptions:
+    string[];
+
   conditions:
     DecisionExplanationCondition[];
 
@@ -198,10 +223,19 @@ export type PairwiseOverlapObservation = {
   commonRiskCount:
     number;
 
+  commonEvidenceDescriptions:
+    string[];
+
+  commonEvidenceCount:
+    number;
+
   conditionOverlapRatio:
     number;
 
   riskOverlapRatio:
+    number;
+
+  evidenceOverlapRatio:
     number;
 };
 
@@ -217,7 +251,8 @@ export type PairwiseDifferentiationAssertion = {
 
   materialKind:
     "condition"
-    | "risk";
+    | "risk"
+    | "evidence";
 
   leftKeys:
     string[];
@@ -226,6 +261,15 @@ export type PairwiseDifferentiationAssertion = {
     string[];
 
   keySetsAreIdentical:
+    boolean;
+
+  leftDescriptions?:
+    string[];
+
+  rightDescriptions?:
+    string[];
+
+  descriptionSetsAreIdentical?:
     boolean;
 
   passed:
@@ -276,6 +320,18 @@ export type DecisionExplanationQuestionTypeDifferentiationVerificationResult = {
     averageRiskOverlapRatio:
       number;
 
+    averageCommonEvidenceCount:
+      number;
+
+    averageEvidenceOverlapRatio:
+      number;
+
+    rawAverageCommonEvidenceCount:
+      number;
+
+    rawAverageEvidenceOverlapRatio:
+      number;
+
     pairwiseDifferentiationAssertionCount:
       number;
 
@@ -314,6 +370,30 @@ const PAIRWISE_DIFFERENTIATION_REGRESSION_CONTRACTS = [
     assertRiskKeysAreNotIdentical:
       true,
   },
+  {
+    questionA:
+      "money",
+    questionB:
+      "continuation",
+    assertEvidenceDescriptionsAreNotIdentical:
+      true,
+  },
+  {
+    questionA:
+      "money",
+    questionB:
+      "businessStart",
+    assertEvidenceDescriptionsAreNotIdentical:
+      true,
+  },
+  {
+    questionA:
+      "continuation",
+    questionB:
+      "termination",
+    assertEvidenceDescriptionsAreNotIdentical:
+      true,
+  },
 ] as const satisfies readonly {
   questionA:
     QuestionTypeFixtureName;
@@ -325,6 +405,9 @@ const PAIRWISE_DIFFERENTIATION_REGRESSION_CONTRACTS = [
     true;
 
   assertRiskKeysAreNotIdentical?:
+    true;
+
+  assertEvidenceDescriptionsAreNotIdentical?:
     true;
 }[];
 
@@ -404,6 +487,69 @@ function buildArtifacts(
   };
 }
 
+function extractEvidenceSources(
+  evidence:
+    readonly DecisionExplanationEvidence[],
+): string[] {
+  return [
+    ...new Set(
+      evidence.map(
+        (item) =>
+          item.source,
+      ),
+    ),
+  ];
+}
+
+function extractEvidenceDescriptions(
+  evidence:
+    readonly DecisionExplanationEvidence[],
+): string[] {
+  return evidence.map(
+    (item) =>
+      item.description.trim(),
+  ).filter(
+    (description) =>
+      description.length
+      > 0,
+  );
+}
+
+function extractPromptEvidenceDescriptions(
+  plan:
+    DecisionExplanationPlan,
+): string[] {
+  const evidenceBlock =
+    plan.blocks.find(
+      (block) =>
+        block.step
+        === "evidence",
+    );
+
+  if (
+    !evidenceBlock
+    || evidenceBlock.content.trim()
+      .length
+    === 0
+  ) {
+    return [];
+  }
+
+  return evidenceBlock.content
+    .split(
+      /\r?\n/,
+    )
+    .map(
+      (line) =>
+        line.trim(),
+    )
+    .filter(
+      (line) =>
+        line.length
+        > 0,
+    );
+}
+
 function extractKeys(
   items:
     readonly { key: string }[],
@@ -463,6 +609,9 @@ function computeFilteredKeys(
 
   filteredRisks:
     DecisionExplanationRisk[];
+
+  filteredEvidence:
+    DecisionExplanationEvidence[];
 } {
   const explanationFocus =
     artifacts.plan.explanationFocus
@@ -499,6 +648,11 @@ function computeFilteredKeys(
     filteredRisks:
       filterRelevantRisks(
         artifacts.explanationInput.risks,
+        relevanceContext,
+      ),
+    filteredEvidence:
+      filterRelevantEvidence(
+        artifacts.explanationInput.evidence,
         relevanceContext,
       ),
   };
@@ -786,6 +940,149 @@ function buildRelevanceChecks(
   return checks;
 }
 
+function buildEvidenceRelevanceChecks(
+  name:
+    QuestionTypeFixtureName,
+  filteredEvidence:
+    readonly DecisionExplanationEvidence[],
+  rawEvidence:
+    readonly DecisionExplanationEvidence[],
+  promptEvidenceDescriptions:
+    readonly string[],
+  engineVerdict:
+    DecisionExplanationInput["verdict"],
+  payloadVerdict:
+    DecisionExplanationPayload["verdict"],
+): Record<
+  string,
+  boolean
+> {
+  const filteredSources =
+    extractEvidenceSources(
+      filteredEvidence,
+    );
+  const rawSources =
+    extractEvidenceSources(
+      rawEvidence,
+    );
+
+  const checks: Record<
+    string,
+    boolean
+  > = {
+    filteredEvidenceSourcesAreSubsetOfRaw:
+      isSubsetOf(
+        filteredSources,
+        rawSources,
+      ),
+
+    filteredEvidenceDescriptionsAreSubsetOfRaw:
+      isSubsetOf(
+        extractEvidenceDescriptions(
+          filteredEvidence,
+        ),
+        extractEvidenceDescriptions(
+          rawEvidence,
+        ),
+      ),
+
+    engineEvidencePoolIsUnchanged:
+      rawEvidence.length
+      > 0,
+
+    promptEvidenceIsAvailableForDecisionQuestion:
+      name
+      === "lifeFlowInterpretation"
+      || !isDecisionQuestion(
+        name,
+      )
+      || promptEvidenceDescriptions.length
+        > 0,
+
+    verdictIsUnchangedAfterEvidenceFiltering:
+      engineVerdict
+      === payloadVerdict,
+  };
+
+  if (
+    name
+    === "lifeFlowInterpretation"
+  ) {
+    return checks;
+  }
+
+  switch (
+    name
+  ) {
+    case "money":
+      checks.includesMoneyEvidence =
+        filteredSources.includes(
+          "money",
+        );
+      break;
+
+    case "continuation":
+      checks.includesRelationshipEvidence =
+        filteredSources.includes(
+          "relationship",
+        );
+      break;
+
+    case "compatibility":
+      checks.includesRelationshipEvidence =
+        filteredSources.includes(
+          "relationship",
+        )
+        || filteredSources.includes(
+          "compatibility",
+        );
+      break;
+
+    case "businessStart":
+      checks.includesBusinessRelatedEvidence =
+        filteredSources.some(
+          (source) =>
+            source
+            === "capacity"
+            || source
+            === "money"
+            || source
+            === "career"
+            || source
+            === "relationship",
+        );
+      break;
+
+    case "realEstateBuy":
+      checks.includesMoneyOrContextEvidence =
+        filteredSources.includes(
+          "money",
+        )
+        || filteredSources.includes(
+          "currentContext",
+        )
+        || filteredSources.includes(
+          "lifeContext",
+        );
+      break;
+
+    case "termination":
+      checks.includesCareerOrContextEvidence =
+        filteredSources.includes(
+          "career",
+        )
+        || filteredSources.includes(
+          "currentContext",
+        );
+      break;
+
+    default:
+      break;
+  }
+
+  return checks;
+}
+
 function buildObservation(
   artifacts:
     BuiltArtifacts,
@@ -793,9 +1090,13 @@ function buildObservation(
     DecisionExplanationCondition[],
   filteredRisks:
     DecisionExplanationRisk[],
+  filteredEvidence:
+    DecisionExplanationEvidence[],
   uniqueConditionKeys:
     string[],
   uniqueRiskKeys:
+    string[],
+  uniquePromptEvidenceDescriptions:
     string[],
 ): QuestionTypeObservation {
   const {
@@ -823,6 +1124,22 @@ function buildObservation(
     extractKeys(
       filteredRisks,
     );
+  const rawEvidenceSources =
+    extractEvidenceSources(
+      explanationInput.evidence,
+    );
+  const filteredEvidenceSources =
+    extractEvidenceSources(
+      filteredEvidence,
+    );
+  const filteredEvidenceDescriptions =
+    extractEvidenceDescriptions(
+      filteredEvidence,
+    );
+  const promptEvidenceDescriptions =
+    extractPromptEvidenceDescriptions(
+      plan,
+    );
 
   const observation: QuestionTypeObservation = {
     name:
@@ -849,6 +1166,20 @@ function buildObservation(
 
     evidence:
       explanationInput.evidence,
+
+    filteredEvidence,
+
+    rawEvidenceCount:
+      explanationInput.evidence.length,
+
+    filteredEvidenceCount:
+      filteredEvidence.length,
+
+    rawEvidenceSources,
+    filteredEvidenceSources,
+    filteredEvidenceDescriptions,
+    promptEvidenceDescriptions,
+    uniquePromptEvidenceDescriptions,
 
     conditions:
       filteredConditions,
@@ -895,6 +1226,14 @@ function buildObservation(
       decisionResult.verdict,
       payload.verdict,
     ),
+    ...buildEvidenceRelevanceChecks(
+      fixture.name,
+      filteredEvidence,
+      explanationInput.evidence,
+      promptEvidenceDescriptions,
+      decisionResult.verdict,
+      payload.verdict,
+    ),
   };
 
   observation.passed =
@@ -920,10 +1259,16 @@ function buildPairwiseOverlaps(
     riskKeys:
       string[];
 
+    evidenceDescriptions:
+      string[];
+
     conditionCount:
       number;
 
     riskCount:
+      number;
+
+    evidenceCount:
       number;
   },
 ): PairwiseOverlapObservation[] {
@@ -974,6 +1319,11 @@ function buildPairwiseOverlaps(
           leftKeys.riskKeys,
           rightKeys.riskKeys,
         );
+      const commonEvidenceDescriptions =
+        intersectKeys(
+          leftKeys.evidenceDescriptions,
+          rightKeys.evidenceDescriptions,
+        );
 
       overlaps.push({
         questionA:
@@ -990,6 +1340,10 @@ function buildPairwiseOverlaps(
         commonRiskCount:
           commonRiskKeys.length,
 
+        commonEvidenceDescriptions,
+        commonEvidenceCount:
+          commonEvidenceDescriptions.length,
+
         conditionOverlapRatio:
           computeOverlapRatio(
             commonConditionKeys.length,
@@ -1002,6 +1356,13 @@ function buildPairwiseOverlaps(
             commonRiskKeys.length,
             leftKeys.riskCount,
             rightKeys.riskCount,
+          ),
+
+        evidenceOverlapRatio:
+          computeOverlapRatio(
+            commonEvidenceDescriptions.length,
+            leftKeys.evidenceCount,
+            rightKeys.evidenceCount,
           ),
       });
     }
@@ -1036,6 +1397,18 @@ function areKeySetsIdentical(
   );
 }
 
+function areDescriptionSetsIdentical(
+  left:
+    readonly string[],
+  right:
+    readonly string[],
+): boolean {
+  return areKeySetsIdentical(
+    left,
+    right,
+  );
+}
+
 function buildPairwiseDifferentiationCheckName(
   questionA:
     QuestionTypeFixtureName,
@@ -1043,12 +1416,19 @@ function buildPairwiseDifferentiationCheckName(
     QuestionTypeFixtureName,
   materialKind:
     "condition"
-    | "risk",
+    | "risk"
+    | "evidence",
 ): string {
+  const materialLabel =
+    materialKind
+    === "evidence"
+      ? "EvidenceDescriptions"
+      : `${materialKind.charAt(0).toUpperCase()}${materialKind.slice(1)}Keys`;
+
   return (
     `${questionA}${questionB.charAt(0).toUpperCase()}${questionB.slice(1)}`
-    + `Filtered${materialKind.charAt(0).toUpperCase()}${materialKind.slice(1)}`
-    + "KeysAreNotIdentical"
+    + `Filtered${materialLabel}`
+    + "AreNotIdentical"
   );
 }
 
@@ -1173,6 +1553,56 @@ function buildPairwiseDifferentiationAssertions(
           !keySetsAreIdentical,
       });
     }
+
+    if (
+      "assertEvidenceDescriptionsAreNotIdentical"
+      in contract
+      && contract.assertEvidenceDescriptionsAreNotIdentical
+    ) {
+      const descriptionSetsAreIdentical =
+        areDescriptionSetsIdentical(
+          left.promptEvidenceDescriptions,
+          right.promptEvidenceDescriptions,
+        );
+
+      assertions.push({
+        name:
+          buildPairwiseDifferentiationCheckName(
+            contract.questionA,
+            contract.questionB,
+            "evidence",
+          ),
+
+        questionA:
+          contract.questionA,
+
+        questionB:
+          contract.questionB,
+
+        materialKind:
+          "evidence",
+
+        leftKeys:
+          left.promptEvidenceDescriptions,
+
+        rightKeys:
+          right.promptEvidenceDescriptions,
+
+        keySetsAreIdentical:
+          descriptionSetsAreIdentical,
+
+        leftDescriptions:
+          left.promptEvidenceDescriptions,
+
+        rightDescriptions:
+          right.promptEvidenceDescriptions,
+
+        descriptionSetsAreIdentical,
+
+        passed:
+          !descriptionSetsAreIdentical,
+      });
+    }
   }
 
   return assertions;
@@ -1220,6 +1650,12 @@ function buildOverlapSummary(
 
   averageRiskOverlapRatio:
     number;
+
+  averageCommonEvidenceCount:
+    number;
+
+  averageEvidenceOverlapRatio:
+    number;
 } {
   return {
     averageCommonConditionCount:
@@ -1253,6 +1689,22 @@ function buildOverlapSummary(
             overlap.riskOverlapRatio,
         ),
       ),
+
+    averageCommonEvidenceCount:
+      average(
+        overlaps.map(
+          (overlap) =>
+            overlap.commonEvidenceCount,
+        ),
+      ),
+
+    averageEvidenceOverlapRatio:
+      average(
+        overlaps.map(
+          (overlap) =>
+            overlap.evidenceOverlapRatio,
+        ),
+      ),
   };
 }
 
@@ -1269,6 +1721,7 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
         const {
           filteredConditions,
           filteredRisks,
+          filteredEvidence,
         } = computeFilteredKeys(
           artifacts,
         );
@@ -1287,6 +1740,7 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
             artifacts.payload,
           filteredConditions,
           filteredRisks,
+          filteredEvidence,
         };
       },
     );
@@ -1309,6 +1763,11 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
         const ownRiskKeys =
           extractKeys(
             artifacts.filteredRisks,
+          );
+
+        const ownPromptEvidenceDescriptions =
+          extractPromptEvidenceDescriptions(
+            artifacts.plan,
           );
 
         const otherDecisionConditionKeys =
@@ -1367,6 +1826,34 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
             )
             : ownRiskKeys;
 
+        const otherDecisionPromptEvidenceDescriptions =
+          isDecisionQuestion(
+            artifacts.fixture.name,
+          )
+            ? decisionArtifacts
+              .filter(
+                (other) =>
+                  other.fixture.name
+                  !== artifacts.fixture.name,
+              )
+              .map(
+                (other) =>
+                  extractPromptEvidenceDescriptions(
+                    other.plan,
+                  ),
+              )
+            : [];
+
+        const uniquePromptEvidenceDescriptions =
+          isDecisionQuestion(
+            artifacts.fixture.name,
+          )
+            ? computeUniqueKeys(
+              ownPromptEvidenceDescriptions,
+              otherDecisionPromptEvidenceDescriptions,
+            )
+            : ownPromptEvidenceDescriptions;
+
         return buildObservation(
           {
             fixture:
@@ -1384,8 +1871,10 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
           },
           artifacts.filteredConditions,
           artifacts.filteredRisks,
+          artifacts.filteredEvidence,
           uniqueConditionKeys,
           uniqueRiskKeys,
+          uniquePromptEvidenceDescriptions,
         );
       },
     );
@@ -1398,10 +1887,16 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
           observation.rawConditionKeys,
         riskKeys:
           observation.rawRiskKeys,
+        evidenceDescriptions:
+          extractEvidenceDescriptions(
+            observation.evidence,
+          ),
         conditionCount:
           observation.rawConditionCount,
         riskCount:
           observation.rawRiskCount,
+        evidenceCount:
+          observation.rawEvidenceCount,
       }),
     );
 
@@ -1413,10 +1908,14 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
           observation.conditionKeys,
         riskKeys:
           observation.riskKeys,
+        evidenceDescriptions:
+          observation.promptEvidenceDescriptions,
         conditionCount:
           observation.conditionCount,
         riskCount:
           observation.riskCount,
+        evidenceCount:
+          observation.promptEvidenceDescriptions.length,
       }),
     );
 
@@ -1452,6 +1951,12 @@ export function verifyDecisionExplanationQuestionTypeDifferentiation():
 
     rawAverageRiskOverlapRatio:
       rawOverlapSummary.averageRiskOverlapRatio,
+
+    rawAverageCommonEvidenceCount:
+      rawOverlapSummary.averageCommonEvidenceCount,
+
+    rawAverageEvidenceOverlapRatio:
+      rawOverlapSummary.averageEvidenceOverlapRatio,
 
     ...filteredOverlapSummary,
 
