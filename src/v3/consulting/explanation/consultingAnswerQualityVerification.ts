@@ -356,15 +356,25 @@ export function containsTechnicalSyntax(
 }
 
 
+const OLD_LAST_PARAGRAPH_COPY_RULE =
+  "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다";
+
+
 export function promptRequiresVerbatimFinalDecisionLastParagraph(
   prompt: ConsultingPrompt,
 ): boolean {
   return (
     prompt.systemPrompt.includes(
-      "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
+      "payload.finalDecision은 엔진이 확정한 최종 결론이다.",
     )
     && prompt.systemPrompt.includes(
-      "답변의 마지막에 기계적으로 같은 문장을 복사하는 방식으로 강제하지 않는다",
+      "finalDecision의 단어, 조사, 문장 구조를 바꾸거나 요약하거나 자연스럽게 재작성하지 않는다.",
+    )
+    && !prompt.systemPrompt.includes(
+      OLD_LAST_PARAGRAPH_COPY_RULE,
+    )
+    && !prompt.userPrompt.includes(
+      "위 최종 결론을 답변의 마지막 단락에",
     )
     && prompt.userPrompt.includes(
       "엔진이 확정한 최종 결론",
@@ -377,12 +387,11 @@ export function promptRequiresFinalDecisionExactlyOnce(
   prompt: ConsultingPrompt,
 ): boolean {
   return (
-    countOccurrences(
-      prompt.userPrompt,
-      "최종 결론",
-    ) === 1
+    prompt.systemPrompt.includes(
+      "답변 본문에는 payload.finalDecision의 원문 전체를 정확히 한 번 포함해야 한다.",
+    )
     && prompt.systemPrompt.includes(
-      "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
+      "finalDecision 원문은 답변 본문에 정확히 한 번만 포함한다.",
     )
   );
 }
@@ -391,13 +400,8 @@ export function promptRequiresFinalDecisionExactlyOnce(
 export function promptForbidsFinalDecisionPrefix(
   prompt: ConsultingPrompt,
 ): boolean {
-  return (
-    prompt.systemPrompt.includes(
-      "마지막 단락에 제목이나 최종 판단이라는 형식을 붙여 복사하지 않는다",
-    )
-    && !prompt.userPrompt.includes(
-      "앞에 제목, 최종 판단:, 따옴표, 목록 기호를 붙이지 마세요",
-    )
+  return prompt.systemPrompt.includes(
+    "finalDecision 원문 앞뒤에 최종 결론, 최종 판단 같은 제목이나 형식 라벨을 붙이지 않는다.",
   );
 }
 
@@ -409,8 +413,11 @@ export function promptForbidsRepeatingFinalDecisionInBody(
     prompt.systemPrompt.includes(
       "GPT는 판단을 새로 만들지 않고 엔진 판단을 사람이 이해할 수 있게 설명한다",
     )
-    && !prompt.userPrompt.includes(
-      "본문에서는 위 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 마세요",
+    && prompt.systemPrompt.includes(
+      "finalDecision과 같은 의미의 결론을 별도로 반복해서 만들지 않는다.",
+    )
+    && prompt.systemPrompt.includes(
+      "finalDecision 원문을 두 번 이상 반복하지 않는다.",
     )
   );
 }
@@ -909,21 +916,6 @@ function buildCase(
       readerSummaries,
     );
 
-  const expectedIncludedReaderSources =
-    uniqueReaderSources(
-      readerSummaries
-        .filter(
-          (item) =>
-            selectedReaderSources.includes(
-              item.source,
-            ),
-        )
-        .map(
-          (item) =>
-            item.source,
-        ),
-    );
-
   const unselectedReaderSummaries =
     readerSummaries.filter(
       (item) =>
@@ -1081,33 +1073,54 @@ function buildCase(
         normalizedPrompt,
       ).length > 0,
 
-    /**
-     * Plan 조건 줄이 엔진 조건 description과
-     * 정규화 집합이 같아야 한다.
-     * source에 없는 새 문장, 빈 줄, 일부 누락이면 실패한다.
+        /**
+     * Plan 조건 줄은 엔진 조건 description에서
+     * 선택된 문장이어야 한다.
+     *
+     * relevance filtering으로 일부 조건이 제외될 수 있으므로
+     * 전체 조건 집합과 동일할 필요는 없다.
+     * source에 없는 새 문장이 있으면 실패한다.
      */
-    explanationDoesNotInventConditions:
-      linesMatchSourceDescriptions(
-        conditionLines,
-        explanationInput.conditions.map(
-          (condition) =>
-            condition.description,
+        explanationDoesNotInventConditions:
+        conditionLines.every(
+          (line) =>
+            explanationInput.conditions.some(
+              (condition) =>
+                normalize(
+                  line,
+                )
+                === normalize(
+                  condition.description,
+                ),
+            ),
         ),
-      ),
 
     /**
      * Plan 위험 줄이 엔진 위험 description과
      * 정규화 집합이 같아야 한다.
      * source에 없는 새 문장, 빈 줄, 일부 누락이면 실패한다.
      */
-    explanationDoesNotInventRisks:
-      linesMatchSourceDescriptions(
-        riskLines,
-        explanationInput.risks.map(
-          (risk) =>
-            risk.description,
+        /**
+     * Plan 위험 줄은 엔진 위험 description에서
+     * 선택된 문장이어야 한다.
+     *
+     * relevance filtering으로 일부 위험이 제외될 수 있으므로
+     * 전체 위험 집합과 동일할 필요는 없다.
+     * source에 없는 새 문장이 있으면 실패한다.
+     */
+        explanationDoesNotInventRisks:
+        riskLines.every(
+          (line) =>
+            explanationInput.risks.some(
+              (risk) =>
+                normalize(
+                  line,
+                )
+                === normalize(
+                  risk.description,
+                ),
+            ),
         ),
-      ),
 
     /**
      * 시스템 프롬프트가 판단 변경 금지를 포함한다.
@@ -1144,8 +1157,8 @@ function buildCase(
       ),
 
     /**
-     * Prompt가 엔진 최종 결론을 약화하지 않고
-     * 마지막 단락 복사를 강제하지 않는다.
+     * Prompt가 payload.finalDecision을 엔진 확정 결론으로
+     * 유지하고 마지막 단락 기계적 복사를 강제하지 않는다.
      */
     promptRequiresVerbatimFinalDecisionLastParagraph:
       promptRequiresVerbatimFinalDecisionLastParagraph(
@@ -1153,8 +1166,8 @@ function buildCase(
       ),
 
     /**
-     * Prompt 사용자 문구에서 최종 결론이
-     * 한 번만 등장하고 반복 강제를 하지 않는다.
+     * Prompt가 finalDecision 원문을
+     * 답변 본문에 정확히 한 번 포함하도록 명시한다.
      */
     promptRequiresFinalDecisionExactlyOnce:
       promptRequiresFinalDecisionExactlyOnce(
@@ -1162,8 +1175,8 @@ function buildCase(
       ),
 
     /**
-     * Prompt가 마지막 단락에 제목이나
-     * 최종 판단 형식을 붙여 복사하지 않는다.
+     * Prompt가 finalDecision 원문 앞뒤에
+     * 고정 제목이나 형식 라벨을 붙이지 않도록 한다.
      */
     promptForbidsFinalDecisionPrefix:
       promptForbidsFinalDecisionPrefix(
@@ -1172,7 +1185,7 @@ function buildCase(
 
     /**
      * Prompt가 엔진 판단을 새로 만들거나
-     * 본문에서 같은 문장을 반복 강제하지 않는다.
+     * finalDecision을 반복·재작성하지 않도록 한다.
      */
     promptForbidsRepeatingFinalDecisionInBody:
       promptForbidsRepeatingFinalDecisionInBody(
@@ -1216,13 +1229,17 @@ function buildCase(
       ),
 
     /**
-     * Evidence 블록의 Reader source가
-     * 선택 규칙과 일치해야 한다.
+     * Evidence에 실제 포함된 Reader source는
+     * 선택 규칙에 의해 허용된 source여야 한다.
+     * relevance filtering으로 선택된 source 일부가
+     * Evidence에서 제외될 수 있다.
      */
     evidenceReaderSourcesMatchSelectionRule:
-      arraysMatchAsSet(
-        includedReaderSources,
-        expectedIncludedReaderSources,
+      includedReaderSources.every(
+        (source) =>
+          selectedReaderSources.includes(
+            source,
+          ),
       ),
 
     /**
@@ -1434,55 +1451,55 @@ export function verifyConsultingAnswerQuality():
       ) === false,
 
     /**
-     * 엔진 최종 결론 유지와 마지막 단락 복사
-     * 금지 규칙이 없으면 Prompt 검사를 통과시키지 않는다.
+     * 엔진 확정 finalDecision 유지와 마지막 단락
+     * 기계적 복사 금지 규칙이 없으면 통과시키지 않는다.
      */
     finalDecisionPromptRuleRejectsMissingVerbatimLastParagraph:
       promptRequiresVerbatimFinalDecisionLastParagraph({
         systemPrompt:
-          "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
+          OLD_LAST_PARAGRAPH_COPY_RULE,
+
+        userPrompt:
+          "위 최종 결론을 답변의 마지막 단락에 그대로 작성하세요",
+      }) === false,
+
+    /**
+     * finalDecision 원문을 본문에 정확히 한 번
+     * 포함하라는 규칙이 없으면 통과시키지 않는다.
+     */
+    finalDecisionPromptRuleRejectsMissingExactlyOnce:
+      promptRequiresFinalDecisionExactlyOnce({
+        systemPrompt:
+          "payload.finalDecision은 엔진이 확정한 최종 결론이다.",
 
         userPrompt:
           "엔진이 확정한 최종 결론",
       }) === false,
 
     /**
-     * 사용자 문구에서 최종 결론이 한 번만
-     * 등장하지 않으면 Prompt 검사를 통과시키지 않는다.
-     */
-    finalDecisionPromptRuleRejectsMissingExactlyOnce:
-      promptRequiresFinalDecisionExactlyOnce({
-        systemPrompt:
-          "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
-
-        userPrompt:
-          "엔진이 확정한 최종 결론\n최종 결론 작성 규칙",
-      }) === false,
-
-    /**
-     * 마지막 단락 형식 복사 금지 규칙이
+     * finalDecision 앞뒤 고정 라벨 금지 규칙이
      * 없으면 Prompt 검사를 통과시키지 않는다.
      */
     finalDecisionPromptRuleRejectsMissingPrefixBan:
       promptForbidsFinalDecisionPrefix({
         systemPrompt:
-          "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
+          "finalDecision 원문을 두 번 이상 반복하지 않는다.",
 
         userPrompt:
-          "앞에 제목, 최종 판단:, 따옴표, 목록 기호를 붙이지 마세요",
+          "엔진이 확정한 최종 결론",
       }) === false,
 
     /**
-     * 엔진 판단 설명 규칙이 없으면
-     * Prompt 검사를 통과시키지 않는다.
+     * 엔진 판단 설명·finalDecision 반복 금지
+     * 규칙이 없으면 Prompt 검사를 통과시키지 않는다.
      */
     finalDecisionPromptRuleRejectsMissingBodyRepeatBan:
       promptForbidsRepeatingFinalDecisionInBody({
         systemPrompt:
-          "최종 결론이라는 고정 문구를 여러 번 반복하지 않는다",
+          "verdict를 변경하지 않는다.",
 
         userPrompt:
-          "본문에서는 위 최종 결론 전체 문장을 반복하거나 바꿔 쓰지 마세요",
+          "엔진이 확정한 최종 결론",
       }) === false,
 
     /**

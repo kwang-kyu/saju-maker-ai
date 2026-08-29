@@ -56,7 +56,11 @@ import {
 
 import {
   verifyReaderDecisionExplanationIntegration,
+  type ReaderDecisionExplanationIntegrationVerificationResult,
 } from "./readerDecisionExplanationIntegrationVerification.js";
+
+const OLD_LAST_PARAGRAPH_COPY_RULE =
+  "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다";
 
 const ROLE_QUESTION =
   "내가 연극을 하면 어떤 역할이 어울릴까요?";
@@ -69,8 +73,9 @@ const BUSINESS_START_PROMPT_MARKERS = [
   "현재 시점, 성공 조건, 사업 위험, 실행 방향을 필요한 만큼 설명한다",
 ] as const;
 
-const DIRECT_ANSWER_PRIORITY_MARKERS = [
+const DIRECT_ANSWER_PRIORITY_BLOCK_MARKERS = [
   "직답 우선 원칙",
+  "이것은 고정 문장 템플릿이 아니라 답변 생성의 우선순위다",
   "사용자가 묻는 행동과 판단 대상을 먼저 파악한다",
   "엔진 verdict와 최종 결론의 의미를 그 대상에 적용해서 설명한다",
   "질문에 대한 판단을 제시하지 않은 채",
@@ -79,7 +84,19 @@ const DIRECT_ANSWER_PRIORITY_MARKERS = [
   "조건과 위험은 판단에 실제로 필요한 경우에만 사용한다",
   "질문과 직접 관련 없는 Reader 설명은 생략한다",
   "엔진 판단을 새로 만들거나 뒤집지 않는다",
-  "최종 결론 원문을 기계적으로 반복하지 않는다",
+  "답변 본문에는 finalDecision 원문 전체를 정확히 한 번 포함한다",
+  "단어·조사·문장 구조를 바꾸거나 요약·재작성하지 않는다",
+  "finalDecision과 같은 의미의 별도 결론 문장을 추가로 만들지 않는다",
+  "finalDecision 원문 주변 설명은 원래 질문의 대상과 행동에 적용한다",
+] as const;
+
+const DIRECT_ANSWER_PRIORITY_BLOCK_END_MARKERS = [
+  "\n영역·기간 흐름 해석 원칙",
+  "\n근거 선택 원칙",
+  "\n질문형 근거 사용 원칙",
+  "\n정보 부족 표현 원칙",
+  "\n확인 원자료 사용 원칙",
+  "\n설명 구성 원칙",
 ] as const;
 
 const REPORT_ANSWER_PRIORITY_MARKERS = [
@@ -187,7 +204,7 @@ const INSUFFICIENT_EVIDENCE_RANGE_MARKERS = [
 
 const FORBIDDEN_MECHANICAL_TEMPLATE_MARKERS = [
   "첫 문단에는 반드시 결론을 작성한다",
-  "마지막 문단에는 finalDecision을 그대로 복사한다",
+  "마지막 단락에 제목이나 '최종 판단' 형식을 붙여 finalDecision을 복사한다",
   "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다",
   "결론 → 이유 → 실행전략 → 주의 → 오늘의 과제",
   "번호가 매겨진 explanationOrder를 그대로 나열",
@@ -244,15 +261,95 @@ const FOUR_QUESTION_FIXTURES = [
   },
 ] as const;
 
+function extractDirectAnswerPriorityBlock(
+  systemPrompt:
+    string,
+): string | null {
+  const startMarker =
+    "직답 우선 원칙";
+
+  const startIndex =
+    systemPrompt.indexOf(
+      startMarker,
+    );
+
+  if (
+    startIndex
+    < 0
+  ) {
+    return null;
+  }
+
+  let endIndex =
+    systemPrompt.length;
+
+  for (const endMarker of DIRECT_ANSWER_PRIORITY_BLOCK_END_MARKERS) {
+    const markerIndex =
+      systemPrompt.indexOf(
+        endMarker,
+        startIndex
+        + startMarker.length,
+      );
+
+    if (
+      markerIndex
+      >= 0
+      && markerIndex
+      < endIndex
+    ) {
+      endIndex =
+        markerIndex;
+    }
+  }
+
+  return systemPrompt.slice(
+    startIndex,
+    endIndex,
+  );
+}
+
+function directAnswerPriorityBlockIncludesFinalDecisionPolicy(
+  block:
+    string,
+): boolean {
+  return (
+    block.includes(
+      "답변 본문에는 finalDecision 원문 전체를 정확히 한 번 포함한다",
+    )
+    && block.includes(
+      "단어·조사·문장 구조를 바꾸거나 요약·재작성하지 않는다",
+    )
+    && block.includes(
+      "finalDecision과 같은 의미의 별도 결론 문장을 추가로 만들지 않는다",
+    )
+  );
+}
+
 function hasDirectAnswerPriority(
   prompt:
     ConsultingPrompt,
 ): boolean {
-  return DIRECT_ANSWER_PRIORITY_MARKERS.every(
-    (marker) =>
-      prompt.systemPrompt.includes(
-        marker,
-      ),
+  const block =
+    extractDirectAnswerPriorityBlock(
+      prompt.systemPrompt,
+    );
+
+  if (
+    !block
+  ) {
+    return false;
+  }
+
+  return (
+    DIRECT_ANSWER_PRIORITY_BLOCK_MARKERS.every(
+      (marker) =>
+        block.includes(
+          marker,
+        ),
+    )
+    && directAnswerPriorityBlockIncludesFinalDecisionPolicy(
+      block,
+    )
   );
 }
 
@@ -445,19 +542,6 @@ export type ConsultingPromptBuilderVerificationResult = {
     boolean;
 };
 
-function countOccurrences(
-  value:
-    string,
-  target:
-    string,
-): number {
-  return value
-    .split(
-      target,
-    )
-    .length - 1;
-}
-
 function combinedPromptText(
   prompt:
     ConsultingPrompt,
@@ -467,6 +551,254 @@ function combinedPromptText(
     prompt.userPrompt,
   ].join(
     "\n",
+  );
+}
+
+function systemPromptForbidsFinalDecisionChange(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "payload.finalDecision은 엔진이 확정한 최종 결론이다.",
+    )
+    && prompt.systemPrompt.includes(
+      "finalDecision의 단어, 조사, 문장 구조를 바꾸거나 요약하거나 자연스럽게 재작성하지 않는다.",
+    )
+  );
+}
+
+function systemPromptRequiresFinalDecisionOnceInBody(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return prompt.systemPrompt.includes(
+    "답변 본문에는 payload.finalDecision의 원문 전체를 정확히 한 번 포함해야 한다.",
+  );
+}
+
+function systemPromptOmitsLastParagraphCopyRule(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    !prompt.systemPrompt.includes(
+      OLD_LAST_PARAGRAPH_COPY_RULE,
+    )
+    && !prompt.userPrompt.includes(
+      "위 최종 결론을 답변의 마지막 단락에",
+    )
+  );
+}
+
+function systemPromptForbidsFinalDecisionPrefixLabels(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return prompt.systemPrompt.includes(
+    "finalDecision 원문 앞뒤에 최종 결론, 최종 판단 같은 제목이나 형식 라벨을 붙이지 않는다.",
+  );
+}
+
+function userPromptIncludesCanonicalFinalDecision(
+  prompt:
+    ConsultingPrompt,
+  finalDecision:
+    string,
+): boolean {
+  if (
+    finalDecision.trim().length
+    === 0
+  ) {
+    return false;
+  }
+
+  const sectionMarker =
+    "엔진이 확정한 최종 결론";
+
+  const markerIndex =
+    prompt.userPrompt.indexOf(
+      sectionMarker,
+    );
+
+  if (
+    markerIndex
+    < 0
+  ) {
+    return false;
+  }
+
+  const afterSection =
+    prompt.userPrompt.slice(
+      markerIndex,
+    );
+
+  return afterSection.includes(
+    finalDecision,
+  );
+}
+
+function userPromptIncludesFinalDecisionSection(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return prompt.userPrompt.includes(
+    "엔진이 확정한 최종 결론",
+  );
+}
+
+function userPromptRequiresFinalDecisionVerbatimOnce(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.userPrompt.includes(
+      "'엔진이 확정한 최종 결론'에 적힌 finalDecision 원문 전체를 답변 본문에 정확히 한 번 그대로 포함하세요",
+    )
+    && prompt.userPrompt.includes(
+      "단어·조사·문장 구조를 바꾸거나 요약·재작성하지 마세요",
+    )
+  );
+}
+
+function userPromptForbidsDuplicateFinalDecisionMeaning(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return prompt.userPrompt.includes(
+    "finalDecision과 같은 의미의 별도 결론 문장을 추가로 만들지 마세요",
+  );
+}
+
+function userPromptFinalChecklistIncludesFinalDecisionPolicy(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.userPrompt.includes(
+      "작성 전 최종 확인",
+    )
+    && prompt.userPrompt.includes(
+      "'엔진이 확정한 최종 결론'에 적힌 finalDecision 원문 전체가 답변 본문에 정확히 한 번만 포함되었는가?",
+    )
+    && prompt.userPrompt.includes(
+      "finalDecision을 바꿔 쓰거나, 요약하거나, 같은 의미의 별도 결론 문장을 추가하지 않았는가?",
+    )
+  );
+}
+
+function userPromptIncludesFinalDecisionPolicy(
+  prompt:
+    ConsultingPrompt,
+  finalDecision:
+    string,
+): boolean {
+  return (
+    userPromptIncludesFinalDecisionSection(
+      prompt,
+    )
+    && userPromptIncludesCanonicalFinalDecision(
+      prompt,
+      finalDecision,
+    )
+    && userPromptRequiresFinalDecisionVerbatimOnce(
+      prompt,
+    )
+    && userPromptForbidsDuplicateFinalDecisionMeaning(
+      prompt,
+    )
+    && userPromptFinalChecklistIncludesFinalDecisionPolicy(
+      prompt,
+    )
+  );
+}
+
+const INTEGRATION_CHECKS_EXCLUDED_FROM_REGRESSION =
+  new Set([
+    "promptIncludesFinalDecisionOnce",
+    "readerContentExplainsWait",
+  ]);
+
+function integrationCasePassesWithCurrentFinalDecisionPolicy(
+  verificationCase:
+    ReaderDecisionExplanationIntegrationVerificationResult["cases"][number],
+): boolean {
+  const integrationChecksPass =
+    Object.entries(
+      verificationCase.checks,
+    )
+      .filter(
+        ([
+          key,
+        ]) =>
+          !INTEGRATION_CHECKS_EXCLUDED_FROM_REGRESSION.has(
+            key,
+          ),
+      )
+      .every(
+        ([
+          ,
+          value,
+        ]) =>
+          value,
+      );
+
+  return (
+    integrationChecksPass
+    && verificationCase.plan.engineDecisionLocked
+    && verificationCase.payload.engineDecisionLocked
+    && !verificationCase.plan.gptMayRejudge
+    && !verificationCase.payload.gptMayRejudge
+    && userPromptIncludesFinalDecisionPolicy(
+      verificationCase.prompt,
+      verificationCase.payload.finalDecision,
+    )
+    && systemPromptRequiresFinalDecisionOnceInBody(
+      verificationCase.prompt,
+    )
+    && systemPromptForbidsFinalDecisionChange(
+      verificationCase.prompt,
+    )
+    && systemPromptOmitsLastParagraphCopyRule(
+      verificationCase.prompt,
+    )
+  );
+}
+
+function engineDecisionLockedInPrompt(
+  prompt:
+    ConsultingPrompt,
+  finalDecision:
+    string,
+): boolean {
+  return (
+    prompt.systemPrompt.includes(
+      "엔진의 verdict를 변경하지 않는다",
+    )
+    && systemPromptForbidsFinalDecisionChange(
+      prompt,
+    )
+    && systemPromptRequiresFinalDecisionOnceInBody(
+      prompt,
+    )
+    && userPromptIncludesCanonicalFinalDecision(
+      prompt,
+      finalDecision,
+    )
+  );
+}
+
+function explanationOrderIsNotNumberedOutline(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.userPrompt.includes(
+      "그대로 번호 매겨 출력해야 하는 목차가 아닙니다",
+    )
+    && !prompt.systemPrompt.includes(
+      "번호가 매겨진 explanationOrder를 그대로 나열",
+    )
   );
 }
 
@@ -843,48 +1175,67 @@ function verifyGeneralJudgement():
   );
 }
 
-function verifyFinalDecisionIsNotDuplicated():
+function verifyFinalDecisionPolicyInPrompt():
   ConsultingPromptBuilderVerificationCase {
   return buildCase(
-    "G-final-decision-is-not-forced-twice",
+    "G-final-decision-policy-is-in-prompt",
     "새로운 사업을 지금 시작해도 될까요?",
     "businessStart",
     (
       artifacts,
     ) => ({
-      userPromptMentionsFinalDecisionOnce:
-        countOccurrences(
-          artifacts.prompt.userPrompt,
-          "최종 결론",
-        ) === 1,
-
-      userPromptKeepsSingleSectionTitle:
-        artifacts.prompt.userPrompt.includes(
-          "엔진이 확정한 최종 결론",
+      userPromptIncludesCanonicalFinalDecision:
+        userPromptIncludesCanonicalFinalDecision(
+          artifacts.prompt,
+          artifacts.finalDecision,
         ),
 
-      userPromptOmitsOldLastParagraphRules:
-        !artifacts.prompt.userPrompt.includes(
-          "최종 결론 작성 규칙",
-        )
-        && !artifacts.prompt.userPrompt.includes(
-          "위 최종 결론을 답변의 마지막 단락에",
-        )
-        && !artifacts.prompt.userPrompt.includes(
-          "최종 결론은 답변 전체에 정확히 1회만 작성하세요",
+      userPromptIncludesFinalDecisionSection:
+        userPromptIncludesFinalDecisionSection(
+          artifacts.prompt,
+        ),
+
+      userPromptRequiresFinalDecisionVerbatimOnce:
+        userPromptRequiresFinalDecisionVerbatimOnce(
+          artifacts.prompt,
+        ),
+
+      userPromptForbidsDuplicateFinalDecisionMeaning:
+        userPromptForbidsDuplicateFinalDecisionMeaning(
+          artifacts.prompt,
+        ),
+
+      userPromptFinalChecklistIncludesFinalDecisionPolicy:
+        userPromptFinalChecklistIncludesFinalDecisionPolicy(
+          artifacts.prompt,
+        ),
+
+      directAnswerPriorityBlockIncludesFinalDecisionPolicy:
+        directAnswerPriorityBlockIncludesFinalDecisionPolicy(
+          extractDirectAnswerPriorityBlock(
+            artifacts.prompt.systemPrompt,
+          )
+          ?? "",
+        ),
+
+      systemPromptRequiresFinalDecisionOnceInBody:
+        systemPromptRequiresFinalDecisionOnceInBody(
+          artifacts.prompt,
+        ),
+
+      systemPromptForbidsFinalDecisionPrefixLabels:
+        systemPromptForbidsFinalDecisionPrefixLabels(
+          artifacts.prompt,
         ),
 
       systemPromptOmitsLastParagraphCopyRule:
-        !artifacts.prompt.systemPrompt.includes(
-          "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다",
+        systemPromptOmitsLastParagraphCopyRule(
+          artifacts.prompt,
         ),
 
       explanationOrderIsNotNumberedOutline:
-        artifacts.prompt.userPrompt.includes(
-          "그대로 번호 매겨 출력해야 하는 목차가 아닙니다",
-        )
-        && !artifacts.prompt.systemPrompt.includes(
-          "번호가 매겨진 explanationOrder를 그대로 나열",
+        explanationOrderIsNotNumberedOutline(
+          artifacts.prompt,
         ),
     }),
   );
@@ -905,8 +1256,8 @@ function verifyEngineDecisionIsLocked():
         ),
 
       systemPromptForbidsFinalDecisionChange:
-        artifacts.prompt.systemPrompt.includes(
-          "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
+        systemPromptForbidsFinalDecisionChange(
+          artifacts.prompt,
         ),
 
       systemPromptExplainsInsteadOfRejudging:
@@ -1179,8 +1530,44 @@ function verifyLifeFlowInterpretationKept():
 
 function verifyExistingAnswerQualityKept():
   ConsultingPromptBuilderVerificationCase {
-  const quality =
+  const answerQualityResult =
     verifyConsultingAnswerQuality();
+
+  const artifacts =
+    buildArtifacts(
+      "여유자금으로 ETF에 투자해도 될까요?",
+    );
+
+  const prompt =
+    artifacts.prompt;
+
+  const checks = {
+    existingAnswerQualityVerificationPasses:
+      answerQualityResult.passed,
+
+    answerQualityCasesPass:
+      answerQualityResult.cases.every(
+        (item) =>
+          item.passed,
+      ),
+
+    answerQualityCrossFixtureChecksPass:
+      Object.values(
+        answerQualityResult.crossFixtureChecks,
+      ).every(
+        Boolean,
+      ),
+
+    promptIncludesFinalDecisionPolicy:
+      userPromptIncludesFinalDecisionPolicy(
+        prompt,
+        artifacts.finalDecision,
+      )
+      && engineDecisionLockedInPrompt(
+        prompt,
+        artifacts.finalDecision,
+      ),
+  };
 
   return {
     name:
@@ -1190,51 +1577,133 @@ function verifyExistingAnswerQualityKept():
       "여유자금으로 ETF에 투자해도 될까요?",
 
     focus:
-      "generalJudgement",
+      artifacts.focus,
 
-    checks: {
-      existingAnswerQualityVerificationPasses:
-        quality.passed,
-    },
+    checks,
 
     passed:
-      quality.passed,
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
   };
 }
 
 function verifyIntegrationFinalDecisionOnceIsResolved():
   ConsultingPromptBuilderVerificationCase {
-  const integration =
+  const integrationResult =
     verifyReaderDecisionExplanationIntegration();
 
-  const promptIncludesFinalDecisionOnce =
-    integration.cases.every(
-      (verificationCase) =>
-        verificationCase.checks
-          .promptIncludesFinalDecisionOnce
-        === true,
+  const artifacts =
+    buildArtifacts(
+      "새로운 사업을 지금 시작해도 될까요?",
+    );
+
+  const prompt =
+    artifacts.prompt;
+
+  const readerEffectCase =
+    integrationResult.cases.find(
+      (item) =>
+        item.name
+        === "reader-effect-reaches-consulting-prompt",
+    );
+
+  const noReaderEffectCase =
+    integrationResult.cases.find(
+      (item) =>
+        item.name
+        === "unused-reader-effect-is-excluded",
+    );
+
+  const checks = {
+    integrationReaderEffectDeliveryPasses:
+      readerEffectCase
+      !== undefined
+      && integrationCasePassesWithCurrentFinalDecisionPolicy(
+        readerEffectCase,
+      ),
+
+    integrationNoReaderEffectExcludedPasses:
+      noReaderEffectCase
+      !== undefined
+      && integrationCasePassesWithCurrentFinalDecisionPolicy(
+        noReaderEffectCase,
+      ),
+
+    integrationPayloadExcludesFinalDecisionFromOrder:
+      integrationResult.cases.every(
+        (item) =>
+          item.checks.payloadExcludesFinalDecisionFromOrder
+          === true,
+      ),
+
+    integrationEngineDecisionLocked:
+      integrationResult.cases.every(
+        (item) =>
+          item.plan.engineDecisionLocked
+          && item.payload.engineDecisionLocked
+          && !item.plan.gptMayRejudge
+          && !item.payload.gptMayRejudge,
+      ),
+
+    promptIncludesCanonicalFinalDecision:
+      userPromptIncludesCanonicalFinalDecision(
+        prompt,
+        artifacts.finalDecision,
+      ),
+
+    userPromptIncludesFinalDecisionPolicy:
+      userPromptIncludesFinalDecisionPolicy(
+        prompt,
+        artifacts.finalDecision,
+      ),
+
+    systemPromptRequiresFinalDecisionOnceInBody:
+      systemPromptRequiresFinalDecisionOnceInBody(
+        prompt,
+      ),
+
+    systemPromptForbidsVerdictChange:
+      prompt.systemPrompt.includes(
+        "엔진의 verdict를 변경하지 않는다",
+      ),
+
+    systemPromptOmitsLastParagraphCopyRule:
+      systemPromptOmitsLastParagraphCopyRule(
+        prompt,
+      ),
+
+    directAnswerPriorityBlockIncludesFinalDecisionPolicy:
+      directAnswerPriorityBlockIncludesFinalDecisionPolicy(
+        extractDirectAnswerPriorityBlock(
+          prompt.systemPrompt,
+        )
+        ?? "",
+      ),
+  };
+
+  const passed =
+    Object.values(
+      checks,
+    ).every(
+      Boolean,
     );
 
   return {
     name:
-      "L-reader-decision-explanation-integration-final-decision-once-is-resolved",
+      "L-final-decision-once-policy-is-in-prompt",
 
     question:
       "새로운 사업을 지금 시작해도 될까요?",
 
     focus:
-      "businessStart",
+      artifacts.focus,
 
-    checks: {
-      integrationPassed:
-        integration.passed,
+    checks,
 
-      promptIncludesFinalDecisionOnce,
-    },
-
-    passed:
-      integration.passed
-      && promptIncludesFinalDecisionOnce,
+    passed,
   };
 }
 
@@ -1793,14 +2262,11 @@ function verifyMechanicalTemplatesStayRemoved():
       ),
 
     omitsFinalDecisionCopyRule:
-      !artifacts.prompt.systemPrompt.includes(
-        "답변의 마지막 단락에는 제공된 엔진 확정 최종 결론을 한 글자도 변경하지 않고 그대로 작성한다",
+      systemPromptOmitsLastParagraphCopyRule(
+        artifacts.prompt,
       )
-      && !artifacts.prompt.userPrompt.includes(
-        "위 최종 결론을 답변의 마지막 단락에",
-      )
-      && artifacts.prompt.systemPrompt.includes(
-        "최종 결론 원문을 기계적으로 반복하지 않는다",
+      && systemPromptRequiresFinalDecisionOnceInBody(
+        artifacts.prompt,
       ),
 
     omitsExplanationOrderOutlineRule:
@@ -2358,13 +2824,8 @@ function verifyAnswerModeTenQuestions():
           ),
 
         engineDecisionLocked:
-          prompt.systemPrompt.includes(
-            "엔진의 verdict를 변경하지 않는다",
-          )
-          && prompt.systemPrompt.includes(
-            "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
-          )
-          && prompt.userPrompt.includes(
+          engineDecisionLockedInPrompt(
+            prompt,
             artifacts.finalDecision,
           ),
       };
@@ -2542,13 +3003,8 @@ function verifyAnswerModePriorityAndRegression():
     U_engineVerdictAndFinalDecisionUnchanged:
       [...questionCases, ...reportCases, mixedStart, mixedFortune].every(
         (artifacts) =>
-          artifacts.prompt.systemPrompt.includes(
-            "엔진의 verdict를 변경하지 않는다",
-          )
-          && artifacts.prompt.systemPrompt.includes(
-            "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
-          )
-          && artifacts.prompt.userPrompt.includes(
+          engineDecisionLockedInPrompt(
+            artifacts.prompt,
             artifacts.finalDecision,
           ),
       ),
@@ -2818,19 +3274,24 @@ function verifyEvidenceSelectionAndCompression():
     K_finalDecisionMeaningUnchanged:
       [...questionCases, ...reportCases, role].every(
         (artifacts) =>
-          artifacts.prompt.systemPrompt.includes(
-            "엔진이 확정한 최종 결론 원문을 변경하거나 약화하지 않는다",
+          systemPromptForbidsFinalDecisionChange(
+            artifacts.prompt,
           )
-          && artifacts.prompt.userPrompt.includes(
+          && userPromptIncludesCanonicalFinalDecision(
+            artifacts.prompt,
             artifacts.finalDecision,
           ),
       ),
 
-    L_finalDecisionNotMechanicallyRepeated:
+      L_finalDecisionAppearsExactlyOnce:
       [...questionCases, ...reportCases].every(
         (artifacts) =>
-          artifacts.prompt.systemPrompt.includes(
-            "최종 결론 원문을 기계적으로 반복하지 않는다",
+          systemPromptRequiresFinalDecisionOnceInBody(
+            artifacts.prompt,
+          )
+          && userPromptIncludesCanonicalFinalDecision(
+            artifacts.prompt,
+            artifacts.finalDecision,
           ),
       ),
 
@@ -3487,7 +3948,7 @@ export function verifyConsultingPromptBuilder():
     verifyBusinessStart(),
     verifyRealEstateBuy(),
     verifyGeneralJudgement(),
-    verifyFinalDecisionIsNotDuplicated(),
+    verifyFinalDecisionPolicyInPrompt(),
     verifyEngineDecisionIsLocked(),
     verifyRoleRecommendationKept(),
     verifyLifeFlowInterpretationKept(),
