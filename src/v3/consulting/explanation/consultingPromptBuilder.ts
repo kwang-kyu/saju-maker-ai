@@ -334,6 +334,12 @@ function resolvePromptExplanationFocus(
   ) {
     return null;
   }
+  if (
+    payload.explanationFocus
+  ) {
+    return payload.explanationFocus;
+  }
+
 
   return resolveDecisionExplanationFocus(
     {
