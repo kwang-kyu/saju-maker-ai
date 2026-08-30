@@ -253,6 +253,121 @@ function resolveQuestionTopic(
     .topic;
 }
 
+const GENERAL_JUDGEMENT_EXECUTION_EVIDENCE_SOURCES:
+  readonly DecisionExplanationEvidence["source"][] = [
+    "career",
+    "lifeDriver",
+    "lifePhase",
+    "repeatedPattern",
+    "survivalStyle",
+  ];
+
+const GENERAL_JUDGEMENT_EXECUTION_ACTION_OBJECT_TYPES:
+  readonly NonNullable<
+    DecisionExplanationMaterialRelevanceContext["questionContext"]
+  >["actionObject"]["type"][] = [
+    "business",
+    "job",
+  ];
+
+function isExecutionEvidenceSourceForGeneralJudgement(
+  source:
+    DecisionExplanationEvidence["source"],
+): boolean {
+  return GENERAL_JUDGEMENT_EXECUTION_EVIDENCE_SOURCES.some(
+    (item) =>
+      item === source,
+  );
+}
+
+function isExecutionActionObjectForGeneralJudgement(
+  context:
+    DecisionExplanationMaterialRelevanceContext,
+): boolean {
+  const actionObjectType =
+    context
+      .questionContext
+      ?.actionObject
+      .type;
+
+  if (
+    !actionObjectType
+  ) {
+    return false;
+  }
+
+  return GENERAL_JUDGEMENT_EXECUTION_ACTION_OBJECT_TYPES.some(
+    (item) =>
+      item
+      === actionObjectType,
+  );
+}
+
+/**
+ * generalJudgement focus에서 decisionTarget/actionObject 기준으로
+ * execution·business 관련 evidence만 걸른다.
+ *
+ * null이면 기존 topic/focus relevance 로직에 위임한다.
+ */
+function resolveDecisionTargetEvidenceRelevance(
+  source:
+    DecisionExplanationEvidence["source"],
+  context:
+    DecisionExplanationMaterialRelevanceContext,
+): boolean | null {
+  if (
+    context.focus
+    !== "generalJudgement"
+  ) {
+    return null;
+  }
+
+  const {
+    decisionTarget,
+  } = context;
+
+  if (
+    decisionTarget
+    === "none"
+  ) {
+    return (
+      source
+      === "questionIntent"
+    );
+  }
+
+  if (
+    decisionTarget
+    === "manageMoney"
+  ) {
+    if (
+      isExecutionEvidenceSourceForGeneralJudgement(
+        source,
+      )
+    ) {
+      return false;
+    }
+
+    if (
+      isExecutionActionObjectForGeneralJudgement(
+        context,
+      )
+      && (
+        source
+        === "career"
+        || source
+        === "capacity"
+      )
+    ) {
+      return false;
+    }
+
+    return null;
+  }
+
+  return null;
+}
+
 function isMoneyRelatedContext(
   context:
     DecisionExplanationMaterialRelevanceContext,
@@ -280,6 +395,19 @@ function isReaderEvidenceSourceRelevant(
   context:
     DecisionExplanationMaterialRelevanceContext,
 ): boolean {
+  const decisionTargetRelevance =
+    resolveDecisionTargetEvidenceRelevance(
+      source,
+      context,
+    );
+
+  if (
+    decisionTargetRelevance
+    !== null
+  ) {
+    return decisionTargetRelevance;
+  }
+
   const topic =
     resolveQuestionTopic(
       context,
@@ -389,6 +517,19 @@ export function isEvidenceMaterialRelevant(
   context:
     DecisionExplanationMaterialRelevanceContext,
 ): boolean {
+  const decisionTargetRelevance =
+    resolveDecisionTargetEvidenceRelevance(
+      evidence.source,
+      context,
+    );
+
+  if (
+    decisionTargetRelevance
+    !== null
+  ) {
+    return decisionTargetRelevance;
+  }
+
   const {
     focus,
     decisionTarget,
