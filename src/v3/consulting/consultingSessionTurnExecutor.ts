@@ -1,4 +1,4 @@
-  import {
+﻿  import {
     buildConsultingClarificationAnswer,
   } from "./consultingClarificationAnswerBuilder.js";
   import {
@@ -479,6 +479,25 @@
   function buildConfirmedCounterpartSaju(
     clarificationFacts:
       readonly ConsultingClarificationFact[],
+
+      counterpartFacts?:
+      {
+        birthDate?:
+          string
+          | null;
+
+        calendarType?:
+          string
+          | null;
+
+        gender?:
+          string
+          | null;
+
+        birthTime?:
+          string
+          | null;
+      },
   ) {
     const itemKey =
       "counterpartBirthData";
@@ -488,21 +507,27 @@
         clarificationFacts,
         itemKey,
         "birthDate",
-      );
+      )
+      ?? counterpartFacts
+        ?.birthDate;
 
     const calendarType =
       getClarificationFieldValue(
         clarificationFacts,
         itemKey,
         "calendarType",
-      );
+      )
+      ?? counterpartFacts
+        ?.calendarType;
 
     const gender =
       getClarificationFieldValue(
         clarificationFacts,
         itemKey,
         "gender",
-      );
+      )
+      ?? counterpartFacts
+        ?.gender;
 
     if (
       !birthDate
@@ -517,7 +542,9 @@
         clarificationFacts,
         itemKey,
         "birthTime",
-      );
+      )
+      ?? counterpartFacts
+        ?.birthTime;
 
     return buildCounterpartSajuCalculation({
       birthDate,
@@ -608,9 +635,11 @@
         decisionTurnId,
       );
 
-    const counterpartSaju =
+      const counterpartSaju =
       buildConfirmedCounterpartSaju(
         clarificationFacts,
+        decisionTurn.questionReaderResult
+          ?.counterpartFacts,
       );
 
     return {

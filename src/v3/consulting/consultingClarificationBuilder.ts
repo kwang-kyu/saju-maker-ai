@@ -219,8 +219,8 @@ function buildCounterpartBirthDataItem(
     description:
       `궁합 판단에 필요한 상대방의 ${missingFieldText} 정보가 확인되지 않았다.`,
 
-    question:
-      `이미 알려주신 정보는 다시 적지 않아도 됩니다. 상대방의 ${missingFieldText}만 알려주세요.`,
+      question:
+      `상대방의 ${missingFieldText}을 알려주세요.`,
   };
 }
 

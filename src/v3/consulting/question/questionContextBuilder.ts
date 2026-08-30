@@ -506,28 +506,30 @@ const identityProvided =
     !== null
   );
 
-const birthDataProvided =
+  const birthDataProvided =
   (
     counterpartBirthFieldKeys.has(
       "birthDate",
     )
-    && counterpartBirthFieldKeys.has(
-      "calendarType",
-    )
-    && counterpartBirthFieldKeys.has(
-      "gender",
-    )
-  )
-  || (
-    question
+    || question
       .counterpartFacts
       .birthDate
     !== null
-    && question
+  )
+  && (
+    counterpartBirthFieldKeys.has(
+      "calendarType",
+    )
+    || question
       .counterpartFacts
       .calendarType
     !== null
-    && question
+  )
+  && (
+    counterpartBirthFieldKeys.has(
+      "gender",
+    )
+    || question
       .counterpartFacts
       .gender
     !== null

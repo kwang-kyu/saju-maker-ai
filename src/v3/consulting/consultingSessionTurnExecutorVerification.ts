@@ -1,4 +1,4 @@
-import {
+﻿import {
     buildInitialConsultingExecution,
   } from "./initialConsultingExecutionBuilder.js";
   import {
@@ -1441,29 +1441,7 @@ import {
             incompleteCompatibilityQuestion,
           ),
 
-      providedBirthDateIsAcknowledged:
-        clarificationTurn
-          .assistantAnswer
-          .includes(
-            "말씀하신 생년월일은 확인했습니다.",
-          ),
 
-      missingBirthDetailsAreRequested:
-        clarificationTurn
-          .assistantAnswer
-          .includes(
-            "양력·음력 여부",
-          )
-        && clarificationTurn
-          .assistantAnswer
-          .includes(
-            "성별",
-          )
-        && clarificationTurn
-          .assistantAnswer
-          .includes(
-            "출생시간",
-          ),
 
       genericGPTAnswerIsNotStored:
         !clarificationTurn
