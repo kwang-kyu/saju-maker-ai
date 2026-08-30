@@ -894,6 +894,34 @@ function normalizeCounterpartBirthTime(
 ): string | null {
   const trimmedValue =
     value.trim();
+    const zodiacTimeMap: Record<
+  string,
+  string
+> = {
+  자시: "23:00",
+  축시: "01:00",
+  인시: "03:00",
+  묘시: "05:00",
+  진시: "07:00",
+  사시: "09:00",
+  오시: "11:00",
+  미시: "13:00",
+  신시: "15:00",
+  유시: "17:00",
+  술시: "19:00",
+  해시: "21:00",
+};
+
+const zodiacTime =
+  zodiacTimeMap[
+    trimmedValue
+  ];
+
+if (
+  zodiacTime
+) {
+  return zodiacTime;
+}
 
   const directMatch =
     /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(
@@ -914,6 +942,44 @@ function normalizeCounterpartBirthTime(
       ":",
     );
   }
+  const zodiacHourMap:
+  Record<string, string> = {
+    자시: "00:00",
+    子時: "00:00",
+    축시: "02:00",
+    丑時: "02:00",
+    인시: "04:00",
+    寅時: "04:00",
+    묘시: "06:00",
+    卯時: "06:00",
+    진시: "08:00",
+    辰時: "08:00",
+    사시: "10:00",
+    巳時: "10:00",
+    오시: "12:00",
+    午時: "12:00",
+    미시: "14:00",
+    未時: "14:00",
+    신시: "16:00",
+    申時: "16:00",
+    유시: "18:00",
+    酉時: "18:00",
+    술시: "20:00",
+    戌時: "20:00",
+    해시: "22:00",
+    亥時: "22:00",
+  };
+
+const zodiacHour =
+  zodiacHourMap[
+    trimmedValue
+  ];
+
+if (
+  zodiacHour
+) {
+  return zodiacHour;
+}
 
   const koreanMatch =
     trimmedValue.match(
