@@ -1,6 +1,7 @@
 import type {
   ConsultingClarificationRequest,
 } from "./consultingSession.js";
+
 import {
   buildConsultingClarificationAnswer,
 } from "./consultingClarificationAnswerBuilder.js";
@@ -92,34 +93,27 @@ export function verifyConsultingClarificationAnswerBuilder():
   const birthDateQuestion =
     "1990년 3월 15일생인데 궁합이 맞을까요?";
 
-  const birthDateAnswer =
+  const partialBirthClarification =
+    buildClarificationFixture([
+      {
+        key:
+          "counterpartBirthData",
+
+        description:
+          "상대방 성별",
+
+        question:
+          "이미 알려주신 정보는 다시 적지 않아도 됩니다. 상대방의 성별만 알려주세요.",
+      },
+    ]);
+
+  const partialBirthAnswer =
     buildConsultingClarificationAnswer({
       originalQuestion:
         birthDateQuestion,
 
       clarification:
-        buildClarificationFixture([
-          {
-            key:
-              "counterpartBirthData",
-
-            description:
-              "상대방 생년월일",
-
-            question:
-              "상대방의 생년월일을 알려주세요.",
-          },
-          {
-            key:
-              "monthlyLivingCost",
-
-            description:
-              "현재 고정 생활비",
-
-            question:
-              "생활비를 제외하고 사용할 수 있는 여유자금은 얼마인가요?",
-          },
-        ]),
+        partialBirthClarification,
     });
 
   const checks = {
@@ -154,25 +148,24 @@ export function verifyConsultingClarificationAnswerBuilder():
         "생활비를 제외하고 사용할 수 있는 여유자금은 얼마인가요?",
       ),
 
-    birthDateAcknowledgementIsPreserved:
-      birthDateAnswer.includes(
-        "말씀하신 생년월일은 확인했습니다.",
+    partialBirthShowsOnlyCurrentMissingField:
+      partialBirthAnswer.includes(
+        "상대방의 성별만 알려주세요.",
       ),
 
-    birthDateDetailsAreRequested:
-      birthDateAnswer.includes(
+    partialBirthDoesNotRepeatCalendarType:
+      !partialBirthAnswer.includes(
         "양력·음력 여부",
-      )
-      && birthDateAnswer.includes(
-        "성별",
-      )
-      && birthDateAnswer.includes(
+      ),
+
+    partialBirthDoesNotRepeatBirthTime:
+      !partialBirthAnswer.includes(
         "출생시간",
       ),
 
-    birthDateFlowDoesNotListSecondQuestion:
-      !birthDateAnswer.includes(
-        "생활비를 제외하고 사용할 수 있는 여유자금은 얼마인가요?",
+    partialBirthDoesNotRequestAllBirthDetailsAgain:
+      !partialBirthAnswer.includes(
+        "성별과 가능한 경우",
       ),
   };
 
