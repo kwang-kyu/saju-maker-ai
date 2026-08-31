@@ -329,6 +329,10 @@ export function verifyFullCompatibilityAssessment():
             regressionInput
               .question
               .intent,
+          conclusionNature:
+            regressionInput
+              .question
+              .conclusionNature,
           coreDecision:
             "궁합을 확인한다.",
           decisionReason:

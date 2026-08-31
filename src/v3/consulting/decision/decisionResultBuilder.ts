@@ -89,6 +89,27 @@
     const conflictExists =
       hasContextConflict(contextAlignment);
 
+    const conclusionNature =
+      decisionInput
+        .question
+        .conclusionNature;
+
+    const usesCoreDecisionOnly =
+      decisionInput.question.intent === "existence"
+      || decisionInput.question.intent === "prediction"
+      || conclusionNature === "interpretation"
+      || conclusionNature === "recommendation"
+      || conclusionNature === "warning";
+
+    const finalDecisionSentence =
+      usesCoreDecisionOnly
+        ? inputFinalDecisionSentence ?? coreDecision
+        : inputFinalDecisionSentence
+          ?? [
+            coreDecision,
+            recommendedDirection,
+          ].join(" ");
+
     return {
       verdict,
       confidence,
@@ -100,6 +121,7 @@
         decisionInput.question.decisionTarget,
       topic: decisionInput.question.topic,
       intent: decisionInput.question.intent,
+      conclusionNature,
 
       coreDecision,
       decisionReason,
@@ -121,12 +143,7 @@
       recommendedDirection,
       prohibitedDirection,
 
-      finalDecisionSentence:
-        inputFinalDecisionSentence
-        ?? [
-          coreDecision,
-          recommendedDirection,
-        ].join(" "),
+      finalDecisionSentence,
 
       humanContextUsed: true,
       questionContextUsed: true,

@@ -34,7 +34,16 @@ export type QuestionIntent =
   | "continuation"
   | "termination"
   | "prediction"
+  | "existence"
   | "generalJudgement";
+
+export type ConclusionNature =
+  | "decision"
+  | "interpretation"
+  | "existence"
+  | "recommendation"
+  | "prediction"
+  | "warning";
 
 export type QuestionMotive =
   | "opportunityCapture"
@@ -126,6 +135,14 @@ export type QuestionReaderResult = {
 
   analysisScope:
     QuestionAnalysisScope;
+
+  /**
+   * 결론 문장의 성격.
+   * intent 등 Reader 정보를 바탕으로 결정하며,
+   * 아직 분류되지 않은 질문은 decision으로 유지한다.
+   */
+  conclusionNature:
+    ConclusionNature;
 
   counterpartFacts:
     QuestionCounterpartFacts;
@@ -395,7 +412,11 @@ const intentRules: readonly KeywordRule<QuestionIntent>[] = [
       "실패",
       "손해",
       "망할",
-      "주의",
+      "주의할",
+      "주의해야",
+      "주의할 점",
+      "주의사항",
+      "주의점",
       "조심",
       "괜찮을까",
     ],
@@ -439,6 +460,13 @@ const intentRules: readonly KeywordRule<QuestionIntent>[] = [
       "들어올까",
       "생길까",
       "만날까",
+    ],
+  },
+  {
+    result: "existence",
+    keywords: [
+      "운이 있나",
+      "수가 있나",
     ],
   },
 ];
@@ -808,6 +836,83 @@ function matchesKoreanKeyword(
   );
 }
 
+const FUTURE_OUTCOME_PREDICTION_PATTERNS:
+  readonly RegExp[] = [
+    /어떻게\s*될\s*까/,
+    /어떨(?:까|까요|지|지요)/,
+    /들어올까/,
+    /생길까/,
+    /만날까/,
+    /성공할까/,
+    /잘될까/,
+  ];
+
+const PREDICTION_INTENT_EXCLUSION_PATTERNS:
+  readonly RegExp[] = [
+    /언제/,
+    /(?:몇\s*월|몇월|시기|때가)/,
+    /(?:운|수)(?:이|가)?\s*있나/,
+    /(?:해야|해야\s*하|해야\s*되|해야\s*할)/,
+    /(?:해도\s*될|해도될|시작해도)/,
+    /계속/,
+  ];
+
+function isFutureOutcomePredictionQuestion(
+  question:
+    string,
+): boolean {
+  if (
+    PREDICTION_INTENT_EXCLUSION_PATTERNS.some(
+      (pattern) =>
+        pattern.test(
+          question,
+        ),
+    )
+  ) {
+    return false;
+  }
+
+  return FUTURE_OUTCOME_PREDICTION_PATTERNS.some(
+    (pattern) =>
+      pattern.test(
+        question,
+      ),
+  );
+}
+
+function resolveQuestionIntent(
+  question:
+    string,
+): {
+  result:
+    QuestionIntent;
+
+  evidence:
+    string[];
+} {
+  if (
+    isFutureOutcomePredictionQuestion(
+      question,
+    )
+  ) {
+    return {
+      result:
+        "prediction",
+
+      evidence:
+        [
+          "futureOutcomePrediction",
+        ],
+    };
+  }
+
+  return findRule(
+    question,
+    intentRules,
+    "generalJudgement",
+  );
+}
+
 function findRule<T extends string>(
   question:
     string,
@@ -994,6 +1099,7 @@ function buildAsksWhat(topic: QuestionTopic, intent: QuestionIntent): string {
     continuation: "계속 유지해야 하는지",
     termination: "중단하거나 정리해야 하는지",
     prediction: "앞으로 어떤 결과가 예상되는지",
+    existence: "관련 운이나 구조의 존재 여부",
     generalJudgement: "전체적으로 어떻게 판단해야 하는지",
   };
 
@@ -1066,7 +1172,15 @@ function resolveDecisionTargetByTopic(
     DecisionTarget,
   topic:
     QuestionTopic,
+  intent:
+    QuestionIntent,
 ): DecisionTarget {
+  if (
+    intent === "existence"
+  ) {
+    return "none";
+  }
+
   if (
     keywordDecisionTarget
     !== "none"
@@ -1079,6 +1193,221 @@ function resolveDecisionTargetByTopic(
   }
 
   return keywordDecisionTarget;
+}
+
+const JOB_FIT_RECOMMENDATION_PATTERN =
+  /(?:어떤|무엇(?:인|이)?)\s*(?:직업|일|업무).*(?:맞|어울|적성)|(?:나에게|내게)\s*맞는\s*(?:일|직업|업무)|(?:적성|성향).*(?:맞|어울)/;
+
+const SELF_INTERPRETATION_PATTERN =
+  /(?:어떤|무슨)\s*(?:성향|사람|특징)|(?:장점|약점)|(?:사주|성격|기질).*(?:특징|성향)|(?:나|내).*(?:어떤\s*사람|성향)/;
+
+const WARNING_CONCLUSION_PATTERN =
+  /조심|주의(?:할|해야|할\s*점|사항|점)|(?:어떤|무엇).*(?:위험|조심|주의)/;
+
+const EXECUTION_STYLE_RISK_PATTERN =
+  /(?:위험|손해|실패).*(?:클|크|괜찮|될|해도|할\s*까)/;
+
+export type ConclusionNatureResolutionInput = {
+  intent:
+    QuestionIntent;
+
+  analysisMode:
+    QuestionAnalysisMode;
+
+  normalizedQuestion:
+    string;
+
+  decisionTarget:
+    DecisionTarget;
+};
+
+export function isJobFitRecommendationQuestion(
+  normalizedQuestion:
+    string,
+): boolean {
+  return JOB_FIT_RECOMMENDATION_PATTERN.test(
+    normalizedQuestion,
+  );
+}
+
+function isSelfInterpretationQuestion(
+  normalizedQuestion:
+    string,
+  intent:
+    QuestionIntent,
+  decisionTarget:
+    DecisionTarget,
+): boolean {
+  if (
+    SELF_INTERPRETATION_PATTERN.test(
+      normalizedQuestion,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    intent
+      === "reason"
+    && decisionTarget
+      === "none"
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function isWarningConclusionQuestion(
+  normalizedQuestion:
+    string,
+  intent:
+    QuestionIntent,
+  decisionTarget:
+    DecisionTarget,
+): boolean {
+  if (
+    intent
+      !== "risk"
+  ) {
+    return false;
+  }
+
+  if (
+    decisionTarget
+      !== "none"
+  ) {
+    return false;
+  }
+
+  if (
+    EXECUTION_STYLE_RISK_PATTERN.test(
+      normalizedQuestion,
+    )
+  ) {
+    return false;
+  }
+
+  return WARNING_CONCLUSION_PATTERN.test(
+    normalizedQuestion,
+  );
+}
+
+export function resolveConclusionNature(
+  input:
+    | ConclusionNatureResolutionInput
+    | QuestionIntent,
+): ConclusionNature {
+  if (
+    typeof input
+      === "string"
+  ) {
+    if (
+      input
+        === "existence"
+    ) {
+      return "existence";
+    }
+
+    if (
+      input
+        === "prediction"
+    ) {
+      return "prediction";
+    }
+
+    return "decision";
+  }
+
+  const {
+    intent,
+    analysisMode,
+    normalizedQuestion,
+    decisionTarget,
+  } = input;
+
+  if (
+    intent
+      === "existence"
+  ) {
+    return "existence";
+  }
+
+  if (
+    intent
+      === "prediction"
+  ) {
+    return "prediction";
+  }
+
+  if (
+    isRoleRecommendationQuestion(
+      normalizedQuestion,
+    )
+    || isJobFitRecommendationQuestion(
+      normalizedQuestion,
+    )
+  ) {
+    return "recommendation";
+  }
+
+  if (
+    analysisMode
+      === "interpretation"
+  ) {
+    return "interpretation";
+  }
+
+  if (
+    isSelfInterpretationQuestion(
+      normalizedQuestion,
+      intent,
+      decisionTarget,
+    )
+  ) {
+    return "interpretation";
+  }
+
+  if (
+    isWarningConclusionQuestion(
+      normalizedQuestion,
+      intent,
+      decisionTarget,
+    )
+  ) {
+    return "warning";
+  }
+
+  return "decision";
+}
+
+export function attachConclusionNature<
+  T extends Omit<
+    QuestionReaderResult,
+    "conclusionNature"
+  >,
+>(
+  result:
+    T,
+): QuestionReaderResult {
+  return {
+    ...result,
+
+    conclusionNature:
+      resolveConclusionNature({
+        intent:
+          result.intent,
+
+        analysisMode:
+          result.analysisMode,
+
+        normalizedQuestion:
+          result.normalizedQuestion,
+
+        decisionTarget:
+          result.decisionTarget,
+      }),
+  };
 }
 
 function calculateConfidence(evidenceCount: number): number {
@@ -1185,6 +1514,14 @@ export function isCompatibilityAnalysisQuestion(
     DecisionTarget,
 ): boolean {
   if (
+    COMPATIBILITY_EXPLICIT_PATTERN.test(
+      question,
+    )
+  ) {
+    return true;
+  }
+
+  if (
     SELF_FIT_EXCLUSION_PATTERN.test(
       question,
     )
@@ -1195,14 +1532,6 @@ export function isCompatibilityAnalysisQuestion(
   if (
     decisionTarget
       === "partner"
-  ) {
-    return true;
-  }
-
-  if (
-    COMPATIBILITY_EXPLICIT_PATTERN.test(
-      question,
-    )
   ) {
     return true;
   }
@@ -1478,11 +1807,10 @@ export function readQuestion(
     "general",
   );
 
-  const intentMatch = findRule(
-    normalizedQuestion,
-    intentRules,
-    "generalJudgement",
-  );
+  const intentMatch =
+    resolveQuestionIntent(
+      normalizedQuestion,
+    );
 
   const motiveMatch = findRule(
     normalizedQuestion,
@@ -1506,6 +1834,7 @@ export function readQuestion(
     resolveDecisionTargetByTopic(
       decisionMatch.result,
       resolvedTopic,
+      intentMatch.result,
     );
 
   const urgencyMatch =
@@ -1546,39 +1875,41 @@ export function readQuestion(
     ]),
   );
 
-  return applyLifeFlowInterpretationNormalization(
-    applyRoleRecommendationNormalization({
-    originalQuestion: question.trim(),
-    normalizedQuestion,
+  return attachConclusionNature(
+    applyLifeFlowInterpretationNormalization(
+      applyRoleRecommendationNormalization({
+        originalQuestion: question.trim(),
+        normalizedQuestion,
 
-    topic: resolvedTopic,
-    intent: intentMatch.result,
-    motive: motiveMatch.result,
-    decisionTarget:
-      resolvedDecisionTarget,
-      urgency: urgencyMatch.urgency,
-      timingType,
+        topic: resolvedTopic,
+        intent: intentMatch.result,
+        motive: motiveMatch.result,
+        decisionTarget:
+          resolvedDecisionTarget,
+        urgency: urgencyMatch.urgency,
+        timingType,
 
-      analysisMode,
-      analysisScope,
-      counterpartFacts,
+        analysisMode,
+        analysisScope,
+        counterpartFacts,
 
-      asksWhat: buildAsksWhat(
-      resolvedTopic,
-      intentMatch.result,
+        asksWhat: buildAsksWhat(
+          resolvedTopic,
+          intentMatch.result,
+        ),
+        asksWhy: buildAsksWhy(
+          motiveMatch.result,
+        ),
+        decisionQuestion: buildDecisionQuestion(
+          resolvedDecisionTarget,
+          resolvedTopic,
+        ),
+
+        evidence,
+        confidence: calculateConfidence(evidence.length),
+
+        humanContextReceived: true,
+      }),
     ),
-    asksWhy: buildAsksWhy(
-      motiveMatch.result,
-    ),
-    decisionQuestion: buildDecisionQuestion(
-      resolvedDecisionTarget,
-      resolvedTopic,
-    ),
-
-    evidence,
-    confidence: calculateConfidence(evidence.length),
-
-    humanContextReceived: true,
-  }),
   );
 }

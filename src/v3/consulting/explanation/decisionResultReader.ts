@@ -42,6 +42,7 @@
     topic: DecisionResult["topic"];
     intent: DecisionResult["intent"];
     decisionTarget: DecisionResult["decisionTarget"];
+    conclusionNature: DecisionResult["conclusionNature"];
 
     contextAlignment: DecisionResult["contextAlignment"];
     actionReadiness: DecisionResult["actionReadiness"];
@@ -146,6 +147,7 @@
       topic: result.topic,
       intent: result.intent,
       decisionTarget: result.decisionTarget,
+      conclusionNature: result.conclusionNature,
 
       contextAlignment: result.contextAlignment,
       actionReadiness: result.actionReadiness,

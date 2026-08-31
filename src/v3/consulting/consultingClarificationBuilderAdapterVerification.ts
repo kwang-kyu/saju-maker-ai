@@ -85,6 +85,11 @@ function createDecisionResult(
         .question
         .intent,
 
+    conclusionNature:
+      questionContext
+        .question
+        .conclusionNature,
+
     coreDecision:
       "현재 정보만으로는 결론을 확정하지 않는다.",
 

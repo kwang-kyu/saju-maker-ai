@@ -12,6 +12,7 @@
 
   import type {
     DecisionTarget,
+    QuestionAnalysisMode,
     QuestionIntent,
   } from "../question/questionReader.js";
 
@@ -32,6 +33,9 @@
 
     decisionTarget:
       DecisionTarget;
+
+    analysisMode?:
+      QuestionAnalysisMode;
   };
 
   function buildWealthRecommendedOpening(
@@ -422,27 +426,6 @@
     }
   }
 
-  function isNonExecutionPrediction(
-    intent:
-      QuestionIntent,
-    decisionTarget:
-      DecisionTarget,
-  ): boolean {
-    if (
-      intent
-      !== "prediction"
-    ) {
-      return false;
-    }
-
-    return (
-      decisionTarget
-      === "manageMoney"
-      || decisionTarget
-        === "none"
-    );
-  }
-
   function buildPredictionDirection(
     verdict:
       DecisionVerdict,
@@ -503,6 +486,114 @@
         };
     }
   }
+
+  function buildExistenceDirection(
+    verdict: DecisionVerdict,
+  ): DirectionJudgement {
+    switch (verdict) {
+      case "recommended":
+        return {
+          recommendedDirection:
+            "관련 신호와 근거의 강도를 함께 확인하고 전체 맥락에서 해석한다.",
+          prohibitedDirection:
+            "일부 신호만으로 해당 운이나 가능성의 존재 여부를 단정하지 않는다.",
+        };
+
+      case "conditionallyRecommended":
+        return {
+          recommendedDirection:
+            "관련 신호는 확인되나 조건과 맥락을 함께 보며 존재 여부를 해석한다.",
+          prohibitedDirection:
+            "조건을 무시한 채 운이나 구조의 존재를 확정하지 않는다.",
+        };
+
+      case "wait":
+        return {
+          recommendedDirection:
+            "당장 뚜렷한 신호는 적으나 전체 흐름에서 관련 가능성을 함께 본다.",
+          prohibitedDirection:
+            "신호가 약하다는 이유만으로 존재 여부를 완전히 부정하지 않는다.",
+        };
+
+      case "notRecommended":
+        return {
+          recommendedDirection:
+            "현재 확인되는 범위에서 관련 신호가 약한 근거를 중심으로 본다.",
+          prohibitedDirection:
+            "약한 신호만으로 운이나 구조가 전혀 없다고 단정하지 않는다.",
+        };
+
+      case "insufficientEvidence":
+        return {
+          recommendedDirection:
+            "현재 확인된 근거 범위에서 존재 여부와 한계를 구분하고, 확인되지 않은 부분은 열어 둔다.",
+          prohibitedDirection:
+            "근거가 부족한 상태에서 운이나 구조의 존재 여부를 확정하지 않는다.",
+        };
+
+      case "interpreted":
+        return {
+          recommendedDirection:
+            "관련 운이나 구조의 존재 여부를 중심으로 해석하되, 전체 맥락과 함께 본다.",
+          prohibitedDirection:
+            "운 해석 결과만으로 해당 운이나 구조의 존재를 확정하지 않는다.",
+        };
+    }
+  }
+
+  function buildCompatibilityDirection(
+  verdict: DecisionVerdict,
+): DirectionJudgement {
+  switch (verdict) {
+    case "recommended":
+      return {
+        recommendedDirection:
+          "관계의 가능성을 열어 두고, 실제 만남과 교류를 통해 서로의 성향과 관계 흐름을 확인하며 이어간다.",
+        prohibitedDirection:
+          "초기의 끌림이나 좋은 신호만으로 관계의 안정성을 성급하게 확정하지 않는다.",
+      };
+
+    case "conditionallyRecommended":
+      return {
+        recommendedDirection:
+          "서로의 기대와 관계 기준을 확인하면서 부담이 커지지 않는 범위에서 관계를 이어간다.",
+        prohibitedDirection:
+          "서로의 상황과 차이를 확인하지 않은 채 관계를 빠르게 깊게 만들지 않는다.",
+      };
+
+    case "wait":
+      return {
+        recommendedDirection:
+          "두 사람 사이의 충돌과 부담 요소를 더 살펴본 뒤 관계 판단을 유보한다.",
+        prohibitedDirection:
+          "감정과 조급함만으로 관계를 확정하지 않는다.",
+      };
+
+    case "notRecommended":
+      return {
+        recommendedDirection:
+          "현재 관계를 더 확대하기보다 서로에게 맞지 않는 부분과 부담 요소를 다시 살펴본다.",
+        prohibitedDirection:
+          "맞지 않는 신호를 무시한 채 관계를 억지로 이어가거나 확대하지 않는다.",
+      };
+
+    case "insufficientEvidence":
+      return {
+        recommendedDirection:
+          "상대의 정보와 실제 관계 상황을 더 확인한 뒤 두 사람의 관계 가능성을 다시 판단한다.",
+        prohibitedDirection:
+          "확인되지 않은 정보만으로 두 사람의 관계를 좋거나 나쁘다고 단정하지 않는다.",
+      };
+
+    case "interpreted":
+      return {
+        recommendedDirection:
+          "두 사람 사이의 관계 흐름을 참고하되, 실제 관계의 방향은 서로의 상황과 선택을 함께 보며 판단한다.",
+        prohibitedDirection:
+          "궁합 해석 결과만으로 실제 관계의 성사나 지속을 확정하지 않는다.",
+      };
+  }
+}
 
   function buildVerdictDirection(
     verdict: DecisionVerdict,
@@ -565,15 +656,14 @@
       verdict,
       context,
       intent,
-      decisionTarget,
+      analysisMode
     } = input;
 
-    if (
-      isNonExecutionPrediction(
-        intent,
-        decisionTarget,
-      )
-    ) {
+    if (intent === "existence") {
+      return buildExistenceDirection(verdict);
+    }
+
+    if (intent === "prediction") {
       return buildPredictionDirection(
         verdict,
       );
@@ -615,6 +705,9 @@
     if (lifeAssessment.familyResponsibility === "high") {
       return buildFamilyResponsibilityDirection(verdict);
     }
+  if (analysisMode === "compatibility") {
+  return buildCompatibilityDirection(verdict);
+}
 
-    return buildVerdictDirection(verdict);
+return buildVerdictDirection(verdict);
   }

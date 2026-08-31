@@ -72,6 +72,9 @@ export type DecisionExplanationPlan = {
   decisionTarget:
     DecisionExplanationInput["decisionTarget"];
 
+  conclusionNature:
+    DecisionExplanationInput["conclusionNature"];
+
   verdict:
     DecisionExplanationInput["verdict"];
 
@@ -1744,6 +1747,9 @@ export function buildDecisionExplanationPlan(
       decisionTarget:
         input.decisionTarget,
 
+      conclusionNature:
+        input.conclusionNature,
+
       verdict:
         input.verdict,
 
@@ -1783,6 +1789,9 @@ export function buildDecisionExplanationPlan(
 
       decisionTarget:
         input.decisionTarget,
+
+      conclusionNature:
+        input.conclusionNature,
 
       verdict:
         input.verdict,
@@ -1843,6 +1852,9 @@ export function buildDecisionExplanationPlan(
 
     decisionTarget:
       input.decisionTarget,
+
+    conclusionNature:
+      input.conclusionNature,
 
     verdict:
       input.verdict,

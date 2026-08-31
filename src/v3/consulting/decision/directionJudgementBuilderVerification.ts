@@ -60,17 +60,13 @@
    *
    * 목적:
    *
-   * 1. prediction + manageMoney 같은 비실행형 예측 질문은
-   *    "진행한다 / 실행한다 / 유보한다" 중심의 실행 Direction으로
-   *    떨어지지 않아야 한다.
+   * 1. prediction 질문은 "진행한다 / 실행한다 / 유보한다" 중심의
+   *    실행 Direction으로 떨어지지 않아야 한다.
    *
-   * 2. prediction + none 역시 비실행형 예측 Direction을 사용한다.
+   * 2. prediction + manageMoney, none, start 모두
+   *    예측 전용 Direction을 사용한다.
    *
-   * 3. prediction + start 같은 실제 행동 질문은
-   *    기존 실행 Direction을 유지해야 한다.
-   *
-   * 4. 비실행형 예측과 실행형 예측의 Direction이
-   *    서로 동일한 정형 문장으로 붕괴하지 않아야 한다.
+   * 3. 예측 Direction은 가능성·흐름·조건·불확실성 중심이어야 한다.
    */
   export function verifyDirectionJudgementBuilder():
     DirectionJudgementBuilderVerificationResult {
@@ -228,41 +224,75 @@
             "흐름",
           ),
 
-      executionPredictionKeepsExecutionDirection:
+      executionPredictionUsesPredictionDirection:
         executionPrediction
           .recommendedDirection
           .includes(
-            "진행",
+            "가능성",
           )
         || executionPrediction
           .recommendedDirection
           .includes(
-            "실행",
-          ),
-
-      executionPredictionKeepsExecutionProhibition:
-        executionPrediction
-          .prohibitedDirection
-          .includes(
-            "실행",
+            "흐름",
           )
         || executionPrediction
-          .prohibitedDirection
+          .recommendedDirection
           .includes(
             "조건",
           ),
 
-      predictionDirectionsAreSeparated:
-        nonExecutionPrediction
+      executionPredictionAvoidsExecutionDirection:
+        !executionPrediction
           .recommendedDirection
-        !== executionPrediction
-          .recommendedDirection,
+          .includes(
+            "제한적으로 진행",
+          )
+        && !executionPrediction
+          .recommendedDirection
+          .includes(
+            "바로 실행",
+          )
+        && !executionPrediction
+          .recommendedDirection
+          .includes(
+            "판단을 유보",
+          ),
 
-      predictionProhibitionsAreSeparated:
-        nonExecutionPrediction
+      executionPredictionAvoidsExecutionProhibition:
+        !executionPrediction
           .prohibitedDirection
-        !== executionPrediction
-          .prohibitedDirection,
+          .includes(
+            "바로 실행",
+          )
+        && !executionPrediction
+          .prohibitedDirection
+          .includes(
+            "확정적인 결정",
+          ),
+
+      allPredictionDirectionsAvoidExecutionLanguage:
+        [
+          nonExecutionPrediction,
+          genericPrediction,
+          executionPrediction,
+        ].every(
+          (direction) =>
+            !direction
+              .recommendedDirection
+              .includes(
+                "진행한다",
+              )
+            && !direction
+              .recommendedDirection
+              .includes(
+                "유보한다",
+              )
+            && !direction
+              .recommendedDirection
+              .includes(
+                "중단한다",
+              ),
+        ),
     };
 
     return {

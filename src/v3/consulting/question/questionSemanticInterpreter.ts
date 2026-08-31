@@ -13,6 +13,9 @@ import type {
   QuestionUrgency,
 } from "./questionReader.js";
 import {
+  attachConclusionNature,
+} from "./questionReader.js";
+import {
   applyRoleRecommendationNormalization,
 } from "./roleRecommendationQuestionDetector.js";
 import {
@@ -48,6 +51,7 @@ const QUESTION_INTENTS:
     "continuation",
     "termination",
     "prediction",
+    "existence",
     "generalJudgement",
   ];
 
@@ -977,16 +981,18 @@ asksWhat, asksWhy, decisionQuestion은 자연스러운 한국어로 작성한다
       ?? "",
     );
 
-  return applyLifeFlowInterpretationNormalization(
-    applyRoleRecommendationNormalization({
-    originalQuestion,
+  return attachConclusionNature(
+    applyLifeFlowInterpretationNormalization(
+      applyRoleRecommendationNormalization({
+        originalQuestion,
 
-    normalizedQuestion,
+        normalizedQuestion,
 
-    ...interpretation,
+        ...interpretation,
 
-    humanContextReceived:
-      true as const,
-  }),
+        humanContextReceived:
+          true as const,
+      }),
+    ),
   );
 }

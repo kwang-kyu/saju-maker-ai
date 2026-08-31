@@ -1,0 +1,364 @@
+import {
+  buildDecisionEngineRegressionInput,
+} from "./regression/decisionEngineRegressionFixture.js";
+import {
+  runDecisionEngine,
+} from "./decisionEngine.js";
+import type {
+  DecisionResult,
+} from "./decisionTypes.js";
+import type {
+  ConclusionNature,
+} from "../question/questionReader.js";
+
+const EXECUTION_STYLE_PATTERNS:
+  readonly RegExp[] = [
+    /진행(?:하는|할|하지| 여부)/,
+    /보류(?:하는|한다|한다\.)/,
+    /중단(?:하는|한다)/,
+    /기다리(?:는|기)/,
+    /실행(?:하는|하기| 여부)/,
+    /바로 시작/,
+    /조건을 갖춘 뒤(?: 진행| 움직)/,
+    /선택을 조금 더 보류/,
+    /시기를 늦추/,
+    /결정을 유보/,
+    /진행하지 않/,
+  ];
+
+const INTERPRETATION_CASES:
+  readonly {
+    question:
+      string;
+
+    expectedConclusionNature:
+      ConclusionNature;
+  }[] = [
+    {
+      question:
+        "나는 어떤 성향인가요?",
+
+      expectedConclusionNature:
+        "interpretation",
+    },
+    {
+      question:
+        "내 사주의 특징은 무엇인가요?",
+
+      expectedConclusionNature:
+        "interpretation",
+    },
+    {
+      question:
+        "왜 일이 잘 안 풀리나요?",
+
+      expectedConclusionNature:
+        "interpretation",
+    },
+    {
+      question:
+        "왜 인간관계가 반복해서 힘든가요?",
+
+      expectedConclusionNature:
+        "interpretation",
+    },
+  ];
+
+const DECISION_PRESERVATION_CASES:
+  readonly {
+    question:
+      string;
+
+    expectedConclusionNature:
+      ConclusionNature;
+  }[] = [
+    {
+      question:
+        "지금 사업을 계속할까요?",
+
+      expectedConclusionNature:
+        "decision",
+    },
+    {
+      question:
+        "지금 주식에 투자해도 될까요?",
+
+      expectedConclusionNature:
+        "decision",
+    },
+  ];
+
+export type InterpretationCaseSnapshot = {
+  question:
+    string;
+
+  conclusionNature:
+    ConclusionNature;
+
+  verdict:
+    DecisionResult["verdict"];
+
+  coreDecision:
+    string;
+
+  recommendedDirection:
+    string;
+
+  prohibitedDirection:
+    string;
+
+  finalDecisionSentence:
+    string;
+
+  finalDecisionIsExecutionStyle:
+    boolean;
+
+  finalDecisionMatchesLegacyAssembly:
+    boolean;
+};
+
+export type InterpretationConclusionNatureVerificationResult = {
+  checks:
+    Record<
+      string,
+      boolean
+    >;
+
+  interpretationSnapshots:
+    InterpretationCaseSnapshot[];
+
+  decisionPreservationSnapshots:
+    InterpretationCaseSnapshot[];
+
+  passed:
+    boolean;
+};
+
+function isExecutionStyleSentence(
+  sentence:
+    string,
+): boolean {
+  return EXECUTION_STYLE_PATTERNS.some(
+    (pattern) =>
+      pattern.test(
+        sentence,
+      ),
+  );
+}
+
+function buildCaseSnapshot(
+  questionText:
+    string,
+  expectedConclusionNature:
+    ConclusionNature,
+  options: {
+    expectLegacyAssembly:
+      boolean;
+
+    expectNonExecutionFinalDecision:
+      boolean;
+  },
+): {
+  snapshot:
+    InterpretationCaseSnapshot;
+
+  checks:
+    Record<
+      string,
+      boolean
+    >;
+} {
+  const input =
+    buildDecisionEngineRegressionInput({
+      questionText,
+    });
+
+  const result =
+    runDecisionEngine(input);
+
+  const conclusionNature =
+    input
+      .question
+      .conclusionNature;
+
+  const legacyAssembly =
+    [
+      result.coreDecision,
+      result.recommendedDirection,
+    ].join(" ");
+
+  const finalDecisionMatchesLegacyAssembly =
+    result
+      .finalDecisionSentence
+    === legacyAssembly;
+
+  const id =
+    questionText
+      .replace(
+        /[^\p{L}\p{N}]+/gu,
+        "_",
+      )
+      .slice(
+        0,
+        40,
+      );
+
+  const checks: Record<
+    string,
+    boolean
+  > = {
+    [`${id}_usesExpectedConclusionNature`]:
+      conclusionNature
+      === expectedConclusionNature,
+
+    [`${id}_finalDecisionIsNotExecutionStyle`]:
+      options
+        .expectNonExecutionFinalDecision
+        ? !isExecutionStyleSentence(
+          result
+            .finalDecisionSentence,
+        )
+        : true,
+
+    [`${id}_finalDecisionUsesCoreDecisionOnly`]:
+      options
+        .expectNonExecutionFinalDecision
+        ? result
+          .finalDecisionSentence
+        === result
+          .coreDecision
+        : result
+          .finalDecisionSentence
+        !== result
+          .coreDecision,
+
+    [`${id}_preservesLegacyAssembly`]:
+      options
+        .expectLegacyAssembly
+        ? finalDecisionMatchesLegacyAssembly
+        : !finalDecisionMatchesLegacyAssembly,
+  };
+
+  return {
+    snapshot: {
+      question:
+        questionText,
+
+      conclusionNature,
+
+      verdict:
+        result.verdict,
+
+      coreDecision:
+        result.coreDecision,
+
+      recommendedDirection:
+        result.recommendedDirection,
+
+      prohibitedDirection:
+        result.prohibitedDirection,
+
+      finalDecisionSentence:
+        result.finalDecisionSentence,
+
+      finalDecisionIsExecutionStyle:
+        isExecutionStyleSentence(
+          result
+            .finalDecisionSentence,
+        ),
+
+      finalDecisionMatchesLegacyAssembly,
+    },
+
+    checks,
+  };
+}
+
+export function verifyInterpretationConclusionNature():
+  InterpretationConclusionNatureVerificationResult {
+  const checks: Record<
+    string,
+    boolean
+  > = {};
+
+  const interpretationSnapshots:
+    InterpretationCaseSnapshot[] = [];
+
+  for (const testCase of INTERPRETATION_CASES) {
+    const {
+      snapshot,
+      checks:
+        caseChecks,
+    } = buildCaseSnapshot(
+      testCase.question,
+
+      testCase
+        .expectedConclusionNature,
+
+      {
+        expectLegacyAssembly:
+          false,
+
+        expectNonExecutionFinalDecision:
+          true,
+      },
+    );
+
+    interpretationSnapshots.push(
+      snapshot,
+    );
+
+    Object.assign(
+      checks,
+      caseChecks,
+    );
+  }
+
+  const decisionPreservationSnapshots:
+    InterpretationCaseSnapshot[] = [];
+
+  for (const testCase of DECISION_PRESERVATION_CASES) {
+    const {
+      snapshot,
+      checks:
+        caseChecks,
+    } = buildCaseSnapshot(
+      testCase.question,
+
+      testCase
+        .expectedConclusionNature,
+
+      {
+        expectLegacyAssembly:
+          true,
+
+        expectNonExecutionFinalDecision:
+          false,
+      },
+    );
+
+    decisionPreservationSnapshots.push(
+      snapshot,
+    );
+
+    Object.assign(
+      checks,
+      caseChecks,
+    );
+  }
+
+  return {
+    checks,
+
+    interpretationSnapshots,
+
+    decisionPreservationSnapshots,
+
+    passed:
+      Object
+        .values(
+          checks,
+        )
+        .every(Boolean),
+  };
+}

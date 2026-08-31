@@ -8,6 +8,7 @@ import {
   readQuestion,
 } from "./questionReader.js";
 import type {
+  ConclusionNature,
   DecisionTarget,
   QuestionAnalysisMode,
   QuestionIntent,
@@ -21,6 +22,147 @@ import {
   applyRoleRecommendationNormalization,
   isRoleRecommendationQuestion,
 } from "./roleRecommendationQuestionDetector.js";
+
+const CONCLUSION_NATURE_STAGE2_CASES:
+  readonly {
+    question:
+      string;
+
+    expectedConclusionNature:
+      ConclusionNature;
+  }[] = [
+    {
+      question:
+        "왜 일이 잘 안 풀리나요?",
+
+      expectedConclusionNature:
+        "interpretation",
+    },
+    {
+      question:
+        "내 사주의 특징은 무엇인가요?",
+
+      expectedConclusionNature:
+        "interpretation",
+    },
+    {
+      question:
+        "나는 어떤 성향인가요?",
+
+      expectedConclusionNature:
+        "interpretation",
+    },
+    {
+      question:
+        "어떤 직업이 맞나요?",
+
+      expectedConclusionNature:
+        "recommendation",
+    },
+    {
+      question:
+        "연극에서 어떤 역할이 맞나요?",
+
+      expectedConclusionNature:
+        "recommendation",
+    },
+    {
+      question:
+        "무엇을 조심해야 하나요?",
+
+      expectedConclusionNature:
+        "warning",
+    },
+    {
+      question:
+        "지금 사업을 계속할까요?",
+
+      expectedConclusionNature:
+        "decision",
+    },
+    {
+      question:
+        "지금 주식에 투자해도 될까요?",
+
+      expectedConclusionNature:
+        "decision",
+    },
+    {
+      question:
+        "재물운이 있나요?",
+
+      expectedConclusionNature:
+        "existence",
+    },
+  ];
+
+function buildConclusionNatureStage2Checks(
+  humanContext:
+    HumanDestinyContext,
+) {
+  const checks:
+    Record<
+      string,
+      boolean
+    > = {};
+
+  for (
+    const verificationCase
+    of CONCLUSION_NATURE_STAGE2_CASES
+  ) {
+    const question =
+      readQuestion(
+        humanContext,
+        verificationCase
+          .question,
+      );
+
+    const id =
+      verificationCase
+        .question
+        .slice(
+          0,
+          24,
+        )
+        .replace(
+          /[^\w가-힣]+/g,
+          "_",
+        );
+
+    checks[
+      `conclusionNatureStage2_${id}`
+    ] =
+      question
+        .conclusionNature
+      === verificationCase
+        .expectedConclusionNature;
+  }
+
+  const traitQuestion =
+    readQuestion(
+      humanContext,
+      "내 사주의 특징은 무엇인가요?",
+    );
+
+  checks[
+    "sajuTraitQuestionAvoidsRiskIntentFalsePositive"
+  ] =
+    traitQuestion
+      .intent
+    !== "risk";
+
+  checks[
+    "investmentRiskQuestionStaysDecisionConclusion"
+  ] =
+    readQuestion(
+      humanContext,
+      "가상자산 투자는 손실 위험이 클까요?",
+    )
+      .conclusionNature
+    === "decision";
+
+  return checks;
+}
 
 const ROLE_QUESTION =
   "내가 연극을 하면 어떤 역할이 어울릴까요?";
@@ -468,6 +610,90 @@ const COMPATIBILITY_POSITIVE_CASES:
           false,
       },
     },
+    {
+      question:
+        "1970년생 여성 개띠와 궁합",
+
+      expected: {
+        topic:
+          "relationship",
+
+        intent:
+          "generalJudgement",
+
+        decisionTarget:
+          "none",
+
+        analysisMode:
+          "compatibility",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "나는 연애운이 있나요 지금 1970년생 여성 개띠하고 궁합 성격은 맞는지요",
+
+      expected: {
+        topic:
+          "love",
+
+        intent:
+          "existence",
+
+        decisionTarget:
+          "none",
+
+        analysisMode:
+          "compatibility",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "1970년생 여성과 궁합",
+
+      expected: {
+        topic:
+          "relationship",
+
+        intent:
+          "generalJudgement",
+
+        decisionTarget:
+          "none",
+
+        analysisMode:
+          "compatibility",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "개띠 여성과 궁합",
+
+      expected: {
+        topic:
+          "relationship",
+
+        intent:
+          "generalJudgement",
+
+        decisionTarget:
+          "none",
+
+        analysisMode:
+          "compatibility",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
   ];
 
 const COMPATIBILITY_NEGATIVE_CASES:
@@ -677,6 +903,27 @@ const COMPATIBILITY_NEGATIVE_CASES:
 
         intent:
           "generalJudgement",
+
+        decisionTarget:
+          "none",
+
+        analysisMode:
+          "decision",
+
+        roleRecommendationAnalysisRequired:
+          false,
+      },
+    },
+    {
+      question:
+        "나는 연애운이 있나요",
+
+      expected: {
+        topic:
+          "love",
+
+        intent:
+          "existence",
 
         decisionTarget:
           "none",
@@ -949,6 +1196,230 @@ const DECISION_PATH_PRESERVATION_CASES:
         roleRecommendationAnalysisRequired:
           false,
       },
+    },
+  ];
+
+const EXISTENCE_POSITIVE_CASES:
+  readonly {
+    question:
+      string;
+
+    expectedIntent:
+      QuestionIntent;
+  }[] = [
+    {
+      question:
+        "재물운이 있나요?",
+
+      expectedIntent:
+        "existence",
+    },
+    {
+      question:
+        "사업운이 있나요?",
+
+      expectedIntent:
+        "existence",
+    },
+    {
+      question:
+        "직장운이 있나요?",
+
+      expectedIntent:
+        "existence",
+    },
+    {
+      question:
+        "배우자운이 있나요?",
+
+      expectedIntent:
+        "existence",
+    },
+    {
+      question:
+        "자식운이 있나요?",
+
+      expectedIntent:
+        "existence",
+    },
+    {
+      question:
+        "내가 관재수가 있나요?",
+
+      expectedIntent:
+        "existence",
+    },
+  ];
+
+const EXISTENCE_NEGATIVE_CASES:
+  readonly {
+    question:
+      string;
+
+    expectedIntent:
+      QuestionIntent;
+  }[] = [
+    {
+      question:
+        "올해 재물운이 있나요?",
+
+      expectedIntent:
+        "timing",
+    },
+    {
+      question:
+        "언제 재물운이 들어오나요?",
+
+      expectedIntent:
+        "timing",
+    },
+    {
+      question:
+        "지금 투자하면 돈을 벌 수 있을까?",
+
+      expectedIntent:
+        "generalJudgement",
+    },
+    {
+      question:
+        "소송을 해도 될까요?",
+
+      expectedIntent:
+        "possibility",
+    },
+  ];
+
+const FUTURE_OUTCOME_PREDICTION_CASES:
+  readonly {
+    question:
+      string;
+
+    expectedIntent:
+      QuestionIntent;
+
+    expectedConclusionNature:
+      ConclusionNature;
+  }[] = [
+    {
+      question:
+        "올해 사업은 어떻게 될까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "올해 사업운은 어떨까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "앞으로 사업은 어떻게 될까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "앞으로 연애운은 어떨까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "내년 재물운은 어떨까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "올해 직장운은 어떻게 될까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "앞으로 인간관계는 어떻게 될까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "앞으로 결혼운은 어떨까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "앞으로 내 삶은 어떻게 될까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+  ];
+
+const TIMING_METHOD_PROTECTION_CASES:
+  readonly {
+    question:
+      string;
+
+    expectedIntent:
+      QuestionIntent;
+  }[] = [
+    {
+      question:
+        "언제 사업을 시작해야 하나요?",
+
+      expectedIntent:
+        "timing",
+    },
+    {
+      question:
+        "어떻게 사업을 해야 하나요?",
+
+      expectedIntent:
+        "method",
+    },
+    {
+      question:
+        "지금 사업을 계속할까요?",
+
+      expectedIntent:
+        "continuation",
     },
   ];
 
@@ -1276,6 +1747,251 @@ export function verifyQuestionReader():
       "decisionPathPreservation",
     );
 
+  const existencePositiveChecks =
+    Object.fromEntries(
+      EXISTENCE_POSITIVE_CASES.map(
+        (verificationCase) => {
+          const question =
+            readQuestion(
+              humanContext,
+              verificationCase
+                .question,
+            );
+
+          const id =
+            verificationCase
+              .question
+              .slice(
+                0,
+                24,
+              )
+              .replace(
+                /[^\w가-힣]+/g,
+                "_",
+              );
+
+          return [
+            `existencePositive_${id}`,
+            question.intent
+              === verificationCase
+                .expectedIntent,
+          ] as const;
+        },
+      ),
+    );
+
+  const existenceNegativeChecks =
+    Object.fromEntries(
+      EXISTENCE_NEGATIVE_CASES.map(
+        (verificationCase) => {
+          const question =
+            readQuestion(
+              humanContext,
+              verificationCase
+                .question,
+            );
+
+          const id =
+            verificationCase
+              .question
+              .slice(
+                0,
+                24,
+              )
+              .replace(
+                /[^\w가-힣]+/g,
+                "_",
+              );
+
+          return [
+            `existenceNegative_${id}`,
+            question.intent
+              === verificationCase
+                .expectedIntent,
+          ] as const;
+        },
+      ),
+    );
+
+  const futureOutcomePredictionChecks =
+    Object.fromEntries(
+      FUTURE_OUTCOME_PREDICTION_CASES.flatMap(
+        (verificationCase) => {
+          const question =
+            readQuestion(
+              humanContext,
+              verificationCase
+                .question,
+            );
+
+          const id =
+            verificationCase
+              .question
+              .slice(
+                0,
+                24,
+              )
+              .replace(
+                /[^\w가-힣]+/g,
+                "_",
+              );
+
+          return [
+            [
+              `futureOutcomePredictionIntent_${id}`,
+              question.intent
+                === verificationCase
+                  .expectedIntent,
+            ],
+            [
+              `futureOutcomePredictionConclusionNature_${id}`,
+              question
+                .conclusionNature
+              === verificationCase
+                .expectedConclusionNature,
+            ],
+          ] as const;
+        },
+      ),
+    );
+
+  const timingMethodProtectionChecks =
+    Object.fromEntries(
+      TIMING_METHOD_PROTECTION_CASES.map(
+        (verificationCase) => {
+          const question =
+            readQuestion(
+              humanContext,
+              verificationCase
+                .question,
+            );
+
+          const id =
+            verificationCase
+              .question
+              .slice(
+                0,
+                24,
+              )
+              .replace(
+                /[^\w가-힣]+/g,
+                "_",
+              );
+
+          return [
+            `timingMethodProtection_${id}`,
+            question.intent
+              === verificationCase
+                .expectedIntent,
+          ] as const;
+        },
+      ),
+    );
+
+  const decisionQuestionText =
+    "지금 사업을 계속할까요?";
+
+  const decisionQuestion =
+    readQuestion(
+      humanContext,
+      decisionQuestionText,
+    );
+
+  const decisionQuestionContext =
+    buildQuestionContext(
+      decisionQuestion,
+    );
+
+  const existenceQuestionText =
+    "재물운이 있나요?";
+
+  const existenceQuestion =
+    readQuestion(
+      humanContext,
+      existenceQuestionText,
+    );
+
+  const existenceQuestionContext =
+    buildQuestionContext(
+      existenceQuestion,
+    );
+
+  const predictionQuestionText =
+    "앞으로 돈이 들어올까요?";
+
+  const predictionQuestion =
+    readQuestion(
+      humanContext,
+      predictionQuestionText,
+    );
+
+  const predictionQuestionContext =
+    buildQuestionContext(
+      predictionQuestion,
+    );
+
+  const conclusionNatureChecks: Record<
+    string,
+    boolean
+  > = {
+    decisionQuestionUsesDecisionConclusionNature:
+      decisionQuestion
+        .conclusionNature
+      === "decision",
+
+    decisionQuestionContextPreservesConclusionNature:
+      decisionQuestionContext
+        .question
+        .conclusionNature
+      === "decision",
+
+    existenceQuestionUsesExistenceIntent:
+      existenceQuestion
+        .intent
+      === "existence",
+
+    existenceQuestionUsesExistenceConclusionNature:
+      existenceQuestion
+        .conclusionNature
+      === "existence",
+
+    existenceQuestionContextPreservesConclusionNature:
+      existenceQuestionContext
+        .question
+        .conclusionNature
+      === "existence",
+
+    predictionQuestionContextPreservesConclusionNature:
+      predictionQuestionContext
+        .question
+        .conclusionNature
+      === predictionQuestion
+        .conclusionNature,
+  };
+
+  if (
+    predictionQuestion.intent
+    === "prediction"
+  ) {
+    conclusionNatureChecks
+      .predictionQuestionUsesPredictionConclusionNature =
+      predictionQuestion
+        .conclusionNature
+      === "prediction";
+
+    conclusionNatureChecks
+      .predictionQuestionContextUsesPredictionConclusionNature =
+      predictionQuestionContext
+        .question
+        .conclusionNature
+      === "prediction";
+  }
+
+  const conclusionNatureStage2Checks =
+    buildConclusionNatureStage2Checks(
+      humanContext,
+    );
+
   const checks = {
     detectsRoleRecommendationQuestion:
       isRoleRecommendationQuestion(
@@ -1351,6 +2067,18 @@ export function verifyQuestionReader():
     ...compatibilityNegativeChecks,
 
     ...decisionPathPreservationChecks,
+
+    ...existencePositiveChecks,
+
+    ...existenceNegativeChecks,
+
+    ...futureOutcomePredictionChecks,
+
+    ...timingMethodProtectionChecks,
+
+    ...conclusionNatureChecks,
+
+    ...conclusionNatureStage2Checks,
   };
 
   return {

@@ -132,6 +132,9 @@ const INTENT_KOREAN_LABELS:
 
     method:
       "방법과 접근 판단",
+
+    existence:
+      "관련 운·구조의 존재 여부를 확인",
   };
 
 const DECISION_TARGET_KOREAN_LABELS:
@@ -204,6 +207,27 @@ const DECISION_TARGET_KOREAN_LABELS:
 
     respondToConflict:
       "갈등에 어떻게 대응할지 결정",
+  };
+
+const CONCLUSION_NATURE_KOREAN_LABELS:
+  Readonly<Record<string, string>> = {
+    decision:
+      "확정된 실행·선택 판단을 설명",
+
+    interpretation:
+      "의미와 구조를 해석",
+
+    recommendation:
+      "적합성과 추천 이유를 설명",
+
+    warning:
+      "위험·주의·반복 패턴을 설명",
+
+    prediction:
+      "가능성·흐름·변화 방향을 설명",
+
+    existence:
+      "운·구조의 존재 여부를 설명",
   };
 
 const ANALYSIS_MODE_KOREAN_LABELS:
@@ -962,11 +986,13 @@ function buildQuestionContextUserSection(
       .question;
 
   const analysisModeLabel =
-    translateValue(
-      question.analysisMode,
-      ANALYSIS_MODE_KOREAN_LABELS,
-      "질문의 핵심을 판단",
-    );
+    question.intent === "existence"
+      ? "관련 운·구조의 존재 여부를 확인"
+      : translateValue(
+        question.analysisMode,
+        ANALYSIS_MODE_KOREAN_LABELS,
+        "질문의 핵심을 판단",
+      );
 
   const actionObjectDescription =
     questionContext
@@ -1207,6 +1233,107 @@ function buildLegalSafetySystemRules():
   ].join("\n");
 }
 
+function buildConclusionNatureSystemRules(
+  conclusionNature:
+    DecisionExplanationPayload["conclusionNature"],
+): string {
+  const commonRules = [
+    "- finalDecision, verdict, confidence, evidence, conditions, risks를 새로 판단하거나 변경하지 않는다.",
+  ];
+
+  if (
+    conclusionNature
+    === "decision"
+  ) {
+    return [
+      "결론 성격: 실행·선택 판단 설명 원칙",
+      "",
+      "- 확정된 결론을 중심으로 설명한다.",
+      "- 결론의 이유와 근거를 설명할 수 있다.",
+      "- 엔진이 제공한 recommendedDirection이 있는 경우에만 실행 방향을 설명한다.",
+      "- 새로운 실행 지시나 판단을 만들지 않는다.",
+      ...commonRules,
+    ].join("\n");
+  }
+
+  if (
+    conclusionNature
+    === "interpretation"
+  ) {
+    return [
+      "결론 성격: 의미·구조 해석 설명 원칙",
+      "",
+      "- 의미와 구조의 해석 중심으로 설명한다.",
+      "- 새로운 행동 지시나 실행 계획을 만들지 않는다.",
+      "- 엔진 결론을 실행형 조언으로 바꾸지 않는다.",
+      ...commonRules,
+    ].join("\n");
+  }
+
+  if (
+    conclusionNature
+    === "recommendation"
+  ) {
+    return [
+      "결론 성격: 적합성·추천 설명 원칙",
+      "",
+      "- 무엇이 왜 적합하거나 추천되는지 설명한다.",
+      "- 엔진 근거와 적합성 이유를 중심으로 설명한다.",
+      "- 엔진에 없는 새로운 추천 판단을 만들지 않는다.",
+      ...commonRules,
+    ].join("\n");
+  }
+
+  if (
+    conclusionNature
+    === "warning"
+  ) {
+    return [
+      "결론 성격: 위험·주의 설명 원칙",
+      "",
+      "- 위험, 반복 패턴, 조건, 주의 요소 중심으로 설명한다.",
+      "- 엔진이 확정하지 않은 행동 계획을 새로 만들지 않는다.",
+      "- 경고를 실행 지시로 바꾸지 않는다.",
+      ...commonRules,
+    ].join("\n");
+  }
+
+  if (
+    conclusionNature
+    === "prediction"
+  ) {
+    return [
+      "결론 성격: 가능성·흐름 설명 원칙",
+      "",
+      "- 가능성, 흐름, 변화 방향, 시기 관련 표현 중심으로 설명한다.",
+      "- 미래를 확정적으로 단정하지 않는다.",
+      "- 엔진에 없는 새로운 미래 예측을 만들지 않는다.",
+      "- 실행 지시나 행동 계획으로 답변을 바꾸지 않는다.",
+      ...commonRules,
+    ].join("\n");
+  }
+
+  if (
+    conclusionNature
+    === "existence"
+  ) {
+    return [
+      "결론 성격: 존재 여부 설명 원칙",
+      "",
+      "- 해당 구조나 신호가 존재하는 근거를 중심으로 설명한다.",
+      "- 존재 여부를 엔진 결과보다 강하게 단정하지 않는다.",
+      "- 존재 질문을 실행 조언이나 행동 계획으로 바꾸지 않는다.",
+      ...commonRules,
+    ].join("\n");
+  }
+
+  return [
+    "결론 성격 설명 원칙",
+    "",
+    ...commonRules,
+  ].join("\n");
+}
+
 function buildTopicSafetySystemRules(
   topic:
     DecisionExplanationPayload["topic"],
@@ -1314,6 +1441,18 @@ export function buildConsultingPrompt(
         DECISION_TARGET_KOREAN_LABELS,
         "질문에 포함된 선택을 판단",
       );
+
+  const conclusionNatureLabel =
+    translateValue(
+      payload.conclusionNature,
+      CONCLUSION_NATURE_KOREAN_LABELS,
+      "엔진이 확정한 결론 성격을 설명",
+    );
+
+  const conclusionNatureSystemRules =
+    buildConclusionNatureSystemRules(
+      payload.conclusionNature,
+    );
 
   const roleRecommendationRules =
     payload.explanationKind
@@ -1542,6 +1681,7 @@ ${groundingUsageRules ? `\n${groundingUsageRules}` : ""}
 - evidence에 없는 합·충·형·파·해와 오행 관계를 새로 만들지 않는다.
 - 엔진 verdict와 overallLevel을 변경하거나 뒤집지 않는다.
 ${questionFocusSystemRules ? `\n${questionFocusSystemRules}` : ""}
+${conclusionNatureSystemRules ? `\n${conclusionNatureSystemRules}` : ""}
 ${roleRecommendationRules ? `\n${roleRecommendationRules}` : ""}
 ${lifeFlowInterpretationRules ? `\n${lifeFlowInterpretationRules}` : ""}
 ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
@@ -1642,6 +1782,7 @@ ${topicSafetySystemRules ? `\n${topicSafetySystemRules}` : ""}
     `상담 영역: ${topicLabel}`,
     `질문 의도: ${intentLabel}`,
     `결정할 대상: ${decisionTargetLabel}`,
+    `결론 성격: ${conclusionNatureLabel}`,
     "",
     ...buildQuestionContextUserSection(
       questionContext,

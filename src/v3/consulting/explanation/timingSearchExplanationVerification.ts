@@ -49,6 +49,9 @@
       decisionTarget:
         "start",
 
+      conclusionNature:
+        "decision",
+
       contextAlignment:
         "partiallyAligned",
 

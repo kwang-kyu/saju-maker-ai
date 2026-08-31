@@ -215,17 +215,17 @@
       predictionStartUsesStartSpecificAnswer:
         predictionStart
         ===
-        "지금 시작하는 방향 자체는 가능하지만, 질문한 결과로 이어지려면 필요한 조건과 변수의 영향을 함께 봐야 한다.",
+        "질문한 결과로 이어질 여지는 있으나, 조건과 변수에 따라 흐름의 방향과 성사 시점이 달라질 수 있다.",
 
       predictionPartnerUsesPartnerSpecificAnswer:
         predictionPartner
         ===
-        "이 사람과 함께할 여지는 있지만, 관계가 질문한 결과로 이어지려면 확인해야 할 조건과 변수가 있다.",
+        "이 사람과의 관계에서 질문한 결과로 이어질 여지는 있으나, 확인해야 할 조건과 변수에 따라 전개 방향이 달라질 수 있다.",
 
       predictionGenericUsesGenericPredictionAnswer:
         predictionGeneric
         ===
-        "질문한 결과로 이어질 여지는 있지만 조건과 변수의 영향을 함께 받는 흐름으로 판단한다.",
+        "질문한 결과로 이어질 여지는 있지만, 조건과 변수에 따라 흐름의 방향과 성사 시점이 달라질 수 있다.",
 
       possibilityUsesPossibilityAnswer:
         possibility

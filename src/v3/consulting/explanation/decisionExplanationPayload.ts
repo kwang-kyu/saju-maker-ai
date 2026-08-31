@@ -27,6 +27,9 @@ export type DecisionExplanationPayload = {
   decisionTarget:
     DecisionExplanationPlan["decisionTarget"];
 
+  conclusionNature:
+    DecisionExplanationPlan["conclusionNature"];
+
   verdict:
     DecisionExplanationPlan["verdict"];
 
@@ -85,6 +88,9 @@ export function buildDecisionExplanationPayload(
 
     decisionTarget:
       plan.decisionTarget,
+
+    conclusionNature:
+      plan.conclusionNature,
 
     verdict:
       plan.verdict,

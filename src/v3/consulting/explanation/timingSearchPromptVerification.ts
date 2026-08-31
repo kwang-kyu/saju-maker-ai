@@ -33,13 +33,97 @@
 
       nonTimingSearchDoesNotDeliverTimingBlocks:
         boolean;
+
+      decisionConclusionNatureRulesAreInSystemPrompt:
+        boolean;
+
+      systemPromptExcludesOtherConclusionNatureRules:
+        boolean;
+
+      predictionConclusionNatureRulesAreInSystemPrompt:
+        boolean;
+
+      predictionSystemPromptExcludesOtherConclusionNatureRules:
+        boolean;
+
+      interpretationConclusionNatureRulesAreInSystemPrompt:
+        boolean;
+
+      interpretationSystemPromptExcludesOtherConclusionNatureRules:
+        boolean;
+
+      recommendationConclusionNatureRulesAreInSystemPrompt:
+        boolean;
+
+      recommendationSystemPromptExcludesOtherConclusionNatureRules:
+        boolean;
+
+      warningConclusionNatureRulesAreInSystemPrompt:
+        boolean;
+
+      warningSystemPromptExcludesOtherConclusionNatureRules:
+        boolean;
+
+      existenceConclusionNatureRulesAreInSystemPrompt:
+        boolean;
+
+      existenceSystemPromptExcludesOtherConclusionNatureRules:
+        boolean;
     };
 
     passed:
       boolean;
   };
 
-  function buildTimingInput():
+  const OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES = [
+    "결론 성격: 의미·구조 해석 설명 원칙",
+    "결론 성격: 적합성·추천 설명 원칙",
+    "결론 성격: 위험·주의 설명 원칙",
+    "결론 성격: 가능성·흐름 설명 원칙",
+    "결론 성격: 존재 여부 설명 원칙",
+  ] as const;
+
+  const PREDICTION_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES = [
+    "결론 성격: 실행·선택 판단 설명 원칙",
+    "결론 성격: 의미·구조 해석 설명 원칙",
+    "결론 성격: 적합성·추천 설명 원칙",
+    "결론 성격: 위험·주의 설명 원칙",
+    "결론 성격: 존재 여부 설명 원칙",
+  ] as const;
+
+  const INTERPRETATION_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES = [
+    "결론 성격: 실행·선택 판단 설명 원칙",
+    "결론 성격: 적합성·추천 설명 원칙",
+    "결론 성격: 위험·주의 설명 원칙",
+    "결론 성격: 가능성·흐름 설명 원칙",
+    "결론 성격: 존재 여부 설명 원칙",
+  ] as const;
+
+  const RECOMMENDATION_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES = [
+    "결론 성격: 실행·선택 판단 설명 원칙",
+    "결론 성격: 의미·구조 해석 설명 원칙",
+    "결론 성격: 위험·주의 설명 원칙",
+    "결론 성격: 가능성·흐름 설명 원칙",
+    "결론 성격: 존재 여부 설명 원칙",
+  ] as const;
+
+  const WARNING_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES = [
+    "결론 성격: 실행·선택 판단 설명 원칙",
+    "결론 성격: 의미·구조 해석 설명 원칙",
+    "결론 성격: 적합성·추천 설명 원칙",
+    "결론 성격: 가능성·흐름 설명 원칙",
+    "결론 성격: 존재 여부 설명 원칙",
+  ] as const;
+
+  const EXISTENCE_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES = [
+    "결론 성격: 실행·선택 판단 설명 원칙",
+    "결론 성격: 의미·구조 해석 설명 원칙",
+    "결론 성격: 적합성·추천 설명 원칙",
+    "결론 성격: 위험·주의 설명 원칙",
+    "결론 성격: 가능성·흐름 설명 원칙",
+  ] as const;
+
+  function buildBaseInput():
     DecisionExplanationInput {
     return {
       verdict:
@@ -56,6 +140,9 @@
 
       decisionTarget:
         "start",
+
+      conclusionNature:
+        "decision",
 
       contextAlignment:
         "partiallyAligned",
@@ -108,6 +195,22 @@
 
       lifeFlowInterpretationAssessment:
         null,
+
+      timingAssessment:
+        null,
+
+      engineDecisionLocked:
+        true,
+
+      gptMayRejudge:
+        false,
+    };
+  }
+
+  function buildTimingInput():
+    DecisionExplanationInput {
+    return {
+      ...buildBaseInput(),
 
       timingAssessment: {
         analysisRequired:
@@ -406,12 +509,256 @@
         evidenceComplete:
           true,
       },
+    };
+  }
 
-      engineDecisionLocked:
-        true,
+  function buildPredictionInput():
+    DecisionExplanationInput {
+    return {
+      ...buildBaseInput(),
 
-      gptMayRejudge:
-        false,
+      topic:
+        "money",
+
+      intent:
+        "prediction",
+
+      decisionTarget:
+        "none",
+
+      conclusionNature:
+        "prediction",
+
+      directAnswer:
+        "앞으로 재물이 들어올 가능성은 있지만, 흐름상 바로 확정되기보다는 단계적인 변화를 거칠 수 있습니다.",
+
+      reason:
+        "재물 흐름과 현재 국면을 기준으로 가능성을 설명한다.",
+
+      evidence: [
+        {
+          source:
+            "questionIntent",
+
+          description:
+            "앞으로 돈이 들어올지에 대한 가능성·흐름 질문이다.",
+
+          importance:
+            "core",
+        },
+      ],
+
+      recommendedDirection:
+        "흐름을 관찰하며 재물 변화 가능성을 점검한다.",
+
+      prohibitedDirection:
+        "가능성 설명을 실행 지시로 바꾸지 않는다.",
+
+      finalDecisionSentence:
+        "앞으로 재물이 들어올 가능성은 있지만, 흐름상 단계적인 변화를 거칠 수 있습니다.",
+
+      timingAssessment:
+        null,
+    };
+  }
+
+  function buildInterpretationInput():
+    DecisionExplanationInput {
+    return {
+      ...buildBaseInput(),
+
+      topic:
+        "lifeFlow",
+
+      intent:
+        "reason",
+
+      decisionTarget:
+        "none",
+
+      conclusionNature:
+        "interpretation",
+
+      directAnswer:
+        "현재 사주 구조상 책임을 혼자 떠안는 경향과 반복되는 부담 패턴이 함께 확인됩니다.",
+
+      reason:
+        "원국과 현재 흐름을 기준으로 성향과 구조를 해석한다.",
+
+      evidence: [
+        {
+          source:
+            "questionIntent",
+
+          description:
+            "어떤 성향인지, 왜 반복되는지에 대한 의미·구조 해석 질문이다.",
+
+          importance:
+            "core",
+        },
+      ],
+
+      recommendedDirection:
+        "반복되는 부담 패턴을 인식하고 구조를 이해하는 데 활용한다.",
+
+      prohibitedDirection:
+        "해석을 실행 지시나 행동 계획으로 바꾸지 않는다.",
+
+      finalDecisionSentence:
+        "현재 사주 구조상 책임을 혼자 떠안는 경향과 반복되는 부담 패턴이 함께 확인됩니다.",
+
+      timingAssessment:
+        null,
+    };
+  }
+
+  function buildRecommendationInput():
+    DecisionExplanationInput {
+    return {
+      ...buildBaseInput(),
+
+      topic:
+        "job",
+
+      intent:
+        "selection",
+
+      decisionTarget:
+        "choose",
+
+      conclusionNature:
+        "recommendation",
+
+      directAnswer:
+        "현재 사주 구조상 기획·조율 역할과 사람을 연결하는 업무가 상대적으로 적합합니다.",
+
+      reason:
+        "원국과 현재 흐름을 기준으로 적성과 적합한 활동 방향을 설명한다.",
+
+      evidence: [
+        {
+          source:
+            "questionIntent",
+
+          description:
+            "어떤 직업이 맞는지에 대한 적합성·추천 질문이다.",
+
+          importance:
+            "core",
+        },
+      ],
+
+      recommendedDirection:
+        "기획·조율과 사람 연결 업무를 중심으로 적합성을 설명한다.",
+
+      prohibitedDirection:
+        "추천을 실행 지시나 확정 판단으로 바꾸지 않는다.",
+
+      finalDecisionSentence:
+        "현재 사주 구조상 기획·조율 역할과 사람을 연결하는 업무가 상대적으로 적합합니다.",
+
+      timingAssessment:
+        null,
+    };
+  }
+
+  function buildWarningInput():
+    DecisionExplanationInput {
+    return {
+      ...buildBaseInput(),
+
+      topic:
+        "business",
+
+      intent:
+        "risk",
+
+      decisionTarget:
+        "none",
+
+      conclusionNature:
+        "warning",
+
+      directAnswer:
+        "현재 사주 구조상 무리한 확장과 책임 과중 패턴을 특히 조심해야 합니다.",
+
+      reason:
+        "원국과 현재 흐름을 기준으로 위험·주의·반복 패턴을 설명한다.",
+
+      evidence: [
+        {
+          source:
+            "questionIntent",
+
+          description:
+            "무엇을 조심해야 하는지에 대한 위험·주의 질문이다.",
+
+          importance:
+            "core",
+        },
+      ],
+
+      recommendedDirection:
+        "위험·반복 패턴을 인식하고 주의 요소를 점검한다.",
+
+      prohibitedDirection:
+        "경고를 실행 지시나 확정 판단으로 바꾸지 않는다.",
+
+      finalDecisionSentence:
+        "현재 사주 구조상 무리한 확장과 책임 과중 패턴을 특히 조심해야 합니다.",
+
+      timingAssessment:
+        null,
+    };
+  }
+
+  function buildExistenceInput():
+    DecisionExplanationInput {
+    return {
+      ...buildBaseInput(),
+
+      topic:
+        "money",
+
+      intent:
+        "existence",
+
+      decisionTarget:
+        "none",
+
+      conclusionNature:
+        "existence",
+
+      directAnswer:
+        "현재 사주 구조상 재물운 관련 신호가 일부 확인됩니다.",
+
+      reason:
+        "원국과 현재 흐름을 기준으로 재물운·구조의 존재 여부를 설명한다.",
+
+      evidence: [
+        {
+          source:
+            "questionIntent",
+
+          description:
+            "재물운이 있는지에 대한 존재 여부 질문이다.",
+
+          importance:
+            "core",
+        },
+      ],
+
+      recommendedDirection:
+        "존재하는 근거와 신호를 중심으로 설명한다.",
+
+      prohibitedDirection:
+        "존재 질문을 실행 조언이나 행동 계획으로 바꾸지 않는다.",
+
+      finalDecisionSentence:
+        "현재 사주 구조상 재물운 관련 신호가 일부 확인됩니다.",
+
+      timingAssessment:
+        null,
     };
   }
 
@@ -496,6 +843,51 @@
         "사업을 시작해도 괜찮을까요?",
       );
 
+    const predictionInput =
+      buildPredictionInput();
+
+    const predictionPrompt =
+      buildPromptForInput(
+        predictionInput,
+        "앞으로 돈이 들어올까요?",
+      );
+
+    const interpretationInput =
+      buildInterpretationInput();
+
+    const interpretationPrompt =
+      buildPromptForInput(
+        interpretationInput,
+        "나는 어떤 성향인가요?",
+      );
+
+    const recommendationInput =
+      buildRecommendationInput();
+
+    const recommendationPrompt =
+      buildPromptForInput(
+        recommendationInput,
+        "어떤 직업이 맞나요?",
+      );
+
+    const warningInput =
+      buildWarningInput();
+
+    const warningPrompt =
+      buildPromptForInput(
+        warningInput,
+        "무엇을 조심해야 하나요?",
+      );
+
+    const existenceInput =
+      buildExistenceInput();
+
+    const existencePrompt =
+      buildPromptForInput(
+        existenceInput,
+        "재물운이 있나요?",
+      );
+
     const checks = {
       recommendationTitleIsDelivered:
         prompt.userPrompt
@@ -569,6 +961,206 @@
           .userPrompt
           .includes(
             "상대적으로 주의할 시기",
+          ),
+
+      decisionConclusionNatureRulesAreInSystemPrompt:
+        prompt.systemPrompt
+          .includes(
+            "결론 성격: 실행·선택 판단 설명 원칙",
+          )
+        && prompt.systemPrompt
+          .includes(
+            "확정된 결론을 중심으로 설명한다.",
+          )
+        && prompt.systemPrompt
+          .includes(
+            "결론의 이유와 근거를 설명할 수 있다.",
+          )
+        && prompt.systemPrompt
+          .includes(
+            "엔진이 제공한 recommendedDirection이 있는 경우에만 실행 방향을 설명한다.",
+          )
+        && prompt.systemPrompt
+          .includes(
+            "새로운 실행 지시나 판단을 만들지 않는다.",
+          )
+        && prompt.systemPrompt
+          .includes(
+            "finalDecision, verdict, confidence, evidence, conditions, risks를 새로 판단하거나 변경하지 않는다.",
+          ),
+
+      systemPromptExcludesOtherConclusionNatureRules:
+        OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES
+          .every(
+            (title) =>
+              !prompt.systemPrompt
+                .includes(
+                  title,
+                ),
+          ),
+
+      predictionConclusionNatureRulesAreInSystemPrompt:
+        predictionPrompt.systemPrompt
+          .includes(
+            "결론 성격: 가능성·흐름 설명 원칙",
+          )
+        && predictionPrompt.systemPrompt
+          .includes(
+            "가능성, 흐름, 변화 방향, 시기 관련 표현 중심으로 설명한다.",
+          )
+        && predictionPrompt.systemPrompt
+          .includes(
+            "미래를 확정적으로 단정하지 않는다.",
+          )
+        && predictionPrompt.systemPrompt
+          .includes(
+            "엔진에 없는 새로운 미래 예측을 만들지 않는다.",
+          )
+        && predictionPrompt.systemPrompt
+          .includes(
+            "실행 지시나 행동 계획으로 답변을 바꾸지 않는다.",
+          )
+        && predictionPrompt.systemPrompt
+          .includes(
+            "finalDecision, verdict, confidence, evidence, conditions, risks를 새로 판단하거나 변경하지 않는다.",
+          ),
+
+      predictionSystemPromptExcludesOtherConclusionNatureRules:
+        PREDICTION_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES
+          .every(
+            (title) =>
+              !predictionPrompt.systemPrompt
+                .includes(
+                  title,
+                ),
+          ),
+
+      interpretationConclusionNatureRulesAreInSystemPrompt:
+        interpretationPrompt.systemPrompt
+          .includes(
+            "결론 성격: 의미·구조 해석 설명 원칙",
+          )
+        && interpretationPrompt.systemPrompt
+          .includes(
+            "- 의미와 구조의 해석 중심으로 설명한다.",
+          )
+        && interpretationPrompt.systemPrompt
+          .includes(
+            "- 새로운 행동 지시나 실행 계획을 만들지 않는다.",
+          )
+        && interpretationPrompt.systemPrompt
+          .includes(
+            "- 엔진 결론을 실행형 조언으로 바꾸지 않는다.",
+          )
+        && interpretationPrompt.systemPrompt
+          .includes(
+            "- finalDecision, verdict, confidence, evidence, conditions, risks를 새로 판단하거나 변경하지 않는다.",
+          ),
+
+      interpretationSystemPromptExcludesOtherConclusionNatureRules:
+        INTERPRETATION_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES
+          .every(
+            (title) =>
+              !interpretationPrompt.systemPrompt
+                .includes(
+                  title,
+                ),
+          ),
+
+      recommendationConclusionNatureRulesAreInSystemPrompt:
+        recommendationPrompt.systemPrompt
+          .includes(
+            "결론 성격: 적합성·추천 설명 원칙",
+          )
+        && recommendationPrompt.systemPrompt
+          .includes(
+            "- 무엇이 왜 적합하거나 추천되는지 설명한다.",
+          )
+        && recommendationPrompt.systemPrompt
+          .includes(
+            "- 엔진 근거와 적합성 이유를 중심으로 설명한다.",
+          )
+        && recommendationPrompt.systemPrompt
+          .includes(
+            "- 엔진에 없는 새로운 추천 판단을 만들지 않는다.",
+          )
+        && recommendationPrompt.systemPrompt
+          .includes(
+            "- finalDecision, verdict, confidence, evidence, conditions, risks를 새로 판단하거나 변경하지 않는다.",
+          ),
+
+      recommendationSystemPromptExcludesOtherConclusionNatureRules:
+        RECOMMENDATION_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES
+          .every(
+            (title) =>
+              !recommendationPrompt.systemPrompt
+                .includes(
+                  title,
+                ),
+          ),
+
+      warningConclusionNatureRulesAreInSystemPrompt:
+        warningPrompt.systemPrompt
+          .includes(
+            "결론 성격: 위험·주의 설명 원칙",
+          )
+        && warningPrompt.systemPrompt
+          .includes(
+            "- 위험, 반복 패턴, 조건, 주의 요소 중심으로 설명한다.",
+          )
+        && warningPrompt.systemPrompt
+          .includes(
+            "- 엔진이 확정하지 않은 행동 계획을 새로 만들지 않는다.",
+          )
+        && warningPrompt.systemPrompt
+          .includes(
+            "- 경고를 실행 지시로 바꾸지 않는다.",
+          )
+        && warningPrompt.systemPrompt
+          .includes(
+            "- finalDecision, verdict, confidence, evidence, conditions, risks를 새로 판단하거나 변경하지 않는다.",
+          ),
+
+      warningSystemPromptExcludesOtherConclusionNatureRules:
+        WARNING_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES
+          .every(
+            (title) =>
+              !warningPrompt.systemPrompt
+                .includes(
+                  title,
+                ),
+          ),
+
+      existenceConclusionNatureRulesAreInSystemPrompt:
+        existencePrompt.systemPrompt
+          .includes(
+            "결론 성격: 존재 여부 설명 원칙",
+          )
+        && existencePrompt.systemPrompt
+          .includes(
+            "- 해당 구조나 신호가 존재하는 근거를 중심으로 설명한다.",
+          )
+        && existencePrompt.systemPrompt
+          .includes(
+            "- 존재 여부를 엔진 결과보다 강하게 단정하지 않는다.",
+          )
+        && existencePrompt.systemPrompt
+          .includes(
+            "- 존재 질문을 실행 조언이나 행동 계획으로 바꾸지 않는다.",
+          )
+        && existencePrompt.systemPrompt
+          .includes(
+            "- finalDecision, verdict, confidence, evidence, conditions, risks를 새로 판단하거나 변경하지 않는다.",
+          ),
+
+      existenceSystemPromptExcludesOtherConclusionNatureRules:
+        EXISTENCE_OTHER_CONCLUSION_NATURE_SYSTEM_RULE_TITLES
+          .every(
+            (title) =>
+              !existencePrompt.systemPrompt
+                .includes(
+                  title,
+                ),
           ),
     };
 

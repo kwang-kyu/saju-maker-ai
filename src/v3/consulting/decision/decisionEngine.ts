@@ -44,6 +44,21 @@ import {
 import {
   buildLifeFlowInterpretationDecisionResult,
 } from "./lifeFlowInterpretationDecisionBuilder.js";
+import {
+  buildCareerRecommendationSource,
+} from "./careerRecommendationSourceBuilder.js";
+import {
+  buildWarningConclusionSource,
+} from "./warningConclusionSourceBuilder.js";
+import {
+  buildExistenceConclusionSource,
+} from "./existenceConclusionSourceBuilder.js";
+import {
+  buildPredictionConclusionSource,
+} from "./predictionConclusionSourceBuilder.js";
+import {
+  buildReaderDecisionEvidence,
+} from "./readerDecisionEvidenceBuilder.js";
 
 /**
  * Decision Engine
@@ -187,6 +202,8 @@ export function runDecisionEngine(
 
       decisionTarget:
         input.question.decisionTarget,
+      analysisMode:
+        input.question.analysisMode,
     });
 
   const evidence =
@@ -233,6 +250,66 @@ export function runDecisionEngine(
     readerAssessment:
       readerDecisionAssessment,
   });
+  const careerRecommendation =
+    input
+      .question
+      .conclusionNature
+    === "recommendation"
+      ? buildCareerRecommendationSource(
+        input.humanContext,
+      )
+      : undefined;
+
+  const warningConclusion =
+    input
+      .question
+      .conclusionNature
+    === "warning"
+      ? buildWarningConclusionSource(
+        risks,
+        conditions,
+      )
+      : undefined;
+
+  const readerDecisionEvidence =
+    buildReaderDecisionEvidence(
+      input,
+    );
+
+  const existenceConclusion =
+    input
+      .question
+      .conclusionNature
+    === "existence"
+    || input
+      .question
+      .intent
+    === "existence"
+      ? buildExistenceConclusionSource(
+        input,
+        readerDecisionAssessment,
+        readerDecisionEvidence,
+        conditions,
+      )
+      : undefined;
+
+  const predictionConclusion =
+    input
+      .question
+      .conclusionNature
+    === "prediction"
+    || input
+      .question
+      .intent
+    === "prediction"
+      ? buildPredictionConclusionSource(
+        input,
+        readerDecisionAssessment,
+        readerDecisionEvidence,
+        conditions,
+      )
+      : undefined;
+
   const coreDecision = buildCoreDecision(
     verdict,
     input.question.decisionQuestion,
@@ -245,6 +322,20 @@ export function runDecisionEngine(
 
       decisionTarget:
         input.question.decisionTarget,
+
+      analysisMode:
+        input.question.analysisMode,
+
+      conclusionNature:
+        input.question.conclusionNature,
+
+      careerRecommendation,
+
+      warningConclusion,
+
+      existenceConclusion,
+
+      predictionConclusion,
     },
   );
   return buildDecisionResult({

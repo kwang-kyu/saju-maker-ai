@@ -219,6 +219,7 @@ export type DecisionResult = {
   decisionTarget: QuestionReaderResult["decisionTarget"];
   topic: QuestionReaderResult["topic"];
   intent: QuestionReaderResult["intent"];
+  conclusionNature: QuestionReaderResult["conclusionNature"];
 
   coreDecision: string;
   decisionReason: string;
