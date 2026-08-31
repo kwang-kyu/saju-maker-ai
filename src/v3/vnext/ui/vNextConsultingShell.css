@@ -1,0 +1,553 @@
+.vnext-consulting-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at top center,
+      rgba(176, 134, 72, 0.1),
+      transparent 28rem
+    ),
+    linear-gradient(
+      180deg,
+      #f8f5ef 0%,
+      #f2ede3 100%
+    );
+  color: #26231f;
+  font-family:
+    Pretendard,
+    "Noto Sans KR",
+    system-ui,
+    sans-serif;
+}
+
+.vnext-consulting-header {
+  border-bottom: 1px solid rgba(84, 69, 48, 0.14);
+  background: rgba(255, 253, 248, 0.92);
+  backdrop-filter: blur(14px);
+}
+
+.vnext-consulting-header-inner {
+  width: min(720px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 28px 0 24px;
+  text-align: center;
+}
+
+.vnext-consulting-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.vnext-consulting-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.vnext-consulting-brand {
+  margin: 0;
+  color: #211d18;
+  font-family:
+    "Noto Serif KR",
+    Georgia,
+    serif;
+  font-size: clamp(28px, 6vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.vnext-consulting-title {
+  margin: 0;
+  color: #211d18;
+  font-family:
+    "Noto Serif KR",
+    Georgia,
+    serif;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.vnext-consulting-subtitle {
+  margin: 12px 0 0;
+  color: #5f574c;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.vnext-consulting-header-status {
+  margin-top: 14px;
+}
+
+.vnext-consulting-header-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+.vnext-consulting-header-status-badge--idle {
+  background: rgba(139, 103, 50, 0.1);
+  color: #6f5228;
+}
+
+.vnext-consulting-header-status-badge--active {
+  background: rgba(139, 103, 50, 0.16);
+  color: #5c4520;
+}
+
+.vnext-consulting-header-status-badge--waiting {
+  background: rgba(176, 134, 72, 0.14);
+  color: #7a5928;
+}
+
+.vnext-consulting-header-status-badge--error {
+  background: rgba(155, 61, 47, 0.12);
+  color: #9b3d2f;
+}
+
+.vnext-consulting-new-session-button {
+  border: 1px solid rgba(84, 69, 48, 0.22);
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #3d3830;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.vnext-consulting-new-session-button:hover {
+  background: #f7f1e6;
+}
+
+.vnext-consulting-auth {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.vnext-consulting-auth-status {
+  margin: 0;
+  color: #6f6558;
+  font-size: 13px;
+}
+
+.vnext-consulting-auth-button {
+  border: 1px solid rgba(84, 69, 48, 0.22);
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #3d3830;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.vnext-consulting-auth-button:hover {
+  background: #f7f1e6;
+}
+
+.vnext-consulting-main {
+  width: min(720px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vnext-consulting-birth-summary {
+  border: 1px solid rgba(84, 69, 48, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.92);
+  padding: 20px 22px;
+}
+
+.vnext-consulting-birth-summary--compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+
+.vnext-consulting-birth-summary-main {
+  min-width: 0;
+}
+
+.vnext-consulting-birth-summary-identity {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vnext-consulting-birth-summary-kicker {
+  margin: 0;
+  color: #8b6732;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.vnext-consulting-birth-summary-name {
+  margin: 0;
+  color: #211d18;
+  font-family:
+    "Noto Serif KR",
+    Georgia,
+    serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.vnext-consulting-birth-summary-inline {
+  margin: 6px 0 0;
+  color: #5f574c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vnext-consulting-birth-summary-edit {
+  flex-shrink: 0;
+  border: 1px solid rgba(84, 69, 48, 0.18);
+  border-radius: 999px;
+  background: transparent;
+  color: #6f6558;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+}
+
+.vnext-consulting-birth-summary-edit:hover {
+  background: rgba(139, 103, 50, 0.08);
+}
+
+.vnext-consulting-conversation-section {
+  border: 1px solid rgba(84, 69, 48, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.92);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 280px;
+}
+
+.vnext-consulting-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid rgba(139, 103, 50, 0.18);
+  border-radius: 14px;
+  background: rgba(176, 134, 72, 0.08);
+  padding: 12px 14px;
+}
+
+.vnext-consulting-status--compact {
+  padding: 10px 12px;
+}
+
+.vnext-consulting-status-spinner {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 2px solid rgba(139, 103, 50, 0.18);
+  border-top-color: #8b6732;
+  border-radius: 50%;
+  animation: vnext-consulting-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes vnext-consulting-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vnext-consulting-status-copy {
+  min-width: 0;
+}
+
+.vnext-consulting-status-label {
+  display: block;
+  color: #5c4520;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.vnext-consulting-status-description {
+  margin: 4px 0 0;
+  color: #6f6558;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vnext-conversation-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.vnext-conversation-turns {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vnext-conversation-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vnext-conversation-turn--active {
+  animation: vnext-conversation-fade-in 0.2s ease;
+}
+
+@keyframes vnext-conversation-fade-in {
+  from {
+    opacity: 0.6;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.vnext-conversation-user,
+.vnext-conversation-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vnext-conversation-user {
+  align-items: flex-end;
+}
+
+.vnext-conversation-assistant {
+  align-items: flex-start;
+}
+
+.vnext-conversation-role {
+  color: #8b8174;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vnext-conversation-bubble {
+  max-width: min(100%, 560px);
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.vnext-conversation-bubble p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.vnext-conversation-bubble--user {
+  background: rgba(139, 103, 50, 0.12);
+  border: 1px solid rgba(139, 103, 50, 0.16);
+  color: #26231f;
+}
+
+.vnext-conversation-bubble--assistant {
+  background: #fff;
+  border: 1px solid rgba(84, 69, 48, 0.12);
+  color: #26231f;
+}
+
+.vnext-conversation-bubble--pending {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.vnext-conversation-bubble--streaming {
+  background: #fff;
+}
+
+.vnext-conversation-pending-text {
+  color: #8b8174;
+  font-style: italic;
+}
+
+.vnext-conversation-stream-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: #8b6732;
+  vertical-align: text-bottom;
+  animation: vnext-conversation-blink 1s step-end infinite;
+}
+
+@keyframes vnext-conversation-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.vnext-conversation-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px;
+  min-height: 180px;
+}
+
+.vnext-conversation-empty-title {
+  margin: 0;
+  color: #211d18;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.vnext-conversation-empty-description {
+  margin: 8px 0 0;
+  color: #6f6558;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 360px;
+}
+
+.vnext-consulting-composer {
+  border: 1px solid rgba(84, 69, 48, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.96);
+  padding: 22px;
+}
+
+.vnext-consulting-composer--inline {
+  padding: 16px 18px;
+}
+
+.vnext-consulting-composer-heading {
+  margin-bottom: 16px;
+}
+
+.vnext-consulting-composer-title {
+  margin: 0;
+  color: #211d18;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.vnext-consulting-composer-description {
+  margin: 8px 0 0;
+  color: #5f574c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.vnext-consulting-composer-inline-hint {
+  margin: 0 0 10px;
+  color: #6f6558;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vnext-consulting-composer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vnext-consulting-composer-label {
+  color: #3d3830;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vnext-consulting-composer-textarea {
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid rgba(84, 69, 48, 0.18);
+  border-radius: 14px;
+  background: #fff;
+  color: #26231f;
+  font: inherit;
+  line-height: 1.6;
+  padding: 14px 16px;
+}
+
+.vnext-consulting-composer--inline .vnext-consulting-composer-textarea {
+  min-height: 72px;
+}
+
+.vnext-consulting-composer-textarea:focus {
+  border-color: rgba(139, 103, 50, 0.55);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(176, 134, 72, 0.12);
+}
+
+.vnext-consulting-composer-submit {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    #8b6732 0%,
+    #6f5228 100%
+  );
+  color: #fffdf8;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 20px;
+}
+
+.vnext-consulting-composer-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.vnext-consulting-panel-section {
+  border: 1px solid rgba(84, 69, 48, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.92);
+  padding: 22px;
+}
+
+.vnext-consulting-panel-section .vnext-consulting-panel {
+  padding: 0;
+}
+
+.vnext-consulting-error {
+  margin: 12px 0 0;
+  color: #9b3d2f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .vnext-consulting-header-top {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .vnext-consulting-header-actions {
+    align-items: center;
+  }
+
+  .vnext-consulting-birth-summary--compact {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
