@@ -63,20 +63,32 @@ function normalizePathname(
     || "/";
 }
 
+function isV3ConsultingHash(
+  hash: string,
+): boolean {
+  const normalizedHash =
+    hash.toLowerCase();
+
+  return (
+    normalizedHash
+      === V3_CONSULTING_HASH
+    || normalizedHash.startsWith(
+      `${V3_CONSULTING_HASH}?`,
+    )
+  );
+}
+
 function isV3ConsultingLocation():
   boolean {
-  const normalizedHash =
-    window.location.hash
-      .toLowerCase();
-
   const normalizedPathname =
     normalizePathname(
       window.location.pathname,
     );
 
   return (
-    normalizedHash
-      === V3_CONSULTING_HASH
+    isV3ConsultingHash(
+      window.location.hash,
+    )
     || normalizedPathname
       === V3_AUTH_CALLBACK_PATH
   );
