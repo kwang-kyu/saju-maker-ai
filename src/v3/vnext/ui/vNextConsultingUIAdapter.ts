@@ -19,6 +19,7 @@ import {
   VNextConsultingController,
 } from "./vNextConsultingController.js";
 import {
+  resolveBrowserGatewayMockMode,
   resolveBrowserResponseGateway,
 } from "./vNextRemoteResponseGateway.js";
 import {
@@ -51,7 +52,7 @@ export function useVNextConsulting(
   if (!controllerRef.current) {
     controllerRef.current = new VNextConsultingController({
       gateway: resolveBrowserResponseGateway(
-        options.mockGateway ?? true,
+        resolveBrowserGatewayMockMode(options.mockGateway),
       ),
     });
   }

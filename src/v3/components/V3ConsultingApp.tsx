@@ -1,4 +1,4 @@
-import {
+﻿import {
   useState,
   type FormEvent,
 } from "react";
@@ -189,9 +189,7 @@ function buildV3AuthRedirectUrl():
       isStreaming: vNextIsStreaming,
       submitQuestion: submitVNextQuestion,
       submitFollowUpQuestion: submitVNextFollowUpQuestion,
-    } = useVNextConsulting({
-      mockGateway: vNextMode,
-    });
+    } = useVNextConsulting();
     const {
       state: vNextReportState,
       loadingLabel: vNextReportLoadingLabel,
@@ -199,9 +197,7 @@ function buildV3AuthRedirectUrl():
       isStreaming: vNextReportIsStreaming,
       startReport: startVNextReport,
       setActiveSection: setVNextReportActiveSection,
-    } = useVNextReport({
-      mockGateway: vNextMode,
-    });
+    } = useVNextReport();
     const [
       vNextFollowUpQuestion,
       setVNextFollowUpQuestion,
@@ -312,9 +308,11 @@ function buildV3AuthRedirectUrl():
       }
 
       if (
-        !authenticated
-        || accessToken
-        === null
+        !vNextMode
+        && (
+          !authenticated
+          || accessToken === null
+        )
       ) {
         setErrorMessage(
           "카카오 로그인 후 천운문 상담을 시작해 주세요.",
@@ -398,6 +396,13 @@ function buildV3AuthRedirectUrl():
           );
         }
 
+        return;
+      }
+
+      if (accessToken === null) {
+        setErrorMessage(
+          "카카오 로그인 후 천운문 상담을 시작해 주세요.",
+        );
         return;
       }
 

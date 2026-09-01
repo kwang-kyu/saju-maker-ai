@@ -16,6 +16,7 @@ import type {
   VNextBirthProfile,
 } from "../entry/vNextBirthProfile.js";
 import {
+  resolveBrowserGatewayMockMode,
   resolveBrowserResponseGateway,
 } from "../ui/vNextRemoteResponseGateway.js";
 import {
@@ -50,7 +51,7 @@ export function useVNextReport(
   if (!controllerRef.current) {
     controllerRef.current = new VNextReportController({
       gateway: resolveBrowserResponseGateway(
-        options.mockGateway ?? true,
+        resolveBrowserGatewayMockMode(options.mockGateway),
       ),
     });
   }
