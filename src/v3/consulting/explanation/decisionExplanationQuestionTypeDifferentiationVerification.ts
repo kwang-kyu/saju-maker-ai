@@ -55,7 +55,7 @@ const QUESTION_FIXTURES = [
   {
     name: "businessStart",
     questionText:
-      "지금 통닭집을 시작하면 성공할까요?",
+      "통닭집 창업을 해도 될까요?",
   },
   {
     name: "money",

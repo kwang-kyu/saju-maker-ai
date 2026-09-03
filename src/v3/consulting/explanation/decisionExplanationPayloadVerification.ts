@@ -305,6 +305,8 @@ const VALID_DECISION_EXPLANATION_FOCUS_VALUES = [
   "continuation",
   "termination",
   "businessStart",
+  "businessTiming",
+  "businessFieldFit",
   "realEstateBuy",
   "generalJudgement",
 ] as const satisfies readonly DecisionExplanationFocus[];
@@ -735,7 +737,7 @@ function verifyBusinessStart():
   DecisionExplanationPayloadVerificationCase {
   return buildCase(
     "C-business-start-payload-keeps-business-blocks",
-    "지금 통닭집을 시작하면 성공할까요?",
+    "통닭집 창업을 해도 될까요?",
     (
       artifacts,
     ) => {

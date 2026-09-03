@@ -40,7 +40,17 @@ const RELEVANCE_CASE_FIXTURES = [
   {
     name: "A_businessStart",
     questionText:
+      "통닭집 창업을 해도 될까요?",
+  },
+  {
+    name: "F_businessTiming",
+    questionText:
       "지금 통닭집을 시작하면 성공할까요?",
+  },
+  {
+    name: "G_businessFieldFit",
+    questionText:
+      "어떤 사업 분야가 나에게 맞을까요?",
   },
   {
     name: "B_moneyRecovery",
@@ -104,6 +114,26 @@ const FILTERED_MATERIAL_REGRESSION_BASELINE:
       "survivalStyle",
     ],
     conditionKeys: [
+      "useGradualGrowth",
+    ],
+    riskKeys: [
+      "repeatedPattern-1",
+      "repeatedPattern-2",
+    ],
+  },
+
+  F_businessTiming: {
+    evidenceSources: [
+      "capacity",
+      "career",
+      "destiny",
+      "lifeDriver",
+      "lifePhase",
+      "questionIntent",
+      "repeatedPattern",
+      "survivalStyle",
+    ],
+    conditionKeys: [
       "completeTimingEvidence",
       "confirmExecutionConditions",
       "useGradualGrowth",
@@ -112,6 +142,25 @@ const FILTERED_MATERIAL_REGRESSION_BASELINE:
       "repeatedPattern-1",
       "repeatedPattern-2",
       "urgentDecision",
+    ],
+  },
+
+  G_businessFieldFit: {
+    evidenceSources: [
+      "capacity",
+      "career",
+      "destiny",
+      "lifeDriver",
+      "questionIntent",
+      "repeatedPattern",
+      "survivalStyle",
+    ],
+    conditionKeys: [
+      "clarifyDecisionTarget",
+    ],
+    riskKeys: [
+      "repeatedPattern-1",
+      "repeatedPattern-2",
     ],
   },
 
@@ -363,6 +412,8 @@ function buildRelevanceContext(
 function buildCaseChecks(
   name:
     MaterialRelevanceCaseName,
+  focus:
+    DecisionExplanationFocus,
   filtered:
     MaterialKeySnapshot,
   raw:
@@ -415,9 +466,16 @@ function buildCaseChecks(
     name
   ) {
     case "A_businessStart":
+      checks.resolvesToBusinessStartFocus =
+        focus
+        === "businessStart";
       checks.includesCapacityEvidence =
         filtered.evidenceSources.includes(
           "capacity",
+        );
+      checks.includesLifePhaseEvidence =
+        filtered.evidenceSources.includes(
+          "lifePhase",
         );
       checks.excludesHumanIdentityEvidence =
         !filtered.evidenceSources.includes(
@@ -426,6 +484,85 @@ function buildCaseChecks(
       checks.excludesRelationshipEvidence =
         !filtered.evidenceSources.includes(
           "relationship",
+        );
+      checks.includesUseGradualGrowthCondition =
+        filtered.conditionKeys.includes(
+          "useGradualGrowth",
+        );
+      checks.excludesCompleteTimingEvidenceCondition =
+        !filtered.conditionKeys.includes(
+          "completeTimingEvidence",
+        );
+      break;
+
+    case "F_businessTiming":
+      checks.resolvesToBusinessTimingFocus =
+        focus
+        === "businessTiming";
+      checks.includesCapacityEvidence =
+        filtered.evidenceSources.includes(
+          "capacity",
+        );
+      checks.includesLifePhaseEvidence =
+        filtered.evidenceSources.includes(
+          "lifePhase",
+        );
+      checks.excludesHumanIdentityEvidence =
+        !filtered.evidenceSources.includes(
+          "humanIdentity",
+        );
+      checks.excludesRelationshipEvidence =
+        !filtered.evidenceSources.includes(
+          "relationship",
+        );
+      checks.includesCompleteTimingEvidenceCondition =
+        filtered.conditionKeys.includes(
+          "completeTimingEvidence",
+        );
+      checks.includesConfirmExecutionConditions =
+        filtered.conditionKeys.includes(
+          "confirmExecutionConditions",
+        );
+      checks.includesUrgentDecisionRisk =
+        filtered.riskKeys.includes(
+          "urgentDecision",
+        );
+      break;
+
+    case "G_businessFieldFit":
+      checks.resolvesToBusinessFieldFitFocus =
+        focus
+        === "businessFieldFit";
+      checks.includesCapacityEvidence =
+        filtered.evidenceSources.includes(
+          "capacity",
+        );
+      checks.includesRepeatedPatternEvidence =
+        filtered.evidenceSources.includes(
+          "repeatedPattern",
+        );
+      checks.excludesLifePhaseEvidence =
+        !filtered.evidenceSources.includes(
+          "lifePhase",
+        );
+      checks.excludesHumanIdentityEvidence =
+        !filtered.evidenceSources.includes(
+          "humanIdentity",
+        );
+      checks.excludesRelationshipEvidence =
+        !filtered.evidenceSources.includes(
+          "relationship",
+        );
+      checks.includesClarifyDecisionTargetCondition =
+        filtered.conditionKeys.includes(
+          "clarifyDecisionTarget",
+        );
+      checks.includesRepeatedPatternRisks =
+        filtered.riskKeys.includes(
+          "repeatedPattern-1",
+        )
+        && filtered.riskKeys.includes(
+          "repeatedPattern-2",
         );
       break;
 
@@ -620,6 +757,7 @@ function buildCaseResult(
   const checks =
     buildCaseChecks(
       fixture.name,
+      focus,
       filtered,
       raw,
       regressionMatch,

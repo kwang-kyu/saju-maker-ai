@@ -44,9 +44,26 @@ const EXECUTION_TYPE_FOCUSES:
   readonly DecisionExplanationFocus[] = [
     "termination",
     "businessStart",
+    "businessTiming",
     "realEstateBuy",
     "generalJudgement",
   ];
+
+const BUSINESS_EXPLANATION_FOCUSES:
+  readonly DecisionExplanationFocus[] = [
+    "businessStart",
+    "businessTiming",
+    "businessFieldFit",
+  ];
+
+function isBusinessExplanationFocus(
+  focus:
+    DecisionExplanationFocus,
+): boolean {
+  return BUSINESS_EXPLANATION_FOCUSES.includes(
+    focus,
+  );
+}
 
 export function isExecutionTypeFocus(
   focus:
@@ -107,6 +124,7 @@ export function isConditionMaterialRelevant(
       case "useGradualGrowth":
         return (
           focus === "businessStart"
+          || focus === "businessTiming"
           || (
             focus === "termination"
             && (
@@ -181,6 +199,12 @@ export function isRiskMaterialRelevant(
         || decisionTarget === "invest"
       )
       && risk.key === "repeatedPattern-1";
+    }
+
+    if (
+      focus === "businessFieldFit"
+    ) {
+      return true;
     }
 
     return isExecutionTypeFocus(
@@ -435,8 +459,9 @@ function isReaderEvidenceSourceRelevant(
     === "destiny"
   ) {
     return (
-      context.focus
-      === "businessStart"
+      isBusinessExplanationFocus(
+        context.focus,
+      )
       || context.focus
       === "continuation"
     );
@@ -466,10 +491,11 @@ function isReaderEvidenceSourceRelevant(
 
     case "career":
       return (
-        context.focus
-        === "termination"
+        isBusinessExplanationFocus(
+          context.focus,
+        )
         || context.focus
-        === "businessStart"
+        === "termination"
         || topic
         === "job"
         || topic
@@ -478,8 +504,9 @@ function isReaderEvidenceSourceRelevant(
 
     case "capacity":
       return (
-        context.focus
-        === "businessStart"
+        isBusinessExplanationFocus(
+          context.focus,
+        )
         || context.focus
         === "termination"
         || context.focus
@@ -547,19 +574,24 @@ export function isEvidenceMaterialRelevant(
     case "lifePhase":
       return (
         focus === "businessStart"
+        || focus === "businessTiming"
         || focus === "termination"
         || focus === "realEstateBuy"
       );
 
     case "lifeDriver":
       return (
-        focus === "businessStart"
+        isBusinessExplanationFocus(
+          focus,
+        )
         || focus === "termination"
       );
 
     case "survivalStyle":
       return (
-        focus === "businessStart"
+        isBusinessExplanationFocus(
+          focus,
+        )
         || (
           focus === "termination"
           && (
@@ -591,6 +623,12 @@ export function isEvidenceMaterialRelevant(
           decisionTarget === "buy"
           || decisionTarget === "invest"
         );
+      }
+
+      if (
+        focus === "businessFieldFit"
+      ) {
+        return true;
       }
 
       return isExecutionTypeFocus(

@@ -1687,6 +1687,8 @@ function buildFocusedDecisionExplanationBlocks(
       );
 
     case "businessStart":
+    case "businessTiming":
+    case "businessFieldFit":
       return buildBusinessStartExplanationBlocks(
         input,
         materials,

@@ -1061,7 +1061,7 @@ function verifyBusinessStart():
   ConsultingPromptBuilderVerificationCase {
   return buildCase(
     "C-business-start-prompt-centers-business-decision",
-    "지금 통닭집을 시작하면 성공할까요?",
+    "통닭집 창업을 해도 될까요?",
     "businessStart",
     (
       artifacts,
@@ -1093,6 +1093,108 @@ function verifyBusinessStart():
       partnershipDoesNotDominateWithCompatibility:
         artifacts.prompt.systemPrompt.includes(
           "궁합 설명이 답변 전체를 지배하지 않게 한다",
+        ),
+    }),
+  );
+}
+
+function verifyBusinessTiming():
+  ConsultingPromptBuilderVerificationCase {
+  return buildCase(
+    "business-timing-prompt-centers-when-to-start",
+    "지금 통닭집을 시작하면 성공할까요?",
+    "businessTiming",
+    (
+      artifacts,
+    ) => ({
+      usesBusinessTimingFocus:
+        artifacts.focus
+        === "businessTiming",
+
+      centersBusinessTiming:
+        artifacts.prompt.systemPrompt.includes(
+          "언제 시작하는 것이 좋은가라는 질문 목적에 집중한다",
+        ),
+
+      distinguishesPreparationAndExecutionTiming:
+        artifacts.prompt.systemPrompt.includes(
+          "현재 시점의 의미, 준비 시기인지 실행 시기인지를 중심으로 설명한다",
+        ),
+
+      centersWaitingAndExecutionConditions:
+        artifacts.prompt.systemPrompt.includes(
+          "기다려야 하는 조건과 실행으로 넘어가기 위한 조건을 중심으로 설명한다",
+        ),
+
+      avoidsInventedSpecificTiming:
+        artifacts.prompt.systemPrompt.includes(
+          "엔진이 제공하지 않는 구체적인 날짜나 시점을 만들어내지 않는다",
+        ),
+
+      preservesEngineJudgement:
+        artifacts.prompt.systemPrompt.includes(
+          "현재 엔진의 verdict와 evidence를 변경하거나 새 판단을 하지 않는다",
+        ),
+
+      avoidsGenericSajuRepetition:
+        artifacts.prompt.systemPrompt.includes(
+          "일반적인 사주 성향 설명을 길게 반복하지 않는다",
+        ),
+
+      hasDirectAnswerPriority:
+        hasDirectAnswerPriority(
+          artifacts.prompt,
+        ),
+    }),
+  );
+}
+
+function verifyBusinessFieldFit():
+  ConsultingPromptBuilderVerificationCase {
+  return buildCase(
+    "business-field-fit-prompt-centers-field-or-structure-fit",
+    "어떤 사업 분야가 나에게 맞을까요?",
+    "businessFieldFit",
+    (
+      artifacts,
+    ) => ({
+      usesBusinessFieldFitFocus:
+        artifacts.focus
+        === "businessFieldFit",
+
+      centersBusinessFieldOrStructureFit:
+        artifacts.prompt.systemPrompt.includes(
+          "어떤 사업 분야 또는 사업 구조가 사용자에게 맞는가에 집중한다",
+        ),
+
+      explainsBusinessMethodRoleAndStrengthStructure:
+        artifacts.prompt.systemPrompt.includes(
+          "사용자에게 맞는 사업 방식, 역할, 강점이 활용되는 구조를 중심으로 설명한다",
+        ),
+
+      explainsStructuresToAvoid:
+        artifacts.prompt.systemPrompt.includes(
+          "피해야 할 사업 구조를 필요한 근거와 함께 설명한다",
+        ),
+
+      avoidsArbitrarySpecificBusinessType:
+        artifacts.prompt.systemPrompt.includes(
+          "엔진이 제공하지 않는 특정 업종을 임의로 단정하지 않는다",
+        ),
+
+      preservesEngineJudgement:
+        artifacts.prompt.systemPrompt.includes(
+          "현재 엔진의 verdict와 evidence를 변경하거나 새 판단을 하지 않는다",
+        ),
+
+      avoidsGenericSajuRepetition:
+        artifacts.prompt.systemPrompt.includes(
+          "일반적인 사주 성향 설명을 길게 반복하지 않는다",
+        ),
+
+      hasDirectAnswerPriority:
+        hasDirectAnswerPriority(
+          artifacts.prompt,
         ),
     }),
   );
@@ -1179,7 +1281,7 @@ function verifyFinalDecisionPolicyInPrompt():
   ConsultingPromptBuilderVerificationCase {
   return buildCase(
     "G-final-decision-policy-is-in-prompt",
-    "새로운 사업을 지금 시작해도 될까요?",
+    "통닭집 창업을 해도 될까요?",
     "businessStart",
     (
       artifacts,
@@ -1245,7 +1347,7 @@ function verifyEngineDecisionIsLocked():
   ConsultingPromptBuilderVerificationCase {
   return buildCase(
     "H-prompt-does-not-change-engine-verdict-or-final-decision",
-    "새로운 사업을 지금 시작해도 될까요?",
+    "통닭집 창업을 해도 될까요?",
     "businessStart",
     (
       artifacts,
@@ -1712,7 +1814,7 @@ function verifyPayloadAndGroundingKeepQuestionFocusRules():
   const scenarios = [
     {
       question:
-        "지금 통닭집을 시작하면 성공할까요?",
+        "통닭집 창업을 해도 될까요?",
 
       expectedFocus:
         "businessStart" as const,
@@ -2158,7 +2260,7 @@ function verifyInsufficientEvidenceLanguageIsRestricted():
 
   const businessStart =
     buildArtifacts(
-      "지금 통닭집을 시작하면 성공할까요?",
+      "통닭집 창업을 해도 될까요?",
     );
 
   const insufficientEvidencePrompt =
@@ -2927,7 +3029,7 @@ function verifyAnswerModePriorityAndRegression():
       && questionCases[4]?.focus
       === null
       && questionCases[5]?.focus
-      === "businessStart",
+      === "businessTiming",
 
     N_payloadStillPresent:
       mixedStart.prompt.userPrompt.includes(
@@ -3946,6 +4048,8 @@ export function verifyConsultingPromptBuilder():
     verifyContinuation(),
     verifyTermination(),
     verifyBusinessStart(),
+    verifyBusinessTiming(),
+    verifyBusinessFieldFit(),
     verifyRealEstateBuy(),
     verifyGeneralJudgement(),
     verifyFinalDecisionPolicyInPrompt(),
