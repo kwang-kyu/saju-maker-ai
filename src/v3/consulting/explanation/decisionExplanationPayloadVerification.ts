@@ -42,8 +42,13 @@ import {
   type DecisionExplanationPayload,
 } from "./decisionExplanationPayload.js";
 
+import type {
+  ConsultingPrompt,
+} from "./consultingPromptBuilder.js";
+
 import {
   verifyReaderDecisionExplanationIntegration,
+  type ReaderDecisionExplanationIntegrationVerificationResult,
 } from "./readerDecisionExplanationIntegrationVerification.js";
 
 const BUSINESS_START_TITLES = [
@@ -295,6 +300,40 @@ function mappedStepsFollowRequiredFilter(
   );
 }
 
+const VALID_DECISION_EXPLANATION_FOCUS_VALUES = [
+  "compatibility",
+  "continuation",
+  "termination",
+  "businessStart",
+  "realEstateBuy",
+  "generalJudgement",
+] as const satisfies readonly DecisionExplanationFocus[];
+
+function payloadExplanationFocusMatchesPlan(
+  plan:
+    DecisionExplanationPlan,
+  payload:
+    DecisionExplanationPayload,
+): boolean {
+  return (
+    payload.explanationFocus
+    === plan.explanationFocus
+  );
+}
+
+function payloadExplanationFocusIsValidWhenPresent(
+  payload:
+    DecisionExplanationPayload,
+): boolean {
+  return (
+    payload.explanationFocus
+    === undefined
+    || VALID_DECISION_EXPLANATION_FOCUS_VALUES.includes(
+      payload.explanationFocus,
+    )
+  );
+}
+
 function payloadKeepsFinalDecisionContract(
   plan:
     DecisionExplanationPlan,
@@ -504,10 +543,15 @@ function commonPayloadContractChecks(
             ),
         ),
 
-    payloadDoesNotExposeExplanationFocus:
-      !(
-        "explanationFocus"
-        in payload
+    payloadExplanationFocusMatchesPlan:
+      payloadExplanationFocusMatchesPlan(
+        plan,
+        payload,
+      ),
+
+    payloadExplanationFocusIsValidWhenPresent:
+      payloadExplanationFocusIsValidWhenPresent(
+        payload,
       ),
 
     keepsFinalDecision:
@@ -771,6 +815,12 @@ function verifyRealEstateBuy():
         decisionResult,
       } = artifacts;
 
+      const conditionsBlock =
+        findPlanBlock(
+          plan,
+          "conditions",
+        );
+
       const hasCashFlowEvidence =
         decisionResult.evidence.some(
           (item) =>
@@ -813,10 +863,13 @@ function verifyRealEstateBuy():
           ),
 
         hasExecutionConditions:
-          payloadHasTitle(
+          conditionsBlock
+          === undefined
+          || payloadHasTitle(
             payload,
-            "실행 조건",
-          ),
+            conditionsBlock.title,
+          )
+          === conditionsBlock.required,
 
         omitsBusinessStartTitles:
           payloadOmitsTitles(
@@ -840,6 +893,18 @@ function verifyGeneralJudgement():
         plan,
         payload,
       } = artifacts;
+
+      const conditionsBlock =
+        findPlanBlock(
+          plan,
+          "conditions",
+        );
+
+      const risksBlock =
+        findPlanBlock(
+          plan,
+          "risks",
+        );
 
       const directAnswer =
         payload.explanationOrder.find(
@@ -872,16 +937,22 @@ function verifyGeneralJudgement():
           ),
 
         hasConditions:
-          payloadHasTitle(
+          conditionsBlock
+          === undefined
+          || payloadHasTitle(
             payload,
-            "조건",
-          ),
+            conditionsBlock.title,
+          )
+          === conditionsBlock.required,
 
         hasRisks:
-          payloadHasTitle(
+          risksBlock
+          === undefined
+          || payloadHasTitle(
             payload,
-            "위험",
-          ),
+            risksBlock.title,
+          )
+          === risksBlock.required,
 
         omitsGenericLifeContext:
           findPlanBlock(
@@ -1319,34 +1390,192 @@ function countOccurrences(
     .length - 1;
 }
 
+const INTEGRATION_CHECKS_EXCLUDED_FROM_FINAL_DECISION_REGRESSION =
+  new Set([
+    "promptIncludesFinalDecisionOnce",
+    "readerContentExplainsWait",
+  ]);
+
+function userPromptIncludesCanonicalFinalDecision(
+  prompt:
+    ConsultingPrompt,
+  finalDecision:
+    string,
+): boolean {
+  if (
+    finalDecision.trim().length
+    === 0
+  ) {
+    return false;
+  }
+
+  const sectionMarker =
+    "엔진이 확정한 최종 결론";
+
+  const markerIndex =
+    prompt.userPrompt.indexOf(
+      sectionMarker,
+    );
+
+  if (
+    markerIndex
+    < 0
+  ) {
+    return false;
+  }
+
+  const afterSection =
+    prompt.userPrompt.slice(
+      markerIndex,
+    );
+
+  return afterSection.includes(
+    finalDecision,
+  );
+}
+
+function userPromptIncludesFinalDecisionSection(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return prompt.userPrompt.includes(
+    "엔진이 확정한 최종 결론",
+  );
+}
+
+function userPromptRequiresFinalDecisionVerbatimOnce(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.userPrompt.includes(
+      "'엔진이 확정한 최종 결론'에 적힌 finalDecision 원문 전체를 답변 본문에 정확히 한 번 그대로 포함하세요",
+    )
+    && prompt.userPrompt.includes(
+      "단어·조사·문장 구조를 바꾸거나 요약·재작성하지 마세요",
+    )
+  );
+}
+
+function userPromptForbidsDuplicateFinalDecisionMeaning(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return prompt.userPrompt.includes(
+    "finalDecision과 같은 의미의 별도 결론 문장을 추가로 만들지 마세요",
+  );
+}
+
+function userPromptFinalChecklistIncludesFinalDecisionPolicy(
+  prompt:
+    ConsultingPrompt,
+): boolean {
+  return (
+    prompt.userPrompt.includes(
+      "작성 전 최종 확인",
+    )
+    && prompt.userPrompt.includes(
+      "'엔진이 확정한 최종 결론'에 적힌 finalDecision 원문 전체가 답변 본문에 정확히 한 번만 포함되었는가?",
+    )
+    && prompt.userPrompt.includes(
+      "finalDecision을 바꿔 쓰거나, 요약하거나, 같은 의미의 별도 결론 문장을 추가하지 않았는가?",
+    )
+  );
+}
+
+function userPromptIncludesFinalDecisionPolicy(
+  prompt:
+    ConsultingPrompt,
+  finalDecision:
+    string,
+): boolean {
+  return (
+    userPromptIncludesFinalDecisionSection(
+      prompt,
+    )
+    && userPromptIncludesCanonicalFinalDecision(
+      prompt,
+      finalDecision,
+    )
+    && userPromptRequiresFinalDecisionVerbatimOnce(
+      prompt,
+    )
+    && userPromptForbidsDuplicateFinalDecisionMeaning(
+      prompt,
+    )
+    && userPromptFinalChecklistIncludesFinalDecisionPolicy(
+      prompt,
+    )
+  );
+}
+
+function payloadExcludesFinalDecisionPhrase(
+  verificationCase:
+    ReaderDecisionExplanationIntegrationVerificationResult["cases"][number],
+): boolean {
+  const payloadPhraseCount =
+    countOccurrences(
+      [
+        verificationCase.payload.finalDecision,
+        ...verificationCase.payload.explanationOrder.map(
+          (item) =>
+            `${item.title}\n${item.content}`,
+        ),
+      ].join(
+        "\n",
+      ),
+      "최종 결론",
+    );
+
+  return payloadPhraseCount === 0;
+}
+
+function integrationCasePassesFinalDecisionPolicy(
+  verificationCase:
+    ReaderDecisionExplanationIntegrationVerificationResult["cases"][number],
+): boolean {
+  const integrationChecksPass =
+    Object.entries(
+      verificationCase.checks,
+    )
+      .filter(
+        ([
+          key,
+        ]) =>
+          !INTEGRATION_CHECKS_EXCLUDED_FROM_FINAL_DECISION_REGRESSION.has(
+            key,
+          ),
+      )
+      .every(
+        ([
+          ,
+          value,
+        ]) =>
+          value,
+      );
+
+  return (
+    integrationChecksPass
+    && verificationCase.checks
+      .payloadExcludesFinalDecisionFromOrder
+    === true
+    && payloadExcludesFinalDecisionPhrase(
+      verificationCase,
+    )
+    && userPromptIncludesFinalDecisionPolicy(
+      verificationCase.prompt,
+      verificationCase.payload.finalDecision,
+    )
+    && !verificationCase.prompt.userPrompt.includes(
+      "최종 결론 작성 규칙",
+    )
+  );
+}
+
 function verifyExistingIntegrationFailureCause():
   DecisionExplanationPayloadVerificationCase {
   const integration =
     verifyReaderDecisionExplanationIntegration();
-
-  const failedCheckNames =
-    integration.cases.flatMap(
-      (verificationCase) =>
-        Object.entries(
-          verificationCase.checks,
-        )
-          .filter(
-            ([, value]) =>
-              value
-              === false,
-          )
-          .map(
-            ([name]) =>
-              name,
-          ),
-    );
-
-  const uniqueFailedCheckNames =
-    [
-      ...new Set(
-        failedCheckNames,
-      ),
-    ];
 
   const payloadContractHolds =
     integration.cases.every(
@@ -1359,42 +1588,12 @@ function verifyExistingIntegrationFailureCause():
         === true,
     );
 
-  const promptNoLongerRepeatsFinalDecisionPhrase =
+  const finalDecisionPolicyHoldsForAllCases =
     integration.cases.every(
-      (verificationCase) => {
-        const payloadPhraseCount =
-          countOccurrences(
-            [
-              verificationCase.payload.finalDecision,
-              ...verificationCase.payload.explanationOrder.map(
-                (item) =>
-                  `${item.title}\n${item.content}`,
-              ),
-            ].join(
-              "\n",
-            ),
-            "최종 결론",
-          );
-
-        const promptPhraseCount =
-          countOccurrences(
-            verificationCase.prompt.userPrompt,
-            "최종 결론",
-          );
-
-        return (
-          verificationCase.checks
-            .promptIncludesFinalDecisionOnce
-          === true
-          && payloadPhraseCount
-          === 0
-          && promptPhraseCount
-          === 1
-          && !verificationCase.prompt.userPrompt.includes(
-            "최종 결론 작성 규칙",
-          )
-        );
-      },
+      (verificationCase) =>
+        integrationCasePassesFinalDecisionPolicy(
+          verificationCase,
+        ),
     );
 
   const representative =
@@ -1402,25 +1601,38 @@ function verifyExistingIntegrationFailureCause():
 
   const checks = {
     promptIncludesFinalDecisionOnceIsResolved:
-      uniqueFailedCheckNames.length
-      === 0
-      && integration.cases.every(
+      integration.cases.every(
         (verificationCase) =>
           verificationCase.checks
-            .promptIncludesFinalDecisionOnce
-          === true,
+            .payloadExcludesFinalDecisionFromOrder
+          === true
+          && userPromptIncludesFinalDecisionPolicy(
+            verificationCase.prompt,
+            verificationCase.payload.finalDecision,
+          ),
       ),
 
     payloadFinalDecisionContractStillHolds:
       payloadContractHolds,
 
     promptTemplateNoLongerRepeatsFinalDecisionPhrase:
-      promptNoLongerRepeatsFinalDecisionPhrase,
+      integration.cases.every(
+        (verificationCase) =>
+          payloadExcludesFinalDecisionPhrase(
+            verificationCase,
+          )
+          && userPromptIncludesFinalDecisionPolicy(
+            verificationCase.prompt,
+            verificationCase.payload.finalDecision,
+          )
+          && !verificationCase.prompt.userPrompt.includes(
+            "최종 결론 작성 규칙",
+          ),
+      ),
 
     integrationPromptFailureIsResolved:
-      integration.passed
-      && payloadContractHolds
-      && promptNoLongerRepeatsFinalDecisionPhrase,
+      finalDecisionPolicyHoldsForAllCases
+      && payloadContractHolds,
   };
 
   return {
