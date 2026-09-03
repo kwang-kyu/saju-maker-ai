@@ -7,6 +7,12 @@ import {
   applyLifeFlowInterpretationNormalization,
   isLifeFlowInterpretationQuestion,
 } from "./lifeFlowInterpretationQuestionDetector.js";
+import {
+  applyLifeDirectionTopicNormalization,
+} from "./lifeDirectionTopicDisambiguation.js";
+import {
+  applyRelationshipReconcileNormalization,
+} from "./relationshipReconcileDisambiguation.js";
 
 export type QuestionTopic =
   | "business"
@@ -1071,7 +1077,7 @@ function detectTimingType(
   return "unknown";
 }
 
-function buildAsksWhat(topic: QuestionTopic, intent: QuestionIntent): string {
+export function buildAsksWhat(topic: QuestionTopic, intent: QuestionIntent): string {
   const topicText: Record<QuestionTopic, string> = {
     business: "사업과 창업의 적합성",
     money: "재물과 자금의 흐름",
@@ -1123,7 +1129,7 @@ function buildAsksWhy(motive: QuestionMotive): string {
   return motiveText[motive];
 }
 
-function buildDecisionQuestion(
+export function buildDecisionQuestion(
   decisionTarget: DecisionTarget,
   topic: QuestionTopic,
 ): string {
@@ -1876,40 +1882,44 @@ export function readQuestion(
   );
 
   return attachConclusionNature(
-    applyLifeFlowInterpretationNormalization(
-      applyRoleRecommendationNormalization({
-        originalQuestion: question.trim(),
-        normalizedQuestion,
+    applyLifeDirectionTopicNormalization(
+      applyLifeFlowInterpretationNormalization(
+        applyRelationshipReconcileNormalization(
+          applyRoleRecommendationNormalization({
+          originalQuestion: question.trim(),
+          normalizedQuestion,
 
-        topic: resolvedTopic,
-        intent: intentMatch.result,
-        motive: motiveMatch.result,
-        decisionTarget:
-          resolvedDecisionTarget,
-        urgency: urgencyMatch.urgency,
-        timingType,
+          topic: resolvedTopic,
+          intent: intentMatch.result,
+          motive: motiveMatch.result,
+          decisionTarget:
+            resolvedDecisionTarget,
+          urgency: urgencyMatch.urgency,
+          timingType,
 
-        analysisMode,
-        analysisScope,
-        counterpartFacts,
+          analysisMode,
+          analysisScope,
+          counterpartFacts,
 
-        asksWhat: buildAsksWhat(
-          resolvedTopic,
-          intentMatch.result,
+          asksWhat: buildAsksWhat(
+            resolvedTopic,
+            intentMatch.result,
+          ),
+          asksWhy: buildAsksWhy(
+            motiveMatch.result,
+          ),
+          decisionQuestion: buildDecisionQuestion(
+            resolvedDecisionTarget,
+            resolvedTopic,
+          ),
+
+          evidence,
+          confidence: calculateConfidence(evidence.length),
+
+          humanContextReceived: true,
+        }),
         ),
-        asksWhy: buildAsksWhy(
-          motiveMatch.result,
-        ),
-        decisionQuestion: buildDecisionQuestion(
-          resolvedDecisionTarget,
-          resolvedTopic,
-        ),
-
-        evidence,
-        confidence: calculateConfidence(evidence.length),
-
-        humanContextReceived: true,
-      }),
+      ),
     ),
   );
 }
