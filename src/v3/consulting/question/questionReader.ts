@@ -13,6 +13,9 @@ import {
 import {
   applyRelationshipReconcileNormalization,
 } from "./relationshipReconcileDisambiguation.js";
+import {
+  applyRelationshipSeparationNormalization,
+} from "./relationshipSeparationDisambiguation.js";
 
 export type QuestionTopic =
   | "business"
@@ -1885,7 +1888,8 @@ export function readQuestion(
     applyLifeDirectionTopicNormalization(
       applyLifeFlowInterpretationNormalization(
         applyRelationshipReconcileNormalization(
-          applyRoleRecommendationNormalization({
+          applyRelationshipSeparationNormalization(
+            applyRoleRecommendationNormalization({
           originalQuestion: question.trim(),
           normalizedQuestion,
 
@@ -1917,7 +1921,8 @@ export function readQuestion(
           confidence: calculateConfidence(evidence.length),
 
           humanContextReceived: true,
-        }),
+            }),
+          ),
         ),
       ),
     ),
