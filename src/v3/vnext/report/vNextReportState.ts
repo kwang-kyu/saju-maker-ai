@@ -16,6 +16,12 @@ import type {
 import type {
   ResponseActionType,
 } from "../response/responseContext.js";
+import type {
+  VNextAnalysisProgressStep,
+} from "../ui/vNextAnalysisProgress.js";
+import {
+  resolveReportProgressLabel,
+} from "../ui/vNextAnalysisProgress.js";
 
 export type VNextReportPhase =
   | "idle"
@@ -34,6 +40,7 @@ export type VNextReportSessionState = {
   streamingText: string | null;
   errorMessage: string | null;
   streamMetadata: ResponseStreamMetadata | null;
+  progressStep: VNextAnalysisProgressStep | null;
 };
 
 export const INITIAL_VNEXT_REPORT_SESSION_STATE: VNextReportSessionState = {
@@ -45,18 +52,27 @@ export const INITIAL_VNEXT_REPORT_SESSION_STATE: VNextReportSessionState = {
   streamingText: null,
   errorMessage: null,
   streamMetadata: null,
+  progressStep: null,
 };
 
 export function resolveReportLoadingLabel(
   phase: VNextReportPhase,
+  progressStep: VNextAnalysisProgressStep | null = null,
 ): string | null {
-  if (phase === "analyzing") {
-    return "사주 정보를 분석하고 있습니다.";
-  }
+  const fallback = phase === "analyzing"
+    ? "사주 정보를 분석하고 있습니다."
+    : phase === "generating"
+      ? "리포트를 작성하고 있습니다."
+      : null;
 
-  if (phase === "generating") {
-    return "리포트를 작성하고 있습니다.";
-  }
-
-  return null;
+  return resolveReportProgressLabel(
+    progressStep ?? (
+      phase === "generating"
+        ? "generating"
+        : phase === "streaming"
+          ? "streaming"
+          : null
+    ),
+    fallback,
+  );
 }

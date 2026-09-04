@@ -35,6 +35,9 @@ import {
   INITIAL_VNEXT_REPORT_SESSION_STATE,
   type VNextReportSessionState,
 } from "./vNextReportState.js";
+import type {
+  VNextAnalysisProgressStep,
+} from "../ui/vNextAnalysisProgress.js";
 
 export type VNextReportControllerOptions = {
   gateway?: ResponseGateway;
@@ -113,6 +116,16 @@ export class VNextReportController {
     this.emit();
   }
 
+  private updateProgressStep(
+    progressStep: VNextAnalysisProgressStep,
+  ): void {
+    this.state = {
+      ...this.state,
+      progressStep,
+    };
+    this.emit();
+  }
+
   async startReport(
     birthProfile: VNextBirthProfile,
   ): Promise<void> {
@@ -133,6 +146,7 @@ export class VNextReportController {
       errorMessage: null,
       streamingText: null,
       streamMetadata: null,
+      progressStep: "birthInputValidated",
     };
     this.emit();
 
@@ -145,6 +159,11 @@ export class VNextReportController {
       const analysis = analyzeVNextConsultingRequest(
         request,
         "report",
+        {
+          onProgress: (step) => {
+            this.updateProgressStep(step);
+          },
+        },
       );
       const sections = extractReportSections(
         analysis.analysisResult,
@@ -157,6 +176,7 @@ export class VNextReportController {
           phase: "generating",
           sections,
           activeSection: sections[0] ?? null,
+          progressStep: "generating",
         };
         this.emit();
       } else {
@@ -186,6 +206,7 @@ export class VNextReportController {
               ...this.state,
               phase: "streaming",
               streamingText,
+              progressStep: "streaming",
             };
             this.emit();
           }
@@ -214,6 +235,7 @@ export class VNextReportController {
           totalLatencyMs,
           apiCallCount: response.apiCallCount,
         },
+        progressStep: "completed",
       };
       this.emit();
     } catch {
@@ -223,6 +245,7 @@ export class VNextReportController {
         errorMessage: "리포트를 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.",
         streamingText: null,
         streamMetadata: null,
+        progressStep: null,
       };
       this.emit();
     }

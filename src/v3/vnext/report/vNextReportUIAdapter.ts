@@ -88,8 +88,11 @@ export function useVNextReport(
   }, []);
 
   const loadingLabel = useMemo(
-    () => resolveReportLoadingLabel(state.phase),
-    [state.phase],
+    () => resolveReportLoadingLabel(
+      state.phase,
+      state.progressStep,
+    ),
+    [state.phase, state.progressStep],
   );
 
   const isBusy = state.phase === "analyzing"

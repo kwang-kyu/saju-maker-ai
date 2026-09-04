@@ -1,3 +1,6 @@
+import {
+  VNextAnalysisProgressBar,
+} from "../ui/VNextAnalysisProgressBar.js";
 import type {
   VNextReportSessionState,
 } from "./vNextReportState.js";
@@ -16,7 +19,6 @@ export function VNextReportProgress({
   state,
   isBusy,
   isStreaming,
-  loadingLabel,
 }: VNextReportProgressProps) {
   const showProgress = isBusy || isStreaming;
 
@@ -24,27 +26,16 @@ export function VNextReportProgress({
     return null;
   }
 
-  const label = loadingLabel
-    ?? (isStreaming
-      ? VNEXT_REPORT_COPY.progressStreaming
-      : null);
-
   return (
     <div
       className="vnext-report-progress"
       role="status"
       aria-live="polite"
     >
-      <div
-        className="vnext-report-progress-spinner"
-        aria-hidden="true"
+      <VNextAnalysisProgressBar
+        progressStep={state.progressStep}
+        className="vnext-analysis-progress vnext-analysis-progress--report"
       />
-
-      {label ? (
-        <p className="vnext-report-progress-label">
-          {label}
-        </p>
-      ) : null}
 
       {isStreaming && state.streamingText ? (
         <p className="vnext-report-progress-stream-hint">
