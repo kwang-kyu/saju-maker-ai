@@ -1,6 +1,9 @@
 import type {
   VNextConsultingSessionState,
 } from "./vNextConsultingState.js";
+import {
+  VNextAnalysisProgressBar,
+} from "./VNextAnalysisProgressBar.js";
 
 export type VNextConsultingStatusTone =
   | "idle"
@@ -121,10 +124,10 @@ export function VNextConsultingStatus({
       role="status"
       aria-live="polite"
     >
-      {status.showSpinner ? (
-        <span
-          className="vnext-consulting-status-spinner"
-          aria-hidden="true"
+      {(isBusy || isStreaming) ? (
+        <VNextAnalysisProgressBar
+          progressStep={state.progressStep}
+          className="vnext-analysis-progress vnext-analysis-progress--status"
         />
       ) : null}
 

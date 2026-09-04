@@ -23,6 +23,9 @@ import {
   resolveBrowserResponseGateway,
 } from "./vNextRemoteResponseGateway.js";
 import {
+  resolveAnalysisProgressView,
+} from "./vNextAnalysisProgress.js";
+import {
   resolveLoadingLabel,
   type VNextConsultingSessionState,
 } from "./vNextConsultingState.js";
@@ -95,8 +98,16 @@ export function useVNextConsulting(
   }, []);
 
   const loadingLabel = useMemo(
-    () => resolveLoadingLabel(state.phase),
-    [state.phase],
+    () => {
+      const progressView = resolveAnalysisProgressView(state.progressStep);
+
+      if (progressView) {
+        return `${progressView.label}.`;
+      }
+
+      return resolveLoadingLabel(state.phase);
+    },
+    [state.phase, state.progressStep],
   );
 
   const isBusy = state.phase === "analyzing"
