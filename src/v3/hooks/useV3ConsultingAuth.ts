@@ -64,6 +64,87 @@ import {
 const V3_CONSULTING_LOCATION =
   "/#v3";
 
+const V3_CONSULTING_VNEXT_LOCATION =
+  "/#v3?vnext=1";
+
+const V3_VNEXT_MODE_STORAGE_KEY =
+  "v3.consulting.vnext-mode";
+
+function isVNextModeFromLocation(
+  location:
+    Pick<
+      Location,
+      "hash" | "search"
+    > = globalThis.location,
+): boolean {
+  const hashQuery =
+    location.hash.includes("?")
+      ? location.hash.split("?")[1]
+      : "";
+
+  const params =
+    new URLSearchParams(
+      hashQuery
+      || location.search.replace(
+        /^\?/,
+        "",
+      ),
+    );
+
+  return params.get("vnext")
+    === "1";
+}
+
+function rememberVNextModeForAuthCallback(
+  enabled:
+    boolean,
+): void {
+  try {
+    sessionStorage.setItem(
+      V3_VNEXT_MODE_STORAGE_KEY,
+      enabled
+        ? "1"
+        : "0",
+    );
+  } catch {
+    // Storage unavailable; callback falls back to legacy location.
+  }
+}
+
+function readRememberedVNextModeForAuthCallback():
+  boolean {
+  try {
+    return sessionStorage.getItem(
+      V3_VNEXT_MODE_STORAGE_KEY,
+    )
+      === "1";
+  } catch {
+    return false;
+  }
+}
+
+function clearRememberedVNextModeForAuthCallback():
+  void {
+  try {
+    sessionStorage.removeItem(
+      V3_VNEXT_MODE_STORAGE_KEY,
+    );
+  } catch {
+    // Storage unavailable; ignore cleanup failure.
+  }
+}
+
+function resolveV3ConsultingReturnLocation():
+  string {
+  if (
+    readRememberedVNextModeForAuthCallback()
+  ) {
+    return V3_CONSULTING_VNEXT_LOCATION;
+  }
+
+  return V3_CONSULTING_LOCATION;
+}
+
 function normalizePathname(
   pathname:
     string,
@@ -104,8 +185,13 @@ function completeV3AuthCallback(
     return;
   }
 
+  const returnLocation =
+    resolveV3ConsultingReturnLocation();
+
+  clearRememberedVNextModeForAuthCallback();
+
   globalThis.location.replace(
-    V3_CONSULTING_LOCATION,
+    returnLocation,
   );
 }
 
@@ -281,6 +367,10 @@ function completeV3AuthCallback(
           );
 
           try {
+            rememberVNextModeForAuthCallback(
+              isVNextModeFromLocation(),
+            );
+
             const client =
               requireClient();
 
