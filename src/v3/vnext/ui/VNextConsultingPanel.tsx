@@ -67,9 +67,9 @@ export function VNextConsultingPanel({
 
       {isBusy && loadingLabel ? (
         <div className="v3-consulting-loading">
-          <div
-            className="v3-consulting-spinner"
-            aria-hidden="true"
+          <VNextAnalysisProgressBar
+            progressStep={state.progressStep}
+            className="vnext-analysis-progress vnext-analysis-progress--panel"
           />
 
           <p className="v3-consulting-loading-title">
