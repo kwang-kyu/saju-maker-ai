@@ -197,11 +197,72 @@ function readQuestionReadOnly(
   }
 }
 
+function hasReaderMeaningShift(
+  current: QuestionReaderResult,
+  previous: QuestionReaderResult,
+): boolean {
+  const topicShift =
+    current.topic !== "general"
+    && previous.topic !== "general"
+    && current.topic !== previous.topic;
+
+  const urgencyShift =
+    current.urgency !== "unknown"
+    && previous.urgency !== "unknown"
+    && current.urgency !== previous.urgency;
+
+  const intentShift =
+    current.intent !== previous.intent
+    && current.intent !== "generalJudgement"
+    && previous.intent !== "generalJudgement";
+
+  const targetShift =
+    current.decisionTarget !== "none"
+    && previous.decisionTarget !== "none"
+    && current.decisionTarget !== previous.decisionTarget;
+
+  return (
+    topicShift
+    || urgencyShift
+    || current.analysisMode !== previous.analysisMode
+    || intentShift
+    || targetShift
+  );
+}
+
+function hasContinuationEvidence(
+  normalizedQuestion: string,
+  current: QuestionReaderResult | null,
+  previous: QuestionReaderResult | null,
+): boolean {
+  if (
+    /^(?:그(?:럼|거)|그것|이것|저것|거기|또\s|왜\s|어떻게\s)/.test(
+      normalizedQuestion,
+    )
+  ) {
+    return true;
+  }
+
+  if (normalizedQuestion.length <= 18) {
+    return true;
+  }
+
+  if (current && previous) {
+    return (
+      current.topic === previous.topic
+      && current.intent === previous.intent
+    );
+  }
+
+  return false;
+}
+
 /**
  * 새 질문의 follow-up 유형을 판단한다.
  *
  * 우선순위: clarificationAnswer → continuation → timeRefinement
- * → scenarioRefinement → newQuestion(domain) → continuation fallback → newQuestion
+ * → scenarioRefinement → newQuestion(domain)
+ * → newQuestion(meaning shift) → continuation fallback(evidence) → newQuestion
  */
 export function resolveFollowUpQuestionType(
   input: FollowUpQuestionResolverInput,
@@ -296,10 +357,48 @@ export function resolveFollowUpQuestionType(
     };
   }
 
-  if (input.previousTurn) {
+  const previousReaderResult =
+    input.previousTurn && input.humanContext
+      ? readQuestionReadOnly(
+          input.humanContext,
+          input.previousTurn.question,
+        )
+      : null;
+
+  if (
+    questionReaderResult
+    && previousReaderResult
+    && hasReaderMeaningShift(
+      questionReaderResult,
+      previousReaderResult,
+    )
+  ) {
+    return {
+      type: "newQuestion",
+      reason: "question meaning shift detected via Question Reader",
+      questionReaderResult,
+    };
+  }
+
+  if (
+    input.previousTurn
+    && hasContinuationEvidence(
+      normalizedQuestion,
+      questionReaderResult,
+      previousReaderResult,
+    )
+  ) {
     return {
       type: "continuation",
-      reason: "follow-up within same session without domain shift",
+      reason: "follow-up within same session without meaning shift",
+      questionReaderResult,
+    };
+  }
+
+  if (input.previousTurn) {
+    return {
+      type: "newQuestion",
+      reason: "no continuation evidence — treated as new question",
       questionReaderResult,
     };
   }
