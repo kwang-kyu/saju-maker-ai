@@ -11,6 +11,9 @@ import type {
   ResponseActionType,
 } from "../response/responseContext.js";
 import {
+  normalizeConsultingDisplayText,
+} from "./consultingDisplayText.js";
+import {
   mapResponseSourceToMessageSource,
   type VNextConsultingMessage,
   type VNextConsultingTurn,
@@ -41,7 +44,7 @@ export function mapNaturalResponseToMessage(
   return {
     id: createMessageId("assistant"),
     role: "assistant",
-    text: response.text,
+    text: normalizeConsultingDisplayText(response.text),
     source: mapResponseSourceToMessageSource(response.source),
     createdAt: new Date().toISOString(),
     status: "complete",

@@ -1,6 +1,12 @@
 import type {
   VNextConsultingSessionState,
 } from "./vNextConsultingState.js";
+import {
+  VNextAnalysisProgressBar,
+} from "./VNextAnalysisProgressBar.js";
+import {
+  normalizeConsultingDisplayText,
+} from "./consultingDisplayText.js";
 
 export type VNextConsultingPanelProps = {
   state: VNextConsultingSessionState;
