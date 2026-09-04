@@ -56,6 +56,9 @@ import {
   type VNextConsultingAnalysisResult,
 } from "../ui/vNextConsultingPipeline.js";
 import type {
+  VNextAnalysisProgressCallback,
+} from "../ui/vNextAnalysisProgress.js";
+import type {
   ConversationAnalysisCache,
 } from "./conversationContextCache.js";
 import {
@@ -83,6 +86,7 @@ export type VNextConversationPipelineOptions = {
   answerMode?: AnswerMode;
   requestId?: string;
   onGenerating?: () => void;
+  onAnalysisProgress?: VNextAnalysisProgressCallback;
   onStreamEvent?: (event: ResponseStreamEvent) => void;
   analysisStartedAt?: number;
 };
@@ -524,6 +528,7 @@ function executeConversationAnalysis(
   reusePlan: ConversationReusePlan | null,
   answerMode: AnswerMode,
   effectiveQuestion: string,
+  onAnalysisProgress?: VNextAnalysisProgressCallback,
 ): ResolvedConversationExecution {
   const cache = session.analysisCache;
   const reused = reusePlan
@@ -571,6 +576,9 @@ function executeConversationAnalysis(
   const freshAnalysis = analyzeVNextConsultingRequest(
     request,
     answerMode,
+    {
+      onProgress: onAnalysisProgress,
+    },
   );
 
   if (followUpType === "initial" || !reusePlan) {
@@ -869,6 +877,7 @@ export async function runVNextConversationPipeline(
     reusePlan,
     answerMode,
     effectiveQuestion,
+    params.options?.onAnalysisProgress,
   );
 
   const analysisLatencyMs = Date.now() - analysisStartedAt;
