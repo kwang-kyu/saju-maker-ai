@@ -70,6 +70,15 @@ const V3_CONSULTING_VNEXT_LOCATION =
 const V3_VNEXT_MODE_STORAGE_KEY =
   "v3.consulting.vnext-mode";
 
+let v3AuthCallbackRedirectHandled =
+  false;
+
+function resetV3AuthCallbackRedirectGuard():
+  void {
+  v3AuthCallbackRedirectHandled =
+    false;
+}
+
 function isVNextModeFromLocation(
   location:
     Pick<
@@ -99,6 +108,8 @@ function rememberVNextModeForAuthCallback(
   enabled:
     boolean,
 ): void {
+  resetV3AuthCallbackRedirectGuard();
+
   try {
     sessionStorage.setItem(
       V3_VNEXT_MODE_STORAGE_KEY,
@@ -181,12 +192,16 @@ function completeV3AuthCallback(
   if (
     !authenticated
     || !isAuthCallback
+    || v3AuthCallbackRedirectHandled
   ) {
     return;
   }
 
   const returnLocation =
     resolveV3ConsultingReturnLocation();
+
+  v3AuthCallbackRedirectHandled =
+    true;
 
   clearRememberedVNextModeForAuthCallback();
 
