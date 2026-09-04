@@ -40,6 +40,7 @@ export type VNextBirthProfile = {
 export type BirthTimeBranchOption = {
   value: BirthTimeBranch;
   label: string;
+  buttonLabel?: string;
 };
 
 /**
@@ -48,18 +49,18 @@ export type BirthTimeBranchOption = {
  */
 export const VNEXT_BIRTH_TIME_BRANCH_OPTIONS: BirthTimeBranchOption[] = [
   { value: "unknown", label: "모름" },
-  { value: "ja", label: "자시" },
-  { value: "chuk", label: "축시" },
-  { value: "in", label: "인시" },
-  { value: "myo", label: "묘시" },
-  { value: "jin", label: "진시" },
-  { value: "sa", label: "사시" },
-  { value: "o", label: "오시" },
-  { value: "mi", label: "미시" },
-  { value: "sin", label: "신시" },
-  { value: "yu", label: "유시" },
-  { value: "sul", label: "술시" },
-  { value: "hae", label: "해시" },
+  { value: "ja", label: "자시", buttonLabel: "자시 (23:00~00:59)" },
+  { value: "chuk", label: "축시", buttonLabel: "축시 (01:00~02:59)" },
+  { value: "in", label: "인시", buttonLabel: "인시 (03:00~04:59)" },
+  { value: "myo", label: "묘시", buttonLabel: "묘시 (05:00~06:59)" },
+  { value: "jin", label: "진시", buttonLabel: "진시 (07:00~08:59)" },
+  { value: "sa", label: "사시", buttonLabel: "사시 (09:00~10:59)" },
+  { value: "o", label: "오시", buttonLabel: "오시 (11:00~12:59)" },
+  { value: "mi", label: "미시", buttonLabel: "미시 (13:00~14:59)" },
+  { value: "sin", label: "신시", buttonLabel: "신시 (15:00~16:59)" },
+  { value: "yu", label: "유시", buttonLabel: "유시 (17:00~18:59)" },
+  { value: "sul", label: "술시", buttonLabel: "술시 (19:00~20:59)" },
+  { value: "hae", label: "해시", buttonLabel: "해시 (21:00~22:59)" },
 ];
 
 export function findBirthTimeBranchOption(

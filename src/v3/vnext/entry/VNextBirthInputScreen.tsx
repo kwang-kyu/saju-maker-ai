@@ -5,6 +5,7 @@ import {
 
 import type {
   BirthTimeBranch,
+  VNextBirthCalendarType,
   VNextBirthGender,
   VNextBirthProfile,
 } from "./vNextBirthProfile.js";
@@ -78,6 +79,10 @@ export function VNextBirthInputScreen({
     setGender,
   ] = useState<VNextBirthGender>("male");
   const [
+    calendarType,
+    setCalendarType,
+  ] = useState<VNextBirthCalendarType>("solar");
+  const [
     year,
     setYear,
   ] = useState<number | null>(null);
@@ -116,7 +121,7 @@ export function VNextBirthInputScreen({
       month,
       day,
       birthTimeBranch,
-      calendarType: "solar",
+      calendarType,
     });
   }
 
@@ -186,6 +191,42 @@ export function VNextBirthInputScreen({
                 onClick={() => setGender("female")}
               >
                 {VNEXT_ENTRY_COPY.birthInputGenderFemale}
+              </button>
+            </div>
+          </div>
+
+          <div className="vnext-entry-field">
+            <span className="vnext-entry-label">
+              {VNEXT_ENTRY_COPY.birthInputCalendarLabel}
+            </span>
+
+            <div className="vnext-entry-toggle-group">
+              <button
+                className={[
+                  "vnext-entry-toggle-button",
+                  calendarType === "solar"
+                    ? "vnext-entry-toggle-button--selected"
+                    : "",
+                ].filter(Boolean).join(" ")}
+                type="button"
+                aria-pressed={calendarType === "solar"}
+                onClick={() => setCalendarType("solar")}
+              >
+                {VNEXT_ENTRY_COPY.birthInputCalendarSolar}
+              </button>
+
+              <button
+                className={[
+                  "vnext-entry-toggle-button",
+                  calendarType === "lunar"
+                    ? "vnext-entry-toggle-button--selected"
+                    : "",
+                ].filter(Boolean).join(" ")}
+                type="button"
+                aria-pressed={calendarType === "lunar"}
+                onClick={() => setCalendarType("lunar")}
+              >
+                {VNEXT_ENTRY_COPY.birthInputCalendarLunar}
               </button>
             </div>
           </div>
@@ -319,7 +360,7 @@ export function VNextBirthInputScreen({
                       aria-pressed={isSelected}
                       onClick={() => setBirthTimeBranch(item.value)}
                     >
-                      {item.label}
+                      {item.buttonLabel ?? item.label}
                     </button>
                   );
                 })}

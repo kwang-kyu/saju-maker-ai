@@ -66,6 +66,11 @@ const SAMPLE_BIRTH_PROFILE: VNextBirthProfile = {
   calendarType: "solar",
 };
 
+const SAMPLE_LUNAR_BIRTH_PROFILE: VNextBirthProfile = {
+  ...SAMPLE_BIRTH_PROFILE,
+  calendarType: "lunar",
+};
+
 function runSyncCase(
   id: string,
   run: () => {
@@ -156,12 +161,14 @@ export async function verifyVNextStep6A2BirthInput(): Promise<VNextStep6A2BirthI
       return {
         passed: option.value === "yu"
           && option.label === "유시"
+          && option.buttonLabel === "유시 (17:00~18:59)"
           && VNEXT_BIRTH_TIME_BRANCH_OPTIONS.some(
             (item) => item.label === "유시" && item.value === "yu",
           ),
         details: [
           `value=${option.value}`,
           `label=${option.label}`,
+          `buttonLabel=${String(option.buttonLabel)}`,
         ],
       };
     }),
@@ -335,6 +342,96 @@ export async function verifyVNextStep6A2BirthInput(): Promise<VNextStep6A2BirthI
           && request.sajuInput.birthTime === "17:00",
         details: [
           `answerMode=${request.answerMode}`,
+        ],
+      };
+    }),
+
+    runSyncCase("case-12-birth-input-calendar-copy-contract", () => {
+      return {
+        passed: VNEXT_ENTRY_COPY.birthInputCalendarLabel === "양력 / 음력"
+          && VNEXT_ENTRY_COPY.birthInputCalendarSolar === "양력"
+          && VNEXT_ENTRY_COPY.birthInputCalendarLunar === "음력",
+        details: [
+          `label=${VNEXT_ENTRY_COPY.birthInputCalendarLabel}`,
+          `solar=${VNEXT_ENTRY_COPY.birthInputCalendarSolar}`,
+          `lunar=${VNEXT_ENTRY_COPY.birthInputCalendarLunar}`,
+        ],
+      };
+    }),
+
+    runSyncCase("case-13-lunar-calendar-type-passes-through-adapter", () => {
+      const sajuInput = adaptBirthProfileToSajuInput(
+        SAMPLE_LUNAR_BIRTH_PROFILE,
+        "2026-09-01",
+      );
+
+      return {
+        passed: sajuInput.calendarType === "lunar"
+          && sajuInput.birthDate === "1990-05-10"
+          && sajuInput.birthTime === "17:00"
+          && sajuInput.gender === "female",
+        details: [
+          `calendarType=${sajuInput.calendarType}`,
+          `birthDate=${sajuInput.birthDate}`,
+          `birthTime=${sajuInput.birthTime}`,
+          `gender=${sajuInput.gender}`,
+        ],
+      };
+    }),
+
+    runSyncCase("case-14-solar-calendar-type-maintains-existing-behavior", () => {
+      const sajuInput = adaptBirthProfileToSajuInput(
+        SAMPLE_BIRTH_PROFILE,
+        "2026-09-01",
+      );
+      const request = buildVNextConsultingRequestFromBirthProfile(
+        SAMPLE_BIRTH_PROFILE,
+        "올해 이직해도 될까요?",
+        "2026-09-01",
+      );
+
+      return {
+        passed: sajuInput.calendarType === "solar"
+          && request.sajuInput.calendarType === "solar"
+          && request.sajuInput.birthDate === "1990-05-10"
+          && request.sajuInput.birthTime === "17:00"
+          && request.sajuInput.gender === "female",
+        details: [
+          `calendarType=${sajuInput.calendarType}`,
+          `birthDate=${request.sajuInput.birthDate}`,
+        ],
+      };
+    }),
+
+    runSyncCase("case-15-lunar-selection-preserves-other-birth-profile-fields", () => {
+      const controller = new VNextEntryController();
+
+      controller.startConsulting();
+      controller.selectMode("question");
+      controller.completeBirthInput(SAMPLE_LUNAR_BIRTH_PROFILE);
+      const state = controller.getState();
+      const request = buildVNextConsultingRequestFromBirthProfile(
+        SAMPLE_LUNAR_BIRTH_PROFILE,
+        "올해 이직해도 될까요?",
+        "2026-09-01",
+      );
+
+      return {
+        passed: state.birthProfile?.calendarType === "lunar"
+          && state.birthProfile?.year === 1990
+          && state.birthProfile?.month === 5
+          && state.birthProfile?.day === 10
+          && state.birthProfile?.birthTimeBranch === "yu"
+          && state.birthProfile?.gender === "female"
+          && request.sajuInput.calendarType === "lunar"
+          && request.sajuInput.birthDate === "1990-05-10"
+          && request.sajuInput.birthTime === "17:00"
+          && request.sajuInput.gender === "female",
+        details: [
+          `calendarType=${String(state.birthProfile?.calendarType)}`,
+          `birthDate=${request.sajuInput.birthDate}`,
+          `birthTime=${request.sajuInput.birthTime}`,
+          `gender=${request.sajuInput.gender}`,
         ],
       };
     }),
