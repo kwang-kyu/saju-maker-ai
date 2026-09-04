@@ -87,6 +87,19 @@ export function containsMoneyFlowForbiddenRule(
   return prompt.systemInstruction.includes("재무 일반론 자동 삽입");
 }
 
+export function containsConsultingFlowGuidance(
+  prompt: ResponsePrompt,
+): boolean {
+  const rulesSection = prompt.userPrompt.split("[설명 규칙]")[1] ?? "";
+
+  return [
+    "자연스러운 상담 흐름",
+    "직접적인 판단",
+    "기계적으로 설명하지 않는다",
+    "기계적인 번호 구조",
+  ].every((token) => rulesSection.includes(token));
+}
+
 export function containsFixedReportStructure(
   prompt: ResponsePrompt,
 ): boolean {

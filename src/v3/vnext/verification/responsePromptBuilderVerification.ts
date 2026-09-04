@@ -8,6 +8,7 @@ import {
   runPromptPipelineCase,
 } from "./promptVerificationFixture.js";
 import {
+  containsConsultingFlowGuidance,
   containsFixedReportStructure,
   containsGenericMoneyTheory,
   containsMoneyFlowForbiddenRule,
@@ -91,9 +92,11 @@ export function verifyResponsePromptBuilder(): ResponsePromptBuilderVerification
           && includesAll(prompt.metadata.selectedBlockIds, [
             "ability",
             "suitableRole",
-          ]),
+          ])
+          && containsConsultingFlowGuidance(prompt),
         details: [
           `selectedBlockIds=${prompt.metadata.selectedBlockIds.join(",")}`,
+          `consultingFlowGuidance=${containsConsultingFlowGuidance(prompt)}`,
         ],
       }),
     ),
@@ -104,11 +107,13 @@ export function verifyResponsePromptBuilder(): ResponsePromptBuilderVerification
         passed: containsTimeSegmentSections(prompt)
           && !containsGenericMoneyTheory(prompt)
           && containsMoneyFlowForbiddenRule(prompt)
-          && !containsFixedReportStructure(prompt),
+          && !containsFixedReportStructure(prompt)
+          && containsConsultingFlowGuidance(prompt),
         details: [
           `timeSegments=${containsTimeSegmentSections(prompt)}`,
           `genericMoneyTheory=${containsGenericMoneyTheory(prompt)}`,
           `moneyFlowForbiddenRule=${containsMoneyFlowForbiddenRule(prompt)}`,
+          `consultingFlowGuidance=${containsConsultingFlowGuidance(prompt)}`,
         ],
       }),
       { includeLuckFlow: true },
