@@ -6,8 +6,27 @@
  */
 
 import {
+  buildHumanDestinyContextPipeline,
+} from "../../builders/humanDestinyContextPipelineBuilder.js";
+import {
+  buildCounterpartSajuCalculation,
+} from "../../consulting/decision/counterpartSajuCalculationBuilder.js";
+import {
+  runConsultingTurn,
+} from "../../consulting/consultingRunner.js";
+import {
   buildInitialConsultingExecution,
+  type InitialConsultingExecutionResult,
 } from "../../consulting/initialConsultingExecutionBuilder.js";
+import type {
+  QuestionReaderResult,
+} from "../../consulting/question/questionReader.js";
+import {
+  readHumanLifeContext,
+} from "../../readers/humanLifeContextReader.js";
+import type {
+  VNextAnalysisProgressCallback,
+} from "./vNextAnalysisProgress.js";
 import {
   buildTargetPeriodLuckFlowForQuestion,
 } from "../../consulting/decision/targetPeriodLuckFlowBuilder.js";
@@ -137,14 +156,125 @@ export function buildAnalysisRequestFromV3Request(
   };
 }
 
+function buildReferenceDate(
+  referenceDateIso: string,
+): Date {
+  const [
+    year,
+    month,
+    day,
+  ] = referenceDateIso
+    .split("-")
+    .map(Number);
+
+  const referenceDate = new Date(
+    year,
+    month - 1,
+    day,
+  );
+
+  if (
+    Number.isNaN(referenceDate.getTime())
+    || referenceDate.getFullYear() !== year
+    || referenceDate.getMonth() + 1 !== month
+    || referenceDate.getDate() !== day
+  ) {
+    throw new Error(
+      "referenceDate must use a valid YYYY-MM-DD format.",
+    );
+  }
+
+  return referenceDate;
+}
+
+/**
+ * buildInitialConsultingExecution과 동일한 호출 순서를 유지하면서
+ * 실제 단계 완료 시점에 progress callback을 발생시킨다.
+ *
+ * callback이 없으면 공식 builder를 그대로 위임해
+ * questionInterpretation / counterpartSaju 처리를 단일 경로로 보장한다.
+ */
+function buildInitialConsultingExecutionWithProgress(
+  request: V3ConsultingRequest,
+  onProgress?: VNextAnalysisProgressCallback,
+  questionInterpretation?: QuestionReaderResult,
+): InitialConsultingExecutionResult {
+  if (!onProgress) {
+    return buildInitialConsultingExecution(
+      request,
+      questionInterpretation,
+    );
+  }
+
+  onProgress("birthInputValidated");
+
+  const humanDestinyPipeline = buildHumanDestinyContextPipeline(
+    request.sajuInput,
+  );
+  onProgress("sajuCalculated");
+
+  const lifeContext = readHumanLifeContext({
+    ...request.humanLifeContextInput,
+    birthDate:
+      humanDestinyPipeline.sajuFactsPipeline.calculatedSaju.solarDateIso,
+    referenceDate: buildReferenceDate(
+      request.sajuInput.referenceDate,
+    ),
+  });
+  onProgress("humanContextReady");
+
+  const counterpartFacts =
+    questionInterpretation?.counterpartFacts;
+
+  const counterpartSaju =
+    counterpartFacts
+    && counterpartFacts.birthDate
+    && counterpartFacts.calendarType
+    && counterpartFacts.gender
+      ? buildCounterpartSajuCalculation({
+          birthDate: counterpartFacts.birthDate,
+          birthTime: counterpartFacts.birthTime,
+          calendarType: counterpartFacts.calendarType,
+          gender: counterpartFacts.gender,
+        })
+      : undefined;
+
+  const turnResult = runConsultingTurn({
+    sajuFacts: humanDestinyPipeline.sajuFactsPipeline,
+    readerEvidence: humanDestinyPipeline.evidenceBundle,
+    questionInterpretation,
+    counterpartSaju,
+    humanContext: humanDestinyPipeline.humanContext,
+    lifeContext,
+    question: request.question,
+  });
+  onProgress("consultingTurnComplete");
+
+  return {
+    humanDestinyPipeline,
+    lifeContext,
+    turnResult,
+  };
+}
+
+export type AnalyzeVNextConsultingRequestOptions = {
+  onProgress?: VNextAnalysisProgressCallback;
+  questionInterpretation?: QuestionReaderResult;
+};
+
 /**
  * V3ConsultingRequest로 vNext 분석 단계까지 실행한다.
  */
 export function analyzeVNextConsultingRequest(
   request: V3ConsultingRequest,
   answerMode: AnswerMode = "question",
+  options: AnalyzeVNextConsultingRequestOptions = {},
 ): VNextConsultingAnalysisResult {
-  const execution = buildInitialConsultingExecution(request);
+  const execution = buildInitialConsultingExecutionWithProgress(
+    request,
+    options.onProgress,
+    options.questionInterpretation,
+  );
   const { turnResult, humanDestinyPipeline } = execution;
   const questionContext = turnResult.questionContext;
 
@@ -183,6 +313,7 @@ export function analyzeVNextConsultingRequest(
     humanDestinyContext: humanDestinyPipeline.humanContext,
     targetPeriodLuckFlow: targetPeriodBuildResult?.fact ?? undefined,
     questionReaderResult: turnResult.questionReaderResult,
+    questionContext: turnResult.questionContext,
     decisionResult: turnResult.decisionResult,
     targetPeriod: targetPeriod ?? null,
   });
