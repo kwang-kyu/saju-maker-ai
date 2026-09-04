@@ -104,6 +104,52 @@ export function resolveBudgetIncludeEvidence(
   return budget === "detailed";
 }
 
+const STANDARD_DIRECT_ANSWER_EVIDENCE_LIMIT = 1;
+
+/**
+ * Budget × block별 relevantEvidence 직렬화 상한.
+ *
+ * - 0: Evidence 직렬화하지 않음
+ * - 양수: slice(0, limit) — relevantEvidence 배열 순서 그대로 사용
+ * - Infinity: 제한 없음 (detailed — 전체 relevantEvidence)
+ */
+export function resolveBudgetEvidenceLimit(
+  budget: PromptBudgetLevel,
+  blockId: string,
+): number {
+  switch (budget) {
+    case "minimal":
+      return 0;
+    case "standard":
+      return blockId === "directAnswer"
+        ? STANDARD_DIRECT_ANSWER_EVIDENCE_LIMIT
+        : 0;
+    case "detailed":
+      return Number.POSITIVE_INFINITY;
+  }
+}
+
+export type PromptEvidencePolicy = {
+  budget: PromptBudgetLevel;
+  getBlockEvidenceLimit: (blockId: string) => number;
+};
+
+/**
+ * Budget Evidence 정책 — Prompt Section Builder wiring용.
+ *
+ * Prompt Layer는 이미 정렬된 relevantEvidence를
+ * 정책에 따라 몇 개 직렬화할지만 결정한다.
+ */
+export function resolvePromptEvidencePolicy(
+  budget: PromptBudgetLevel,
+): PromptEvidencePolicy {
+  return {
+    budget,
+    getBlockEvidenceLimit: (blockId: string) =>
+      resolveBudgetEvidenceLimit(budget, blockId),
+  };
+}
+
 export function estimatePromptSectionsSize(
   sections: readonly PromptSection[],
 ): number {

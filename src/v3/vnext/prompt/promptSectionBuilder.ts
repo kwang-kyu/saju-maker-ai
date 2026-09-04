@@ -5,6 +5,9 @@
  * 전체 JSON dump 금지.
  */
 
+import type {
+  PromptEvidencePolicy,
+} from "./promptBudgetController.js";
 import {
   buildExplanationRulesSection,
 } from "./promptTemplate.js";
@@ -97,9 +100,34 @@ function formatEvidenceItem(item: VNextEvidenceItem): string {
   return `- ${item.key}: ${item.description}`;
 }
 
+function resolveBlockEvidenceLimit(
+  blockId: string,
+  options?: {
+    includeEvidence?: boolean;
+    evidencePolicy?: PromptEvidencePolicy;
+  },
+): number {
+  if (options?.evidencePolicy) {
+    return options.evidencePolicy.getBlockEvidenceLimit(blockId);
+  }
+
+  return options?.includeEvidence ? Number.POSITIVE_INFINITY : 0;
+}
+
+function sliceRelevantEvidence(
+  relevantEvidence: readonly VNextEvidenceItem[],
+  limit: number,
+): readonly VNextEvidenceItem[] {
+  if (limit === Number.POSITIVE_INFINITY) {
+    return relevantEvidence;
+  }
+
+  return relevantEvidence.slice(0, limit);
+}
+
 function formatBlockContent(
   block: ResponseBlockContext,
-  includeEvidence: boolean,
+  evidenceLimit: number,
 ): string {
   const lines: string[] = [];
 
@@ -117,9 +145,14 @@ function formatBlockContent(
     );
   }
 
-  if (includeEvidence && block.relevantEvidence.length > 0) {
+  const evidenceToSerialize = sliceRelevantEvidence(
+    block.relevantEvidence,
+    evidenceLimit,
+  );
+
+  if (evidenceToSerialize.length > 0) {
     lines.push(
-      block.relevantEvidence.map(formatEvidenceItem).join("\n"),
+      evidenceToSerialize.map(formatEvidenceItem).join("\n"),
     );
   }
 
@@ -160,13 +193,13 @@ function buildAnswerGoalSection(
 
 function buildBlockSection(
   block: ResponseBlockContext,
-  includeEvidence: boolean,
+  evidenceLimit: number,
   priority: number,
 ): PromptSection {
   return {
     id: block.id,
     title: resolveSectionTitle(block.id),
-    content: formatBlockContent(block, includeEvidence),
+    content: formatBlockContent(block, evidenceLimit),
     blockIds: [block.id],
     priority,
   };
@@ -192,23 +225,24 @@ export function buildPromptSections(
   strategy: PromptStrategy,
   options?: {
     includeEvidence?: boolean;
+    evidencePolicy?: PromptEvidencePolicy;
   },
 ): PromptSection[] {
-  const includeEvidence = options?.includeEvidence ?? false;
   const sections: PromptSection[] = [
     buildQuestionSection(context),
     buildAnswerGoalSection(strategy),
   ];
 
   context.blocks.forEach((block, index) => {
-    const content = formatBlockContent(block, includeEvidence);
+    const evidenceLimit = resolveBlockEvidenceLimit(block.id, options);
+    const content = formatBlockContent(block, evidenceLimit);
 
     if (!content.trim()) {
       return;
     }
 
     sections.push(
-      buildBlockSection(block, includeEvidence, 10 + index),
+      buildBlockSection(block, evidenceLimit, 10 + index),
     );
   });
 

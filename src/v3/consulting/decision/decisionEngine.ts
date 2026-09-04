@@ -59,6 +59,9 @@ import {
 import {
   buildReaderDecisionEvidence,
 } from "./readerDecisionEvidenceBuilder.js";
+import {
+  applyDecisionMaterialRelevanceGate,
+} from "./decisionMaterialRelevanceGate.js";
 
 /**
  * Decision Engine
@@ -250,6 +253,31 @@ export function runDecisionEngine(
     readerAssessment:
       readerDecisionAssessment,
   });
+
+  const {
+    evidence:
+      relevanceGatedEvidence,
+    conditions:
+      relevanceGatedConditions,
+    risks:
+      relevanceGatedRisks,
+  } = applyDecisionMaterialRelevanceGate({
+    evidence,
+    conditions,
+    risks,
+    actionReadiness,
+    decisionTarget:
+      input.question.decisionTarget,
+    intent:
+      input.question.intent,
+    topic:
+      input.question.topic,
+    originalQuestion:
+      input.question.originalQuestion,
+    questionContext:
+      input.questionContext,
+  });
+
   const careerRecommendation =
     input
       .question
@@ -266,8 +294,8 @@ export function runDecisionEngine(
       .conclusionNature
     === "warning"
       ? buildWarningConclusionSource(
-        risks,
-        conditions,
+        relevanceGatedRisks,
+        relevanceGatedConditions,
       )
       : undefined;
 
@@ -289,7 +317,7 @@ export function runDecisionEngine(
         input,
         readerDecisionAssessment,
         readerDecisionEvidence,
-        conditions,
+        relevanceGatedConditions,
       )
       : undefined;
 
@@ -306,7 +334,7 @@ export function runDecisionEngine(
         input,
         readerDecisionAssessment,
         readerDecisionEvidence,
-        conditions,
+        relevanceGatedConditions,
       )
       : undefined;
 
@@ -349,9 +377,12 @@ export function runDecisionEngine(
     coreDecision,
     decisionReason: alignmentResult.reason,
 
-    evidence,
-    conditions,
-    risks,
+    evidence:
+      relevanceGatedEvidence,
+    conditions:
+      relevanceGatedConditions,
+    risks:
+      relevanceGatedRisks,
 
     timingAssessment,
 

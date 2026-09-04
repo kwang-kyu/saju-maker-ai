@@ -7,7 +7,7 @@
 import {
   applyPromptBudget,
   estimatePromptSectionsSize,
-  resolveBudgetIncludeEvidence,
+  resolvePromptEvidencePolicy,
 } from "./promptBudgetController.js";
 import {
   buildPromptSections,
@@ -52,12 +52,12 @@ export function buildResponsePrompt(
   const budget = input.budget ?? "standard";
   const strategy = input.strategy
     ?? resolvePromptStrategy(input.responseContext);
-  const includeEvidence = resolveBudgetIncludeEvidence(budget);
+  const evidencePolicy = resolvePromptEvidencePolicy(budget);
 
   const allSections = buildPromptSections(
     input.responseContext,
     strategy,
-    { includeEvidence },
+    { evidencePolicy },
   );
   const selectedSections = applyPromptBudget(
     allSections,
@@ -116,13 +116,13 @@ export function estimatePromptSectionPayloadSize(
 ): number {
   const strategy = input.strategy
     ?? resolvePromptStrategy(input.responseContext);
-  const includeEvidence = resolveBudgetIncludeEvidence(
+  const evidencePolicy = resolvePromptEvidencePolicy(
     input.budget ?? "standard",
   );
   const sections = buildPromptSections(
     input.responseContext,
     strategy,
-    { includeEvidence },
+    { evidencePolicy },
   );
   const selectedSections = applyPromptBudget(
     sections,

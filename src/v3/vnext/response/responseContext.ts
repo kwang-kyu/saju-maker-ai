@@ -20,6 +20,9 @@ import type {
 import type {
   MissingContextItem,
 } from "../types/questionMeaning.js";
+import type {
+  QuestionSpecificMaterialSelection,
+} from "../adapters/questionSpecificMaterialAdapter.js";
 
 /** Blueprint block 또는 Report section 단위 컨텍스트 */
 export type ResponseBlockContext = {
@@ -41,6 +44,7 @@ export type ResponseContext = {
   scenario: ConsultingScenarioType;
   blueprint: AnswerBlueprint;
   blocks: ResponseBlockContext[];
+  questionSpecificMaterials?: QuestionSpecificMaterialSelection;
   missingContext?: MissingContextItem[];
 };
 

@@ -11,9 +11,15 @@ import type {
 import type {
   QuestionReaderResult,
 } from "../../consulting/question/questionReader.js";
+import type {
+  QuestionContext,
+} from "../../consulting/question/questionContext.js";
 import {
   adaptAssessment,
 } from "../adapters/assessmentAdapter.js";
+import {
+  adaptQuestionSpecificMaterials,
+} from "../adapters/questionSpecificMaterialAdapter.js";
 import {
   adaptHumanState,
 } from "../adapters/humanStateAdapter.js";
@@ -51,6 +57,7 @@ export type VNextOrchestratorInput = {
   targetPeriodLuckFlow?: SajuTargetPeriodLuckFlowFact | null;
   currentLuckFlow?: SajuLuckFlowFact | null;
   questionReaderResult?: QuestionReaderResult | null;
+  questionContext?: QuestionContext | null;
   decisionResult?: DecisionResult | null;
   targetPeriod?: TimePeriodRef | null;
 };
@@ -77,6 +84,38 @@ function pendingStage<T>(): PipelineStageResult<T> {
   return {
     status: "pending",
   };
+}
+
+function applyQuestionSpecificMaterials(
+  result: AnalysisResult,
+  input: VNextOrchestratorInput,
+): void {
+  if (!input.decisionResult) {
+    result.questionSpecificMaterials = skippedStage(
+      "decision result was not provided",
+    );
+    return;
+  }
+
+  const originalQuestion =
+    input.questionReaderResult?.originalQuestion
+    ?? input.analysisRequest.question
+    ?? "";
+
+  if (!originalQuestion.trim()) {
+    result.questionSpecificMaterials = skippedStage(
+      "original question was not provided",
+    );
+    return;
+  }
+
+  result.questionSpecificMaterials = readyStage(
+    adaptQuestionSpecificMaterials({
+      decisionResult: input.decisionResult,
+      originalQuestion: originalQuestion.trim(),
+      questionContext: input.questionContext ?? undefined,
+    }),
+  );
 }
 
 function scenarioRequiresHumanState(
@@ -141,6 +180,8 @@ export function runVNextOrchestrator(
         "decision result was not provided",
       );
     }
+
+    applyQuestionSpecificMaterials(result, input);
 
     return result;
   }
@@ -214,6 +255,8 @@ export function runVNextOrchestrator(
       "decision result was not provided",
     );
   }
+
+  applyQuestionSpecificMaterials(result, input);
 
   if (shouldExtractChangeSignals(scenario.requiredSignals)) {
     const signals = extractChangeSignals({

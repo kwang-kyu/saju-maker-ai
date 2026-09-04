@@ -28,6 +28,9 @@ import type {
 import type {
   ResponseContext,
 } from "./responseContext.js";
+import type {
+  QuestionSpecificMaterialSelection,
+} from "../adapters/questionSpecificMaterialAdapter.js";
 import {
   resolveBlueprintBlockIds,
   selectResponseBlockContext,
@@ -72,7 +75,22 @@ function buildSelectionContext(
       readReadyValue<ChangeSignal[]>(input.analysisResult.changeSignals) ?? [],
     assessment: readReadyValue<Assessment>(input.analysisResult.assessment),
     emphasis: readBlueprintEmphasis(blueprint),
+    questionSpecificMaterials: readQuestionSpecificMaterials(
+      input.analysisResult,
+    ),
   };
+}
+
+function readQuestionSpecificMaterials(
+  analysisResult: AnalysisResult,
+): QuestionSpecificMaterialSelection | undefined {
+  const stage = analysisResult.questionSpecificMaterials;
+
+  if (!stage || stage.status !== "ready") {
+    return undefined;
+  }
+
+  return stage.value;
 }
 
 function buildClarificationContext(
@@ -97,6 +115,9 @@ function buildClarificationContext(
       relevantEvidence: [],
       emphasis: ["missingContext"],
     }],
+    questionSpecificMaterials: readQuestionSpecificMaterials(
+      input.analysisResult,
+    ),
     missingContext,
   };
 }
@@ -148,6 +169,9 @@ export function buildResponseContext(
     scenario: scenario.type,
     blueprint,
     blocks,
+    questionSpecificMaterials: readQuestionSpecificMaterials(
+      input.analysisResult,
+    ),
   };
 }
 

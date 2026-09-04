@@ -29,8 +29,16 @@ import type {
   TimeState,
 } from "../types/timeState.js";
 import type {
+  QuestionSpecificMaterialSelection,
+} from "../adapters/questionSpecificMaterialAdapter.js";
+import type {
   ResponseBlockContext,
 } from "./responseContext.js";
+import {
+  orderConditionsByQuestionSpecificPriority,
+  orderEvidenceByQuestionSpecificPriority,
+  orderRisksByQuestionSpecificPriority,
+} from "./responseMaterialPriorityResolver.js";
 
 export type ResponseBlockSelection = Pick<
   ResponseBlockContext,
@@ -46,6 +54,7 @@ export type ResponseSelectionContext = {
   changeSignals: ChangeSignal[];
   assessment?: Assessment;
   emphasis: string[];
+  questionSpecificMaterials?: QuestionSpecificMaterialSelection;
 };
 
 export type ResponseBlockSelectorRule = {
@@ -256,6 +265,151 @@ function withEmphasis(
   return {
     ...selection,
     emphasis: [...emphasis],
+  };
+}
+
+const CONDITION_FACT_BLOCK_IDS = new Set<string>([
+  "compatibilityConditions",
+  "conditions",
+  "condition",
+  "caution",
+  "assessment",
+]);
+
+const RISK_FACT_BLOCK_IDS = new Set<string>([
+  "risk",
+  "limitingFactors",
+  "caution",
+  "assessment",
+]);
+
+function isConditionFact(
+  fact: Record<string, string | number | boolean | null>,
+): boolean {
+  return typeof fact.key === "string"
+    && "required" in fact
+    && "satisfied" in fact;
+}
+
+function isRiskFact(
+  fact: Record<string, string | number | boolean | null>,
+): boolean {
+  return typeof fact.key === "string"
+    && "severity" in fact
+    && !("required" in fact);
+}
+
+function conditionFactToAssessmentCondition(
+  fact: Record<string, string | number | boolean | null>,
+): AssessmentCondition {
+  return {
+    key: String(fact.key),
+    description: String(fact.description ?? ""),
+    required: Boolean(fact.required),
+    satisfied: Boolean(fact.satisfied),
+  };
+}
+
+function riskFactToAssessmentRisk(
+  fact: Record<string, string | number | boolean | null>,
+): AssessmentRisk {
+  return {
+    key: String(fact.key),
+    description: String(fact.description ?? ""),
+    severity: String(fact.severity) as AssessmentRisk["severity"],
+  };
+}
+
+function reorderFactsByQuestionSpecificPriority(
+  facts: readonly Record<string, string | number | boolean | null>[],
+  materials: QuestionSpecificMaterialSelection | undefined,
+  options: { conditions: boolean; risks: boolean },
+): Record<string, string | number | boolean | null>[] {
+  if (!options.conditions && !options.risks) {
+    return [...facts];
+  }
+
+  const result: Record<string, string | number | boolean | null>[] = [];
+  let conditionFacts: Record<string, string | number | boolean | null>[] = [];
+  let riskFacts: Record<string, string | number | boolean | null>[] = [];
+
+  const flushConditions = () => {
+    if (conditionFacts.length === 0) {
+      return;
+    }
+
+    result.push(...assessmentConditionFacts(
+      orderConditionsByQuestionSpecificPriority(
+        conditionFacts.map(conditionFactToAssessmentCondition),
+        materials,
+      ),
+    ));
+    conditionFacts = [];
+  };
+
+  const flushRisks = () => {
+    if (riskFacts.length === 0) {
+      return;
+    }
+
+    result.push(...assessmentRiskFacts(
+      orderRisksByQuestionSpecificPriority(
+        riskFacts.map(riskFactToAssessmentRisk),
+        materials,
+      ),
+    ));
+    riskFacts = [];
+  };
+
+  for (const fact of facts) {
+    if (options.conditions && isConditionFact(fact)) {
+      flushRisks();
+      conditionFacts.push(fact);
+      continue;
+    }
+
+    if (options.risks && isRiskFact(fact)) {
+      flushConditions();
+      riskFacts.push(fact);
+      continue;
+    }
+
+    flushConditions();
+    flushRisks();
+    result.push(fact);
+  }
+
+  flushConditions();
+  flushRisks();
+
+  return result;
+}
+
+function applyQuestionSpecificMaterialPriority(
+  blockId: string,
+  selection: ResponseBlockSelection,
+  context: ResponseSelectionContext,
+): ResponseBlockSelection {
+  const materials = context.questionSpecificMaterials;
+  const applyConditions = CONDITION_FACT_BLOCK_IDS.has(blockId);
+  const applyRisks = RISK_FACT_BLOCK_IDS.has(blockId);
+
+  return {
+    ...selection,
+    relevantEvidence: orderEvidenceByQuestionSpecificPriority(
+      selection.relevantEvidence,
+      materials,
+    ),
+    relevantFacts: applyConditions || applyRisks
+      ? reorderFactsByQuestionSpecificPriority(
+        selection.relevantFacts,
+        materials,
+        {
+          conditions: applyConditions,
+          risks: applyRisks,
+        },
+      )
+      : selection.relevantFacts,
   };
 }
 
@@ -913,10 +1067,15 @@ export function selectResponseBlockContext(
 ): ResponseBlockContext {
   const rule = findResponseBlockSelectorRule(blockId);
   const selection = rule?.select(context) ?? emptySelection();
+  const prioritized = applyQuestionSpecificMaterialPriority(
+    blockId,
+    selection,
+    context,
+  );
 
   return {
     id: blockId,
-    ...selection,
+    ...prioritized,
   };
 }
 

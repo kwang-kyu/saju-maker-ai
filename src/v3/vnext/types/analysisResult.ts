@@ -26,6 +26,9 @@ import type {
 import type {
   AnswerBlueprint,
 } from "./answerBlueprint.js";
+import type {
+  QuestionSpecificMaterialSelection,
+} from "../adapters/questionSpecificMaterialAdapter.js";
 
 /** 파이프라인 단계 실행 상태 */
 export type PipelineStageStatus =
@@ -63,5 +66,8 @@ export type AnalysisResult = {
   questionMeaning?: PipelineStageResult<QuestionMeaning>;
   consultingScenario?: PipelineStageResult<ConsultingScenario>;
   assessment?: PipelineStageResult<Assessment>;
+  questionSpecificMaterials?: PipelineStageResult<
+    QuestionSpecificMaterialSelection
+  >;
   answerBlueprint?: PipelineStageResult<AnswerBlueprint>;
 };

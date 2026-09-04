@@ -87,6 +87,10 @@ export type {
 } from "./analysisResult.js";
 
 export type {
+  QuestionSpecificMaterialSelection,
+} from "../adapters/questionSpecificMaterialAdapter.js";
+
+export type {
   ResponseBlockContext,
   ResponseContext,
   ResponseActionType,
