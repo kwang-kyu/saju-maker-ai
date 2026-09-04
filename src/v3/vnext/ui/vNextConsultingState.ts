@@ -10,6 +10,9 @@ import type {
 import type {
   ResponseActionType,
 } from "../response/responseContext.js";
+import type {
+  VNextAnalysisProgressStep,
+} from "./vNextAnalysisProgress.js";
 
 export type VNextConsultingPhase =
   | "idle"
@@ -63,6 +66,7 @@ export type VNextConsultingSessionState = {
   activeQuestion: string | null;
   streamingText: string | null;
   streamMetadata: ResponseStreamMetadata | null;
+  progressStep: VNextAnalysisProgressStep | null;
 };
 
 export const INITIAL_VNEXT_CONSULTING_SESSION_STATE: VNextConsultingSessionState = {
@@ -74,6 +78,7 @@ export const INITIAL_VNEXT_CONSULTING_SESSION_STATE: VNextConsultingSessionState
   activeQuestion: null,
   streamingText: null,
   streamMetadata: null,
+  progressStep: null,
 };
 
 export function resolveLoadingLabel(

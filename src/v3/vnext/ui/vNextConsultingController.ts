@@ -24,6 +24,9 @@ import type {
 import {
   buildConsultingTurn,
 } from "./vNextResponseMapper.js";
+import type {
+  VNextAnalysisProgressStep,
+} from "./vNextAnalysisProgress.js";
 import {
   INITIAL_VNEXT_CONSULTING_SESSION_STATE,
   type VNextConsultingPhase,
@@ -93,6 +96,16 @@ export class VNextConsultingController {
     this.emit();
   }
 
+  private updateProgressStep(
+    progressStep: VNextAnalysisProgressStep,
+  ): void {
+    this.state = {
+      ...this.state,
+      progressStep,
+    };
+    this.emit();
+  }
+
   async submitQuestion(
     request: V3ConsultingRequest,
   ): Promise<void> {
@@ -111,6 +124,7 @@ export class VNextConsultingController {
       activeQuestion: question,
       streamingText: null,
       streamMetadata: null,
+      progressStep: "birthInputValidated",
     };
     this.emit();
 
@@ -139,6 +153,7 @@ export class VNextConsultingController {
       activeQuestion: trimmedQuestion,
       streamingText: null,
       streamMetadata: null,
+      progressStep: "birthInputValidated",
     };
     this.emit();
 
@@ -173,10 +188,14 @@ export class VNextConsultingController {
           streaming: true,
           answerMode: "question",
           analysisStartedAt: pipelineStartedAt,
+          onAnalysisProgress: (step) => {
+            this.updateProgressStep(step);
+          },
           onGenerating: () => {
             this.state = {
               ...this.state,
               phase: "generating",
+              progressStep: "generating",
             };
             this.emit();
           },
@@ -193,6 +212,7 @@ export class VNextConsultingController {
                 ...this.state,
                 phase: "streaming",
                 streamingText,
+                progressStep: "streaming",
               };
               this.emit();
             }
@@ -239,6 +259,7 @@ export class VNextConsultingController {
           totalLatencyMs,
           apiCallCount: pipelineResult.response.apiCallCount,
         },
+        progressStep: "completed",
       };
       this.emit();
     } catch {
@@ -249,6 +270,7 @@ export class VNextConsultingController {
         activeQuestion: null,
         streamingText: null,
         streamMetadata: null,
+        progressStep: null,
       };
       this.emit();
     }

@@ -53,6 +53,7 @@ export type VNextConsultingPipelineInput = {
   gateway: ResponseGateway;
   requestId?: string;
   onGenerating?: () => void;
+  onAnalysisProgress?: VNextAnalysisProgressCallback;
   onStreamEvent?: (event: ResponseStreamEvent) => void;
   analysisStartedAt?: number;
 };
@@ -163,6 +164,10 @@ export function analyzeVNextConsultingRequest(
         })
       : null;
 
+  if (targetPeriodBuildResult) {
+    options.onProgress?.("targetPeriodResolved");
+  }
+
   const targetPeriod = targetPeriodBuildResult?.target
     ? buildTargetPeriodRef(targetPeriodBuildResult.target)
     : undefined;
@@ -181,6 +186,7 @@ export function analyzeVNextConsultingRequest(
     decisionResult: turnResult.decisionResult,
     targetPeriod: targetPeriod ?? null,
   });
+  options.onProgress?.("orchestrationComplete");
 
   const pipeline = runResponsePipeline({
     analysisResult,
@@ -189,6 +195,7 @@ export function analyzeVNextConsultingRequest(
   });
 
   const prompt = buildResponsePromptFromAction(pipeline.action);
+  options.onProgress?.("responsePrepared");
 
   return {
     analysisResult,
@@ -207,6 +214,9 @@ export async function runVNextConsultingPipeline(
   const analysis = analyzeVNextConsultingRequest(
     input.request,
     input.answerMode ?? "question",
+    {
+      onProgress: input.onAnalysisProgress,
+    },
   );
   const analysisLatencyMs = Date.now() - analysisStartedAt;
 
@@ -241,6 +251,9 @@ export async function runVNextConsultingPipelineNonStreaming(
   const analysis = analyzeVNextConsultingRequest(
     input.request,
     input.answerMode ?? "question",
+    {
+      onProgress: input.onAnalysisProgress,
+    },
   );
 
   if (analysis.action.type === "consulting") {
