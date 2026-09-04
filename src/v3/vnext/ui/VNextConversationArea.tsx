@@ -2,6 +2,9 @@ import type {
   VNextConsultingSessionState,
   VNextConsultingTurn,
 } from "./vNextConsultingState.js";
+import {
+  normalizeConsultingDisplayText,
+} from "./consultingDisplayText.js";
 
 export type VNextConversationAreaProps = {
   state: VNextConsultingSessionState;
@@ -25,7 +28,7 @@ function renderAssistantMessages(
 
         <div className="vnext-conversation-bubble vnext-conversation-bubble--assistant">
           <p>
-            {message.text}
+            {normalizeConsultingDisplayText(message.text)}
           </p>
         </div>
       </div>
@@ -109,7 +112,7 @@ function renderActiveTurn(
 
           <div className="vnext-conversation-bubble vnext-conversation-bubble--assistant vnext-conversation-bubble--streaming">
             <p>
-              {state.streamingText ?? ""}
+              {normalizeConsultingDisplayText(state.streamingText ?? "")}
               <span
                 className="vnext-conversation-stream-cursor"
                 aria-hidden="true"

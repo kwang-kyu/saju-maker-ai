@@ -2,6 +2,9 @@ import type {
   NaturalConsultingResponse,
 } from "../gpt/responseGatewayTypes.js";
 import {
+  normalizeConsultingDisplayText,
+} from "../ui/consultingDisplayText.js";
+import {
   VNEXT_REPORT_COPY,
   VNEXT_REPORT_SECTION_LABELS,
 } from "./vNextReportCopy.js";
@@ -20,11 +23,11 @@ function resolveDisplayText(
   isStreaming: boolean,
 ): string | null {
   if (isStreaming && state.streamingText) {
-    return state.streamingText;
+    return normalizeConsultingDisplayText(state.streamingText);
   }
 
   if (state.response?.text) {
-    return state.response.text;
+    return normalizeConsultingDisplayText(state.response.text);
   }
 
   return null;
@@ -43,7 +46,7 @@ function renderCompletedResponse(
       ) : null}
 
       <div className="vnext-report-content-text">
-        <p>{response.text}</p>
+        <p>{normalizeConsultingDisplayText(response.text)}</p>
       </div>
     </article>
   );

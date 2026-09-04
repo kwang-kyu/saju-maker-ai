@@ -101,7 +101,7 @@ export function VNextConsultingPanel({
                   </span>
 
                   <p>
-                    {message.text}
+                    {normalizeConsultingDisplayText(message.text)}
                   </p>
                 </div>
               ) : (
@@ -111,7 +111,7 @@ export function VNextConsultingPanel({
                   </span>
 
                   <p>
-                    {message.text}
+                    {normalizeConsultingDisplayText(message.text)}
                   </p>
                 </div>
               )}
@@ -138,7 +138,7 @@ export function VNextConsultingPanel({
                 </span>
 
                 <p>
-                  {state.streamingText}
+                  {normalizeConsultingDisplayText(state.streamingText)}
                 </p>
               </div>
             ) : null}
