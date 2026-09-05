@@ -17,6 +17,9 @@ import {
 import {
   isLifeFlowInterpretationQuestion,
 } from "./lifeFlowInterpretationQuestionDetector.js";
+import {
+  resolveLifeFlowTarget,
+} from "./lifeFlowTargetResolver.js";
 
   type QuestionRealitySignalRule = {
     area:
@@ -437,12 +440,55 @@ import {
   function requiresDecisionTimingAnalysis(
     question:
       QuestionReaderResult,
+    referenceDateIso?:
+      string,
   ): boolean {
-    return (
+    if (
       question.intent === "timing"
       || question.urgency !== "unknown"
       || question.timingType !== "unknown"
-    );
+    ) {
+      return true;
+    }
+
+    const referenceDate =
+      referenceDateIso
+      ?? "2025-01-01";
+
+    try {
+      const lifeFlowTarget =
+        resolveLifeFlowTarget(
+          question.normalizedQuestion,
+          referenceDate,
+        );
+
+      if (
+        lifeFlowTarget.scope
+        === "overall"
+      ) {
+        return false;
+      }
+
+      const counterpartBirthDate =
+        question
+          .counterpartFacts
+          .birthDate;
+
+      if (
+        lifeFlowTarget.scope
+        === "day"
+        && counterpartBirthDate
+        !== null
+        && lifeFlowTarget.startDate
+        === counterpartBirthDate
+      ) {
+        return false;
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   function requiresTimingSearch(

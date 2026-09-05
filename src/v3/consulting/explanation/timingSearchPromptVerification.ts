@@ -282,6 +282,9 @@
         limitations:
           [],
 
+        periodSegments:
+          [],
+
         evidenceKeys: [
           "seun",
           "wolun-1",

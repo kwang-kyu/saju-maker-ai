@@ -559,6 +559,282 @@ function buildLifeFlowInterpretationExplanationBlocks(
   ];
 }
 
+function hasTimingPeriodEvidence(
+  assessment:
+    NonNullable<
+      DecisionExplanationInput["timingAssessment"]
+    >,
+): boolean {
+  return (
+    assessment.targetMonth
+    !== null
+    || assessment.hasWolun
+    || assessment.hasIlun
+    || assessment.hasYearSegments
+    || assessment.evidenceKeys.some(
+      (key) =>
+        key.startsWith(
+          "wolun",
+        ),
+    )
+  );
+}
+
+function hasTimingFlowContent(
+  assessment:
+    NonNullable<
+      DecisionExplanationInput["timingAssessment"]
+    >,
+): boolean {
+  return (
+    assessment.flowInterpretationAvailable
+    || (
+      assessment.overallTheme
+        ?.trim()
+        .length
+      ?? 0
+    ) > 0
+    || assessment.supportiveSignals.length
+    > 0
+    || assessment.tensionSignals.length
+    > 0
+    || assessment.cautions.length
+    > 0
+  );
+}
+
+function timingSearchAlreadyExplainsWindows(
+  assessment:
+    NonNullable<
+      DecisionExplanationInput["timingAssessment"]
+    >,
+): boolean {
+  const timingSearch =
+    assessment.timingSearch;
+
+  return (
+    timingSearch.required
+    && timingSearch.available
+    && (
+      timingSearch.recommendedWindows.length
+      > 0
+      || timingSearch.cautionWindows.length
+      > 0
+    )
+  );
+}
+
+function buildTimingAssessmentPeriodLabel(
+  assessment:
+    NonNullable<
+      DecisionExplanationInput["timingAssessment"]
+    >,
+): string | null {
+  if (
+    assessment.targetScope
+    === "month"
+    && assessment.targetYear
+    !== null
+    && assessment.targetMonth
+    !== null
+  ) {
+    return `${assessment.targetYear}년 ${assessment.targetMonth}월 월운`;
+  }
+
+  if (
+    assessment.targetScope
+    === "year"
+    && assessment.targetYear
+    !== null
+  ) {
+    return `${assessment.targetYear}년 연운`;
+  }
+
+  if (
+    assessment.targetScope
+    === "day"
+    && assessment.targetStartDate
+  ) {
+    return `${assessment.targetStartDate} 일운`;
+  }
+
+  if (
+    assessment.targetStartDate
+    && assessment.targetEndDate
+  ) {
+    return `${assessment.targetStartDate}~${assessment.targetEndDate}`;
+  }
+
+  return null;
+}
+
+function buildTimingAssessmentExplanationBlocks(
+  input:
+    DecisionExplanationInput,
+): ExplanationBlock[] {
+  const assessment =
+    input.timingAssessment;
+
+  if (
+    !assessment
+    || !assessment.analysisRequired
+    || !hasTimingPeriodEvidence(
+      assessment,
+    )
+    || !hasTimingFlowContent(
+      assessment,
+    )
+    || timingSearchAlreadyExplainsWindows(
+      assessment,
+    )
+  ) {
+    return [];
+  }
+
+  const periodLabel =
+    buildTimingAssessmentPeriodLabel(
+      assessment,
+    );
+
+  const flowSummaryLines =
+    [
+      periodLabel,
+      assessment.overallTheme,
+    ].filter(
+      (
+        line,
+      ): line is string =>
+        typeof line
+        === "string"
+        && line.length
+        > 0,
+    );
+
+  const supportiveLines =
+    assessment
+      .supportiveSignals;
+
+  const segmentLines =
+    assessment
+      .periodSegments
+      .map(
+        (segment) =>
+          [
+            segment.periodLabel,
+            segment.theme,
+          ].join(
+            "\n",
+          ),
+      );
+
+  const wolunEvidenceLines =
+    [
+      ...segmentLines,
+      ...supportiveLines,
+    ];
+
+  const cautionLines =
+    [
+      ...assessment
+        .tensionSignals,
+      ...assessment
+        .cautions,
+    ];
+
+  const limitationLines =
+    assessment
+      .limitations;
+
+  const blocks:
+    ExplanationBlock[] = [];
+
+  if (
+    flowSummaryLines.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "evidence",
+
+      title:
+        "대상 시기의 핵심 흐름",
+
+      required:
+        true,
+
+      content:
+        flowSummaryLines.join(
+          "\n",
+        ),
+    });
+  }
+
+  if (
+    wolunEvidenceLines.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "evidence",
+
+      title:
+        "월운·일운 근거",
+
+      required:
+        true,
+
+      content:
+        wolunEvidenceLines.join(
+          "\n\n",
+        ),
+    });
+  }
+
+  if (
+    cautionLines.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "risks",
+
+      title:
+        "대상 시기의 주의 흐름",
+
+      required:
+        true,
+
+      content:
+        cautionLines.join(
+          "\n",
+        ),
+    });
+  }
+
+  if (
+    limitationLines.length
+    > 0
+  ) {
+    blocks.push({
+      step:
+        "conditions",
+
+      title:
+        "시기 해석의 한계",
+
+      required:
+        true,
+
+      content:
+        limitationLines.join(
+          "\n",
+        ),
+    });
+  }
+
+  return blocks;
+}
+
 function buildTimingSearchExplanationBlocks(
   input:
     DecisionExplanationInput,
@@ -1375,6 +1651,9 @@ function buildBusinessStartExplanationBlocks(
     ...buildTimingSearchExplanationBlocks(
       input,
     ),
+    ...buildTimingAssessmentExplanationBlocks(
+      input,
+    ),
     {
       step:
         "conditions",
@@ -1491,6 +1770,9 @@ function buildRealEstateBuyExplanationBlocks(
         ),
     },
     ...buildTimingSearchExplanationBlocks(
+      input,
+    ),
+    ...buildTimingAssessmentExplanationBlocks(
       input,
     ),
     {

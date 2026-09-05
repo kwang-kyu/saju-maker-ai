@@ -148,10 +148,12 @@ function buildTimeDifferences(
     ...timing.limitations,
   ];
 
-  return [
+  const granularity = resolveTimingGranularity(timing);
+
+  const differences: Assessment["timeDifferences"] = [
     {
       label: buildTimingLabel(timing),
-      granularity: resolveTimingGranularity(timing),
+      granularity,
       summary: timing.overallTheme || "timing assessment available",
       relativeTo: "target",
       evidence: toVNextEvidenceFromStrings(
@@ -160,6 +162,18 @@ function buildTimeDifferences(
       ),
     },
   ];
+
+  for (const segment of timing.periodSegments) {
+    differences.push({
+      label: segment.periodLabel,
+      granularity,
+      summary: segment.theme,
+      relativeTo: "target",
+      evidence: emptyVNextEvidence(),
+    });
+  }
+
+  return differences;
 }
 
 /**

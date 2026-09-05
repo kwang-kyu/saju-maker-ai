@@ -18,6 +18,7 @@ import type {
 } from "../question/lifeFlowTarget.js";
 import {
   assessLifeFlowInterpretation,
+  type LifeFlowPeriodSegmentInterpretation,
 } from "./lifeFlowInterpretationAssessment.js";
 import {
   assessTimingSearch,
@@ -124,8 +125,11 @@ export type TimingAssessment = {
   limitations:
     string[];
 
-    timingSearch:
-  TimingSearchAssessment;
+  periodSegments:
+    LifeFlowPeriodSegmentInterpretation[];
+
+  timingSearch:
+    TimingSearchAssessment;
 
   evidenceKeys:
     string[];
@@ -263,6 +267,9 @@ export function assessTiming(
         [],
 
       limitations:
+        [],
+
+      periodSegments:
         [],
 
       timingSearch:
@@ -439,6 +446,12 @@ export function assessTiming(
       [
         ...flowInterpretation
           .limitations,
+      ],
+
+    periodSegments:
+      [
+        ...flowInterpretation
+          .periodSegments,
       ],
 
     evidenceKeys:

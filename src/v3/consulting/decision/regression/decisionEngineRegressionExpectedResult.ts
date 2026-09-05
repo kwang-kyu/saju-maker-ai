@@ -240,6 +240,7 @@
       limitations: [
         "대상 기간이 확인되지 않았다.",
       ],
+      periodSegments: [],
       evidenceKeys: [],
       evidenceComplete: false,
 

@@ -85,6 +85,9 @@ function buildNeutralTimingAssessment():
     limitations:
       [],
 
+    periodSegments:
+      [],
+
     timingSearch: {
       required:
         false,
