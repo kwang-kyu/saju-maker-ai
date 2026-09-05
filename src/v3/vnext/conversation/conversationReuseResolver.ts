@@ -71,15 +71,17 @@ export function resolveConversationReusePlan(
       });
 
     case "timeRefinement":
+      // 새 시간 범위의 timeState/assessment가 캐시에 덮이지 않도록 재사용 금지.
+      // humanState는 인물 기반이라 재사용 유지.
       return buildPlan({
         reuseHumanState: canReuseHumanState,
-        reuseTimeState: canReuseTimeState,
-        reuseAssessment: canReuseAssessment,
+        reuseTimeState: false,
+        reuseAssessment: false,
         reuseChangeSignals: canReuseChangeSignals,
         reusePreviousResponseContext: false,
         requiresNewQuestionAnalysis: true,
-        requiresAssessmentRefresh: !canReuseTimeState,
-        reason: "timeRefinement — reuse humanState, refresh time segment only",
+        requiresAssessmentRefresh: true,
+        reason: "timeRefinement — reuse humanState, refresh timeState and assessment",
       });
 
     case "scenarioRefinement":

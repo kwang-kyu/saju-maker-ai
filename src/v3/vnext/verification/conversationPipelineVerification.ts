@@ -6,6 +6,9 @@ import type {
   V3ConsultingRequest,
 } from "../../consulting/v3ConsultingRequest.js";
 import {
+  resolveLifeFlowTarget,
+} from "../../consulting/question/lifeFlowTargetResolver.js";
+import {
   runVNextConversationPipeline,
 } from "../conversation/conversationPipeline.js";
 import type {
@@ -443,6 +446,207 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
           `responseSource=${third.response.source}`,
           `awaitingClarification=${third.session.contextMetadata.awaitingClarification}`,
           `pendingMissingContextKeys=${third.session.contextMetadata.pendingMissingContextKeys.join(",") || "none"}`,
+        ],
+      };
+    }),
+
+    runCase("case-9-year-refinement-identity", async () => {
+      const firstQuestion = "올해의 운세알려줘";
+      const secondQuestion = "내년도 운세알려줘";
+
+      const first = await runVNextConversationPipeline({
+        question: firstQuestion,
+        input: {
+          request: buildVerificationRequest(firstQuestion),
+          gateway,
+        },
+      });
+
+      const referenceDateIso = "2026-10-01";
+      const previousLifeFlowTarget = resolveLifeFlowTarget(
+        firstQuestion,
+        referenceDateIso,
+      );
+      const currentLifeFlowTarget = resolveLifeFlowTarget(
+        secondQuestion,
+        referenceDateIso,
+      );
+      const previousDerivedPeriodKey =
+        previousLifeFlowTarget.targetYear !== null
+          ? String(previousLifeFlowTarget.targetYear)
+          : previousLifeFlowTarget.startDate;
+      const currentDerivedPeriodKey =
+        currentLifeFlowTarget.targetYear !== null
+          ? String(currentLifeFlowTarget.targetYear)
+          : currentLifeFlowTarget.startDate;
+
+      const previousTimePeriodKey =
+        first.session.analysisCache.timeState?.reuseMetadata.timePeriodKey
+        ?? first.session.analysisCache.timeState?.value.targetPeriod.label
+        ?? first.session.analysisCache.timeState?.value.targetPeriod.start
+        ?? null;
+      const previousAssessmentSourceTurnId =
+        first.session.analysisCache.assessment?.sourceTurnId ?? null;
+      const previousQuestionMeaningSourceTurnId =
+        first.session.analysisCache.questionMeaning?.sourceTurnId ?? null;
+
+      const result = await runVNextConversationPipeline({
+        session: first.session,
+        question: secondQuestion,
+        input: {
+          request: buildVerificationRequest(secondQuestion),
+          gateway,
+        },
+      });
+
+      const currentTimePeriodKey =
+        result.session.analysisCache.timeState?.reuseMetadata.timePeriodKey
+        ?? result.session.analysisCache.timeState?.value.targetPeriod.label
+        ?? result.session.analysisCache.timeState?.value.targetPeriod.start
+        ?? null;
+      const currentAssessmentSourceTurnId =
+        result.session.analysisCache.assessment?.sourceTurnId ?? null;
+      const currentQuestionMeaningSourceTurnId =
+        result.session.analysisCache.questionMeaning?.sourceTurnId ?? null;
+
+      // year 운세 질문에서는 timeState 캐시가 비어 있을 수 있으므로,
+      // 캐시 키가 둘 다 있을 때만 cache period 차이를 강제한다.
+      const cachedTimePeriodKeysDifferWhenAvailable =
+        previousTimePeriodKey === null
+        || currentTimePeriodKey === null
+        || previousTimePeriodKey !== currentTimePeriodKey;
+
+      return {
+        passed:
+          result.followUpType !== "continuation"
+          && !result.executionMetadata.executedStages.includes("pipeline:cacheOnly")
+          && !result.executionMetadata.reused.timeState
+          && !result.executionMetadata.reused.assessment
+          && result.executionMetadata.executedStages.includes("timeState:executed")
+          && result.executionMetadata.executedStages.includes("assessment:executed")
+          && (
+            result.executionMetadata.executedStages.includes("pipeline:partial")
+            || result.executionMetadata.executedStages.includes("pipeline:full")
+          )
+          && result.reusePlan?.requiresNewQuestionAnalysis === true
+          && result.reusePlan?.reuseTimeState === false
+          && result.reusePlan?.reuseAssessment === false
+          && previousDerivedPeriodKey !== currentDerivedPeriodKey
+          && cachedTimePeriodKeysDifferWhenAvailable
+          && result.turn.question === secondQuestion
+          && currentAssessmentSourceTurnId === result.turn.turnId
+          && previousAssessmentSourceTurnId !== null
+          && previousAssessmentSourceTurnId !== currentAssessmentSourceTurnId
+          && currentQuestionMeaningSourceTurnId === result.turn.turnId
+          && previousQuestionMeaningSourceTurnId !== null
+          && previousQuestionMeaningSourceTurnId !== currentQuestionMeaningSourceTurnId
+          && result.session.turns.length === 2,
+        details: [
+          `followUpType=${result.followUpType}`,
+          `reusedTimeState=${result.executionMetadata.reused.timeState}`,
+          `reusedAssessment=${result.executionMetadata.reused.assessment}`,
+          `executedStages=${result.executionMetadata.executedStages.join(",")}`,
+          `previousDerivedPeriodKey=${previousDerivedPeriodKey}`,
+          `currentDerivedPeriodKey=${currentDerivedPeriodKey}`,
+          `previousTimePeriodKey=${previousTimePeriodKey ?? "none"}`,
+          `currentTimePeriodKey=${currentTimePeriodKey ?? "none"}`,
+          `turnQuestion=${result.turn.question}`,
+          `previousAssessmentSourceTurnId=${previousAssessmentSourceTurnId ?? "none"}`,
+          `assessmentSourceTurnId=${currentAssessmentSourceTurnId ?? "none"}`,
+          `previousQuestionMeaningSourceTurnId=${previousQuestionMeaningSourceTurnId ?? "none"}`,
+          `questionMeaningSourceTurnId=${currentQuestionMeaningSourceTurnId ?? "none"}`,
+          `requiresNewQuestionAnalysis=${result.reusePlan?.requiresNewQuestionAnalysis ?? false}`,
+        ],
+      };
+    }),
+
+    runCase("case-10-month-refinement-identity", async () => {
+      const firstQuestion = "10월에 사업을 시작해도 될까요?";
+      const secondQuestion = "11월에는 어떨까요?";
+
+      const first = await runVNextConversationPipeline({
+        question: firstQuestion,
+        input: {
+          request: buildVerificationRequest(firstQuestion),
+          gateway,
+        },
+      });
+
+      const previousTimePeriodKey =
+        first.session.analysisCache.timeState?.reuseMetadata.timePeriodKey
+        ?? first.session.analysisCache.timeState?.value.targetPeriod.label
+        ?? first.session.analysisCache.timeState?.value.targetPeriod.start
+        ?? null;
+      const previousAssessmentSourceTurnId =
+        first.session.analysisCache.assessment?.sourceTurnId ?? null;
+
+      const result = await runVNextConversationPipeline({
+        session: first.session,
+        question: secondQuestion,
+        input: {
+          request: buildVerificationRequest(secondQuestion),
+          gateway,
+        },
+      });
+
+      const currentTimePeriodKey =
+        result.session.analysisCache.timeState?.reuseMetadata.timePeriodKey
+        ?? result.session.analysisCache.timeState?.value.targetPeriod.label
+        ?? result.session.analysisCache.timeState?.value.targetPeriod.start
+        ?? null;
+      const currentTimeStateLabel =
+        result.session.analysisCache.timeState?.value.targetPeriod.label
+        ?? null;
+      const currentTimeStateStart =
+        result.session.analysisCache.timeState?.value.targetPeriod.start
+        ?? null;
+      const currentAssessmentSourceTurnId =
+        result.session.analysisCache.assessment?.sourceTurnId ?? null;
+      const currentTimeStateSourceTurnId =
+        result.session.analysisCache.timeState?.sourceTurnId ?? null;
+
+      const novemberPeriodPreserved =
+        (
+          currentTimePeriodKey !== null
+          && /(?:^|-)11(?:$|-)/.test(currentTimePeriodKey)
+        )
+        || (
+          currentTimeStateLabel !== null
+          && /(?:^|-)11(?:$|-)/.test(currentTimeStateLabel)
+        )
+        || (
+          currentTimeStateStart !== null
+          && /-11-/.test(currentTimeStateStart)
+        );
+
+      return {
+        passed:
+          result.followUpType === "timeRefinement"
+          && result.executionMetadata.reused.timeState === false
+          && result.executionMetadata.executedStages.includes("assessment:executed")
+          && !result.executionMetadata.reused.assessment
+          && !result.executionMetadata.executedStages.includes("pipeline:cacheOnly")
+          && previousTimePeriodKey !== null
+          && currentTimePeriodKey !== null
+          && previousTimePeriodKey !== currentTimePeriodKey
+          && novemberPeriodPreserved
+          && currentTimeStateSourceTurnId === result.turn.turnId
+          && currentAssessmentSourceTurnId === result.turn.turnId
+          && previousAssessmentSourceTurnId !== currentAssessmentSourceTurnId
+          && result.turn.question === secondQuestion
+          && result.session.turns.length === 2,
+        details: [
+          `followUpType=${result.followUpType}`,
+          `reusedTimeState=${result.executionMetadata.reused.timeState}`,
+          `reusedAssessment=${result.executionMetadata.reused.assessment}`,
+          `executedStages=${result.executionMetadata.executedStages.join(",")}`,
+          `previousTimePeriodKey=${previousTimePeriodKey ?? "none"}`,
+          `currentTimePeriodKey=${currentTimePeriodKey ?? "none"}`,
+          `currentTimeStateLabel=${currentTimeStateLabel ?? "none"}`,
+          `currentTimeStateStart=${currentTimeStateStart ?? "none"}`,
+          `novemberPeriodPreserved=${novemberPeriodPreserved}`,
+          `assessmentSourceTurnId=${currentAssessmentSourceTurnId ?? "none"}`,
+          `previousAssessmentSourceTurnId=${previousAssessmentSourceTurnId ?? "none"}`,
         ],
       };
     }),

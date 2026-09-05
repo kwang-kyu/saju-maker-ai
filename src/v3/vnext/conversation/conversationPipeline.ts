@@ -20,6 +20,16 @@ import {
   type QuestionCounterpartFacts,
   type QuestionReaderResult,
 } from "../../consulting/question/questionReader.js";
+import type {
+  LifeFlowScope,
+  LifeFlowTarget,
+} from "../../consulting/question/lifeFlowTarget.js";
+import {
+  resolveLifeFlowTarget,
+} from "../../consulting/question/lifeFlowTargetResolver.js";
+import {
+  adaptQuestionMeaning,
+} from "../adapters/questionMeaningAdapter.js";
 import {
   buildAnswerBlueprint,
 } from "../blueprint/answerBlueprintBuilder.js";
@@ -48,6 +58,7 @@ import type {
   HumanState,
   PipelineStageResult,
   QuestionMeaning,
+  TimeGranularity,
   TimeState,
 } from "../types/index.js";
 import type {
@@ -143,6 +154,15 @@ function generateConversationId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function toReferenceDateIso(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value.trim());
+  return match ? match[1] : null;
+}
+
 function createInitialContextMetadata(): ConversationContextMetadata {
   const now = new Date().toISOString();
 
@@ -220,6 +240,275 @@ function resolveActualReuseFlags(
     responseContext:
       reusePlan.reusePreviousResponseContext
       && hasReusableCacheEntry(cache.responseContext),
+  };
+}
+
+function normalizeIdentityAxis(
+  value: string | null | undefined,
+): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function identityAxesDiffer(
+  current: string | null | undefined,
+  cached: string | null | undefined,
+): boolean {
+  const left = normalizeIdentityAxis(current);
+  const right = normalizeIdentityAxis(cached);
+
+  return left !== null && right !== null && left !== right;
+}
+
+function mapLifeFlowScopeToGranularity(
+  scope: LifeFlowScope,
+): TimeGranularity {
+  switch (scope) {
+    case "day":
+      return "day";
+    case "month":
+      return "month";
+    case "year":
+      return "year";
+    case "halfYear":
+      return "period";
+    case "overall":
+      return "life";
+    default:
+      return "period";
+  }
+}
+
+function hasExplicitLifeFlowTime(target: LifeFlowTarget): boolean {
+  return (
+    target.scope === "year"
+    || target.scope === "halfYear"
+    || target.scope === "month"
+    || target.scope === "day"
+    || target.targetYear !== null
+    || target.targetMonth !== null
+    || target.targetDay !== null
+    || target.half !== null
+  );
+}
+
+function tryResolveLifeFlowTarget(
+  question: string,
+  referenceDateIso: string,
+): LifeFlowTarget | null {
+  try {
+    return resolveLifeFlowTarget(question, referenceDateIso);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 분석 전에도 비교 가능하도록 LifeFlowTarget → timePeriodKey 규칙을
+ * buildTimeStateReuseMetadata / targetPeriod label 규칙과 맞춘다.
+ */
+function deriveTimeIdentityFromQuestion(
+  question: string,
+  referenceDateIso: string | null,
+): {
+  timeGranularity: TimeGranularity;
+  timePeriodKey: string;
+} | null {
+  if (!referenceDateIso) {
+    return null;
+  }
+
+  const target = tryResolveLifeFlowTarget(question, referenceDateIso);
+
+  if (!target || !hasExplicitLifeFlowTime(target)) {
+    return null;
+  }
+
+  const label = target.targetYear && target.targetMonth
+    ? `${target.targetYear}-${String(target.targetMonth).padStart(2, "0")}`
+    : target.targetYear
+      ? String(target.targetYear)
+      : undefined;
+
+  return {
+    timeGranularity: mapLifeFlowScopeToGranularity(target.scope),
+    timePeriodKey: label ?? target.startDate,
+  };
+}
+
+function readTimeIdentityFromTimeState(
+  timeState: TimeState | undefined,
+): {
+  timeGranularity: TimeGranularity;
+  timePeriodKey: string;
+} | null {
+  if (!timeState) {
+    return null;
+  }
+
+  return {
+    timeGranularity: timeState.targetPeriod.granularity,
+    timePeriodKey:
+      timeState.targetPeriod.label ?? timeState.targetPeriod.start,
+  };
+}
+
+function hasTimeIdentityMismatch(
+  current:
+    | {
+      timeGranularity: TimeGranularity;
+      timePeriodKey: string;
+    }
+    | null,
+  cache: ConversationAnalysisCache,
+): boolean {
+  if (!current || !cache.timeState) {
+    return false;
+  }
+
+  const cachedGranularity = cache.timeState.reuseMetadata.timeGranularity;
+  const cachedPeriodKey = cache.timeState.reuseMetadata.timePeriodKey;
+
+  return identityAxesDiffer(current.timeGranularity, cachedGranularity)
+    || identityAxesDiffer(current.timePeriodKey, cachedPeriodKey);
+}
+
+function hasNonTimeMeaningIdentityMismatch(
+  current: {
+    domain?: string | null;
+    intent?: string | null;
+    objectLabel?: string | null;
+    scenarioType?: string | null;
+  },
+  cache: ConversationAnalysisCache,
+): boolean {
+  const cachedMeaning = cache.questionMeaning?.value;
+  const cachedScenarioType = cache.scenario?.value.type;
+
+  return identityAxesDiffer(current.domain, cachedMeaning?.domain)
+    || identityAxesDiffer(current.intent, cachedMeaning?.intent)
+    || identityAxesDiffer(current.objectLabel, cachedMeaning?.object?.label)
+    || identityAxesDiffer(current.scenarioType, cachedScenarioType);
+}
+
+/**
+ * FollowUp 분류만으로 cacheOnly/time/assessment 재사용을 허용하지 않는다.
+ * 의미 identity가 다를 때만 차단하며, clarification·continuation 정상 경로는 유지한다.
+ */
+function hasMeaningIdentityMismatchForReuse(params: {
+  followUpType: FollowUpQuestionType;
+  currentQuestion: string;
+  referenceDateIso: string | null;
+  cache: ConversationAnalysisCache;
+  meaningHint: QuestionMeaning | null;
+  freshAnalysis: AnalysisResult | null;
+}): boolean {
+  const {
+    followUpType,
+    currentQuestion,
+    referenceDateIso,
+    cache,
+    meaningHint,
+    freshAnalysis,
+  } = params;
+
+  // clarification은 originalQuestion 기준 분석 — 현재 turn 문자열/힌트로 재사용을 막지 않는다.
+  if (followUpType === "clarificationAnswer") {
+    return false;
+  }
+
+  const questionTimeIdentity = deriveTimeIdentityFromQuestion(
+    currentQuestion,
+    referenceDateIso,
+  );
+
+  if (hasTimeIdentityMismatch(questionTimeIdentity, cache)) {
+    return true;
+  }
+
+  const freshTimeState = freshAnalysis
+    ? readReadyValue<TimeState>(freshAnalysis.timeState)
+    : undefined;
+  const freshTimeIdentity = questionTimeIdentity
+    ? readTimeIdentityFromTimeState(freshTimeState)
+    : null;
+
+  if (hasTimeIdentityMismatch(freshTimeIdentity, cache)) {
+    return true;
+  }
+
+  const freshMeaning = freshAnalysis
+    ? readReadyValue<QuestionMeaning>(freshAnalysis.questionMeaning)
+    : undefined;
+  const freshScenario = freshAnalysis
+    ? readReadyValue<ConsultingScenario>(freshAnalysis.consultingScenario)
+    : undefined;
+
+  // continuation 문구는 domain이 general로 떨어질 수 있어,
+  // 시간 축 외에는 비-general hint가 있을 때만 비교한다.
+  if (followUpType === "continuation") {
+    if (!meaningHint || meaningHint.domain === "general") {
+      return false;
+    }
+
+    return hasNonTimeMeaningIdentityMismatch(
+      {
+        domain: meaningHint.domain,
+        intent: meaningHint.intent,
+        objectLabel: meaningHint.object?.label,
+        scenarioType: null,
+      },
+      cache,
+    );
+  }
+
+  const meaningForCompare = freshMeaning ?? meaningHint;
+
+  if (!meaningForCompare && !freshScenario) {
+    return false;
+  }
+
+  return hasNonTimeMeaningIdentityMismatch(
+    {
+      domain: meaningForCompare?.domain,
+      intent: meaningForCompare?.intent,
+      objectLabel: meaningForCompare?.object?.label,
+      scenarioType: freshScenario?.type,
+    },
+    cache,
+  );
+}
+
+function applyMeaningIdentityReuseGate(
+  reusePlan: ConversationReusePlan,
+  reused: ConversationReusedFlags,
+  identityMismatch: boolean,
+): {
+  reusePlan: ConversationReusePlan;
+  reused: ConversationReusedFlags;
+} {
+  if (!identityMismatch) {
+    return {
+      reusePlan,
+      reused,
+    };
+  }
+
+  return {
+    reusePlan: {
+      ...reusePlan,
+      reuseTimeState: false,
+      reuseAssessment: false,
+    },
+    reused: {
+      ...reused,
+      timeState: false,
+      assessment: false,
+    },
   };
 }
 
@@ -378,7 +667,12 @@ function canUseCacheOnlyPath(
   reusePlan: ConversationReusePlan,
   cache: ConversationAnalysisCache,
   reused: ConversationReusedFlags,
+  meaningIdentityAligned: boolean,
 ): boolean {
+  if (!meaningIdentityAligned) {
+    return false;
+  }
+
   if (followUpType !== "continuation" || reusePlan.requiresNewQuestionAnalysis) {
     return false;
   }
@@ -608,11 +902,14 @@ function executeConversationAnalysis(
   answerMode: AnswerMode,
   effectiveQuestion: string,
   questionInterpretation: QuestionReaderResult | undefined,
+  meaningHint: QuestionMeaning | null,
+  referenceDateIso: string | null,
   onAnalysisProgress?: VNextAnalysisProgressCallback,
 ): ResolvedConversationExecution {
   const cache = session.analysisCache;
-  const reused = reusePlan
-    ? resolveActualReuseFlags(reusePlan, cache)
+  let activeReusePlan = reusePlan;
+  let reused = activeReusePlan
+    ? resolveActualReuseFlags(activeReusePlan, cache)
     : {
         humanState: false,
         timeState: false,
@@ -621,10 +918,37 @@ function executeConversationAnalysis(
         responseContext: false,
       };
 
+  const preIdentityMismatch = followUpType !== "initial" && activeReusePlan
+    ? hasMeaningIdentityMismatchForReuse({
+        followUpType,
+        currentQuestion: request.question,
+        referenceDateIso,
+        cache,
+        meaningHint,
+        freshAnalysis: null,
+      })
+    : false;
+
+  if (activeReusePlan && preIdentityMismatch) {
+    const gated = applyMeaningIdentityReuseGate(
+      activeReusePlan,
+      reused,
+      true,
+    );
+    activeReusePlan = gated.reusePlan;
+    reused = gated.reused;
+  }
+
   if (
     followUpType !== "initial"
-    && reusePlan
-    && canUseCacheOnlyPath(followUpType, reusePlan, cache, reused)
+    && activeReusePlan
+    && canUseCacheOnlyPath(
+      followUpType,
+      activeReusePlan,
+      cache,
+      reused,
+      !preIdentityMismatch,
+    )
   ) {
     const analysisResult = buildAnalysisResultFromCache(
       cache,
@@ -662,7 +986,7 @@ function executeConversationAnalysis(
     },
   );
 
-  if (followUpType === "initial" || !reusePlan) {
+  if (followUpType === "initial" || !activeReusePlan) {
     return {
       analysis: freshAnalysis,
       effectiveQuestion,
@@ -670,6 +994,23 @@ function executeConversationAnalysis(
       executedStages: buildStageExecutionLabels(reused, "full"),
       pipelineMode: "full",
     };
+  }
+
+  const postIdentityMismatch = hasMeaningIdentityMismatchForReuse({
+    followUpType,
+    currentQuestion: request.question,
+    referenceDateIso,
+    cache,
+    meaningHint,
+    freshAnalysis: freshAnalysis.analysisResult,
+  });
+
+  if (postIdentityMismatch) {
+    reused = applyMeaningIdentityReuseGate(
+      activeReusePlan,
+      reused,
+      true,
+    ).reused;
   }
 
   const mergedAnalysisResult = mergeAnalysisResultWithCache(
@@ -851,11 +1192,9 @@ function updateSessionContextMetadata(
   }
 
   if (followUpType === "initial" || followUpType === "newQuestion") {
-    if (action?.type !== "clarification") {
-      originalQuestion = turn.question;
-    } else if (!originalQuestion) {
-      originalQuestion = turn.question;
-    }
+    // newQuestion starts a new clarification chain even when the first
+    // response of that chain is itself a clarification request.
+    originalQuestion = turn.question;
   }
 
   return {
@@ -981,6 +1320,23 @@ export async function runVNextConversationPipeline(
     previousTurn,
   );
 
+  const meaningHintSource = followUpResolution?.questionReaderResult
+    ?? currentReaderResult;
+  const meaningHint = meaningHintSource
+    ? adaptQuestionMeaning(meaningHintSource)
+    : null;
+
+  const referenceDateIso = toReferenceDateIso(
+    params.input.request.sajuInput.referenceDate,
+  )
+    ?? (
+      previousTurn
+        ? toReferenceDateIso(previousTurn.createdAt)
+        : null
+    )
+    ?? toReferenceDateIso(sessionForPipeline.contextMetadata.updatedAt)
+    ?? toReferenceDateIso(sessionForPipeline.contextMetadata.createdAt);
+
   const execution = executeConversationAnalysis(
     pipelineRequest,
     sessionForPipeline,
@@ -989,6 +1345,8 @@ export async function runVNextConversationPipeline(
     answerMode,
     effectiveQuestion,
     questionInterpretation,
+    meaningHint,
+    referenceDateIso,
     params.options?.onAnalysisProgress,
   );
 

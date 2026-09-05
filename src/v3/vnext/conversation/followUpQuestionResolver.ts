@@ -13,6 +13,12 @@ import {
   type QuestionReaderResult,
 } from "../../consulting/question/questionReader.js";
 import type {
+  LifeFlowTarget,
+} from "../../consulting/question/lifeFlowTarget.js";
+import {
+  resolveLifeFlowTarget,
+} from "../../consulting/question/lifeFlowTargetResolver.js";
+import type {
   QuestionMeaning,
 } from "../types/questionMeaning.js";
 import type {
@@ -273,11 +279,101 @@ function isSameDecisionFrameScenarioRefinement(
   return false;
 }
 
+function toReferenceDateIso(value: string): string | null {
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value.trim());
+  return match ? match[1] : null;
+}
+
+function tryResolveLifeFlowTarget(
+  question: string,
+  referenceDateIso: string,
+): LifeFlowTarget | null {
+  try {
+    return resolveLifeFlowTarget(question, referenceDateIso);
+  } catch {
+    return null;
+  }
+}
+
+/** 질문 문자열이 아니라 LifeFlowTarget의 구조화된 기간 필드로 명시적 시간 의미 여부를 본다. */
+function hasExplicitLifeFlowTime(target: LifeFlowTarget): boolean {
+  return (
+    target.scope === "year"
+    || target.scope === "halfYear"
+    || target.scope === "month"
+    || target.scope === "day"
+    || target.targetYear !== null
+    || target.targetMonth !== null
+    || target.targetDay !== null
+    || target.half !== null
+  );
+}
+
+function lifeFlowTimeMeaningSignature(target: LifeFlowTarget): string {
+  return [
+    target.scope,
+    String(target.targetYear),
+    String(target.targetMonth),
+    String(target.targetDay),
+    String(target.half),
+    target.startDate,
+    target.endDate,
+  ].join("|");
+}
+
+/**
+ * 이전/현재 질문의 LifeFlowTarget 시간 의미가 달라졌는지 판단한다.
+ * 현재 질문에 명시적 시간 구조가 있을 때만 비교한다.
+ * (시간 없는 continuation 문구는 false — 기존 continuation 유지)
+ */
+function hasStructuredTimeMeaningShift(
+  currentQuestion: string,
+  previousQuestion: string,
+  referenceDateIso: string,
+): boolean {
+  const current = tryResolveLifeFlowTarget(
+    currentQuestion,
+    referenceDateIso,
+  );
+
+  if (!current || !hasExplicitLifeFlowTime(current)) {
+    return false;
+  }
+
+  const previous = tryResolveLifeFlowTarget(
+    previousQuestion,
+    referenceDateIso,
+  );
+
+  if (!previous || !hasExplicitLifeFlowTime(previous)) {
+    return true;
+  }
+
+  return (
+    lifeFlowTimeMeaningSignature(current)
+    !== lifeFlowTimeMeaningSignature(previous)
+  );
+}
+
 function hasContinuationEvidence(
   normalizedQuestion: string,
   current: QuestionReaderResult | null,
   previous: QuestionReaderResult | null,
+  previousQuestion: string | null,
+  referenceDateIso: string | null,
 ): boolean {
+  if (
+    previousQuestion
+    && referenceDateIso
+    && hasStructuredTimeMeaningShift(
+      normalizedQuestion,
+      previousQuestion,
+      referenceDateIso,
+    )
+  ) {
+    return false;
+  }
+
   if (
     /^(?:그(?:럼|러면|거)|그(?:\s*사람|\s*분)|그것|이것|저것|거기|또\s|왜\s|어떻게\s)/.test(
       normalizedQuestion,
@@ -309,6 +405,14 @@ export function resolveFollowUpQuestionType(
   const normalizedQuestion = normalizeForMatch(input.newQuestion);
   const previousQuestionMeaning =
     input.previousTurn?.questionMeaning ?? null;
+  const previousQuestionText = input.previousTurn
+    ? normalizeForMatch(input.previousTurn.question)
+    : null;
+  const referenceDateIso = input.previousTurn
+    ? toReferenceDateIso(input.previousTurn.createdAt)
+      ?? toReferenceDateIso(input.contextMetadata.updatedAt)
+      ?? toReferenceDateIso(input.contextMetadata.createdAt)
+    : null;
 
   if (!normalizedQuestion) {
     return {
@@ -354,6 +458,25 @@ export function resolveFollowUpQuestionType(
     return {
       type: "timeRefinement",
       reason: "time period refinement detected",
+      questionReaderResult: readQuestionReadOnly(
+        input.humanContext,
+        input.newQuestion,
+      ),
+    };
+  }
+
+  if (
+    previousQuestionText
+    && referenceDateIso
+    && hasStructuredTimeMeaningShift(
+      normalizedQuestion,
+      previousQuestionText,
+      referenceDateIso,
+    )
+  ) {
+    return {
+      type: "timeRefinement",
+      reason: "structured time meaning shift via LifeFlowTarget",
       questionReaderResult: readQuestionReadOnly(
         input.humanContext,
         input.newQuestion,
@@ -427,6 +550,8 @@ export function resolveFollowUpQuestionType(
       normalizedQuestion,
       questionReaderResult,
       previousReaderResult,
+      previousQuestionText,
+      referenceDateIso,
     )
   ) {
     return {
