@@ -141,14 +141,24 @@ function buildTimeDifferences(
     return [];
   }
 
-  const evidenceTexts = [
-    ...timing.supportiveSignals,
-    ...timing.tensionSignals,
-    ...timing.cautions,
-    ...timing.limitations,
-  ];
-
   const granularity = resolveTimingGranularity(timing);
+  const hasPeriodSegments = timing.periodSegments.length > 0;
+
+  // 월 전체 판단(overallTheme)은 항상 별도 entry로 보존한다.
+  // periodSegments가 있으면 overall evidence(supportive/tension/cautions/
+  // limitations)를 같은 peer에 붙이지 않아, 날짜 있는 구간 theme과 섞이지 않게 한다.
+  // periodSegments가 없을 때만 overall evidence를 월 전체 entry에 실는다.
+  const overallEvidence = hasPeriodSegments
+    ? emptyVNextEvidence()
+    : toVNextEvidenceFromStrings(
+      [
+        ...timing.supportiveSignals,
+        ...timing.tensionSignals,
+        ...timing.cautions,
+        ...timing.limitations,
+      ],
+      "decision.timingAssessment",
+    );
 
   const differences: Assessment["timeDifferences"] = [
     {
@@ -156,13 +166,12 @@ function buildTimeDifferences(
       granularity,
       summary: timing.overallTheme || "timing assessment available",
       relativeTo: "target",
-      evidence: toVNextEvidenceFromStrings(
-        evidenceTexts,
-        "decision.timingAssessment",
-      ),
+      evidence: overallEvidence,
     },
   ];
 
+  // 구간별 판단은 periodLabel + theme만 전달한다.
+  // overall evidence를 복사·재배치하거나 theme과 합치지 않는다.
   for (const segment of timing.periodSegments) {
     differences.push({
       label: segment.periodLabel,

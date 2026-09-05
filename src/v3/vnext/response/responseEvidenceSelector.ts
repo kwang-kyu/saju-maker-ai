@@ -32,6 +32,9 @@ import type {
   QuestionSpecificMaterialSelection,
 } from "../adapters/questionSpecificMaterialAdapter.js";
 import type {
+  QuestionSpecificMaterialTierKey,
+} from "../../consulting/explanation/questionSpecificMaterialSelector.js";
+import type {
   ResponseBlockContext,
 } from "./responseContext.js";
 import {
@@ -39,6 +42,11 @@ import {
   orderEvidenceByQuestionSpecificPriority,
   orderRisksByQuestionSpecificPriority,
 } from "./responseMaterialPriorityResolver.js";
+
+const DIRECT_RESPONSE_MATERIAL_TIERS: readonly QuestionSpecificMaterialTierKey[] = [
+  "primary",
+  "secondary",
+];
 
 export type ResponseBlockSelection = Pick<
   ResponseBlockContext,
@@ -320,6 +328,143 @@ function riskFactToAssessmentRisk(
   };
 }
 
+function collectMaterialKeysByTiers(
+  materials: QuestionSpecificMaterialSelection | undefined,
+  kind: "conditions" | "risks",
+  tiers: readonly QuestionSpecificMaterialTierKey[],
+): Set<string> {
+  const keys = new Set<string>();
+
+  if (!materials) {
+    return keys;
+  }
+
+  for (const tierKey of tiers) {
+    for (const material of materials[kind][tierKey]) {
+      keys.add(material.key);
+    }
+  }
+
+  return keys;
+}
+
+/**
+ * evidence.primary / secondary에 없고 supporting에만 나타나는 source.
+ * questionSpecificMaterials의 기존 evidence tier 분류를 그대로 재사용한다.
+ */
+function resolveSupportingOnlyEvidenceSources(
+  materials: QuestionSpecificMaterialSelection,
+): Set<string> {
+  const directSources = new Set<string>();
+
+  for (const evidence of materials.evidence.primary) {
+    directSources.add(evidence.source);
+  }
+
+  for (const evidence of materials.evidence.secondary) {
+    directSources.add(evidence.source);
+  }
+
+  const supportingOnly = new Set<string>();
+
+  for (const evidence of materials.evidence.supporting) {
+    if (!directSources.has(evidence.source)) {
+      supportingOnly.add(evidence.source);
+    }
+  }
+
+  return supportingOnly;
+}
+
+function findRiskSourceInMaterials(
+  key: string,
+  materials: QuestionSpecificMaterialSelection,
+): string | undefined {
+  for (const tierKey of [
+    "primary",
+    "secondary",
+    "supporting",
+  ] as const) {
+    const matched = materials.risks[tierKey].find(
+      (risk) => risk.key === key,
+    );
+
+    if (matched) {
+      return matched.source;
+    }
+  }
+
+  return undefined;
+}
+
+function filterOrderedConditionsByQuestionSpecificMaterials(
+  conditions: readonly AssessmentCondition[],
+  materials: QuestionSpecificMaterialSelection | undefined,
+): AssessmentCondition[] {
+  if (!materials || conditions.length === 0) {
+    return [...conditions];
+  }
+
+  const directKeys = collectMaterialKeysByTiers(
+    materials,
+    "conditions",
+    DIRECT_RESPONSE_MATERIAL_TIERS,
+  );
+
+  // primary/secondary 매칭이 없으면 기존처럼 전체를 유지한다.
+  if (directKeys.size === 0) {
+    return [...conditions];
+  }
+
+  // supporting / unmatched condition은 최종 relevantFacts에서 제외한다.
+  // primary / secondary는 그대로 보존한다.
+  return conditions.filter((condition) =>
+    directKeys.has(condition.key),
+  );
+}
+
+function filterOrderedRisksByQuestionSpecificMaterials(
+  risks: readonly AssessmentRisk[],
+  materials: QuestionSpecificMaterialSelection | undefined,
+): AssessmentRisk[] {
+  if (!materials || risks.length === 0) {
+    return [...risks];
+  }
+
+  const directKeys = collectMaterialKeysByTiers(
+    materials,
+    "risks",
+    DIRECT_RESPONSE_MATERIAL_TIERS,
+  );
+
+  if (directKeys.size === 0) {
+    return [...risks];
+  }
+
+  const supportingOnlySources = resolveSupportingOnlyEvidenceSources(
+    materials,
+  );
+
+  return risks.filter((risk) => {
+    if (!directKeys.has(risk.key)) {
+      return false;
+    }
+
+    const source = findRiskSourceInMaterials(risk.key, materials);
+
+    // severity로 primary여도, evidence tier상 supporting-only source면
+    // 질문 직접 판단보다 일반 반복 조언으로 보고 제외한다.
+    if (
+      source
+      && supportingOnlySources.has(source)
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
 function reorderFactsByQuestionSpecificPriority(
   facts: readonly Record<string, string | number | boolean | null>[],
   materials: QuestionSpecificMaterialSelection | undefined,
@@ -339,8 +484,11 @@ function reorderFactsByQuestionSpecificPriority(
     }
 
     result.push(...assessmentConditionFacts(
-      orderConditionsByQuestionSpecificPriority(
-        conditionFacts.map(conditionFactToAssessmentCondition),
+      filterOrderedConditionsByQuestionSpecificMaterials(
+        orderConditionsByQuestionSpecificPriority(
+          conditionFacts.map(conditionFactToAssessmentCondition),
+          materials,
+        ),
         materials,
       ),
     ));
@@ -353,8 +501,11 @@ function reorderFactsByQuestionSpecificPriority(
     }
 
     result.push(...assessmentRiskFacts(
-      orderRisksByQuestionSpecificPriority(
-        riskFacts.map(riskFactToAssessmentRisk),
+      filterOrderedRisksByQuestionSpecificMaterials(
+        orderRisksByQuestionSpecificPriority(
+          riskFacts.map(riskFactToAssessmentRisk),
+          materials,
+        ),
         materials,
       ),
     ));
@@ -662,23 +813,30 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
   {
     blockId: "currentDirection",
     priority: 60,
-    select: (context) => withEmphasis({
-      relevantFacts: [
-        ...assessmentSummaryFacts(context.assessment),
-        {
-          changeIntensitySummary:
-            context.assessment?.changeIntensity.summary ?? null,
-        },
-      ],
-      relevantSignals: signalsByType(
-        context.changeSignals,
-        ["opportunity", "pressure", "expansion", "responsibility"],
-      ),
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.changeIntensity.evidence,
-      ),
-      emphasis: [],
-    }, context.emphasis),
+    select: (context) => {
+      const hasPeriodLevelTimeDifferences =
+        (context.assessment?.timeDifferences.length ?? 0) > 1;
+
+      return withEmphasis({
+        relevantFacts: [
+          ...assessmentSummaryFacts(context.assessment),
+          {
+            changeIntensitySummary:
+              context.assessment?.changeIntensity.summary ?? null,
+          },
+        ],
+        relevantSignals: signalsByType(
+          context.changeSignals,
+          hasPeriodLevelTimeDifferences
+            ? ["opportunity", "expansion"]
+            : ["opportunity", "pressure", "expansion", "responsibility"],
+        ),
+        relevantEvidence: collectEvidenceItems(
+          context.assessment?.changeIntensity.evidence,
+        ),
+        emphasis: [],
+      }, context.emphasis);
+    },
   },
   {
     blockId: "conditions",
@@ -705,28 +863,68 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
   {
     blockId: "timing",
     priority: 63,
-    select: (context) => withEmphasis({
-      relevantFacts: [
-        ...timeOverviewFacts(context.timeState),
-        ...(context.assessment?.timeDifferences ?? []).map((item) => ({
-          label: item.label,
-          granularity: item.granularity,
-          summary: item.summary,
-          relativeTo: item.relativeTo,
-        })),
-      ],
-      relevantSignals: signalsByType(
+    select: (context) => {
+      const hasPeriodLevelTimeDifferences =
+        (context.assessment?.timeDifferences.length ?? 0) > 1;
+
+      let relevantSignals = signalsByType(
         context.changeSignals,
         ["opportunity", "pressure"],
-      ),
-      relevantEvidence: collectEvidenceItems(
-        context.timeState?.evidence,
-        ...(context.assessment?.timeDifferences ?? []).map(
-          (item) => item.evidence,
+      );
+
+      // period-level이면 날짜 없는 월 전체 signal은 timeDifferences theme과
+      // 경쟁하지 않도록 timing relevantSignals에서 제외한다.
+      if (hasPeriodLevelTimeDifferences) {
+        relevantSignals = relevantSignals.filter((signal) => {
+          const isMonthWideDateless =
+            signal.timeSegment.granularity !== "day"
+            || signal.timeSegment.start === "unknown"
+            || signal.timeSegment.end === "unknown";
+
+          if (
+            signal.type === "pressure"
+            || signal.type === "responsibility"
+          ) {
+            return false;
+          }
+
+          if (signal.type === "opportunity" && isMonthWideDateless) {
+            return false;
+          }
+
+          return true;
+        });
+      }
+
+      // period-level이면 월 전체 대표값(wolun)이 period theme과 경쟁하지 않도록
+      // timing overview facts에서만 제외한다. seun / start·end·label은 유지.
+      const overviewFacts = timeOverviewFacts(context.timeState);
+      const timingOverviewFacts = hasPeriodLevelTimeDifferences
+        ? overviewFacts.filter(
+          (fact) => !("wolunLabel" in fact) && !("wolunSummary" in fact),
+        )
+        : overviewFacts;
+
+      return withEmphasis({
+        relevantFacts: [
+          ...timingOverviewFacts,
+          ...(context.assessment?.timeDifferences ?? []).map((item) => ({
+            label: item.label,
+            granularity: item.granularity,
+            summary: item.summary,
+            relativeTo: item.relativeTo,
+          })),
+        ],
+        relevantSignals,
+        relevantEvidence: collectEvidenceItems(
+          context.timeState?.evidence,
+          ...(context.assessment?.timeDifferences ?? []).map(
+            (item) => item.evidence,
+          ),
         ),
-      ),
-      emphasis: [],
-    }, context.emphasis),
+        emphasis: [],
+      }, context.emphasis);
+    },
   },
   {
     blockId: "possibility",
