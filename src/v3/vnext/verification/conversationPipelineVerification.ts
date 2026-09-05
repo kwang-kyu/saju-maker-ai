@@ -351,8 +351,10 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
         responseAction: null,
         response: {
           text: "mock",
-          source: "mock" as const,
+          source: "direct" as const,
+          validated: true,
           apiCallCount: 0,
+          latencyMs: 0,
         },
         createdAt: new Date().toISOString(),
       };
