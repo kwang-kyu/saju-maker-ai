@@ -47,9 +47,6 @@ export type FollowUpQuestionResolverInput = {
 const CONTINUATION_PATTERN =
   /^(조금\s*)?(더\s*)?(자세히|설명|말해|알려|풀어|구체적)/;
 
-const CONTINUATION_SHORT_PATTERN =
-  /^(더\s*)?(자세히|설명해|말해줘|알려줘)/;
-
 const TIME_REFINEMENT_PATTERN =
   /(?:그러면|그럼|만약)?\s*(?:\d{1,4}년?\s*)?(?:\d{1,2}월|월\s*초|월\s*중|월\s*말|중순|초순|말순|상순|하순|상반기|하반기|\d{1,2}일|\d{1,2}월)/;
 
@@ -68,13 +65,6 @@ function normalizeForMatch(text: string): string {
 
 function isContinuationQuestion(normalizedQuestion: string): boolean {
   if (CONTINUATION_PATTERN.test(normalizedQuestion)) {
-    return true;
-  }
-
-  if (
-    normalizedQuestion.length <= 20
-    && CONTINUATION_SHORT_PATTERN.test(normalizedQuestion)
-  ) {
     return true;
   }
 
@@ -175,6 +165,13 @@ function isNewQuestionByDomain(
 
   const newDomain = topicToDomain[newTopic] ?? "general";
 
+  if (
+    previousDomain === "general"
+    && newDomain !== "general"
+  ) {
+    return true;
+  }
+
   if (newDomain === "general" || previousDomain === "general") {
     return false;
   }
@@ -197,37 +194,83 @@ function readQuestionReadOnly(
   }
 }
 
-function hasReaderMeaningShift(
+function hasDecisionFrameShift(
   current: QuestionReaderResult,
   previous: QuestionReaderResult,
+  normalizedQuestion: string,
 ): boolean {
-  const topicShift =
-    current.topic !== "general"
-    && previous.topic !== "general"
-    && current.topic !== previous.topic;
+  const continuesExplicitDecisionFrame =
+    previous.decisionTarget !== "none"
+    && current.decisionTarget === "none"
+    && /^(?:그(?:럼|러면)|그러면)/.test(normalizedQuestion);
 
-  const urgencyShift =
-    current.urgency !== "unknown"
-    && previous.urgency !== "unknown"
-    && current.urgency !== previous.urgency;
+  if (continuesExplicitDecisionFrame) {
+    return false;
+  }
 
-  const intentShift =
-    current.intent !== previous.intent
-    && current.intent !== "generalJudgement"
-    && previous.intent !== "generalJudgement";
+  if (current.analysisMode !== previous.analysisMode) {
+    if (
+      current.decisionTarget !== "none"
+      && current.decisionTarget === previous.decisionTarget
+    ) {
+      return false;
+    }
 
-  const targetShift =
+    return true;
+  }
+
+  if (
     current.decisionTarget !== "none"
     && previous.decisionTarget !== "none"
-    && current.decisionTarget !== previous.decisionTarget;
+    && current.decisionTarget !== previous.decisionTarget
+  ) {
+    return true;
+  }
 
-  return (
-    topicShift
-    || urgencyShift
-    || current.analysisMode !== previous.analysisMode
-    || intentShift
-    || targetShift
-  );
+  const currentDecision = current.decisionQuestion.trim();
+  const previousDecision = previous.decisionQuestion.trim();
+
+  if (
+    currentDecision
+    && previousDecision
+    && currentDecision !== previousDecision
+    && current.decisionTarget === "none"
+    && previous.decisionTarget === "none"
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function isSameDecisionFrameScenarioRefinement(
+  normalizedQuestion: string,
+  current: QuestionReaderResult,
+  previous: QuestionReaderResult,
+  previousQuestionMeaning: QuestionMeaning | null,
+): boolean {
+  if (hasDecisionFrameShift(current, previous, normalizedQuestion)) {
+    return false;
+  }
+
+  if (current.intent !== previous.intent) {
+    return true;
+  }
+
+  if (
+    isScenarioRefinementQuestion(
+      normalizedQuestion,
+      previousQuestionMeaning,
+    )
+  ) {
+    return true;
+  }
+
+  if (/^(?:그(?:럼|러면)|그러면)/.test(normalizedQuestion)) {
+    return true;
+  }
+
+  return false;
 }
 
 function hasContinuationEvidence(
@@ -236,18 +279,14 @@ function hasContinuationEvidence(
   previous: QuestionReaderResult | null,
 ): boolean {
   if (
-    /^(?:그(?:럼|거)|그것|이것|저것|거기|또\s|왜\s|어떻게\s)/.test(
+    /^(?:그(?:럼|러면|거)|그(?:\s*사람|\s*분)|그것|이것|저것|거기|또\s|왜\s|어떻게\s)/.test(
       normalizedQuestion,
     )
   ) {
     return true;
   }
 
-  if (normalizedQuestion.length <= 18) {
-    return true;
-  }
-
-  if (current && previous) {
+  if (current && previous && !hasDecisionFrameShift(current, previous, normalizedQuestion)) {
     return (
       current.topic === previous.topic
       && current.intent === previous.intent
@@ -261,8 +300,8 @@ function hasContinuationEvidence(
  * 새 질문의 follow-up 유형을 판단한다.
  *
  * 우선순위: clarificationAnswer → continuation → timeRefinement
- * → scenarioRefinement → newQuestion(domain)
- * → newQuestion(meaning shift) → continuation fallback(evidence) → newQuestion
+ * → newQuestion(domain) → newQuestion(frame shift)
+ * → scenarioRefinement(same frame) → continuation fallback(evidence) → newQuestion
  */
 export function resolveFollowUpQuestionType(
   input: FollowUpQuestionResolverInput,
@@ -322,26 +361,18 @@ export function resolveFollowUpQuestionType(
     };
   }
 
-  if (
-    isScenarioRefinementQuestion(
-      normalizedQuestion,
-      previousQuestionMeaning,
-    )
-  ) {
-    return {
-      type: "scenarioRefinement",
-      reason: "scenario condition refinement detected",
-      questionReaderResult: readQuestionReadOnly(
-        input.humanContext,
-        input.newQuestion,
-      ),
-    };
-  }
-
   const questionReaderResult = readQuestionReadOnly(
     input.humanContext,
     input.newQuestion,
   );
+
+  const previousReaderResult =
+    input.previousTurn && input.humanContext
+      ? readQuestionReadOnly(
+          input.humanContext,
+          input.previousTurn.question,
+        )
+      : null;
 
   if (
     questionReaderResult
@@ -357,25 +388,35 @@ export function resolveFollowUpQuestionType(
     };
   }
 
-  const previousReaderResult =
-    input.previousTurn && input.humanContext
-      ? readQuestionReadOnly(
-          input.humanContext,
-          input.previousTurn.question,
-        )
-      : null;
-
   if (
     questionReaderResult
     && previousReaderResult
-    && hasReaderMeaningShift(
+    && hasDecisionFrameShift(
       questionReaderResult,
       previousReaderResult,
+      normalizedQuestion,
     )
   ) {
     return {
       type: "newQuestion",
-      reason: "question meaning shift detected via Question Reader",
+      reason: "decision frame shift detected via Question Reader",
+      questionReaderResult,
+    };
+  }
+
+  if (
+    questionReaderResult
+    && previousReaderResult
+    && isSameDecisionFrameScenarioRefinement(
+      normalizedQuestion,
+      questionReaderResult,
+      previousReaderResult,
+      previousQuestionMeaning,
+    )
+  ) {
+    return {
+      type: "scenarioRefinement",
+      reason: "scenario refinement within same decision frame",
       questionReaderResult,
     };
   }

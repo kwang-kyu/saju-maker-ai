@@ -17,6 +17,9 @@ import type {
 import type {
   ConsultingScenarioType,
 } from "../types/consultingScenario.js";
+import type {
+  QuestionCounterpartFacts,
+} from "../../consulting/question/questionReader.js";
 
 /** 대화 세션 식별자 */
 export type ConversationSessionId = string;
@@ -73,6 +76,8 @@ export type ConversationContextMetadata = {
   activeScenarioType: ConsultingScenarioType | null;
   /** 세션 누적 GPT API 호출 횟수 — 검증용 */
   totalGptApiCallCount: number;
+  /** 세션에 축적된 상대방 사실 — QuestionReaderResult.counterpartFacts와 호환 */
+  counterpartFacts?: QuestionCounterpartFacts;
   /** 세션 생성 시각 */
   createdAt: string;
   /** 마지막 갱신 시각 */

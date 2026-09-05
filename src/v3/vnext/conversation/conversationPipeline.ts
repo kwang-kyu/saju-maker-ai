@@ -16,6 +16,11 @@ import type {
   HumanDestinyContext,
 } from "../../types/humanDestinyContext.js";
 import {
+  readQuestion,
+  type QuestionCounterpartFacts,
+  type QuestionReaderResult,
+} from "../../consulting/question/questionReader.js";
+import {
   buildAnswerBlueprint,
 } from "../blueprint/answerBlueprintBuilder.js";
 import {
@@ -408,6 +413,80 @@ function canUseCacheOnlyPath(
   return true;
 }
 
+function mergeCounterpartFacts(
+  existing: QuestionCounterpartFacts | undefined,
+  incoming: QuestionCounterpartFacts,
+): QuestionCounterpartFacts {
+  return {
+    birthDate: incoming.birthDate ?? existing?.birthDate ?? null,
+    birthTime: incoming.birthTime ?? existing?.birthTime ?? null,
+    calendarType: incoming.calendarType ?? existing?.calendarType ?? null,
+    gender: incoming.gender ?? existing?.gender ?? null,
+    zodiac: incoming.zodiac ?? existing?.zodiac ?? null,
+    relationship: incoming.relationship ?? existing?.relationship ?? null,
+    evidence: [
+      ...(existing?.evidence ?? []),
+      ...incoming.evidence,
+    ],
+  };
+}
+
+function readQuestionForSession(
+  humanContext: HumanDestinyContext | null,
+  question: string,
+): QuestionReaderResult | null {
+  if (!humanContext) {
+    return null;
+  }
+
+  try {
+    return readQuestion(humanContext, question.trim());
+  } catch {
+    return null;
+  }
+}
+
+function hasStoredCounterpartFacts(
+  facts: QuestionCounterpartFacts | undefined,
+): facts is QuestionCounterpartFacts {
+  if (!facts) {
+    return false;
+  }
+
+  return Boolean(
+    facts.birthDate
+    || facts.birthTime
+    || facts.calendarType
+    || facts.gender
+    || facts.zodiac
+    || facts.relationship,
+  );
+}
+
+function buildQuestionInterpretationForAnalysis(
+  humanContext: HumanDestinyContext | null,
+  question: string,
+  sessionCounterpartFacts: QuestionCounterpartFacts | undefined,
+): QuestionReaderResult | undefined {
+  const readerResult = readQuestionForSession(humanContext, question);
+
+  if (!readerResult) {
+    return undefined;
+  }
+
+  if (!sessionCounterpartFacts) {
+    return readerResult;
+  }
+
+  return {
+    ...readerResult,
+    counterpartFacts: mergeCounterpartFacts(
+      sessionCounterpartFacts,
+      readerResult.counterpartFacts,
+    ),
+  };
+}
+
 function resolveHumanContextForFollowUp(
   request: V3ConsultingRequest,
 ): HumanDestinyContext | null {
@@ -528,6 +607,7 @@ function executeConversationAnalysis(
   reusePlan: ConversationReusePlan | null,
   answerMode: AnswerMode,
   effectiveQuestion: string,
+  questionInterpretation: QuestionReaderResult | undefined,
   onAnalysisProgress?: VNextAnalysisProgressCallback,
 ): ResolvedConversationExecution {
   const cache = session.analysisCache;
@@ -578,6 +658,7 @@ function executeConversationAnalysis(
     answerMode,
     {
       onProgress: onAnalysisProgress,
+      questionInterpretation,
     },
   );
 
@@ -784,6 +865,7 @@ function updateSessionContextMetadata(
     originalQuestion,
     activeScenarioType: turn.scenario?.type ?? metadata.activeScenarioType,
     totalGptApiCallCount: metadata.totalGptApiCallCount + apiCallCount,
+    counterpartFacts: metadata.counterpartFacts,
     createdAt: metadata.createdAt,
     updatedAt: now,
   };
@@ -836,13 +918,34 @@ export async function runVNextConversationPipeline(
   const previousTurn = getPreviousTurn(session);
   const answerMode = params.options?.answerMode ?? "question";
   const analysisStartedAt = params.options?.analysisStartedAt ?? Date.now();
+  const humanContext = resolveHumanContextForFollowUp(params.input.request);
+  const currentReaderResult = readQuestionForSession(
+    humanContext,
+    params.question,
+  );
+  const mergedCounterpartFacts = currentReaderResult
+    ? mergeCounterpartFacts(
+        session.contextMetadata.counterpartFacts,
+        currentReaderResult.counterpartFacts,
+      )
+    : session.contextMetadata.counterpartFacts;
+  const sessionForPipeline: ConversationSession =
+    mergedCounterpartFacts !== session.contextMetadata.counterpartFacts
+      ? {
+          ...session,
+          contextMetadata: {
+            ...session.contextMetadata,
+            counterpartFacts: mergedCounterpartFacts,
+          },
+        }
+      : session;
 
   const followUpResolution = previousTurn
     ? resolveFollowUpQuestionType({
         newQuestion: params.question,
         previousTurn,
-        contextMetadata: session.contextMetadata,
-        humanContext: resolveHumanContextForFollowUp(params.input.request),
+        contextMetadata: sessionForPipeline.contextMetadata,
+        humanContext,
       })
     : null;
 
@@ -859,24 +962,33 @@ export async function runVNextConversationPipeline(
   const pipelineRequest = resolvePipelineRequest(
     params.input.request,
     params.question,
-    session,
+    sessionForPipeline,
     followUpType,
   );
 
+  const questionInterpretation = hasStoredCounterpartFacts(mergedCounterpartFacts)
+    ? buildQuestionInterpretationForAnalysis(
+        humanContext,
+        pipelineRequest.question,
+        mergedCounterpartFacts,
+      )
+    : undefined;
+
   const effectiveQuestion = resolveEffectiveQuestionForResponse(
     params.question,
-    session,
+    sessionForPipeline,
     followUpType,
     previousTurn,
   );
 
   const execution = executeConversationAnalysis(
     pipelineRequest,
-    session,
+    sessionForPipeline,
     followUpType,
     reusePlan,
     answerMode,
     effectiveQuestion,
+    questionInterpretation,
     params.options?.onAnalysisProgress,
   );
 
@@ -897,22 +1009,22 @@ export async function runVNextConversationPipeline(
   );
 
   const updatedCache = updateAnalysisCacheFromResult(
-    session.analysisCache,
+    sessionForPipeline.analysisCache,
     turnId,
     execution.analysis.analysisResult,
     execution.analysis.action,
   );
 
   const contextMetadata = updateSessionContextMetadata(
-    session.contextMetadata,
+    sessionForPipeline.contextMetadata,
     turn,
     followUpType,
     response.apiCallCount,
   );
 
   const updatedSession: ConversationSession = {
-    ...session,
-    turns: [...session.turns, turn],
+    ...sessionForPipeline,
+    turns: [...sessionForPipeline.turns, turn],
     analysisCache: updatedCache,
     contextMetadata,
   };

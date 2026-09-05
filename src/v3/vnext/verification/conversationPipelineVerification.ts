@@ -12,6 +12,12 @@ import type {
   ConversationSession,
 } from "../conversation/conversationSession.js";
 import {
+  resolveFollowUpQuestionType,
+} from "../conversation/followUpQuestionResolver.js";
+import {
+  buildHumanDestinyContextPipeline,
+} from "../../builders/humanDestinyContextPipelineBuilder.js";
+import {
   createMockResponseGateway,
 } from "../gpt/responseGateway.js";
 
@@ -63,6 +69,33 @@ async function runCase(
     id,
     passed: result.passed,
     details: result.details,
+  };
+}
+
+function buildVerificationHumanContext() {
+  return buildHumanDestinyContextPipeline({
+    name: "김천운",
+    birthDate: "1984-03-15",
+    birthTime: "14:30",
+    gender: "male",
+    calendarType: "solar",
+    referenceDate: "2026-10-01",
+    luckStartMethod: "minuteBased",
+  }).humanContext;
+}
+
+function buildEmptyContextMetadata() {
+  const now = new Date().toISOString();
+
+  return {
+    lastCompletedTurnId: null,
+    awaitingClarification: false,
+    pendingMissingContextKeys: [],
+    originalQuestion: null,
+    activeScenarioType: null,
+    totalGptApiCallCount: 0,
+    createdAt: now,
+    updatedAt: now,
   };
 }
 
@@ -299,6 +332,115 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
           `followUpType=${result.followUpType}`,
           `reusedHumanState=${result.executionMetadata.reused.humanState}`,
           `executedStages=${result.executionMetadata.executedStages.join(",")}`,
+        ],
+      };
+    }),
+
+    runCase("case-7-decision-frame-follow-up", async () => {
+      const humanContext = buildVerificationHumanContext();
+      const contextMetadata = buildEmptyContextMetadata();
+      const investQuestion = "지금 투자하면 어떨까요?";
+      const amountQuestion = "그럼 얼마정도가 적당할까요?";
+      const trustQuestion = "그 사람 믿어도 돼?";
+
+      const turn1 = {
+        turnId: "turn-invest",
+        question: investQuestion,
+        questionMeaning: null,
+        scenario: null,
+        responseAction: null,
+        response: {
+          text: "mock",
+          source: "mock" as const,
+          apiCallCount: 0,
+        },
+        createdAt: new Date().toISOString(),
+      };
+
+      const amountResolution = resolveFollowUpQuestionType({
+        newQuestion: amountQuestion,
+        previousTurn: turn1,
+        contextMetadata,
+        humanContext,
+      });
+
+      const turn2 = {
+        ...turn1,
+        turnId: "turn-amount",
+        question: amountQuestion,
+      };
+
+      const trustResolution = resolveFollowUpQuestionType({
+        newQuestion: trustQuestion,
+        previousTurn: turn2,
+        contextMetadata,
+        humanContext,
+      });
+
+      return {
+        passed:
+          amountResolution.type === "scenarioRefinement"
+          && trustResolution.type === "newQuestion",
+        details: [
+          `amountFollowUpType=${amountResolution.type}`,
+          `amountReason=${amountResolution.reason}`,
+          `trustFollowUpType=${trustResolution.type}`,
+          `trustReason=${trustResolution.reason}`,
+        ],
+      };
+    }),
+
+    runCase("case-8-counterpart-facts-reuse", async () => {
+      const marriageQuestion = "이 여자랑 결혼해도 돼?";
+      const counterpartQuestion =
+        "상대방이 음력 1967년 4월 2일생 양띠 여성이야";
+      const compatibilityQuestion = "난 궁합이 맞는지 알고싶어";
+
+      const first = await runVNextConversationPipeline({
+        question: marriageQuestion,
+        input: {
+          request: buildVerificationRequest(marriageQuestion),
+          gateway,
+        },
+      });
+
+      const second = await runVNextConversationPipeline({
+        session: first.session,
+        question: counterpartQuestion,
+        input: {
+          request: buildVerificationRequest(counterpartQuestion),
+          gateway,
+        },
+      });
+
+      const facts = second.session.contextMetadata.counterpartFacts;
+
+      const third = await runVNextConversationPipeline({
+        session: second.session,
+        question: compatibilityQuestion,
+        input: {
+          request: buildVerificationRequest(compatibilityQuestion),
+          gateway,
+        },
+      });
+
+      return {
+        passed:
+          facts?.birthDate === "1967-04-02"
+          && facts?.calendarType === "lunar"
+          && facts?.gender === "female"
+          && facts?.zodiac === "양띠"
+          && third.response.source !== "clarification"
+          && !third.session.contextMetadata.awaitingClarification
+          && third.session.contextMetadata.pendingMissingContextKeys.length === 0,
+        details: [
+          `birthDate=${facts?.birthDate ?? "none"}`,
+          `calendarType=${facts?.calendarType ?? "none"}`,
+          `gender=${facts?.gender ?? "none"}`,
+          `zodiac=${facts?.zodiac ?? "none"}`,
+          `responseSource=${third.response.source}`,
+          `awaitingClarification=${third.session.contextMetadata.awaitingClarification}`,
+          `pendingMissingContextKeys=${third.session.contextMetadata.pendingMissingContextKeys.join(",") || "none"}`,
         ],
       };
     }),
