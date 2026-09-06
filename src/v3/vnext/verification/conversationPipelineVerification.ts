@@ -23,6 +23,9 @@ import {
 import {
   createMockResponseGateway,
 } from "../gpt/responseGateway.js";
+import {
+  readQuestion,
+} from "../../consulting/question/questionReader.js";
 
 export type ConversationPipelineVerificationCase = {
   id: string;
@@ -647,6 +650,100 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
           `novemberPeriodPreserved=${novemberPeriodPreserved}`,
           `assessmentSourceTurnId=${currentAssessmentSourceTurnId ?? "none"}`,
           `previousAssessmentSourceTurnId=${previousAssessmentSourceTurnId ?? "none"}`,
+        ],
+      };
+    }),
+
+    runCase("case-11-counterpart-identity-mismatch", async () => {
+      const firstQuestion =
+        "이 여자랑 결혼해도 돼? 상대방이 음력 1967년 4월 2일생 양띠 여성이야";
+      const secondQuestion =
+        "조금 더 자세히 말해줘. 상대방이 음력 1970년 5월 1일생 양띠 여성이야";
+
+      const first = await runVNextConversationPipeline({
+        question: firstQuestion,
+        input: {
+          request: buildVerificationRequest(firstQuestion),
+          gateway,
+        },
+      });
+
+      const previousCounterpartFacts =
+        first.session.contextMetadata.counterpartFacts;
+      const previousAssessmentSourceTurnId =
+        first.session.analysisCache.assessment?.sourceTurnId ?? null;
+
+      const result = await runVNextConversationPipeline({
+        session: first.session,
+        question: secondQuestion,
+        input: {
+          request: buildVerificationRequest(secondQuestion),
+          gateway,
+        },
+      });
+
+      const currentCounterpartFacts = readQuestion(
+        buildVerificationHumanContext(),
+        secondQuestion,
+      ).counterpartFacts;
+
+      const previousIdentifiable =
+        Boolean(previousCounterpartFacts?.birthDate)
+        && Boolean(previousCounterpartFacts?.calendarType)
+        && Boolean(previousCounterpartFacts?.gender);
+      const currentIdentifiable =
+        Boolean(currentCounterpartFacts.birthDate)
+        && Boolean(currentCounterpartFacts.calendarType)
+        && Boolean(currentCounterpartFacts.gender);
+      const counterpartIdentityMismatch =
+        previousIdentifiable
+        && currentIdentifiable
+        && (
+          previousCounterpartFacts?.birthDate
+            !== currentCounterpartFacts.birthDate
+          || previousCounterpartFacts?.calendarType
+            !== currentCounterpartFacts.calendarType
+          || previousCounterpartFacts?.gender
+            !== currentCounterpartFacts.gender
+        );
+
+      const currentAssessmentSourceTurnId =
+        result.session.analysisCache.assessment?.sourceTurnId ?? null;
+
+      return {
+        passed:
+          previousIdentifiable
+          && Boolean(first.session.analysisCache.assessment)
+          && first.executionMetadata.executedStages.includes("timeState:executed")
+          && first.executionMetadata.executedStages.includes("assessment:executed")
+          && previousCounterpartFacts?.birthDate === "1967-04-02"
+          && currentCounterpartFacts.birthDate === "1970-05-01"
+          && counterpartIdentityMismatch === true
+          && result.followUpType === "continuation"
+          && result.reusePlan?.reuseAssessment === true
+          && result.executionMetadata.reused.timeState === false
+          && result.executionMetadata.reused.assessment === false
+          && result.executionMetadata.executedStages.includes("assessment:executed")
+          && !result.executionMetadata.executedStages.includes("pipeline:cacheOnly")
+          && (
+            result.executionMetadata.executedStages.includes("pipeline:partial")
+            || result.executionMetadata.executedStages.includes("pipeline:full")
+          )
+          && previousAssessmentSourceTurnId !== null
+          && currentAssessmentSourceTurnId === result.turn.turnId
+          && previousAssessmentSourceTurnId !== currentAssessmentSourceTurnId
+          && result.session.turns.length === 2,
+        details: [
+          `previousBirthDate=${previousCounterpartFacts?.birthDate ?? "none"}`,
+          `currentBirthDate=${currentCounterpartFacts.birthDate ?? "none"}`,
+          `counterpartIdentityMismatch=${counterpartIdentityMismatch}`,
+          `followUpType=${result.followUpType}`,
+          `reusePlanReuseAssessment=${result.reusePlan?.reuseAssessment ?? false}`,
+          `reusedTimeState=${result.executionMetadata.reused.timeState}`,
+          `reusedAssessment=${result.executionMetadata.reused.assessment}`,
+          `executedStages=${result.executionMetadata.executedStages.join(",")}`,
+          `previousAssessmentSourceTurnId=${previousAssessmentSourceTurnId ?? "none"}`,
+          `assessmentSourceTurnId=${currentAssessmentSourceTurnId ?? "none"}`,
         ],
       };
     }),

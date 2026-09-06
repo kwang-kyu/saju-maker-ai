@@ -406,6 +406,8 @@ function hasMeaningIdentityMismatchForReuse(params: {
   cache: ConversationAnalysisCache;
   meaningHint: QuestionMeaning | null;
   freshAnalysis: AnalysisResult | null;
+  currentCounterpartFacts?: QuestionCounterpartFacts | null;
+  previousCounterpartFacts?: QuestionCounterpartFacts | null;
 }): boolean {
   const {
     followUpType,
@@ -414,6 +416,8 @@ function hasMeaningIdentityMismatchForReuse(params: {
     cache,
     meaningHint,
     freshAnalysis,
+    currentCounterpartFacts,
+    previousCounterpartFacts,
   } = params;
 
   // clarification은 originalQuestion 기준 분석 — 현재 turn 문자열/힌트로 재사용을 막지 않는다.
@@ -904,6 +908,8 @@ function executeConversationAnalysis(
   questionInterpretation: QuestionReaderResult | undefined,
   meaningHint: QuestionMeaning | null,
   referenceDateIso: string | null,
+  currentCounterpartFacts: QuestionCounterpartFacts | null | undefined,
+  previousCounterpartFacts: QuestionCounterpartFacts | null | undefined,
   onAnalysisProgress?: VNextAnalysisProgressCallback,
 ): ResolvedConversationExecution {
   const cache = session.analysisCache;
@@ -926,6 +932,8 @@ function executeConversationAnalysis(
         cache,
         meaningHint,
         freshAnalysis: null,
+        currentCounterpartFacts,
+        previousCounterpartFacts,
       })
     : false;
 
@@ -1003,6 +1011,8 @@ function executeConversationAnalysis(
     cache,
     meaningHint,
     freshAnalysis: freshAnalysis.analysisResult,
+    currentCounterpartFacts,
+    previousCounterpartFacts,
   });
 
   if (postIdentityMismatch) {
@@ -1347,6 +1357,8 @@ export async function runVNextConversationPipeline(
     questionInterpretation,
     meaningHint,
     referenceDateIso,
+    currentReaderResult?.counterpartFacts,
+    session.contextMetadata.counterpartFacts,
     params.options?.onAnalysisProgress,
   );
 
