@@ -489,11 +489,53 @@ function hasMeaningIdentityMismatchForReuse(params: {
     cache,
     meaningHint,
     freshAnalysis,
+    currentCounterpartFacts,
+    previousCounterpartFacts,
   } = params;
 
   // clarification은 originalQuestion 기준 분석 — 현재 turn 문자열/힌트로 재사용을 막지 않는다.
   if (followUpType === "clarificationAnswer") {
     return false;
+  }
+
+  // counterpart identity: 양쪽이 모두 식별 가능할 때만 mismatch.
+  // continuation general early-return보다 먼저 검사한다.
+  const previousIdentifiable =
+    normalizeIdentityAxis(previousCounterpartFacts?.birthDate) !== null
+    && normalizeIdentityAxis(previousCounterpartFacts?.calendarType) !== null
+    && normalizeIdentityAxis(previousCounterpartFacts?.gender) !== null;
+  const currentIdentifiable =
+    normalizeIdentityAxis(currentCounterpartFacts?.birthDate) !== null
+    && normalizeIdentityAxis(currentCounterpartFacts?.calendarType) !== null
+    && normalizeIdentityAxis(currentCounterpartFacts?.gender) !== null;
+
+  if (previousIdentifiable && currentIdentifiable) {
+    const birthDateMismatch = identityAxesDiffer(
+      currentCounterpartFacts?.birthDate,
+      previousCounterpartFacts?.birthDate,
+    );
+    const calendarTypeMismatch = identityAxesDiffer(
+      currentCounterpartFacts?.calendarType,
+      previousCounterpartFacts?.calendarType,
+    );
+    const genderMismatch = identityAxesDiffer(
+      currentCounterpartFacts?.gender,
+      previousCounterpartFacts?.gender,
+    );
+    // birthTime은 양쪽 모두 값이 있을 때만 비교한다.
+    const birthTimeMismatch = identityAxesDiffer(
+      currentCounterpartFacts?.birthTime,
+      previousCounterpartFacts?.birthTime,
+    );
+
+    if (
+      birthDateMismatch
+      || calendarTypeMismatch
+      || genderMismatch
+      || birthTimeMismatch
+    ) {
+      return true;
+    }
   }
 
   const requireCurrentWhenCached = freshAnalysis !== null;
