@@ -73,11 +73,12 @@ export function resolveConversationReusePlan(
     case "timeRefinement":
       // 새 시간 범위의 timeState/assessment가 캐시에 덮이지 않도록 재사용 금지.
       // humanState는 인물 기반이라 재사용 유지.
+      // 시간축이 바뀌면 이전 changeSignals도 재사용하지 않음.
       return buildPlan({
         reuseHumanState: canReuseHumanState,
         reuseTimeState: false,
         reuseAssessment: false,
-        reuseChangeSignals: canReuseChangeSignals,
+        reuseChangeSignals: false,
         reusePreviousResponseContext: false,
         requiresNewQuestionAnalysis: true,
         requiresAssessmentRefresh: true,

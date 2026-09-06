@@ -254,12 +254,34 @@ function normalizeIdentityAxis(
   return normalized.length > 0 ? normalized : null;
 }
 
+/**
+ * Soft (pre-pass): 양쪽 identity가 모두 있을 때만 불일치로 본다.
+ * 아직 생성되지 않은 축(null) 때문에 재사용을 오차단하지 않는다.
+ */
 function identityAxesDiffer(
   current: string | null | undefined,
   cached: string | null | undefined,
 ): boolean {
   const left = normalizeIdentityAxis(current);
   const right = normalizeIdentityAxis(cached);
+
+  return left !== null && right !== null && left !== right;
+}
+
+/**
+ * Strict (post-pass): 비교 대상 축에서 current가 비어 있고
+ * cache에 구체적인 값이 있으면 불일치로 본다.
+ */
+function identityAxesDifferStrict(
+  current: string | null | undefined,
+  cached: string | null | undefined,
+): boolean {
+  const left = normalizeIdentityAxis(current);
+  const right = normalizeIdentityAxis(cached);
+
+  if (left === null && right !== null) {
+    return true;
+  }
 
   return left !== null && right !== null && left !== right;
 }
@@ -365,18 +387,34 @@ function hasTimeIdentityMismatch(
     }
     | null,
   cache: ConversationAnalysisCache,
+  requireCurrentWhenCached = false,
 ): boolean {
-  if (!current || !cache.timeState) {
+  if (!cache.timeState) {
     return false;
   }
 
   const cachedGranularity = cache.timeState.reuseMetadata.timeGranularity;
   const cachedPeriodKey = cache.timeState.reuseMetadata.timePeriodKey;
+  const differ = requireCurrentWhenCached
+    ? identityAxesDifferStrict
+    : identityAxesDiffer;
 
-  return identityAxesDiffer(current.timeGranularity, cachedGranularity)
-    || identityAxesDiffer(current.timePeriodKey, cachedPeriodKey);
+  if (!current) {
+    if (!requireCurrentWhenCached) {
+      return false;
+    }
+
+    return differ(null, cachedGranularity) || differ(null, cachedPeriodKey);
+  }
+
+  return differ(current.timeGranularity, cachedGranularity)
+    || differ(current.timePeriodKey, cachedPeriodKey);
 }
 
+/**
+ * 전달된 키만 비교한다. 키 생략 = 의도적으로 비교하지 않음.
+ * 키를 넣고 값이 null = 정보 부족(pass 정책에 따라 처리).
+ */
 function hasNonTimeMeaningIdentityMismatch(
   current: {
     domain?: string | null;
@@ -385,19 +423,54 @@ function hasNonTimeMeaningIdentityMismatch(
     scenarioType?: string | null;
   },
   cache: ConversationAnalysisCache,
+  requireCurrentWhenCached = false,
 ): boolean {
   const cachedMeaning = cache.questionMeaning?.value;
   const cachedScenarioType = cache.scenario?.value.type;
+  const differ = requireCurrentWhenCached
+    ? identityAxesDifferStrict
+    : identityAxesDiffer;
 
-  return identityAxesDiffer(current.domain, cachedMeaning?.domain)
-    || identityAxesDiffer(current.intent, cachedMeaning?.intent)
-    || identityAxesDiffer(current.objectLabel, cachedMeaning?.object?.label)
-    || identityAxesDiffer(current.scenarioType, cachedScenarioType);
+  if (
+    "domain" in current
+    && differ(current.domain, cachedMeaning?.domain)
+  ) {
+    return true;
+  }
+
+  if (
+    "intent" in current
+    && differ(current.intent, cachedMeaning?.intent)
+  ) {
+    return true;
+  }
+
+  if (
+    "objectLabel" in current
+    && differ(current.objectLabel, cachedMeaning?.object?.label)
+  ) {
+    return true;
+  }
+
+  if (
+    "scenarioType" in current
+    && differ(current.scenarioType, cachedScenarioType)
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
  * FollowUp 분류만으로 cacheOnly/time/assessment 재사용을 허용하지 않는다.
  * 의미 identity가 다를 때만 차단하며, clarification·continuation 정상 경로는 유지한다.
+ *
+ * null 정책:
+ * - pre (freshAnalysis 없음): soft — 양쪽 값이 있을 때만 mismatch
+ * - post (freshAnalysis 있음): strict — 비교 대상 축에서 current null + cache concrete = mismatch
+ *
+ * 의도적 비교 제외는 null sentinel이 아니라 축 생략으로 표현한다.
  */
 function hasMeaningIdentityMismatchForReuse(params: {
   followUpType: FollowUpQuestionType;
@@ -416,8 +489,6 @@ function hasMeaningIdentityMismatchForReuse(params: {
     cache,
     meaningHint,
     freshAnalysis,
-    currentCounterpartFacts,
-    previousCounterpartFacts,
   } = params;
 
   // clarification은 originalQuestion 기준 분석 — 현재 turn 문자열/힌트로 재사용을 막지 않는다.
@@ -425,24 +496,35 @@ function hasMeaningIdentityMismatchForReuse(params: {
     return false;
   }
 
+  const requireCurrentWhenCached = freshAnalysis !== null;
+
   const questionTimeIdentity = deriveTimeIdentityFromQuestion(
     currentQuestion,
     referenceDateIso,
   );
 
-  if (hasTimeIdentityMismatch(questionTimeIdentity, cache)) {
-    return true;
-  }
+  // 시간 없는 continuation은 time 축을 의도적으로 비교하지 않는다.
+  const compareTimeIdentity =
+    followUpType !== "continuation" || questionTimeIdentity !== null;
 
-  const freshTimeState = freshAnalysis
-    ? readReadyValue<TimeState>(freshAnalysis.timeState)
-    : undefined;
-  const freshTimeIdentity = questionTimeIdentity
-    ? readTimeIdentityFromTimeState(freshTimeState)
-    : null;
+  if (compareTimeIdentity) {
+    let currentTimeIdentity = questionTimeIdentity;
 
-  if (hasTimeIdentityMismatch(freshTimeIdentity, cache)) {
-    return true;
+    if (freshAnalysis) {
+      const freshTimeState = readReadyValue<TimeState>(freshAnalysis.timeState);
+      const freshTimeIdentity = readTimeIdentityFromTimeState(freshTimeState);
+      currentTimeIdentity = freshTimeIdentity ?? questionTimeIdentity;
+    }
+
+    if (
+      hasTimeIdentityMismatch(
+        currentTimeIdentity,
+        cache,
+        requireCurrentWhenCached,
+      )
+    ) {
+      return true;
+    }
   }
 
   const freshMeaning = freshAnalysis
@@ -454,6 +536,7 @@ function hasMeaningIdentityMismatchForReuse(params: {
 
   // continuation 문구는 domain이 general로 떨어질 수 있어,
   // 시간 축 외에는 비-general hint가 있을 때만 비교한다.
+  // scenarioType은 continuation 비교 대상에서 제외한다 (null sentinel 사용 금지).
   if (followUpType === "continuation") {
     if (!meaningHint || meaningHint.domain === "general") {
       return false;
@@ -463,10 +546,10 @@ function hasMeaningIdentityMismatchForReuse(params: {
       {
         domain: meaningHint.domain,
         intent: meaningHint.intent,
-        objectLabel: meaningHint.object?.label,
-        scenarioType: null,
+        objectLabel: meaningHint.object?.label ?? null,
       },
       cache,
+      requireCurrentWhenCached,
     );
   }
 
@@ -476,14 +559,30 @@ function hasMeaningIdentityMismatchForReuse(params: {
     return false;
   }
 
+  const currentAxes: {
+    domain?: string | null;
+    intent?: string | null;
+    objectLabel?: string | null;
+    scenarioType?: string | null;
+  } = {};
+
+  if (meaningForCompare) {
+    currentAxes.domain = meaningForCompare.domain;
+    currentAxes.intent = meaningForCompare.intent;
+    currentAxes.objectLabel = meaningForCompare.object?.label ?? null;
+  }
+
+  if (freshScenario) {
+    currentAxes.scenarioType = freshScenario.type;
+  } else if (requireCurrentWhenCached) {
+    // post: scenarioType은 비교 대상이지만 아직 없으면 정보 부족으로 본다.
+    currentAxes.scenarioType = null;
+  }
+
   return hasNonTimeMeaningIdentityMismatch(
-    {
-      domain: meaningForCompare?.domain,
-      intent: meaningForCompare?.intent,
-      objectLabel: meaningForCompare?.object?.label,
-      scenarioType: freshScenario?.type,
-    },
+    currentAxes,
     cache,
+    requireCurrentWhenCached,
   );
 }
 
