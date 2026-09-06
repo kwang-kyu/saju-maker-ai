@@ -7,6 +7,7 @@ import type {
   Assessment,
   AssessmentCondition,
   AssessmentRisk,
+  TimeDifference,
 } from "../types/assessment.js";
 import type {
   ChangeSignal,
@@ -181,25 +182,129 @@ function resolvePeriodSegments(
   }];
 }
 
+/**
+ * early / middle / late 위치 → segment·period entry 공통 index.
+ * - 1개: 기존처럼 동일 index(0) 공유
+ * - 2개: early=0, middle=없음(중복 방지), late=1
+ * - 3개 이상: early=0, middle=중간, late=마지막
+ */
+function resolvePeriodPositionIndex(
+  segmentCount: number,
+  position: "early" | "middle" | "late",
+): number | undefined {
+  if (segmentCount <= 0) {
+    return undefined;
+  }
+
+  if (segmentCount === 1) {
+    return position === "early" ? 0 : undefined;
+  }
+
+  if (segmentCount === 2) {
+    if (position === "early") {
+      return 0;
+    }
+
+    if (position === "middle") {
+      return undefined;
+    }
+
+    return 1;
+  }
+
+  return position === "early"
+    ? 0
+    : position === "middle"
+      ? Math.floor((segmentCount - 1) / 2)
+      : segmentCount - 1;
+}
+
 function pickSegmentByPosition(
   segments: readonly TimeSegment[],
   position: "early" | "middle" | "late",
 ): TimeSegment | undefined {
-  if (segments.length === 0) {
+  const index = resolvePeriodPositionIndex(segments.length, position);
+
+  if (index === undefined) {
     return undefined;
   }
 
-  if (segments.length === 1) {
-    return segments[0];
+  return segments[index];
+}
+
+/**
+ * Assessment.timeDifferences의 overall(첫 entry)을 제외한 period entry만 반환한다.
+ */
+function resolvePeriodTimeDifferences(
+  assessment: Assessment | undefined,
+): TimeDifference[] {
+  const differences = assessment?.timeDifferences ?? [];
+
+  if (differences.length <= 1) {
+    return [];
   }
 
-  const index = position === "early"
-    ? 0
-    : position === "middle"
-      ? Math.floor((segments.length - 1) / 2)
-      : segments.length - 1;
+  return differences.slice(1);
+}
 
-  return segments[index];
+function periodTimeDifferenceFacts(
+  difference: TimeDifference | undefined,
+): Record<string, string | number | boolean | null>[] {
+  if (!difference) {
+    return [];
+  }
+
+  return [{
+    label: difference.label,
+    summary: difference.summary,
+  }];
+}
+
+function selectGeneralFlowPeriodBlock(
+  context: ResponseSelectionContext,
+  position: "early" | "middle" | "late",
+): ResponseBlockSelection {
+  const segments = resolvePeriodSegments(context.timeState);
+  const segment = pickSegmentByPosition(segments, position);
+  const periodIndex = resolvePeriodPositionIndex(segments.length, position);
+  const periodDifferences = resolvePeriodTimeDifferences(context.assessment);
+  const periodDifference = periodIndex === undefined
+    ? undefined
+    : periodDifferences[periodIndex];
+
+  const relevantSignals = position === "early"
+    ? context.changeSignals.filter((signal) => {
+      const matchesPeriod =
+        signal.timeSegment.label.includes("early")
+        || signal.timeSegment.start === segment?.start;
+
+      if (!matchesPeriod) {
+        return false;
+      }
+
+      // timing 블록과 동일: period에 직접 대응하지 않는
+      // month-wide/dateless signal은 earlyPeriod 근거에서 제외한다.
+      const isMonthWideDateless =
+        signal.timeSegment.granularity !== "day"
+        || signal.timeSegment.start === "unknown"
+        || signal.timeSegment.end === "unknown";
+
+      return !isMonthWideDateless;
+    })
+    : [];
+
+  return withEmphasis({
+    relevantFacts: [
+      ...segmentFacts(segment),
+      ...periodTimeDifferenceFacts(periodDifference),
+    ],
+    relevantSignals,
+    relevantEvidence: collectEvidenceItems(
+      segment?.evidence,
+      periodDifference?.evidence,
+    ),
+    emphasis: [],
+  }, context.emphasis);
 }
 
 function segmentFacts(
@@ -613,56 +718,17 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
   {
     blockId: "earlyPeriod",
     priority: 21,
-    select: (context) => {
-      const segment = pickSegmentByPosition(
-        resolvePeriodSegments(context.timeState),
-        "early",
-      );
-
-      return withEmphasis({
-        relevantFacts: segmentFacts(segment),
-        relevantSignals: context.changeSignals.filter(
-          (signal) => signal.timeSegment.label.includes("early")
-            || signal.timeSegment.start === segment?.start,
-        ),
-        relevantEvidence: collectEvidenceItems(segment?.evidence),
-        emphasis: [],
-      }, context.emphasis);
-    },
+    select: (context) => selectGeneralFlowPeriodBlock(context, "early"),
   },
   {
     blockId: "middlePeriod",
     priority: 22,
-    select: (context) => {
-      const segment = pickSegmentByPosition(
-        resolvePeriodSegments(context.timeState),
-        "middle",
-      );
-
-      return withEmphasis({
-        relevantFacts: segmentFacts(segment),
-        relevantSignals: [],
-        relevantEvidence: collectEvidenceItems(segment?.evidence),
-        emphasis: [],
-      }, context.emphasis);
-    },
+    select: (context) => selectGeneralFlowPeriodBlock(context, "middle"),
   },
   {
     blockId: "latePeriod",
     priority: 23,
-    select: (context) => {
-      const segment = pickSegmentByPosition(
-        resolvePeriodSegments(context.timeState),
-        "late",
-      );
-
-      return withEmphasis({
-        relevantFacts: segmentFacts(segment),
-        relevantSignals: [],
-        relevantEvidence: collectEvidenceItems(segment?.evidence),
-        emphasis: [],
-      }, context.emphasis);
-    },
+    select: (context) => selectGeneralFlowPeriodBlock(context, "late"),
   },
   {
     blockId: "opportunity",
