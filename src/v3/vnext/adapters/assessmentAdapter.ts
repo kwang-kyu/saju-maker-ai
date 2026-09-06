@@ -32,6 +32,7 @@ export type AssessmentAdapterInput = Pick<
   | "coreDecision"
   | "decisionReason"
   | "timingAssessment"
+  | "lifeFlowInterpretationAssessment"
 >;
 
 const VERDICT_TO_POSSIBILITY: Record<
@@ -132,50 +133,27 @@ function buildTimingLabel(
   return "target period";
 }
 
-function buildTimeDifferences(
-  input: AssessmentAdapterInput,
+function buildLifeFlowTimeDifferences(
+  lifeFlow: NonNullable<
+    AssessmentAdapterInput["lifeFlowInterpretationAssessment"]
+  >,
 ): Assessment["timeDifferences"] {
-  const timing = input.timingAssessment;
-
-  if (!timing) {
-    return [];
-  }
-
-  const granularity = resolveTimingGranularity(timing);
-  const hasPeriodSegments = timing.periodSegments.length > 0;
-
-  // 월 전체 판단(overallTheme)은 항상 별도 entry로 보존한다.
-  // periodSegments가 있으면 overall evidence(supportive/tension/cautions/
-  // limitations)를 같은 peer에 붙이지 않아, 날짜 있는 구간 theme과 섞이지 않게 한다.
-  // periodSegments가 없을 때만 overall evidence를 월 전체 entry에 실는다.
-  const overallEvidence = hasPeriodSegments
-    ? emptyVNextEvidence()
-    : toVNextEvidenceFromStrings(
-      [
-        ...timing.supportiveSignals,
-        ...timing.tensionSignals,
-        ...timing.cautions,
-        ...timing.limitations,
-      ],
-      "decision.timingAssessment",
-    );
-
+  // overallTheme + periodSegments(periodLabel/theme)만 전달한다.
+  // key / ganZhi / tenGod / element / signalContributions는 TimeDifference에 넣지 않는다.
   const differences: Assessment["timeDifferences"] = [
     {
-      label: buildTimingLabel(timing),
-      granularity,
-      summary: timing.overallTheme || "timing assessment available",
+      label: "target period",
+      granularity: "period",
+      summary: lifeFlow.overallTheme || "life flow assessment available",
       relativeTo: "target",
-      evidence: overallEvidence,
+      evidence: emptyVNextEvidence(),
     },
   ];
 
-  // 구간별 판단은 periodLabel + theme만 전달한다.
-  // overall evidence를 복사·재배치하거나 theme과 합치지 않는다.
-  for (const segment of timing.periodSegments) {
+  for (const segment of lifeFlow.periodSegments) {
     differences.push({
       label: segment.periodLabel,
-      granularity,
+      granularity: "period",
       summary: segment.theme,
       relativeTo: "target",
       evidence: emptyVNextEvidence(),
@@ -183,6 +161,66 @@ function buildTimeDifferences(
   }
 
   return differences;
+}
+
+function buildTimeDifferences(
+  input: AssessmentAdapterInput,
+): Assessment["timeDifferences"] {
+  const timing = input.timingAssessment;
+
+  // timingAssessment가 있으면 기존 경로만 사용한다.
+  // lifeFlowInterpretationAssessment와 합치지 않는다.
+  if (timing) {
+    const granularity = resolveTimingGranularity(timing);
+    const hasPeriodSegments = timing.periodSegments.length > 0;
+
+    // 월 전체 판단(overallTheme)은 항상 별도 entry로 보존한다.
+    // periodSegments가 있으면 overall evidence(supportive/tension/cautions/
+    // limitations)를 같은 peer에 붙이지 않아, 날짜 있는 구간 theme과 섞이지 않게 한다.
+    // periodSegments가 없을 때만 overall evidence를 월 전체 entry에 실는다.
+    const overallEvidence = hasPeriodSegments
+      ? emptyVNextEvidence()
+      : toVNextEvidenceFromStrings(
+        [
+          ...timing.supportiveSignals,
+          ...timing.tensionSignals,
+          ...timing.cautions,
+          ...timing.limitations,
+        ],
+        "decision.timingAssessment",
+      );
+
+    const differences: Assessment["timeDifferences"] = [
+      {
+        label: buildTimingLabel(timing),
+        granularity,
+        summary: timing.overallTheme || "timing assessment available",
+        relativeTo: "target",
+        evidence: overallEvidence,
+      },
+    ];
+
+    // 구간별 판단은 periodLabel + theme만 전달한다.
+    // overall evidence를 복사·재배치하거나 theme과 합치지 않는다.
+    for (const segment of timing.periodSegments) {
+      differences.push({
+        label: segment.periodLabel,
+        granularity,
+        summary: segment.theme,
+        relativeTo: "target",
+        evidence: emptyVNextEvidence(),
+      });
+    }
+
+    return differences;
+  }
+
+  const lifeFlow = input.lifeFlowInterpretationAssessment;
+  if (lifeFlow) {
+    return buildLifeFlowTimeDifferences(lifeFlow);
+  }
+
+  return [];
 }
 
 /**
