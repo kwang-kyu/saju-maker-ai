@@ -192,11 +192,39 @@ function filterBlocksForMissingContext(
   );
 }
 
+function shouldIncludePossibilityTiming(
+  scenario: ConsultingScenario,
+  questionMeaning: QuestionMeaning,
+): boolean {
+  return (
+    scenario.type === "possibilityCheck"
+    && (
+      scenario.requiredTimeGranularity.length > 0
+      || questionMeaning.time.urgency !== "unspecified"
+      || questionMeaning.time.timingType !== "unspecified"
+      || Boolean(questionMeaning.time.description)
+    )
+  );
+}
+
+function resolveQuestionBlocks(
+  scenario: ConsultingScenario,
+  questionMeaning: QuestionMeaning,
+): ScenarioAnswerBlock[] {
+  const baseBlocks = [...SCENARIO_QUESTION_BLOCKS[scenario.type]];
+
+  if (shouldIncludePossibilityTiming(scenario, questionMeaning)) {
+    return [...baseBlocks, "timing"];
+  }
+
+  return baseBlocks;
+}
+
 function buildQuestionBlueprint(
   input: AnswerBlueprintBuilderInput,
 ): AnswerBlueprint {
   const blocks = filterBlocksForMissingContext(
-    [...SCENARIO_QUESTION_BLOCKS[input.scenario.type]],
+    resolveQuestionBlocks(input.scenario, input.questionMeaning),
     input.scenario,
   );
 
