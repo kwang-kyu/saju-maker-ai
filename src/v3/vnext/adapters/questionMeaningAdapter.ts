@@ -47,6 +47,11 @@ export type QuestionMeaningAdapterInput = Pick<
   sourceTurnId?: string | null;
   /** Optional effective question override (else normalizedQuestion) */
   effectiveQuestion?: string | null;
+  /**
+   * Conversation follow-up counterpart continuity signal.
+   * Report / initial paths omit this; do not invent switch here.
+   */
+  counterpartContinuity?: "continuity" | "switch" | "unknown";
 };
 
 const TOPIC_TO_DOMAIN: Record<
@@ -221,47 +226,61 @@ function buildMissingContext(
 ): MissingContextItem[] {
   const items: MissingContextItem[] = [];
 
-  if (input.analysisMode !== "compatibility") {
+  // Existing compatibility missingContext gate — keep intact.
+  if (input.analysisMode === "compatibility") {
+    const counterpart = input.counterpartFacts;
+
+    if (!counterpart.birthDate) {
+      items.push({
+        key: "counterpartBirthDate",
+        description: "상대방 생년월일",
+        required: true,
+      });
+    }
+
+    if (
+      input.analysisScope === "fullSaju"
+      && !counterpart.birthTime
+    ) {
+      items.push({
+        key: "counterpartBirthTime",
+        description: "상대방 출생 시간",
+        required: false,
+      });
+    }
+
+    if (!counterpart.gender) {
+      items.push({
+        key: "counterpartGender",
+        description: "상대방 성별",
+        required: false,
+      });
+    }
+
+    if (
+      input.analysisScope === "zodiac"
+      && !counterpart.zodiac
+      && !counterpart.birthDate
+    ) {
+      items.push({
+        key: "counterpartZodiac",
+        description: "상대방 띠 또는 출생 정보",
+        required: true,
+      });
+    }
+
     return items;
   }
 
-  const counterpart = input.counterpartFacts;
-
-  if (!counterpart.birthDate) {
+  // switch → missing birthDate: enter existing clarification path.
+  // Do not force when the new counterpart already has birthDate.
+  if (
+    input.counterpartContinuity === "switch"
+    && !input.counterpartFacts?.birthDate
+  ) {
     items.push({
       key: "counterpartBirthDate",
       description: "상대방 생년월일",
-      required: true,
-    });
-  }
-
-  if (
-    input.analysisScope === "fullSaju"
-    && !counterpart.birthTime
-  ) {
-    items.push({
-      key: "counterpartBirthTime",
-      description: "상대방 출생 시간",
-      required: false,
-    });
-  }
-
-  if (!counterpart.gender) {
-    items.push({
-      key: "counterpartGender",
-      description: "상대방 성별",
-      required: false,
-    });
-  }
-
-  if (
-    input.analysisScope === "zodiac"
-    && !counterpart.zodiac
-    && !counterpart.birthDate
-  ) {
-    items.push({
-      key: "counterpartZodiac",
-      description: "상대방 띠 또는 출생 정보",
       required: true,
     });
   }
