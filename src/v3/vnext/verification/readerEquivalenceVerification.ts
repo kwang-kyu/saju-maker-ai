@@ -2,12 +2,29 @@
  * F0 Reader Equivalence Verification.
  *
  * 자연어 표면 문자열이 아니라
- * Question Reader → QuestionMeaning Adapter가 만든
- * structured semantic axis(domain / intent / object.label)의
+ * Question Reader가 만든 primaryAxis
+ * (topic|intent|decisionTarget)의
  * cell 내 동등성과 cell 간 구분성을 검증한다.
+ *
+ * Adapter projection(domain / intent / object.label)은
+ * 관측값으로만 유지하며 PASS 조건에 사용하지 않는다.
  *
  * Oracle: QUESTION_MEANING_CELLS fixture grouping.
  * 외부 의미 오라클 없이 "인간에게 의미가 같은가"를 증명하지 않는다.
+ *
+ * Variation PASS: seed(canonical Reader primaryAxis)와
+ * paraphrase Reader primaryAxis가 동일.
+ * seed와 다르면 FAIL로 고정한다.
+ * keyword miss / 축 불일치를 NOT_COVERED로 숨기지 않는다.
+ *
+ * 현재 confirmed seed-mismatch FAIL oracle: 없음.
+ * (과거 추적 항목 money-invest-timing /
+ * relationship-compatibility /
+ * marriage-spouse-compatibility 는 현재 F0에서 PASS)
+ *
+ * Boundary PASS(구조): 선언된 target primaryAxis와
+ * variant Reader primaryAxis가 일치 (현재 F0 실행 범위는
+ * canonical + paraphrase; target/timing/composite는 NOT_COVERED).
  *
  * 범위 밖: conversation pipeline, followUp, reuse, cache, assessment.
  */
@@ -20,10 +37,18 @@ import {
 } from "../../consulting/questionMeaningRegressionFixtures.js";
 import type {
   QuestionMeaningCell,
+  QuestionMeaningExpectation,
   QuestionMeaningPrimaryAxis,
+  QuestionMeaningVariation,
 } from "../../consulting/questionMeaningRegressionFixtures.js";
 import {
   readQuestion,
+} from "../../consulting/question/questionReader.js";
+import type {
+  DecisionTarget,
+  QuestionIntent,
+  QuestionReaderResult,
+  QuestionTopic,
 } from "../../consulting/question/questionReader.js";
 import type {
   HumanDestinyContext,
@@ -45,7 +70,7 @@ export type ReaderEquivalenceStatus =
   | "NOT_COVERED";
 
 /**
- * F0 최소 projection axis.
+ * F0 최소 Adapter projection 관측값.
  * scenarioType은 참고 관찰값이며 PASS 조건에 포함하지 않는다.
  */
 export type ReaderProjectedAxis = {
@@ -55,15 +80,38 @@ export type ReaderProjectedAxis = {
   scenarioType: string | null;
 };
 
+/**
+ * Reader 실제 primaryAxis 관측값.
+ * PASS/FAIL oracle의 기준 축이다.
+ */
+export type ReaderPrimaryAxisObservation = {
+  topic: QuestionTopic;
+  intent: QuestionIntent;
+  decisionTarget: DecisionTarget;
+  primaryAxis: QuestionMeaningPrimaryAxis;
+};
+
 export type ReaderEquivalenceObservationFlags = {
   /** A. 표면 문자열이 다른지 */
   surfaceDifferent: boolean;
   /** B. 같은 declared fixture cell인지 */
   sameDeclaredCell: boolean;
-  /** C. Reader→Adapter projection이 같은지 */
+  /** C. Reader→Adapter projection이 같은지 (관측) */
   readerProjectionSame: boolean;
-  /** D. Reader→Adapter projection이 다른지 */
+  /** D. Reader→Adapter projection이 다른지 (관측) */
   readerProjectionDifferent: boolean;
+  /**
+   * E. seed(canonical) vs surface Reader primaryAxis가 같은지.
+   * Intra paraphrase PASS oracle.
+   */
+  readerPrimaryAxisSame: boolean;
+  /** F. seed(canonical) vs surface Reader primaryAxis가 다른지 */
+  readerPrimaryAxisDifferent: boolean;
+  /**
+   * G. paraphrase Reader primaryAxis가 seed와 일치하는지.
+   * E와 동일 값이지만 seed 기준 oracle임을 결과 구조에 명시한다.
+   */
+  readerPrimaryAxisMatchesSeed: boolean;
 };
 
 export type ReaderEquivalenceCaseKind =
@@ -80,7 +128,11 @@ export type ReaderEquivalenceSurfaceRecord = {
   projectedObjectLabel: string | null;
   scenarioType: string | null;
   projectionEqual: boolean;
+  readerPrimaryAxisEqual: boolean;
+  leftReaderPrimaryAxis: QuestionMeaningPrimaryAxis | null;
+  rightReaderPrimaryAxis: QuestionMeaningPrimaryAxis | null;
   differingAxes: readonly string[];
+  differingReaderPrimaryAxisFields: readonly string[];
 };
 
 export type ReaderEquivalenceCase = {
@@ -97,7 +149,20 @@ export type ReaderEquivalenceCase = {
   flags: ReaderEquivalenceObservationFlags;
   leftProjection: ReaderProjectedAxis | null;
   rightProjection: ReaderProjectedAxis | null;
+  leftReaderPrimaryAxis: ReaderPrimaryAxisObservation | null;
+  rightReaderPrimaryAxis: ReaderPrimaryAxisObservation | null;
+  /**
+   * Intra paraphrase: seed = canonical Reader primaryAxis.
+   * Inter/coverage: null.
+   */
+  seedReaderPrimaryAxis: QuestionMeaningPrimaryAxis | null;
+  /**
+   * Intra paraphrase FAIL 시 seed vs surface 축 불일치 사유.
+   * NOT_COVERED로 강등하지 않는다.
+   */
+  failReason: string | null;
   differingAxes: readonly string[];
+  differingReaderPrimaryAxisFields: readonly string[];
   details: readonly string[];
   notCoveredReason?: string;
 };
@@ -111,6 +176,7 @@ export type ReaderEquivalenceVerificationResult = {
     paraphraseSurfaceCount: number;
     projectedDomainCoverage: readonly QuestionDomain[];
     projectedIntentCoverage: readonly QuestionMeaningIntent[];
+    readerPrimaryAxisCoverage: readonly QuestionMeaningPrimaryAxis[];
     notCoveredDomains: readonly QuestionDomain[];
     notCoveredIntents: readonly QuestionMeaningIntent[];
     excludedVariationKinds: readonly string[];
@@ -150,11 +216,28 @@ const ALL_QUESTION_MEANING_INTENTS: readonly QuestionMeaningIntent[] = [
   "general",
 ] as const;
 
+/**
+ * F0 실행 범위 밖 Operator 샘플.
+ * target/timing/composite는 Boundary/Variation 구조는 지원하되
+ * 이번 F0 PASS suite에는 포함하지 않는다 (NOT_COVERED).
+ */
 const EXCLUDED_VARIATION_KINDS = [
   "target",
   "timing",
   "composite",
 ] as const;
+
+/**
+ * seed(canonical Reader primaryAxis) ≠ paraphrase 로 확인된
+ * 우선 FAIL oracle cell id 목록.
+ * FAIL 판정 자체는 primaryAxisSame 여부로만 결정되며,
+ * 이 Set은 failReason 주석(confirmed_fail_oracle)용이다.
+ * 현재 F0 결과(failCount=0) 기준으로 stale 항목을 비운 상태.
+ * keyword miss를 NOT_COVERED로 숨기지 않는다.
+ */
+const CONFIRMED_SEED_MISMATCH_FAIL_CELL_IDS: ReadonlySet<string> = new Set([
+  // 현재 활성 confirmed seed-mismatch FAIL 없음.
+]);
 
 function buildVerificationHumanContext(): HumanDestinyContext {
   return buildHumanDestinyContextPipeline({
@@ -168,29 +251,88 @@ function buildVerificationHumanContext(): HumanDestinyContext {
   }).humanContext;
 }
 
+function toReaderPrimaryAxis(
+  readerResult: Pick<
+    QuestionReaderResult,
+    "topic" | "intent" | "decisionTarget"
+  >,
+): ReaderPrimaryAxisObservation {
+  return {
+    topic: readerResult.topic,
+    intent: readerResult.intent,
+    decisionTarget: readerResult.decisionTarget,
+    primaryAxis:
+      `${readerResult.topic}|${readerResult.intent}|${readerResult.decisionTarget}` as QuestionMeaningPrimaryAxis,
+  };
+}
+
 /**
- * semanticAxisReuseVerification.observeAxesFromReaderAdapter 와 동일 경로:
- * readQuestion → adaptQuestionMeaning (+ scenario는 참고 관찰).
+ * fixture expected(+override)에서 선언된 target primaryAxis.
+ * Boundary PASS 판정용 구조 헬퍼 (현재 F0 suite는 paraphrase만 실행).
  */
-function projectReaderAdapterAxis(
+export function toDeclaredPrimaryAxis(
+  expected: Pick<
+    QuestionMeaningExpectation,
+    "topic" | "intent" | "decisionTarget"
+  >,
+): QuestionMeaningPrimaryAxis {
+  return `${expected.topic}|${expected.intent}|${expected.decisionTarget}` as QuestionMeaningPrimaryAxis;
+}
+
+export function toVariationTargetPrimaryAxis(
+  cell: QuestionMeaningCell,
+  variation: QuestionMeaningVariation,
+): QuestionMeaningPrimaryAxis {
+  return toDeclaredPrimaryAxis({
+    topic: variation.expectedOverride?.topic ?? cell.expected.topic,
+    intent: variation.expectedOverride?.intent ?? cell.expected.intent,
+    decisionTarget:
+      variation.expectedOverride?.decisionTarget
+      ?? cell.expected.decisionTarget,
+  });
+}
+
+/**
+ * expectedOverride가 topic|intent|decisionTarget을 바꾸면 Boundary 후보.
+ * timingType/analysisMode만 바꾸면 Variation(축 불변) 후보.
+ */
+export function isPrimaryAxisBoundaryVariation(
+  cell: QuestionMeaningCell,
+  variation: QuestionMeaningVariation,
+): boolean {
+  return toVariationTargetPrimaryAxis(cell, variation) !== cell.primaryAxis;
+}
+
+type QuestionAxisObservation = {
+  readerPrimaryAxis: ReaderPrimaryAxisObservation;
+  projection: ReaderProjectedAxis;
+};
+
+/**
+ * Reader primaryAxis + Adapter projection(+ scenario 참고)을 함께 관측한다.
+ */
+function observeQuestionAxes(
   humanContext: HumanDestinyContext,
   question: string,
-): ReaderProjectedAxis {
+): QuestionAxisObservation {
   const readerResult = readQuestion(humanContext, question);
   const meaning = adaptQuestionMeaning(readerResult);
   const scenario = routeScenario(meaning);
 
   return {
-    domain: meaning.domain,
-    intent: meaning.intent,
-    objectLabel: meaning.object?.label ?? null,
-    scenarioType: scenario.type,
+    readerPrimaryAxis: toReaderPrimaryAxis(readerResult),
+    projection: {
+      domain: meaning.domain,
+      intent: meaning.intent,
+      objectLabel: meaning.object?.label ?? null,
+      scenarioType: scenario.type,
+    },
   };
 }
 
 /**
  * semanticAxisReuseVerification.meaningAxesEqual 과 동일 기준
- * (domain / intent / object.label).
+ * (domain / intent / object.label) — 관측 전용.
  */
 function meaningAxesEqual(
   left: ReaderProjectedAxis,
@@ -222,16 +364,48 @@ function diffMeaningAxes(
   return differing;
 }
 
+function readerPrimaryAxesEqual(
+  left: ReaderPrimaryAxisObservation,
+  right: ReaderPrimaryAxisObservation,
+): boolean {
+  return left.primaryAxis === right.primaryAxis;
+}
+
+function diffReaderPrimaryAxisFields(
+  left: ReaderPrimaryAxisObservation,
+  right: ReaderPrimaryAxisObservation,
+): string[] {
+  const differing: string[] = [];
+
+  if (left.topic !== right.topic) {
+    differing.push("topic");
+  }
+
+  if (left.intent !== right.intent) {
+    differing.push("intent");
+  }
+
+  if (left.decisionTarget !== right.decisionTarget) {
+    differing.push("decisionTarget");
+  }
+
+  return differing;
+}
+
 function buildFlags(params: {
   surfaceDifferent: boolean;
   sameDeclaredCell: boolean;
   readerProjectionSame: boolean;
+  readerPrimaryAxisSame: boolean;
 }): ReaderEquivalenceObservationFlags {
   return {
     surfaceDifferent: params.surfaceDifferent,
     sameDeclaredCell: params.sameDeclaredCell,
     readerProjectionSame: params.readerProjectionSame,
     readerProjectionDifferent: !params.readerProjectionSame,
+    readerPrimaryAxisSame: params.readerPrimaryAxisSame,
+    readerPrimaryAxisDifferent: !params.readerPrimaryAxisSame,
+    readerPrimaryAxisMatchesSeed: params.readerPrimaryAxisSame,
   };
 }
 
@@ -248,7 +422,12 @@ function buildCase(params: {
   flags: ReaderEquivalenceObservationFlags;
   leftProjection: ReaderProjectedAxis | null;
   rightProjection: ReaderProjectedAxis | null;
+  leftReaderPrimaryAxis: ReaderPrimaryAxisObservation | null;
+  rightReaderPrimaryAxis: ReaderPrimaryAxisObservation | null;
+  seedReaderPrimaryAxis?: QuestionMeaningPrimaryAxis | null;
+  failReason?: string | null;
   differingAxes: readonly string[];
+  differingReaderPrimaryAxisFields: readonly string[];
   details: readonly string[];
   notCoveredReason?: string;
 }): ReaderEquivalenceCase {
@@ -266,7 +445,12 @@ function buildCase(params: {
     flags: params.flags,
     leftProjection: params.leftProjection,
     rightProjection: params.rightProjection,
+    leftReaderPrimaryAxis: params.leftReaderPrimaryAxis,
+    rightReaderPrimaryAxis: params.rightReaderPrimaryAxis,
+    seedReaderPrimaryAxis: params.seedReaderPrimaryAxis ?? null,
+    failReason: params.failReason ?? null,
     differingAxes: params.differingAxes,
+    differingReaderPrimaryAxisFields: params.differingReaderPrimaryAxisFields,
     details: params.details,
     ...(params.notCoveredReason
       ? { notCoveredReason: params.notCoveredReason }
@@ -281,7 +465,7 @@ function collectIntraCellCases(
   const cases: ReaderEquivalenceCase[] = [];
 
   for (const cell of cells) {
-    const canonicalProjection = projectReaderAdapterAxis(
+    const canonicalObservation = observeQuestionAxes(
       humanContext,
       cell.canonicalQuestion,
     );
@@ -299,17 +483,24 @@ function collectIntraCellCases(
           surfaceDifferent: false,
           sameDeclaredCell: true,
           readerProjectionSame: true,
+          readerPrimaryAxisSame: true,
         }),
-        leftProjection: canonicalProjection,
+        leftProjection: canonicalObservation.projection,
         rightProjection: null,
+        leftReaderPrimaryAxis: canonicalObservation.readerPrimaryAxis,
+        rightReaderPrimaryAxis: null,
+        seedReaderPrimaryAxis:
+          canonicalObservation.readerPrimaryAxis.primaryAxis,
         differingAxes: [],
+        differingReaderPrimaryAxisFields: [],
         details: [
           `cellId=${cell.id}`,
-          `primaryAxis=${cell.primaryAxis}`,
-          `projectedDomain=${canonicalProjection.domain}`,
-          `projectedIntent=${canonicalProjection.intent}`,
-          `projectedObjectLabel=${canonicalProjection.objectLabel ?? "null"}`,
-          `scenarioType=${canonicalProjection.scenarioType ?? "null"}`,
+          `declaredPrimaryAxis=${cell.primaryAxis}`,
+          `seedReaderPrimaryAxis=${canonicalObservation.readerPrimaryAxis.primaryAxis}`,
+          `projectedDomain=${canonicalObservation.projection.domain}`,
+          `projectedIntent=${canonicalObservation.projection.intent}`,
+          `projectedObjectLabel=${canonicalObservation.projection.objectLabel ?? "null"}`,
+          `scenarioType=${canonicalObservation.projection.scenarioType ?? "null"}`,
         ],
         notCoveredReason:
           "paraphrase surface가 없어 cell 내 Reader Equivalence를 검증할 수 없음",
@@ -318,44 +509,61 @@ function collectIntraCellCases(
     }
 
     for (const paraphrase of cell.paraphrases) {
-      const surfaceProjection = projectReaderAdapterAxis(
+      const surfaceObservation = observeQuestionAxes(
         humanContext,
         paraphrase.question,
       );
       const surfaceDifferent =
         paraphrase.question !== cell.canonicalQuestion;
       const projectionSame = meaningAxesEqual(
-        canonicalProjection,
-        surfaceProjection,
+        canonicalObservation.projection,
+        surfaceObservation.projection,
+      );
+      const primaryAxisSame = readerPrimaryAxesEqual(
+        canonicalObservation.readerPrimaryAxis,
+        surfaceObservation.readerPrimaryAxis,
       );
       const differingAxes = diffMeaningAxes(
-        canonicalProjection,
-        surfaceProjection,
+        canonicalObservation.projection,
+        surfaceObservation.projection,
+      );
+      const differingReaderPrimaryAxisFields = diffReaderPrimaryAxisFields(
+        canonicalObservation.readerPrimaryAxis,
+        surfaceObservation.readerPrimaryAxis,
       );
       const flags = buildFlags({
         surfaceDifferent,
         sameDeclaredCell: true,
         readerProjectionSame: projectionSame,
+        readerPrimaryAxisSame: primaryAxisSame,
       });
 
       const details = [
         `cellId=${cell.id}`,
-        `primaryAxis=${cell.primaryAxis}`,
+        `declaredPrimaryAxis=${cell.primaryAxis}`,
         `canonical=${cell.canonicalQuestion}`,
         `surface=${paraphrase.question}`,
         `A.surfaceDifferent=${flags.surfaceDifferent}`,
         `B.sameDeclaredCell=${flags.sameDeclaredCell}`,
         `C.readerProjectionSame=${flags.readerProjectionSame}`,
         `D.readerProjectionDifferent=${flags.readerProjectionDifferent}`,
-        `canonicalDomain=${canonicalProjection.domain}`,
-        `canonicalIntent=${canonicalProjection.intent}`,
-        `canonicalObjectLabel=${canonicalProjection.objectLabel ?? "null"}`,
-        `surfaceDomain=${surfaceProjection.domain}`,
-        `surfaceIntent=${surfaceProjection.intent}`,
-        `surfaceObjectLabel=${surfaceProjection.objectLabel ?? "null"}`,
-        `scenarioTypeCanonical=${canonicalProjection.scenarioType ?? "null"}`,
-        `scenarioTypeSurface=${surfaceProjection.scenarioType ?? "null"}`,
+        `E.readerPrimaryAxisSame=${flags.readerPrimaryAxisSame}`,
+        `F.readerPrimaryAxisDifferent=${flags.readerPrimaryAxisDifferent}`,
+        `G.readerPrimaryAxisMatchesSeed=${flags.readerPrimaryAxisMatchesSeed}`,
+        `seedReaderPrimaryAxis=${canonicalObservation.readerPrimaryAxis.primaryAxis}`,
+        `surfaceReaderPrimaryAxis=${surfaceObservation.readerPrimaryAxis.primaryAxis}`,
+        `canonicalDomain=${canonicalObservation.projection.domain}`,
+        `canonicalIntent=${canonicalObservation.projection.intent}`,
+        `canonicalObjectLabel=${canonicalObservation.projection.objectLabel ?? "null"}`,
+        `surfaceDomain=${surfaceObservation.projection.domain}`,
+        `surfaceIntent=${surfaceObservation.projection.intent}`,
+        `surfaceObjectLabel=${surfaceObservation.projection.objectLabel ?? "null"}`,
+        `scenarioTypeCanonical=${canonicalObservation.projection.scenarioType ?? "null"}`,
+        `scenarioTypeSurface=${surfaceObservation.projection.scenarioType ?? "null"}`,
         `differingAxes=${differingAxes.join(",") || "none"}`,
+        `differingReaderPrimaryAxisFields=${
+          differingReaderPrimaryAxisFields.join(",") || "none"
+        }`,
       ];
 
       if (!surfaceDifferent) {
@@ -368,9 +576,14 @@ function collectIntraCellCases(
           canonical: cell.canonicalQuestion,
           surface: paraphrase.question,
           flags,
-          leftProjection: canonicalProjection,
-          rightProjection: surfaceProjection,
+          leftProjection: canonicalObservation.projection,
+          rightProjection: surfaceObservation.projection,
+          leftReaderPrimaryAxis: canonicalObservation.readerPrimaryAxis,
+          rightReaderPrimaryAxis: surfaceObservation.readerPrimaryAxis,
+          seedReaderPrimaryAxis:
+            canonicalObservation.readerPrimaryAxis.primaryAxis,
           differingAxes,
+          differingReaderPrimaryAxisFields,
           details,
           notCoveredReason:
             "surface 문자열이 canonical과 동일하여 "
@@ -379,20 +592,47 @@ function collectIntraCellCases(
         continue;
       }
 
-      // 같은 declared cell + 다른 surface → projection 동일해야 PASS
+      // LOCKED: seed(canonical Reader primaryAxis) ≠ paraphrase → FAIL.
+      // keyword miss / 축 불일치를 NOT_COVERED로 숨기지 않는다.
+      // CONFIRMED_SEED_MISMATCH_FAIL_CELL_IDS는 failReason 주석용이며
+      // 현재는 비어 있다 (활성 confirmed FAIL oracle 없음).
+      const status: ReaderEquivalenceStatus = primaryAxisSame
+        ? "PASS"
+        : "FAIL";
+      const failReason = status === "FAIL"
+        ? (
+          `paraphrase_reader_primary_axis_differs_from_seed:`
+          + ` expected=${canonicalObservation.readerPrimaryAxis.primaryAxis}`
+          + ` actual=${surfaceObservation.readerPrimaryAxis.primaryAxis}`
+          + (
+            CONFIRMED_SEED_MISMATCH_FAIL_CELL_IDS.has(cell.id)
+              ? "; confirmed_fail_oracle=true"
+              : ""
+          )
+        )
+        : null;
+
       cases.push(buildCase({
         id: `f0-intra-${cell.id}__${paraphrase.idSuffix}`,
         kind: "intra_cell_paraphrase",
-        status: projectionSame ? "PASS" : "FAIL",
+        status,
         cellId: cell.id,
         primaryAxis: cell.primaryAxis,
         canonical: cell.canonicalQuestion,
         surface: paraphrase.question,
         flags,
-        leftProjection: canonicalProjection,
-        rightProjection: surfaceProjection,
+        leftProjection: canonicalObservation.projection,
+        rightProjection: surfaceObservation.projection,
+        leftReaderPrimaryAxis: canonicalObservation.readerPrimaryAxis,
+        rightReaderPrimaryAxis: surfaceObservation.readerPrimaryAxis,
+        seedReaderPrimaryAxis:
+          canonicalObservation.readerPrimaryAxis.primaryAxis,
+        failReason,
         differingAxes,
-        details,
+        differingReaderPrimaryAxisFields,
+        details: failReason
+          ? [...details, `failReason=${failReason}`]
+          : details,
       }));
     }
   }
@@ -405,25 +645,25 @@ function collectInterCellCases(
   cells: readonly QuestionMeaningCell[],
 ): ReaderEquivalenceCase[] {
   const cases: ReaderEquivalenceCase[] = [];
-  const projections = cells.map((cell) => ({
+  const observations = cells.map((cell) => ({
     cell,
-    projection: projectReaderAdapterAxis(
+    observation: observeQuestionAxes(
       humanContext,
       cell.canonicalQuestion,
     ),
   }));
 
-  for (let leftIndex = 0; leftIndex < projections.length; leftIndex += 1) {
+  for (let leftIndex = 0; leftIndex < observations.length; leftIndex += 1) {
     for (
       let rightIndex = leftIndex + 1;
-      rightIndex < projections.length;
+      rightIndex < observations.length;
       rightIndex += 1
     ) {
-      const left = projections[leftIndex];
-      const right = projections[rightIndex];
+      const left = observations[leftIndex];
+      const right = observations[rightIndex];
 
       if (left.cell.primaryAxis === right.cell.primaryAxis) {
-        // 동일 declared primaryAxis cell pair는 F0 구분성 oracle 대상이 아님
+        // 동일 declared primaryAxis cell pair는 F0 구분성 oracle 대상 아님
         cases.push(buildCase({
           id: `f0-inter-${left.cell.id}__vs__${right.cell.id}`,
           kind: "inter_cell_primary_axis",
@@ -439,17 +679,30 @@ function collectInterCellCases(
               left.cell.canonicalQuestion !== right.cell.canonicalQuestion,
             sameDeclaredCell: false,
             readerProjectionSame: meaningAxesEqual(
-              left.projection,
-              right.projection,
+              left.observation.projection,
+              right.observation.projection,
+            ),
+            readerPrimaryAxisSame: readerPrimaryAxesEqual(
+              left.observation.readerPrimaryAxis,
+              right.observation.readerPrimaryAxis,
             ),
           }),
-          leftProjection: left.projection,
-          rightProjection: right.projection,
-          differingAxes: diffMeaningAxes(left.projection, right.projection),
+          leftProjection: left.observation.projection,
+          rightProjection: right.observation.projection,
+          leftReaderPrimaryAxis: left.observation.readerPrimaryAxis,
+          rightReaderPrimaryAxis: right.observation.readerPrimaryAxis,
+          differingAxes: diffMeaningAxes(
+            left.observation.projection,
+            right.observation.projection,
+          ),
+          differingReaderPrimaryAxisFields: diffReaderPrimaryAxisFields(
+            left.observation.readerPrimaryAxis,
+            right.observation.readerPrimaryAxis,
+          ),
           details: [
             `leftCellId=${left.cell.id}`,
             `rightCellId=${right.cell.id}`,
-            `primaryAxis=${left.cell.primaryAxis}`,
+            `declaredPrimaryAxis=${left.cell.primaryAxis}`,
             "note=declared primaryAxis가 같아 구분성 검증 대상 아님",
           ],
           notCoveredReason:
@@ -461,39 +714,55 @@ function collectInterCellCases(
       const surfaceDifferent =
         left.cell.canonicalQuestion !== right.cell.canonicalQuestion;
       const projectionSame = meaningAxesEqual(
-        left.projection,
-        right.projection,
+        left.observation.projection,
+        right.observation.projection,
+      );
+      const primaryAxisSame = readerPrimaryAxesEqual(
+        left.observation.readerPrimaryAxis,
+        right.observation.readerPrimaryAxis,
       );
       const differingAxes = diffMeaningAxes(
-        left.projection,
-        right.projection,
+        left.observation.projection,
+        right.observation.projection,
+      );
+      const differingReaderPrimaryAxisFields = diffReaderPrimaryAxisFields(
+        left.observation.readerPrimaryAxis,
+        right.observation.readerPrimaryAxis,
       );
       const flags = buildFlags({
         surfaceDifferent,
         sameDeclaredCell: false,
         readerProjectionSame: projectionSame,
+        readerPrimaryAxisSame: primaryAxisSame,
       });
 
       const details = [
         `leftCellId=${left.cell.id}`,
         `rightCellId=${right.cell.id}`,
-        `leftPrimaryAxis=${left.cell.primaryAxis}`,
-        `rightPrimaryAxis=${right.cell.primaryAxis}`,
+        `leftDeclaredPrimaryAxis=${left.cell.primaryAxis}`,
+        `rightDeclaredPrimaryAxis=${right.cell.primaryAxis}`,
         `leftCanonical=${left.cell.canonicalQuestion}`,
         `rightCanonical=${right.cell.canonicalQuestion}`,
         `A.surfaceDifferent=${flags.surfaceDifferent}`,
         `B.sameDeclaredCell=${flags.sameDeclaredCell}`,
         `C.readerProjectionSame=${flags.readerProjectionSame}`,
         `D.readerProjectionDifferent=${flags.readerProjectionDifferent}`,
-        `leftDomain=${left.projection.domain}`,
-        `leftIntent=${left.projection.intent}`,
-        `leftObjectLabel=${left.projection.objectLabel ?? "null"}`,
-        `rightDomain=${right.projection.domain}`,
-        `rightIntent=${right.projection.intent}`,
-        `rightObjectLabel=${right.projection.objectLabel ?? "null"}`,
-        `leftScenarioType=${left.projection.scenarioType ?? "null"}`,
-        `rightScenarioType=${right.projection.scenarioType ?? "null"}`,
+        `E.readerPrimaryAxisSame=${flags.readerPrimaryAxisSame}`,
+        `F.readerPrimaryAxisDifferent=${flags.readerPrimaryAxisDifferent}`,
+        `leftReaderPrimaryAxis=${left.observation.readerPrimaryAxis.primaryAxis}`,
+        `rightReaderPrimaryAxis=${right.observation.readerPrimaryAxis.primaryAxis}`,
+        `leftDomain=${left.observation.projection.domain}`,
+        `leftIntent=${left.observation.projection.intent}`,
+        `leftObjectLabel=${left.observation.projection.objectLabel ?? "null"}`,
+        `rightDomain=${right.observation.projection.domain}`,
+        `rightIntent=${right.observation.projection.intent}`,
+        `rightObjectLabel=${right.observation.projection.objectLabel ?? "null"}`,
+        `leftScenarioType=${left.observation.projection.scenarioType ?? "null"}`,
+        `rightScenarioType=${right.observation.projection.scenarioType ?? "null"}`,
         `differingAxes=${differingAxes.join(",") || "none"}`,
+        `differingReaderPrimaryAxisFields=${
+          differingReaderPrimaryAxisFields.join(",") || "none"
+        }`,
       ];
 
       if (!surfaceDifferent) {
@@ -508,9 +777,12 @@ function collectInterCellCases(
           canonical: left.cell.canonicalQuestion,
           surface: right.cell.canonicalQuestion,
           flags,
-          leftProjection: left.projection,
-          rightProjection: right.projection,
+          leftProjection: left.observation.projection,
+          rightProjection: right.observation.projection,
+          leftReaderPrimaryAxis: left.observation.readerPrimaryAxis,
+          rightReaderPrimaryAxis: right.observation.readerPrimaryAxis,
           differingAxes,
+          differingReaderPrimaryAxisFields,
           details,
           notCoveredReason:
             "두 cell canonical 표면 문자열이 동일하여 구분성 관찰 전제 미성립",
@@ -518,11 +790,11 @@ function collectInterCellCases(
         continue;
       }
 
-      // declared primaryAxis가 다르면 projection도 구분되어야 PASS
+      // declared primaryAxis가 다르면 Reader primaryAxis도 구분되어야 PASS
       cases.push(buildCase({
         id: `f0-inter-${left.cell.id}__vs__${right.cell.id}`,
         kind: "inter_cell_primary_axis",
-        status: projectionSame ? "FAIL" : "PASS",
+        status: primaryAxisSame ? "FAIL" : "PASS",
         cellId: left.cell.id,
         otherCellId: right.cell.id,
         primaryAxis: left.cell.primaryAxis,
@@ -530,9 +802,12 @@ function collectInterCellCases(
         canonical: left.cell.canonicalQuestion,
         surface: right.cell.canonicalQuestion,
         flags,
-        leftProjection: left.projection,
-        rightProjection: right.projection,
+        leftProjection: left.observation.projection,
+        rightProjection: right.observation.projection,
+        leftReaderPrimaryAxis: left.observation.readerPrimaryAxis,
+        rightReaderPrimaryAxis: right.observation.readerPrimaryAxis,
         differingAxes,
+        differingReaderPrimaryAxisFields,
         details,
       }));
     }
@@ -564,10 +839,14 @@ function collectCoverageGapCases(
         surfaceDifferent: false,
         sameDeclaredCell: false,
         readerProjectionSame: false,
+        readerPrimaryAxisSame: false,
       }),
       leftProjection: null,
       rightProjection: null,
+      leftReaderPrimaryAxis: null,
+      rightReaderPrimaryAxis: null,
       differingAxes: [],
+      differingReaderPrimaryAxisFields: [],
       details: [`missingProjectedDomain=${domain}`],
       notCoveredReason:
         `QUESTION_MEANING_CELLS canonical/paraphrase projection에 `
@@ -592,10 +871,14 @@ function collectCoverageGapCases(
         surfaceDifferent: false,
         sameDeclaredCell: false,
         readerProjectionSame: false,
+        readerPrimaryAxisSame: false,
       }),
       leftProjection: null,
       rightProjection: null,
+      leftReaderPrimaryAxis: null,
+      rightReaderPrimaryAxis: null,
       differingAxes: [],
+      differingReaderPrimaryAxisFields: [],
       details: [`missingProjectedIntent=${intent}`],
       notCoveredReason:
         `QUESTION_MEANING_CELLS canonical/paraphrase projection에 `
@@ -616,14 +899,19 @@ function collectCoverageGapCases(
         surfaceDifferent: false,
         sameDeclaredCell: false,
         readerProjectionSame: false,
+        readerPrimaryAxisSame: false,
       }),
       leftProjection: null,
       rightProjection: null,
+      leftReaderPrimaryAxis: null,
+      rightReaderPrimaryAxis: null,
       differingAxes: [],
+      differingReaderPrimaryAxisFields: [],
       details: [`excludedVariationKind=${variationKind}`],
       notCoveredReason:
-        `variationKind=${variationKind}는 F0 범위 밖 `
-        + "(canonical + paraphrase만 검증)",
+        `variationKind=${variationKind}는 현재 F0 실행 범위 밖 `
+        + "(canonical + paraphrase만 PASS/FAIL 대상; "
+        + "Boundary/Variation 헬퍼는 toVariationTargetPrimaryAxis로 준비됨)",
     }));
   }
 
@@ -644,24 +932,31 @@ export function verifyReaderEquivalence(
 
   const observedDomains = new Set<QuestionDomain>();
   const observedIntents = new Set<QuestionMeaningIntent>();
+  const observedReaderPrimaryAxes = new Set<QuestionMeaningPrimaryAxis>();
   let paraphraseSurfaceCount = 0;
 
   for (const cell of cells) {
-    const canonicalProjection = projectReaderAdapterAxis(
+    const canonicalObservation = observeQuestionAxes(
       humanContext,
       cell.canonicalQuestion,
     );
-    observedDomains.add(canonicalProjection.domain);
-    observedIntents.add(canonicalProjection.intent);
+    observedDomains.add(canonicalObservation.projection.domain);
+    observedIntents.add(canonicalObservation.projection.intent);
+    observedReaderPrimaryAxes.add(
+      canonicalObservation.readerPrimaryAxis.primaryAxis,
+    );
 
     for (const paraphrase of cell.paraphrases) {
       paraphraseSurfaceCount += 1;
-      const surfaceProjection = projectReaderAdapterAxis(
+      const surfaceObservation = observeQuestionAxes(
         humanContext,
         paraphrase.question,
       );
-      observedDomains.add(surfaceProjection.domain);
-      observedIntents.add(surfaceProjection.intent);
+      observedDomains.add(surfaceObservation.projection.domain);
+      observedIntents.add(surfaceObservation.projection.intent);
+      observedReaderPrimaryAxes.add(
+        surfaceObservation.readerPrimaryAxis.primaryAxis,
+      );
     }
   }
 
@@ -692,6 +987,7 @@ export function verifyReaderEquivalence(
       paraphraseSurfaceCount,
       projectedDomainCoverage: Array.from(observedDomains).sort(),
       projectedIntentCoverage: Array.from(observedIntents).sort(),
+      readerPrimaryAxisCoverage: Array.from(observedReaderPrimaryAxes).sort(),
       notCoveredDomains: ALL_QUESTION_DOMAINS.filter(
         (domain) => !observedDomains.has(domain),
       ),
@@ -723,7 +1019,11 @@ export function toSurfaceRecords(
       projectedObjectLabel: item.rightProjection!.objectLabel,
       scenarioType: item.rightProjection!.scenarioType,
       projectionEqual: item.flags.readerProjectionSame,
+      readerPrimaryAxisEqual: item.flags.readerPrimaryAxisSame,
+      leftReaderPrimaryAxis: item.leftReaderPrimaryAxis?.primaryAxis ?? null,
+      rightReaderPrimaryAxis: item.rightReaderPrimaryAxis?.primaryAxis ?? null,
       differingAxes: item.differingAxes,
+      differingReaderPrimaryAxisFields: item.differingReaderPrimaryAxisFields,
     }));
 }
 
@@ -751,7 +1051,12 @@ export function serializeReaderEquivalenceVerificationResult(
         flags: item.flags,
         leftProjection: item.leftProjection,
         rightProjection: item.rightProjection,
+        leftReaderPrimaryAxis: item.leftReaderPrimaryAxis,
+        rightReaderPrimaryAxis: item.rightReaderPrimaryAxis,
+        seedReaderPrimaryAxis: item.seedReaderPrimaryAxis,
+        failReason: item.failReason,
         differingAxes: item.differingAxes,
+        differingReaderPrimaryAxisFields: item.differingReaderPrimaryAxisFields,
         details: item.details,
         ...(item.notCoveredReason
           ? { notCoveredReason: item.notCoveredReason }
