@@ -60,6 +60,11 @@ export type VNextOrchestratorInput = {
   questionContext?: QuestionContext | null;
   decisionResult?: DecisionResult | null;
   targetPeriod?: TimePeriodRef | null;
+  /**
+   * Conversation follow-up counterpart continuity.
+   * Omitted on report / initial single-turn paths.
+   */
+  counterpartContinuity?: "continuity" | "switch" | "unknown";
 };
 
 function readyStage<T>(
@@ -143,7 +148,10 @@ export function runVNextOrchestrator(
 
   if (input.questionReaderResult) {
     questionMeaning = adaptQuestionMeaning(
-      input.questionReaderResult,
+      {
+        ...input.questionReaderResult,
+        counterpartContinuity: input.counterpartContinuity,
+      },
     );
     result.questionMeaning = readyStage(questionMeaning);
   } else if (input.analysisRequest.question) {

@@ -323,6 +323,11 @@ function buildInitialConsultingExecutionWithProgress(
 export type AnalyzeVNextConsultingRequestOptions = {
   onProgress?: VNextAnalysisProgressCallback;
   questionInterpretation?: QuestionReaderResult;
+  /**
+   * Conversation follow-up counterpart continuity.
+   * Forwarded to adaptQuestionMeaning; omitted on report / initial paths.
+   */
+  counterpartContinuity?: "continuity" | "switch" | "unknown";
 };
 
 /**
@@ -394,6 +399,7 @@ export function analyzeVNextConsultingRequest(
     questionContext: turnResult.questionContext,
     decisionResult: turnResult.decisionResult,
     targetPeriod: targetPeriod ?? null,
+    counterpartContinuity: options.counterpartContinuity,
   });
   options.onProgress?.("orchestrationComplete");
 
