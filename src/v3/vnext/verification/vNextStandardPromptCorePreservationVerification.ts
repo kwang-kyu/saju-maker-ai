@@ -61,7 +61,7 @@ const CORE_PRESERVATION_FIXTURES = [
   },
   {
     id: "F_storeOpening",
-    category: "actionDecision",
+    category: "generalFlow",
     questionText: "10월에 가게를 오픈하려고 하는데 어떨까요?",
     options: { includeLuckFlow: true as const },
   },

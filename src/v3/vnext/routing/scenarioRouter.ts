@@ -9,7 +9,9 @@ import type {
   HumanStateDomain,
 } from "../types/humanState.js";
 import type {
+  QuestionActionNature,
   QuestionMeaning,
+  QuestionMeaningIntent,
 } from "../types/questionMeaning.js";
 import type {
   TimeGranularity,
@@ -25,56 +27,56 @@ export type ScenarioRouteRule = {
   requiredSignals: ChangeSignalType[];
 };
 
-function containsAny(
-  text: string | null | undefined,
-  keywords: readonly string[],
-): boolean {
-  if (!text) {
-    return false;
-  }
+/**
+ * 실행·결정 성격의 actionNature.
+ * manageMoney는 money topic 기본값으로 자주 붙으므로
+ * prediction flow를 actionDecision으로 끌어가지 않도록 제외한다.
+ */
+const EXECUTION_ACTION_NATURES: ReadonlySet<QuestionActionNature> = new Set([
+  "start",
+  "continue",
+  "stop",
+  "wait",
+  "choose",
+  "invest",
+  "buy",
+  "sell",
+  "move",
+  "partner",
+  "separate",
+  "changeJob",
+  "leaveJob",
+  "marry",
+  "reconcile",
+  "protectHealth",
+  "respondToConflict",
+  "confirmDirection",
+]);
 
-  return keywords.some((keyword) => text.includes(keyword));
-}
+/** prediction 아래에서도 actionDecision 후보가 되는 강한 실행 행동 */
+const STRONG_EXECUTION_UNDER_PREDICTION: ReadonlySet<QuestionActionNature> =
+  new Set([
+    "start",
+    "stop",
+    "buy",
+    "sell",
+    "changeJob",
+    "leaveJob",
+    "marry",
+    "move",
+    "invest",
+    "choose",
+  ]);
 
-function mentionsMonth(
-  questionMeaning: QuestionMeaning,
-): boolean {
-  const sources = [
-    questionMeaning.event,
-    questionMeaning.time.description,
-  ].filter(Boolean) as string[];
-
-  return sources.some((text) => /\d{1,2}\s*월/.test(text));
-}
-
-function mentionsYear(
-  questionMeaning: QuestionMeaning,
-): boolean {
-  const sources = [
-    questionMeaning.event,
-    questionMeaning.time.description,
-  ].filter(Boolean) as string[];
-
-  return sources.some((text) => /\d{4}\s*년/.test(text));
-}
-
-function resolveTimeGranularity(
-  questionMeaning: QuestionMeaning,
-): TimeGranularity[] {
-  if (mentionsMonth(questionMeaning)) {
-    return ["month"];
-  }
-
-  if (mentionsYear(questionMeaning)) {
-    return ["year"];
-  }
-
-  if (questionMeaning.intent === "timing") {
-    return ["month"];
-  }
-
-  return [];
-}
+const ACTIONABLE_INTENTS: ReadonlySet<QuestionMeaningIntent> = new Set([
+  "possibility",
+  "timing",
+  "direction",
+  "selection",
+  "comparison",
+  "method",
+  "risk",
+]);
 
 const MONEY_FLOW_SIGNALS: ChangeSignalType[] = [
   "opportunity",
@@ -98,16 +100,189 @@ const RELATIONSHIP_SIGNALS: ChangeSignalType[] = [
   "stability",
 ];
 
+const LIFE_FLOW_SIGNALS: ChangeSignalType[] = [
+  "opportunity",
+  "pressure",
+  "risk",
+];
+
+function hasExecutionActionNature(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  return EXECUTION_ACTION_NATURES.has(questionMeaning.actionNature);
+}
+
+/**
+ * action-bearing routing 여부.
+ * prediction + actionNature=none → false.
+ * prediction + 강한 실행행동 → true 가능.
+ * possibility/timing/direction 등 + 실행행동 → true.
+ */
+function isActionBearingQuestion(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  if (!hasExecutionActionNature(questionMeaning)) {
+    return false;
+  }
+
+  if (questionMeaning.intent === "prediction") {
+    return STRONG_EXECUTION_UNDER_PREDICTION.has(
+      questionMeaning.actionNature,
+    );
+  }
+
+  return ACTIONABLE_INTENTS.has(questionMeaning.intent)
+    || questionMeaning.analysisMode === "decision";
+}
+
+function hasTimeIdentity(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  const { time } = questionMeaning;
+
+  if (time.period) {
+    return true;
+  }
+
+  if (time.urgency !== "unspecified") {
+    return true;
+  }
+
+  if (time.timingType !== "unspecified") {
+    return true;
+  }
+
+  if (time.description && time.description.trim().length > 0) {
+    return (
+      /\d{1,2}\s*월/.test(time.description)
+      || /\d{4}\s*년/.test(time.description)
+    );
+  }
+
+  return false;
+}
+
+function mapPeriodGranularity(
+  questionMeaning: QuestionMeaning,
+): TimeGranularity | null {
+  const period = questionMeaning.time.period;
+
+  if (!period) {
+    return null;
+  }
+
+  switch (period.granularity) {
+    case "day":
+      return "day";
+    case "month":
+      return "month";
+    case "halfYear":
+      return "period";
+    case "year":
+      return "year";
+    case "overall":
+      return "life";
+    default:
+      return null;
+  }
+}
+
+function mentionsMonth(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  if (questionMeaning.time.period?.month != null) {
+    return true;
+  }
+
+  if (questionMeaning.time.period?.granularity === "month") {
+    return true;
+  }
+
+  const description = questionMeaning.time.description;
+
+  return Boolean(description && /\d{1,2}\s*월/.test(description));
+}
+
+function mentionsYear(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  if (questionMeaning.time.period?.year != null) {
+    return true;
+  }
+
+  if (questionMeaning.time.period?.granularity === "year") {
+    return true;
+  }
+
+  const description = questionMeaning.time.description;
+
+  return Boolean(description && /\d{4}\s*년/.test(description));
+}
+
+function resolveTimeGranularity(
+  questionMeaning: QuestionMeaning,
+): TimeGranularity[] {
+  const fromPeriod = mapPeriodGranularity(questionMeaning);
+
+  if (fromPeriod) {
+    return [fromPeriod];
+  }
+
+  if (mentionsMonth(questionMeaning)) {
+    return ["month"];
+  }
+
+  if (mentionsYear(questionMeaning)) {
+    return ["year"];
+  }
+
+  if (questionMeaning.intent === "timing") {
+    return ["month"];
+  }
+
+  return [];
+}
+
+function isCompatibilityAssessment(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  // analysisMode=compatibility가 primary.
+  // domain=compatibility는 Adapter가 이미 보존한 compatibility 계약.
+  // 단순 relationship + counterpart만으로 compatibility로 올리지 않는다.
+  return (
+    questionMeaning.analysisMode === "compatibility"
+    || questionMeaning.domain === "compatibility"
+  );
+}
+
+function isAptitudeRecommendation(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  if (questionMeaning.domain !== "career") {
+    return false;
+  }
+
+  if (isActionBearingQuestion(questionMeaning)) {
+    return false;
+  }
+
+  return (
+    questionMeaning.intent === "selection"
+    || questionMeaning.intent === "interpretation"
+    || questionMeaning.analysisMode === "selection"
+    || (
+      questionMeaning.analysisMode === "interpretation"
+      && questionMeaning.intent !== "prediction"
+    )
+  );
+}
+
 export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
   {
     id: "relationship-assessment",
     priority: 10,
     matches: (questionMeaning) =>
-      questionMeaning.domain === "compatibility"
-      || (
-        ["relationship", "marriage"].includes(questionMeaning.domain)
-        && containsAny(questionMeaning.event, ["궁합", "합"])
-      ),
+      isCompatibilityAssessment(questionMeaning),
     scenarioType: "relationshipAssessment",
     requiredDomains: ["relationship", "personality", "capacity"],
     requiredTimeGranularity: [],
@@ -117,42 +292,67 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
     id: "aptitude-recommendation",
     priority: 20,
     matches: (questionMeaning) =>
-      questionMeaning.domain === "career"
-      && (
-        questionMeaning.intent === "selection"
-        || questionMeaning.intent === "interpretation"
-      )
-      && containsAny(questionMeaning.event, [
-        "직업",
-        "적성",
-        "맞는",
-        "역할",
-        "일",
-      ]),
+      isAptitudeRecommendation(questionMeaning),
     scenarioType: "aptitudeRecommendation",
     requiredDomains: ["career", "ability", "capacity"],
     requiredTimeGranularity: [],
     requiredSignals: [],
   },
   {
-    id: "action-decision",
+    id: "action-decision-business",
     priority: 30,
     matches: (questionMeaning) =>
-      questionMeaning.domain === "business"
+      isActionBearingQuestion(questionMeaning)
+      && questionMeaning.domain === "business",
+    scenarioType: "actionDecision",
+    requiredDomains: ["career", "money", "capacity", "risk"],
+    requiredTimeGranularity: ["month"],
+    requiredSignals: BUSINESS_ACTION_SIGNALS,
+  },
+  {
+    id: "action-decision-money",
+    priority: 31,
+    matches: (questionMeaning) =>
+      isActionBearingQuestion(questionMeaning)
+      && questionMeaning.domain === "money",
+    scenarioType: "actionDecision",
+    requiredDomains: ["money", "capacity", "risk"],
+    requiredTimeGranularity: ["month"],
+    requiredSignals: MONEY_FLOW_SIGNALS,
+  },
+  {
+    id: "action-decision-career",
+    priority: 32,
+    matches: (questionMeaning) =>
+      isActionBearingQuestion(questionMeaning)
       && (
-        questionMeaning.intent === "timing"
-        || questionMeaning.intent === "possibility"
-        || questionMeaning.intent === "direction"
-      )
-      && containsAny(questionMeaning.event, [
-        "오픈",
-        "개업",
-        "시작",
-        "창업",
-        "가게",
-        "매장",
-        "사업",
-      ]),
+        questionMeaning.domain === "career"
+        || questionMeaning.askedObject === "lifeDirection"
+      ),
+    scenarioType: "actionDecision",
+    requiredDomains: ["career", "ability", "capacity", "risk"],
+    requiredTimeGranularity: ["month"],
+    requiredSignals: ["opportunity", "pressure", "risk"],
+  },
+  {
+    id: "action-decision-relationship",
+    priority: 33,
+    matches: (questionMeaning) =>
+      isActionBearingQuestion(questionMeaning)
+      && (
+        questionMeaning.domain === "relationship"
+        || questionMeaning.domain === "marriage"
+      ),
+    scenarioType: "actionDecision",
+    requiredDomains: ["relationship", "personality", "capacity", "risk"],
+    requiredTimeGranularity: ["month"],
+    requiredSignals: RELATIONSHIP_SIGNALS,
+  },
+  {
+    id: "action-decision-generic",
+    priority: 34,
+    matches: (questionMeaning) =>
+      isActionBearingQuestion(questionMeaning),
     scenarioType: "actionDecision",
     requiredDomains: ["career", "money", "capacity", "risk"],
     requiredTimeGranularity: ["month"],
@@ -164,9 +364,11 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
     matches: (questionMeaning) =>
       questionMeaning.domain === "money"
       && (
-        questionMeaning.intent === "possibility"
+        questionMeaning.intent === "prediction"
+        || questionMeaning.intent === "possibility"
         || questionMeaning.intent === "timing"
         || questionMeaning.intent === "existence"
+        || questionMeaning.intent === "general"
       ),
     scenarioType: "generalFlow",
     requiredDomains: ["money", "capacity", "risk"],
@@ -174,36 +376,79 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
     requiredSignals: MONEY_FLOW_SIGNALS,
   },
   {
+    id: "general-business-flow",
+    priority: 42,
+    matches: (questionMeaning) =>
+      questionMeaning.domain === "business"
+      && questionMeaning.intent === "prediction"
+      && !isActionBearingQuestion(questionMeaning),
+    scenarioType: "generalFlow",
+    requiredDomains: ["career", "money", "capacity", "risk"],
+    requiredTimeGranularity: [],
+    requiredSignals: BUSINESS_ACTION_SIGNALS,
+  },
+  {
+    id: "general-life-prediction-flow",
+    priority: 44,
+    matches: (questionMeaning) =>
+      (
+        questionMeaning.domain === "life"
+        || questionMeaning.askedObject === "lifeFlow"
+      )
+      && questionMeaning.intent === "prediction"
+      && !isActionBearingQuestion(questionMeaning),
+    scenarioType: "generalFlow",
+    requiredDomains: ["personality", "capacity", "risk"],
+    requiredTimeGranularity: [],
+    requiredSignals: LIFE_FLOW_SIGNALS,
+  },
+  {
     id: "timing-assessment",
     priority: 50,
     matches: (questionMeaning) =>
       questionMeaning.intent === "timing"
-      && questionMeaning.domain !== "money",
+      && questionMeaning.domain !== "money"
+      && questionMeaning.time.timingType !== "executionTiming",
     scenarioType: "timingAssessment",
     requiredDomains: ["capacity", "risk"],
     requiredTimeGranularity: ["month"],
     requiredSignals: ["opportunity", "pressure", "risk"],
   },
   {
-    id: "monthly-fortune-flow",
+    id: "specific-event",
     priority: 55,
     matches: (questionMeaning) =>
-      containsAny(questionMeaning.event, ["운세", "흐름"])
-      && (
-        mentionsMonth(questionMeaning)
-        || mentionsYear(questionMeaning)
-      ),
+      questionMeaning.intent === "timing"
+      && questionMeaning.time.timingType === "executionTiming"
+      && questionMeaning.askedObject !== "general"
+      && questionMeaning.askedObject !== "lifeFlow"
+      && !isActionBearingQuestion(questionMeaning),
+    scenarioType: "specificEvent",
+    requiredDomains: ["capacity", "risk"],
+    requiredTimeGranularity: ["month"],
+    requiredSignals: ["opportunity", "pressure", "risk"],
+  },
+  {
+    id: "domain-aware-period-flow",
+    priority: 58,
+    matches: (questionMeaning) =>
+      questionMeaning.intent === "prediction"
+      && hasTimeIdentity(questionMeaning)
+      && !isActionBearingQuestion(questionMeaning),
     scenarioType: "generalFlow",
     requiredDomains: ["personality", "capacity", "risk"],
     requiredTimeGranularity: ["month"],
-    requiredSignals: ["opportunity", "pressure", "risk"],
+    requiredSignals: LIFE_FLOW_SIGNALS,
   },
   {
     id: "possibility-check",
     priority: 60,
     matches: (questionMeaning) =>
-      questionMeaning.intent === "possibility"
-      || questionMeaning.intent === "existence",
+      (
+        questionMeaning.intent === "possibility"
+        || questionMeaning.intent === "existence"
+      )
+      && !isActionBearingQuestion(questionMeaning),
     scenarioType: "possibilityCheck",
     requiredDomains: ["capacity", "risk"],
     requiredTimeGranularity: [],
@@ -214,22 +459,18 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
     priority: 70,
     matches: (questionMeaning) =>
       questionMeaning.intent === "interpretation"
-      || questionMeaning.intent === "reason",
+      || questionMeaning.intent === "reason"
+      || (
+        questionMeaning.analysisMode === "interpretation"
+        && questionMeaning.intent !== "prediction"
+        && questionMeaning.intent !== "possibility"
+        && questionMeaning.intent !== "timing"
+        && questionMeaning.intent !== "existence"
+      ),
     scenarioType: "interpretation",
     requiredDomains: ["personality", "repeatedPattern"],
     requiredTimeGranularity: [],
     requiredSignals: [],
-  },
-  {
-    id: "specific-event",
-    priority: 80,
-    matches: (questionMeaning) =>
-      Boolean(questionMeaning.event)
-      && questionMeaning.intent === "timing",
-    scenarioType: "specificEvent",
-    requiredDomains: ["capacity", "risk"],
-    requiredTimeGranularity: ["month"],
-    requiredSignals: ["opportunity", "pressure", "risk"],
   },
   {
     id: "general-fallback",

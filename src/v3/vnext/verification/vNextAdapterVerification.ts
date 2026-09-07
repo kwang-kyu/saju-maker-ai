@@ -181,7 +181,7 @@ function verifyCase3OctoberStoreOpening(): VNextAdapterVerificationCase {
 
   const checks = [
     questionMeaning.domain === "business",
-    scenario.type === "actionDecision",
+    scenario.type === "generalFlow",
     includesAll(scenario.requiredDomains, [
       "career",
       "money",

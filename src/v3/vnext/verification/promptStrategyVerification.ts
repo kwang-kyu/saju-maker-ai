@@ -130,13 +130,17 @@ function verifyCase3StoreOpening(): PromptStrategyVerificationCase {
   const strategy = resolvePromptStrategy(context);
 
   const checks = [
-    strategy.conversationStyle === "decisionSupport",
-    strategy.scenario === "actionDecision",
+    strategy.conversationStyle === "conversational",
+    strategy.scenario === "generalFlow",
     includesAll(strategy.requiredBlocks, [
-      "directAnswer",
-      "conditions",
-      "risk",
-      "timing",
+      "periodOverview",
+      "earlyPeriod",
+      "middlePeriod",
+      "latePeriod",
+      "opportunity",
+      "pressure",
+      "moneyOrDomainEffect",
+      "caution",
     ]),
   ];
 
