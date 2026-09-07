@@ -10,6 +10,7 @@ import type {
 } from "../../types/humanDestinyContext.js";
 import {
   readQuestion,
+  type QuestionCounterpartFacts,
   type QuestionReaderResult,
 } from "../../consulting/question/questionReader.js";
 import type {
@@ -35,11 +36,22 @@ export type FollowUpQuestionType =
   | "scenarioRefinement"
   | "newQuestion";
 
+/**
+ * 이전 세션 상대 대비 현재 질문의 상대 연속/전환 축.
+ * FollowUpQuestionType과 직교한다.
+ */
+export type CounterpartContinuitySignal =
+  | "continuity"
+  | "switch"
+  | "unknown";
+
 export type FollowUpQuestionResolution = {
   type: FollowUpQuestionType;
   reason: string;
   /** Question Reader read-only 스냅샷 — domain 비교에만 사용 */
   questionReaderResult: QuestionReaderResult | null;
+  /** 이전 상대 유지/전환 — FollowUpQuestionType과 독립 */
+  counterpartContinuity: CounterpartContinuitySignal;
 };
 
 export type FollowUpQuestionResolverInput = {
@@ -48,6 +60,17 @@ export type FollowUpQuestionResolverInput = {
   contextMetadata: ConversationContextMetadata;
   /** domain 비교용 — 없으면 휴리스틱만 사용 */
   humanContext?: HumanDestinyContext | null;
+  /**
+   * merge 이전 세션 counterpart.
+   * 미지정 시 contextMetadata.counterpartFacts 사용.
+   * merged facts를 넘기지 않는다.
+   */
+  previousCounterpartFacts?: QuestionCounterpartFacts | null;
+  /**
+   * 현재 질문 raw counterpart (merge 전).
+   * 있으면 continuity 판정에 재사용한다.
+   */
+  currentCounterpartFacts?: QuestionCounterpartFacts | null;
 };
 
 const CONTINUATION_PATTERN =
@@ -392,6 +415,113 @@ function hasContinuationEvidence(
   return false;
 }
 
+function hasStoredCounterpartFacts(
+  facts: QuestionCounterpartFacts | null | undefined,
+): facts is QuestionCounterpartFacts {
+  if (!facts) {
+    return false;
+  }
+
+  return Boolean(
+    facts.birthDate
+    || facts.birthTime
+    || facts.calendarType
+    || facts.gender
+    || facts.zodiac
+    || facts.relationship,
+  );
+}
+
+function normalizeCounterpartIdentityAxis(
+  value: string | null | undefined,
+): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+/** Soft: 양쪽 identity 축이 모두 있을 때만 불일치. */
+function counterpartIdentityAxesDiffer(
+  current: QuestionCounterpartFacts,
+  previous: QuestionCounterpartFacts,
+): boolean {
+  const axes: Array<keyof Pick<
+    QuestionCounterpartFacts,
+    "birthDate" | "birthTime" | "calendarType" | "gender"
+  >> = ["birthDate", "calendarType", "gender", "birthTime"];
+
+  return axes.some((axis) => {
+    const left = normalizeCounterpartIdentityAxis(current[axis]);
+    const right = normalizeCounterpartIdentityAxis(previous[axis]);
+    return left !== null && right !== null && left !== right;
+  });
+}
+
+function hasCounterpartIdentityAxes(
+  facts: QuestionCounterpartFacts,
+): boolean {
+  return Boolean(
+    normalizeCounterpartIdentityAxis(facts.birthDate)
+    || normalizeCounterpartIdentityAxis(facts.birthTime)
+    || normalizeCounterpartIdentityAxis(facts.calendarType)
+    || normalizeCounterpartIdentityAxis(facts.gender),
+  );
+}
+
+/**
+ * 기존 continuation evidence 중 "이전 상대를 지시"하는 구조만 재사용.
+ * topic/intent 동일만으로는 counterpart continuity로 보지 않는다.
+ */
+function indicatesSameCounterpartContinuation(
+  normalizedQuestion: string,
+  currentFacts: QuestionCounterpartFacts | null | undefined,
+): boolean {
+  if (
+    /(?:그(?:\s*사람|\s*분)|이(?:\s*사람|\s*분))/.test(normalizedQuestion)
+  ) {
+    return true;
+  }
+
+  const relationship = currentFacts?.relationship?.trim() ?? "";
+  if (/^(?:그|이)\s*사람$/.test(relationship)) {
+    return true;
+  }
+
+  return false;
+}
+
+function resolveCounterpartContinuitySignal(params: {
+  previousCounterpartFacts: QuestionCounterpartFacts | null | undefined;
+  currentCounterpartFacts: QuestionCounterpartFacts | null | undefined;
+  indicatesSameCounterpart: boolean;
+}): CounterpartContinuitySignal {
+  const previous = params.previousCounterpartFacts;
+
+  if (!hasStoredCounterpartFacts(previous)) {
+    return "unknown";
+  }
+
+  const current = params.currentCounterpartFacts;
+  const identityMismatch = Boolean(
+    current
+    && hasCounterpartIdentityAxes(current)
+    && counterpartIdentityAxesDiffer(current, previous),
+  );
+
+  if (identityMismatch) {
+    return "switch";
+  }
+
+  if (params.indicatesSameCounterpart) {
+    return "continuity";
+  }
+
+  return "unknown";
+}
+
 /**
  * 새 질문의 follow-up 유형을 판단한다.
  *
@@ -413,12 +543,33 @@ export function resolveFollowUpQuestionType(
       ?? toReferenceDateIso(input.contextMetadata.updatedAt)
       ?? toReferenceDateIso(input.contextMetadata.createdAt)
     : null;
+  const previousCounterpartFacts =
+    input.previousCounterpartFacts
+    ?? input.contextMetadata.counterpartFacts
+    ?? null;
+
+  const resolveContinuity = (
+    currentFacts: QuestionCounterpartFacts | null | undefined,
+    indicatesSameCounterpart: boolean,
+  ): CounterpartContinuitySignal =>
+    resolveCounterpartContinuitySignal({
+      previousCounterpartFacts,
+      currentCounterpartFacts:
+        currentFacts
+        ?? input.currentCounterpartFacts
+        ?? null,
+      indicatesSameCounterpart,
+    });
 
   if (!normalizedQuestion) {
     return {
       type: "newQuestion",
       reason: "empty question treated as new question",
       questionReaderResult: null,
+      counterpartContinuity: resolveContinuity(
+        input.currentCounterpartFacts,
+        false,
+      ),
     };
   }
 
@@ -428,23 +579,37 @@ export function resolveFollowUpQuestionType(
       input.contextMetadata,
     )
   ) {
+    const questionReaderResult = readQuestionReadOnly(
+      input.humanContext,
+      input.newQuestion,
+    );
+
     return {
       type: "clarificationAnswer",
       reason: "awaiting clarification with short factual answer",
-      questionReaderResult: readQuestionReadOnly(
-        input.humanContext,
-        input.newQuestion,
+      questionReaderResult,
+      counterpartContinuity: resolveContinuity(
+        questionReaderResult?.counterpartFacts
+          ?? input.currentCounterpartFacts,
+        true,
       ),
     };
   }
 
   if (isContinuationQuestion(normalizedQuestion)) {
+    const questionReaderResult = readQuestionReadOnly(
+      input.humanContext,
+      input.newQuestion,
+    );
+
     return {
       type: "continuation",
       reason: "continuation phrase detected",
-      questionReaderResult: readQuestionReadOnly(
-        input.humanContext,
-        input.newQuestion,
+      questionReaderResult,
+      counterpartContinuity: resolveContinuity(
+        questionReaderResult?.counterpartFacts
+          ?? input.currentCounterpartFacts,
+        true,
       ),
     };
   }
@@ -455,12 +620,24 @@ export function resolveFollowUpQuestionType(
       previousQuestionMeaning,
     )
   ) {
+    const questionReaderResult = readQuestionReadOnly(
+      input.humanContext,
+      input.newQuestion,
+    );
+    const currentFacts =
+      questionReaderResult?.counterpartFacts
+      ?? input.currentCounterpartFacts;
+
     return {
       type: "timeRefinement",
       reason: "time period refinement detected",
-      questionReaderResult: readQuestionReadOnly(
-        input.humanContext,
-        input.newQuestion,
+      questionReaderResult,
+      counterpartContinuity: resolveContinuity(
+        currentFacts,
+        indicatesSameCounterpartContinuation(
+          normalizedQuestion,
+          currentFacts,
+        ),
       ),
     };
   }
@@ -474,12 +651,24 @@ export function resolveFollowUpQuestionType(
       referenceDateIso,
     )
   ) {
+    const questionReaderResult = readQuestionReadOnly(
+      input.humanContext,
+      input.newQuestion,
+    );
+    const currentFacts =
+      questionReaderResult?.counterpartFacts
+      ?? input.currentCounterpartFacts;
+
     return {
       type: "timeRefinement",
       reason: "structured time meaning shift via LifeFlowTarget",
-      questionReaderResult: readQuestionReadOnly(
-        input.humanContext,
-        input.newQuestion,
+      questionReaderResult,
+      counterpartContinuity: resolveContinuity(
+        currentFacts,
+        indicatesSameCounterpartContinuation(
+          normalizedQuestion,
+          currentFacts,
+        ),
       ),
     };
   }
@@ -497,6 +686,19 @@ export function resolveFollowUpQuestionType(
         )
       : null;
 
+  const currentFacts =
+    input.currentCounterpartFacts
+    ?? questionReaderResult?.counterpartFacts
+    ?? null;
+  const sameCounterpart = indicatesSameCounterpartContinuation(
+    normalizedQuestion,
+    currentFacts,
+  );
+  const counterpartContinuity = resolveContinuity(
+    currentFacts,
+    sameCounterpart,
+  );
+
   if (
     questionReaderResult
     && isNewQuestionByDomain(
@@ -508,6 +710,7 @@ export function resolveFollowUpQuestionType(
       type: "newQuestion",
       reason: "domain shift detected via Question Reader",
       questionReaderResult,
+      counterpartContinuity,
     };
   }
 
@@ -524,6 +727,7 @@ export function resolveFollowUpQuestionType(
       type: "newQuestion",
       reason: "decision frame shift detected via Question Reader",
       questionReaderResult,
+      counterpartContinuity,
     };
   }
 
@@ -541,6 +745,7 @@ export function resolveFollowUpQuestionType(
       type: "scenarioRefinement",
       reason: "scenario refinement within same decision frame",
       questionReaderResult,
+      counterpartContinuity,
     };
   }
 
@@ -558,6 +763,7 @@ export function resolveFollowUpQuestionType(
       type: "continuation",
       reason: "follow-up within same session without meaning shift",
       questionReaderResult,
+      counterpartContinuity,
     };
   }
 
@@ -566,6 +772,7 @@ export function resolveFollowUpQuestionType(
       type: "newQuestion",
       reason: "no continuation evidence — treated as new question",
       questionReaderResult,
+      counterpartContinuity,
     };
   }
 
@@ -573,5 +780,6 @@ export function resolveFollowUpQuestionType(
     type: "newQuestion",
     reason: "no previous turn — treated as new question",
     questionReaderResult,
+    counterpartContinuity,
   };
 }

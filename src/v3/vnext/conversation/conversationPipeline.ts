@@ -94,6 +94,7 @@ import type {
 } from "./conversationTypes.js";
 import {
   resolveFollowUpQuestionType,
+  type CounterpartContinuitySignal,
   type FollowUpQuestionType,
 } from "./followUpQuestionResolver.js";
 
@@ -855,7 +856,45 @@ function canUseCacheOnlyPath(
 function mergeCounterpartFacts(
   existing: QuestionCounterpartFacts | undefined,
   incoming: QuestionCounterpartFacts,
+  counterpartContinuity: CounterpartContinuitySignal = "unknown",
 ): QuestionCounterpartFacts {
+  // resolver가 산출한 switch면 identity 유무와 관계없이
+  // existing field-wise merge / 복원을 하지 않고 incoming만 사용한다.
+  if (counterpartContinuity === "switch") {
+    return {
+      birthDate: incoming.birthDate ?? null,
+      birthTime: incoming.birthTime ?? null,
+      calendarType: incoming.calendarType ?? null,
+      gender: incoming.gender ?? null,
+      zodiac: incoming.zodiac ?? null,
+      relationship: incoming.relationship ?? null,
+      evidence: [...incoming.evidence],
+    };
+  }
+
+  // continuity / unknown: 기존 identity 축 비교(soft)를 재사용한다.
+  // 양쪽이 모두 값을 가진 축에서 불일치하면 새 상대 전환으로 보고
+  // field-wise merge / evidence concat을 하지 않는다.
+  // incoming에 상대 정보가 없으면(전부 null) mismatch가 없어 기존 상대를 유지한다.
+  const counterpartSwitched = Boolean(existing) && (
+    identityAxesDiffer(incoming.birthDate, existing?.birthDate)
+    || identityAxesDiffer(incoming.calendarType, existing?.calendarType)
+    || identityAxesDiffer(incoming.gender, existing?.gender)
+    || identityAxesDiffer(incoming.birthTime, existing?.birthTime)
+  );
+
+  if (counterpartSwitched) {
+    return {
+      birthDate: incoming.birthDate ?? null,
+      birthTime: incoming.birthTime ?? null,
+      calendarType: incoming.calendarType ?? null,
+      gender: incoming.gender ?? null,
+      zodiac: incoming.zodiac ?? null,
+      relationship: incoming.relationship ?? null,
+      evidence: [...incoming.evidence],
+    };
+  }
+
   return {
     birthDate: incoming.birthDate ?? existing?.birthDate ?? null,
     birthTime: incoming.birthTime ?? existing?.birthTime ?? null,
@@ -906,6 +945,7 @@ function buildQuestionInterpretationForAnalysis(
   humanContext: HumanDestinyContext | null,
   question: string,
   sessionCounterpartFacts: QuestionCounterpartFacts | undefined,
+  counterpartContinuity: CounterpartContinuitySignal = "unknown",
 ): QuestionReaderResult | undefined {
   const readerResult = readQuestionForSession(humanContext, question);
 
@@ -913,7 +953,7 @@ function buildQuestionInterpretationForAnalysis(
     return undefined;
   }
 
-  if (!sessionCounterpartFacts) {
+  if (!sessionCounterpartFacts && counterpartContinuity !== "switch") {
     return readerResult;
   }
 
@@ -922,6 +962,7 @@ function buildQuestionInterpretationForAnalysis(
     counterpartFacts: mergeCounterpartFacts(
       sessionCounterpartFacts,
       readerResult.counterpartFacts,
+      counterpartContinuity,
     ),
   };
 }
@@ -1409,18 +1450,46 @@ export async function runVNextConversationPipeline(
   const answerMode = params.options?.answerMode ?? "question";
   const analysisStartedAt = params.options?.analysisStartedAt ?? Date.now();
   const humanContext = resolveHumanContextForFollowUp(params.input.request);
+  const previousCounterpartFacts = session.contextMetadata.counterpartFacts;
   const currentReaderResult = readQuestionForSession(
     humanContext,
     params.question,
   );
+
+  // merge 이전 session counterpart를 resolver에 전달한다.
+  const followUpResolution = previousTurn
+    ? resolveFollowUpQuestionType({
+        newQuestion: params.question,
+        previousTurn,
+        contextMetadata: session.contextMetadata,
+        humanContext,
+        previousCounterpartFacts,
+        currentCounterpartFacts: currentReaderResult?.counterpartFacts,
+      })
+    : null;
+
+  const counterpartContinuity: CounterpartContinuitySignal =
+    followUpResolution?.counterpartContinuity ?? "unknown";
+
   const mergedCounterpartFacts = currentReaderResult
     ? mergeCounterpartFacts(
-        session.contextMetadata.counterpartFacts,
+        previousCounterpartFacts,
         currentReaderResult.counterpartFacts,
+        counterpartContinuity,
       )
-    : session.contextMetadata.counterpartFacts;
+    : counterpartContinuity === "switch"
+      ? {
+          birthDate: null,
+          birthTime: null,
+          calendarType: null,
+          gender: null,
+          zodiac: null,
+          relationship: null,
+          evidence: [],
+        }
+      : previousCounterpartFacts;
   const sessionForPipeline: ConversationSession =
-    mergedCounterpartFacts !== session.contextMetadata.counterpartFacts
+    mergedCounterpartFacts !== previousCounterpartFacts
       ? {
           ...session,
           contextMetadata: {
@@ -1429,15 +1498,6 @@ export async function runVNextConversationPipeline(
           },
         }
       : session;
-
-  const followUpResolution = previousTurn
-    ? resolveFollowUpQuestionType({
-        newQuestion: params.question,
-        previousTurn,
-        contextMetadata: sessionForPipeline.contextMetadata,
-        humanContext,
-      })
-    : null;
 
   const followUpType: FollowUpQuestionType | "initial" =
     followUpResolution?.type ?? "initial";
@@ -1456,13 +1516,16 @@ export async function runVNextConversationPipeline(
     followUpType,
   );
 
-  const questionInterpretation = hasStoredCounterpartFacts(mergedCounterpartFacts)
-    ? buildQuestionInterpretationForAnalysis(
-        humanContext,
-        pipelineRequest.question,
-        mergedCounterpartFacts,
-      )
-    : undefined;
+  const questionInterpretation =
+    hasStoredCounterpartFacts(mergedCounterpartFacts)
+    || counterpartContinuity === "switch"
+      ? buildQuestionInterpretationForAnalysis(
+          humanContext,
+          pipelineRequest.question,
+          mergedCounterpartFacts,
+          counterpartContinuity,
+        )
+      : undefined;
 
   const effectiveQuestion = resolveEffectiveQuestionForResponse(
     params.question,
