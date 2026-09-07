@@ -8,6 +8,9 @@ import type {
   QuestionUrgency,
 } from "../../consulting/question/questionReader.js";
 import type {
+  LifeFlowTarget,
+} from "../../consulting/question/lifeFlowTarget.js";
+import type {
   MissingContextItem,
   QuestionDomain,
   QuestionMeaning,
@@ -16,6 +19,7 @@ import type {
   QuestionMeaningRef,
   QuestionObject,
   QuestionTimeFocus,
+  QuestionTimePeriodIdentity,
 } from "../types/questionMeaning.js";
 
 export type QuestionMeaningAdapterInput = Pick<
@@ -34,6 +38,11 @@ export type QuestionMeaningAdapterInput = Pick<
   | "decisionQuestion"
   | "conclusionNature"
 > & {
+  /**
+   * Optional LifeFlowTarget already resolved upstream.
+   * Adapter does not parse time; it only preserves identity when provided.
+   */
+  lifeFlowTarget?: LifeFlowTarget | null;
   /** Optional conversation turn identity */
   sourceTurnId?: string | null;
   /** Optional effective question override (else normalizedQuestion) */
@@ -260,6 +269,61 @@ function buildMissingContext(
   return items;
 }
 
+function buildPeriodIdentity(
+  lifeFlowTarget: LifeFlowTarget | null | undefined,
+): QuestionTimePeriodIdentity | undefined {
+  if (!lifeFlowTarget) {
+    return undefined;
+  }
+
+  const periodKey = buildPeriodKey(lifeFlowTarget);
+
+  return {
+    granularity: lifeFlowTarget.scope,
+    periodKey,
+    year: lifeFlowTarget.targetYear,
+    month: lifeFlowTarget.targetMonth,
+    day: lifeFlowTarget.targetDay,
+    half: lifeFlowTarget.half,
+    start: lifeFlowTarget.startDate,
+    end: lifeFlowTarget.endDate,
+  };
+}
+
+function buildPeriodKey(
+  lifeFlowTarget: LifeFlowTarget,
+): string | undefined {
+  const {
+    scope,
+    targetYear,
+    targetMonth,
+    targetDay,
+    half,
+  } = lifeFlowTarget;
+
+  if (scope === "day" && targetYear != null && targetMonth != null && targetDay != null) {
+    return `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+  }
+
+  if (scope === "month" && targetYear != null && targetMonth != null) {
+    return `${targetYear}-${String(targetMonth).padStart(2, "0")}`;
+  }
+
+  if (scope === "halfYear" && targetYear != null && half) {
+    return `${targetYear}-${half}`;
+  }
+
+  if (scope === "year" && targetYear != null) {
+    return String(targetYear);
+  }
+
+  if (scope === "overall") {
+    return "overall";
+  }
+
+  return undefined;
+}
+
 function buildTimeFocus(
   input: QuestionMeaningAdapterInput,
 ): QuestionTimeFocus {
@@ -268,10 +332,13 @@ function buildTimeFocus(
       ? input.normalizedQuestion
       : undefined;
 
+  const period = buildPeriodIdentity(input.lifeFlowTarget);
+
   return {
     urgency: mapUrgency(input.urgency),
     timingType: mapTimingType(input.timingType),
     description,
+    ...(period ? { period } : {}),
   };
 }
 
