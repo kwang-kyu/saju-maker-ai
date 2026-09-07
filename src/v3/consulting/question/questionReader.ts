@@ -106,6 +106,16 @@ export type QuestionAnalysisScope =
   | "birthDate"
   | "fullSaju";
 
+/**
+ * 현재 질문이 지칭하는 상대 referent 구조.
+ * same: 동일 상대 지시 / different: 다른 상대 지시 / unspecified: 판단 불가
+ * (continuity/switch 결정은 resolver 책임)
+ */
+export type QuestionCounterpartReferent =
+  | "same"
+  | "different"
+  | "unspecified";
+
 export type QuestionCounterpartFacts = {
   birthDate:
     string | null;
@@ -124,6 +134,15 @@ export type QuestionCounterpartFacts = {
 
   relationship:
     string | null;
+
+  /**
+   * 질문 문장에 나타난 상대 referent 구조.
+   * Reader가 추출만 하고, continuity/switch는 resolver가 결정한다.
+   * 기존 object literal 호환을 위해 optional이며,
+   * extractQuestionCounterpartFacts는 항상 채운다.
+   */
+  counterpartReferent?:
+    QuestionCounterpartReferent;
 
   evidence:
     string[];
@@ -1662,6 +1681,26 @@ function extractQuestionCounterpartFacts(
       /친구|배우자|남편|아내|연인|애인|가족|직원|동업자|파트너|이\s*사람|그\s*사람/,
     );
 
+  // 기존 same-person deixis(그/이 사람·분)와 대칭되는 referent 구조.
+  // relationship 의미는 변경하지 않고 별도 축으로만 추출한다.
+  const samePersonReferentMatch =
+    question.match(
+      /(?:그|이)\s*(?:사람|분)/,
+    );
+
+  const differentPersonReferentMatch =
+    question.match(
+      /다른\s*(?:사람|분)/,
+    );
+
+  const counterpartReferent:
+    QuestionCounterpartReferent =
+    differentPersonReferentMatch
+      ? "different"
+      : samePersonReferentMatch
+        ? "same"
+        : "unspecified";
+
   const evidence = [
     dateMatch?.[0],
     timeMatch?.[0],
@@ -1669,6 +1708,8 @@ function extractQuestionCounterpartFacts(
     genderMatch?.[0],
     calendarMatch?.[0],
     relationshipMatch?.[0],
+    samePersonReferentMatch?.[0],
+    differentPersonReferentMatch?.[0],
   ].filter(
     (
       value,
@@ -1749,7 +1790,14 @@ function extractQuestionCounterpartFacts(
       relationshipMatch?.[0]
       ?? null,
 
-    evidence,
+    counterpartReferent,
+
+    evidence:
+      Array.from(
+        new Set(
+          evidence,
+        ),
+      ),
   };
 }
 

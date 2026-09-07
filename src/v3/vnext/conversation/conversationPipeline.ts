@@ -1092,6 +1092,7 @@ function executeConversationAnalysis(
   referenceDateIso: string | null,
   currentCounterpartFacts: QuestionCounterpartFacts | null | undefined,
   previousCounterpartFacts: QuestionCounterpartFacts | null | undefined,
+  counterpartContinuity: CounterpartContinuitySignal,
   onAnalysisProgress?: VNextAnalysisProgressCallback,
 ): ResolvedConversationExecution {
   const cache = session.analysisCache;
@@ -1173,6 +1174,7 @@ function executeConversationAnalysis(
     {
       onProgress: onAnalysisProgress,
       questionInterpretation,
+      counterpartContinuity,
     },
   );
 
@@ -1537,7 +1539,10 @@ export async function runVNextConversationPipeline(
   const meaningHintSource = followUpResolution?.questionReaderResult
     ?? currentReaderResult;
   const meaningHint = meaningHintSource
-    ? adaptQuestionMeaning(meaningHintSource)
+    ? adaptQuestionMeaning({
+        ...meaningHintSource,
+        counterpartContinuity,
+      })
     : null;
 
   const referenceDateIso = toReferenceDateIso(
@@ -1563,6 +1568,7 @@ export async function runVNextConversationPipeline(
     referenceDateIso,
     currentReaderResult?.counterpartFacts,
     session.contextMetadata.counterpartFacts,
+    counterpartContinuity,
     params.options?.onAnalysisProgress,
   );
 

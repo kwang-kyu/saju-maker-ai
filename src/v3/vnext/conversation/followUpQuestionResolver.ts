@@ -515,7 +515,16 @@ function resolveCounterpartContinuitySignal(params: {
     return "switch";
   }
 
+  // Reader referent: different → switch (unspecified는 switch로 취급하지 않음)
+  if (current?.counterpartReferent === "different") {
+    return "switch";
+  }
+
   if (params.indicatesSameCounterpart) {
+    return "continuity";
+  }
+
+  if (current?.counterpartReferent === "same") {
     return "continuity";
   }
 
