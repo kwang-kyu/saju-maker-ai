@@ -184,6 +184,28 @@ export type QuestionReaderResult = {
   confidence: number;
 
   humanContextReceived: true;
+
+  /**
+   * Semantic Interpreter 선택 게이트용 Reader 진단 정보.
+   * 선택 결과·confidence·evidence 값은 변경하지 않고 관찰만 한다.
+   */
+  readerMatchDiagnostics?: {
+    usedFallback: {
+      topic: boolean;
+      intent: boolean;
+      decisionTarget: boolean;
+    };
+    emptyEvidence: {
+      topic: boolean;
+      intent: boolean;
+      decisionTarget: boolean;
+    };
+    hasRivalCandidates: {
+      topic: boolean;
+      intent: boolean;
+      decisionTarget: boolean;
+    };
+  };
 };
 
 type KeywordRule<T extends string> = {
@@ -4513,6 +4535,20 @@ function calculateConfidence(evidenceCount: number): number {
   return 0.35;
 }
 
+/**
+ * 후보 배열에서 서로 다른 value가 2개 이상이면 rival로 본다.
+ * 선택 로직에는 개입하지 않는다.
+ */
+function hasRivalCandidateValues<T extends string>(
+  candidates: readonly MeaningCandidate<T>[],
+): boolean {
+  const uniqueValues = new Set(
+    candidates.map((candidate) => candidate.value),
+  );
+
+  return uniqueValues.size >= 2;
+}
+
 const RELATIONSHIP_COUNTERPART_PATTERN =
   /(?:이|그)\s*(?:사람|남자|여자)|상대(?:방)?|우리\s*둘|둘이|서로|(?:현재|지금|내|제|그|이)\s*(?:연인|애인|배우자|남편|아내|동업자|파트너)|(?:연인|애인|배우자|남편|아내|동업자|파트너)\s*(?:와|과|랑|하고|와는|과는)/;
 
@@ -5134,6 +5170,28 @@ export function readQuestion(
     ]),
   );
 
+  const readerMatchDiagnostics: NonNullable<
+    QuestionReaderResult["readerMatchDiagnostics"]
+  > = {
+    usedFallback: {
+      topic: meaningCandidates.topics.length === 0,
+      intent: meaningCandidates.intents.length === 0,
+      decisionTarget: meaningCandidates.decisionTargets.length === 0,
+    },
+    emptyEvidence: {
+      topic: normalizedAxes.evidence.topic.length === 0,
+      intent: normalizedAxes.evidence.intent.length === 0,
+      decisionTarget: normalizedAxes.evidence.decisionTarget.length === 0,
+    },
+    hasRivalCandidates: {
+      topic: hasRivalCandidateValues(meaningCandidates.topics),
+      intent: hasRivalCandidateValues(meaningCandidates.intents),
+      decisionTarget: hasRivalCandidateValues(
+        meaningCandidates.decisionTargets,
+      ),
+    },
+  };
+
   return attachConclusionNature(
     applyLifeDirectionTopicNormalization(
       applyLifeFlowInterpretationNormalization(
@@ -5171,6 +5229,7 @@ export function readQuestion(
           confidence: calculateConfidence(evidence.length),
 
           humanContextReceived: true,
+          readerMatchDiagnostics,
             }),
           ),
         ),
