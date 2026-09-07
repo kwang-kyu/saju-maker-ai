@@ -61,7 +61,9 @@ const TOPIC_TO_DOMAIN: Record<
   business: "business",
   money: "money",
   job: "career",
-  realEstate: "money",
+  // QuestionDomain has no realEstate member. Mapping to money collapses
+  // Reader money ≠ realEstate into one axis cell; use existing "other".
+  realEstate: "other",
   relationship: "relationship",
   love: "relationship",
   marriage: "marriage",
@@ -77,7 +79,12 @@ function refineDomainFromQuestionText(
   domain: QuestionDomain,
   normalizedQuestion: string,
 ): QuestionDomain {
-  if (/금전|재물운|재물|수입|매출|돈/.test(normalizedQuestion)) {
+  // Securities / cash markers distinguish money from realEstate-as-other.
+  // Do not use 매수/투자 alone — those also appear in realEstate questions.
+  if (
+    /금전|재물운|재물|수입|매출|돈|주식|채권|ETF|etf|예금/
+      .test(normalizedQuestion)
+  ) {
     return "money";
   }
 
@@ -180,15 +187,25 @@ function resolveDomain(
   analysisMode: QuestionAnalysisMode,
   normalizedQuestion: string,
 ): QuestionDomain {
-  if (analysisMode === "compatibility") {
+  const topicDomain = TOPIC_TO_DOMAIN[topic];
+
+  // analysisMode is an analysis method, not a signal to erase a clear Reader topic.
+  // Preserve TOPIC_TO_DOMAIN for concrete topics (business/career/marriage/…).
+  // Keep compatibility domain only for the existing relationship/general 궁합 contract.
+  const mayUseCompatibilityDomain =
+    topicDomain === "relationship" || topicDomain === "general";
+
+  if (
+    mayUseCompatibilityDomain
+    && (
+      analysisMode === "compatibility"
+      || /궁합|합이\s*맞/.test(normalizedQuestion)
+    )
+  ) {
     return "compatibility";
   }
 
-  if (/궁합|합이\s*맞/.test(normalizedQuestion)) {
-    return "compatibility";
-  }
-
-  return TOPIC_TO_DOMAIN[topic];
+  return topicDomain;
 }
 
 function resolveEvent(
@@ -418,7 +435,7 @@ function buildQuestionRef(
 
 /**
  * 기존 QuestionReaderResult를 vNext QuestionMeaning으로 읽기 전용 변환한다.
- * Reader 값이 있으면 보존하고, 없으면 해석하지 않는다.
+ * Reader 값이 있으면 보존하고, 없으면 추론하지 않는다.
  */
 export function adaptQuestionMeaning(
   input: QuestionMeaningAdapterInput,

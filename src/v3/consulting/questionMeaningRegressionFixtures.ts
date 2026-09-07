@@ -17,7 +17,11 @@ export type QuestionMeaningFixtureDomain =
   | "realEstate"
   | "relationship"
   | "marriage"
-  | "lifeDirection";
+  | "lifeDirection"
+  | "health"
+  | "legal"
+  | "lifeFlow"
+  | "general";
 
 export type QuestionMeaningExpectation = {
   topic:
@@ -377,6 +381,10 @@ export function computeQuestionMeaningFixtureStats(
     relationship: 0,
     marriage: 0,
     lifeDirection: 0,
+    health: 0,
+    legal: 0,
+    lifeFlow: 0,
+    general: 0,
   };
 
   let paraphraseCount = 0;
@@ -1855,14 +1863,14 @@ export const QUESTION_MEANING_CELLS:
         "money|risk|invest",
 
       canonicalQuestion:
-        "퇴직금 전부를 주식에 넣어도 될까요?",
+        "퇴직금 전부를 주식에 투자할 때 어떤 위험이 있나요?",
 
       expected: {
         topic:
           "money",
 
         intent:
-          "possibility",
+          "risk",
 
         decisionTarget:
           "invest",
@@ -1877,13 +1885,14 @@ export const QUESTION_MEANING_CELLS:
       canonicalMeaningAnchorTokens: [
         "퇴직금",
         "주식",
+        "위험",
       ],
 
       distinctMeaningGroup:
         "money-invest-risk",
 
       classificationSignatureGroup:
-        "money-possibility-invest-risk",
+        "money-risk-invest",
 
       paraphrases: [
         {
@@ -1891,12 +1900,12 @@ export const QUESTION_MEANING_CELLS:
             "paraphrase-01",
 
           question:
-            "한 종목에 집중해서 투자해도 될까요?",
+            "한 종목에 자금을 집중해서 투자하면 어떤 위험을 조심해야 하나요?",
 
           meaningAnchorTokens: [
             "한 종목",
             "집중",
-            "투자",
+            "위험",
           ],
 
           variationKind:
@@ -1914,19 +1923,19 @@ export const QUESTION_MEANING_CELLS:
             "composite-liquidity-lock",
 
           question:
-            "퇴직금 전부를 한 자산에 집중해서 투자하려는데 중도 환매가 어렵고 자금이 묶입니다. 진행해도 될까요?",
+            "퇴직금 전부를 한 자산에 집중 투자할 때 중도 환매가 어렵고 자금이 묶이는 위험은 무엇인가요?",
 
           meaningAnchorTokens: [
             "퇴직금",
             "중도 환매",
-            "자금",
+            "위험",
           ],
 
           variationKind:
             "composite",
 
           boundaryNote:
-            "money-invest-possibility 와 essential funds exposure 로 구분",
+            "money-invest-possibility 와 risk intent 로 구분",
         },
       ],
     },
@@ -3828,5 +3837,344 @@ export const QUESTION_MEANING_CELLS:
             "lifeDirection-confirm 와 timing intent 로 구분",
         },
       ],
+    },
+
+    // ── health ──────────────────────────────────────────────────
+    {
+      id:
+        "health-checkup-possibility",
+
+      domain:
+        "health",
+
+      primaryAxis:
+        "health|possibility|protectHealth",
+
+      canonicalQuestion:
+        "건강검진을 받아도 될까요?",
+
+      expected: {
+        topic:
+          "health",
+
+        intent:
+          "possibility",
+
+        decisionTarget:
+          "protectHealth",
+
+        timingType:
+          "unknown",
+
+        analysisMode:
+          "decision",
+      },
+
+      canonicalMeaningAnchorTokens: [
+        "건강",
+        "검진",
+        "해도 될까",
+      ],
+
+      distinctMeaningGroup:
+        "health-checkup",
+
+      classificationSignatureGroup:
+        "health-possibility-protectHealth",
+
+      paraphrases: [
+        {
+          idSuffix:
+            "paraphrase-01",
+
+          question:
+            "병원에 가서 검사를 받아도 될까요?",
+
+          meaningAnchorTokens: [
+            "병원",
+            "검사",
+            "해도 될까",
+          ],
+
+          variationKind:
+            "paraphrase",
+        },
+      ],
+
+      targetVariants: [],
+
+      timingVariants: [],
+
+      compositeVariants: [],
+    },
+
+    // ── legal ───────────────────────────────────────────────────
+    {
+      id:
+        "legal-sue-possibility",
+
+      domain:
+        "legal",
+
+      primaryAxis:
+        "legal|possibility|respondToConflict",
+
+      canonicalQuestion:
+        "고소하는 게 맞을까요?",
+
+      expected: {
+        topic:
+          "legal",
+
+        intent:
+          "possibility",
+
+        decisionTarget:
+          "respondToConflict",
+
+        timingType:
+          "unknown",
+
+        analysisMode:
+          "decision",
+      },
+
+      canonicalMeaningAnchorTokens: [
+        "고소",
+        "맞을까",
+      ],
+
+      distinctMeaningGroup:
+        "legal-sue",
+
+      classificationSignatureGroup:
+        "legal-possibility-respondToConflict",
+
+      paraphrases: [
+        {
+          idSuffix:
+            "paraphrase-01",
+
+          question:
+            "분쟁을 소송으로 가져가도 될까요?",
+
+          meaningAnchorTokens: [
+            "분쟁",
+            "소송",
+            "해도 될까",
+          ],
+
+          variationKind:
+            "paraphrase",
+        },
+      ],
+
+      targetVariants: [],
+
+      timingVariants: [],
+
+      compositeVariants: [],
+    },
+
+    // ── lifeFlow ────────────────────────────────────────────────
+    {
+      id:
+        "lifeFlow-overall-possibility",
+
+      domain:
+        "lifeFlow",
+
+      primaryAxis:
+        "lifeFlow|prediction|none",
+
+      canonicalQuestion:
+        "올해 운의 흐름은 어떤가요?",
+
+      expected: {
+        topic:
+          "lifeFlow",
+
+        intent:
+          "prediction",
+
+        decisionTarget:
+          "none",
+
+        timingType:
+          "bestTiming",
+
+        analysisMode:
+          "interpretation",
+      },
+
+      canonicalMeaningAnchorTokens: [
+        "올해",
+        "운",
+        "흐름",
+      ],
+
+      distinctMeaningGroup:
+        "lifeFlow-overall",
+
+      classificationSignatureGroup:
+        "lifeFlow-prediction-none",
+
+      paraphrases: [
+        {
+          idSuffix:
+            "paraphrase-01",
+
+          question:
+            "제 총운이 궁금합니다",
+
+          meaningAnchorTokens: [
+            "총운",
+            "궁금",
+          ],
+
+          variationKind:
+            "paraphrase",
+        },
+      ],
+
+      targetVariants: [],
+
+      timingVariants: [],
+
+      compositeVariants: [],
+    },
+
+    // ── general / existence ─────────────────────────────────────
+    {
+      id:
+        "general-luck-existence",
+
+      domain:
+        "general",
+
+      primaryAxis:
+        "general|existence|none",
+
+      canonicalQuestion:
+        "나에게 운이 있나요?",
+
+      expected: {
+        topic:
+          "general",
+
+        intent:
+          "existence",
+
+        decisionTarget:
+          "none",
+
+        timingType:
+          "unknown",
+
+        analysisMode:
+          "decision",
+      },
+
+      canonicalMeaningAnchorTokens: [
+        "운",
+        "있나요",
+      ],
+
+      distinctMeaningGroup:
+        "general-luck-existence",
+
+      classificationSignatureGroup:
+        "general-existence-none",
+
+      paraphrases: [
+        {
+          idSuffix:
+            "paraphrase-01",
+
+          question:
+            "좋은 수가 있나요?",
+
+          meaningAnchorTokens: [
+            "좋은 수",
+            "있나요",
+          ],
+
+          variationKind:
+            "paraphrase",
+        },
+      ],
+
+      targetVariants: [],
+
+      timingVariants: [],
+
+      compositeVariants: [],
+    },
+
+    // ── general / interpretation ────────────────────────────────
+    {
+      id:
+        "general-self-interpretation",
+
+      domain:
+        "general",
+
+      primaryAxis:
+        "general|generalJudgement|none",
+
+      canonicalQuestion:
+        "나는 어떤 성향인가요?",
+
+      expected: {
+        topic:
+          "general",
+
+        intent:
+          "generalJudgement",
+
+        decisionTarget:
+          "none",
+
+        timingType:
+          "unknown",
+
+        analysisMode:
+          "decision",
+      },
+
+      canonicalMeaningAnchorTokens: [
+        "성향",
+        "어떤",
+      ],
+
+      distinctMeaningGroup:
+        "general-self-interpretation",
+
+      classificationSignatureGroup:
+        "general-generalJudgement-none",
+
+      paraphrases: [
+        {
+          idSuffix:
+            "paraphrase-01",
+
+          question:
+            "내 사주의 특징은 뭔가요?",
+
+          meaningAnchorTokens: [
+            "사주",
+            "특징",
+          ],
+
+          variationKind:
+            "paraphrase",
+        },
+      ],
+
+      targetVariants: [],
+
+      timingVariants: [],
+
+      compositeVariants: [],
     },
   ];
