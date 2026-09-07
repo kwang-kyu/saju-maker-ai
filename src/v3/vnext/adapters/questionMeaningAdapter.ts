@@ -11,7 +11,9 @@ import type {
   MissingContextItem,
   QuestionDomain,
   QuestionMeaning,
+  QuestionMeaningCounterpart,
   QuestionMeaningIntent,
+  QuestionMeaningRef,
   QuestionObject,
   QuestionTimeFocus,
 } from "../types/questionMeaning.js";
@@ -31,7 +33,12 @@ export type QuestionMeaningAdapterInput = Pick<
   | "asksWhat"
   | "decisionQuestion"
   | "conclusionNature"
->;
+> & {
+  /** Optional conversation turn identity */
+  sourceTurnId?: string | null;
+  /** Optional effective question override (else normalizedQuestion) */
+  effectiveQuestion?: string | null;
+};
 
 const TOPIC_TO_DOMAIN: Record<
   QuestionTopic,
@@ -70,12 +77,8 @@ function refineDomainFromQuestionText(
 function resolveIntent(
   input: QuestionMeaningAdapterInput,
 ): QuestionMeaningIntent {
-  const conclusionIntent = mapConclusionNatureToIntent(
-    input.conclusionNature,
-  );
-
-  if (conclusionIntent) {
-    return conclusionIntent;
+  if (input.intent !== "generalJudgement") {
+    return INTENT_TO_MEANING[input.intent];
   }
 
   if (/있을까|있나요|있을지|있을\s*수/.test(input.normalizedQuestion)) {
@@ -84,6 +87,14 @@ function resolveIntent(
 
   if (/어떨까|해도\s*될까|가능할까/.test(input.normalizedQuestion)) {
     return "possibility";
+  }
+
+  const conclusionIntent = mapConclusionNatureToIntent(
+    input.conclusionNature,
+  );
+
+  if (conclusionIntent) {
+    return conclusionIntent;
   }
 
   return INTENT_TO_MEANING[input.intent];
@@ -102,7 +113,8 @@ function mapConclusionNatureToIntent(
     case "warning":
       return "risk";
     case "prediction":
-      return "possibility";
+      // Preserve Reader prediction; do not collapse to possibility.
+      return "prediction";
     case "decision":
       return "possibility";
     default:
@@ -123,7 +135,8 @@ const INTENT_TO_MEANING: Record<
   selection: "selection",
   continuation: "direction",
   termination: "direction",
-  prediction: "possibility",
+  // Preserve Reader prediction; do not collapse to possibility.
+  prediction: "prediction",
   existence: "existence",
   generalJudgement: "general",
 };
@@ -175,6 +188,11 @@ function resolveEvent(
   return candidate.trim() || null;
 }
 
+/**
+ * 기존 consumer 호환용 object.
+ * label=decisionTarget / category=topic 혼합 표현을 유지한다.
+ * 분리된 축은 actionNature / askedObject를 사용한다.
+ */
 function resolveObject(
   input: QuestionMeaningAdapterInput,
 ): QuestionObject | null {
@@ -257,8 +275,64 @@ function buildTimeFocus(
   };
 }
 
+function buildCounterpart(
+  input: QuestionMeaningAdapterInput,
+): QuestionMeaningCounterpart {
+  const facts = input.counterpartFacts;
+  const hasIdentity = Boolean(
+    facts.birthDate
+    || facts.birthTime
+    || facts.calendarType
+    || facts.gender,
+  );
+  const exists = Boolean(
+    hasIdentity
+    || facts.relationship
+    || facts.zodiac,
+  );
+
+  return {
+    exists,
+    relation: facts.relationship,
+    ...(hasIdentity
+      ? {
+        identity: {
+          birthDate: facts.birthDate,
+          birthTime: facts.birthTime,
+          calendarType: facts.calendarType,
+          gender: facts.gender,
+        },
+      }
+      : {}),
+  };
+}
+
+function buildQuestionRef(
+  input: QuestionMeaningAdapterInput,
+): QuestionMeaningRef {
+  const effectiveQuestion =
+    input.effectiveQuestion?.trim()
+    || input.normalizedQuestion
+    || undefined;
+
+  const sourceTurnId =
+    input.sourceTurnId?.trim()
+    || undefined;
+
+  return {
+    originalQuestion: input.originalQuestion,
+    ...(effectiveQuestion
+      ? { effectiveQuestion }
+      : {}),
+    ...(sourceTurnId
+      ? { sourceTurnId }
+      : {}),
+  };
+}
+
 /**
  * 기존 QuestionReaderResult를 vNext QuestionMeaning으로 읽기 전용 변환한다.
+ * Reader 값이 있으면 보존하고, 없으면 해석하지 않는다.
  */
 export function adaptQuestionMeaning(
   input: QuestionMeaningAdapterInput,
@@ -281,5 +355,11 @@ export function adaptQuestionMeaning(
     time: buildTimeFocus(input),
     object: resolveObject(input),
     missingContext: buildMissingContext(input),
+    actionNature: input.decisionTarget,
+    askedObject: input.topic,
+    analysisMode: input.analysisMode,
+    conclusionNature: input.conclusionNature,
+    counterpart: buildCounterpart(input),
+    questionRef: buildQuestionRef(input),
   };
 }
