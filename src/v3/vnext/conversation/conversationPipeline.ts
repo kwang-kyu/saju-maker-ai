@@ -585,11 +585,13 @@ function hasMeaningIdentityMismatchForReuse(params: {
       return false;
     }
 
+    // continuation 재사용 identity: domain/intent만 비교.
+    // objectLabel 표면 표현 차이(사업↔창업)는 차단하지 않는다.
+    // timeRefinement 등 다른 분기는 objectLabel을 계속 비교한다.
     return hasNonTimeMeaningIdentityMismatch(
       {
         domain: meaningHint.domain,
         intent: meaningHint.intent,
-        objectLabel: meaningHint.object?.label ?? null,
       },
       cache,
       requireCurrentWhenCached,

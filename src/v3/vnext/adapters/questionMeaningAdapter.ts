@@ -29,6 +29,7 @@ export type QuestionMeaningAdapterInput = Pick<
   | "topic"
   | "intent"
   | "decisionTarget"
+  | "objectLabel"
   | "urgency"
   | "timingType"
   | "analysisMode"
@@ -232,7 +233,7 @@ function resolveObject(
   }
 
   return {
-    label: input.decisionTarget,
+    label: input.objectLabel ?? input.decisionTarget,
     category: input.topic,
     description: input.decisionQuestion || undefined,
   };

@@ -39,7 +39,8 @@ export type SemanticAxisInvariant =
   | "C_COUNTERPART_DIFFERENCE"
   | "D_MEANING_DIFFERENCE"
   | "E_SCENARIO_DIFFERENCE"
-  | "F_SURFACE_STRING_INDEPENDENCE";
+  | "F_SURFACE_STRING_INDEPENDENCE"
+  | "G_CONDITION_ADDITION"
 
 export type SemanticAxisCaseStatus =
   | "PASS"
@@ -874,10 +875,10 @@ async function verifySurfaceStringIndependence(
   const currentSourceTurnIds = observeSourceTurnIds(second.session);
   const axisDiff = diffAxes(previousAxis, currentAxis);
 
-  const readerMeaningSame = meaningAxesEqual(
-    previousReaderAxis,
-    currentReaderAxis,
-  );
+  // F: objectLabel(표면 표현) 제외 — domain/intent만 동일하면 same meaning
+  const readerMeaningSame =
+    previousReaderAxis.meaning.domain === currentReaderAxis.meaning.domain
+    && previousReaderAxis.meaning.intent === currentReaderAxis.meaning.intent;
   const readerScenarioSame = scenarioAxesEqual(
     previousReaderAxis,
     currentReaderAxis,
@@ -977,7 +978,62 @@ async function verifySurfaceStringIndependence(
     details,
   });
 }
+/**
+ * G. CONDITION ADDITION — 같은 기본 질문에 구체 조건이 추가되면
+ * 기존 assessment를 그대로 재사용하지 않는지 확인한다.
+ */
+async function verifyConditionAddition(
+  gateway: ReturnType<typeof createMockResponseGateway>,
+): Promise<SemanticAxisReuseVerificationCase> {
+  const firstQuestion = "10월에 사업을 시작해도 될까요?";
+  const secondQuestion = "10월에 카페를 시작해도 될까요?";
 
+  const first = await runTurn(firstQuestion, gateway);
+  const previousAxis = observeAxesFromSession(first.session);
+  const previousSourceTurnIds = observeSourceTurnIds(first.session);
+  const previousReaderAxis = observeAxesFromReaderAdapter(firstQuestion);
+
+  const second = await runTurn(secondQuestion, gateway, first.session);
+  const currentAxis = observeAxesFromSession(second.session);
+  const currentSourceTurnIds = observeSourceTurnIds(second.session);
+  const currentReaderAxis = observeAxesFromReaderAdapter(secondQuestion);
+
+  const axisDiff = diffAxes(previousAxis, currentAxis);
+  const conditionChanged =
+    previousReaderAxis.meaning.objectLabel !==
+    currentReaderAxis.meaning.objectLabel;
+
+  const assessmentNotReused =
+    second.executionMetadata.reused.assessment === false ||
+    second.executionMetadata.executedStages.includes("assessment:executed");
+
+  const details = [
+    `firstQuestion=${firstQuestion}`,
+    `secondQuestion=${secondQuestion}`,
+    `readerPreviousDomain=${previousReaderAxis.meaning.domain}`,
+    `readerCurrentDomain=${currentReaderAxis.meaning.domain}`,
+    `readerPreviousIntent=${previousReaderAxis.meaning.intent}`,
+    `readerCurrentIntent=${currentReaderAxis.meaning.intent}`,
+    `readerPreviousObject=${previousReaderAxis.meaning.objectLabel ?? "null"}`,
+    `readerCurrentObject=${currentReaderAxis.meaning.objectLabel ?? "null"}`,
+    `conditionChanged=${conditionChanged}`,
+    `reusedAssessment=${second.executionMetadata.reused.assessment}`,
+    `executedStages=${second.executionMetadata.executedStages.join(",")}`,
+  ];
+
+  return buildCase({
+    id: "invariant-G-condition-addition",
+    invariant: "G_CONDITION_ADDITION",
+    status: conditionChanged && assessmentNotReused ? "PASS" : "FAIL",
+    previousAxis,
+    currentAxis,
+    axisDiff,
+    result: second,
+    previousSourceTurnIds,
+    currentSourceTurnIds,
+    details,
+  });
+}
 export async function verifySemanticAxisReuse(): Promise<
   SemanticAxisReuseVerificationResult
 > {
@@ -990,6 +1046,7 @@ export async function verifySemanticAxisReuse(): Promise<
     verifyMeaningDifference(gateway),
     verifyScenarioDifference(gateway),
     verifySurfaceStringIndependence(gateway),
+    verifyConditionAddition(gateway),
   ]);
 
   return {

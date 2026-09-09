@@ -153,6 +153,7 @@ export type QuestionReaderResult = {
   normalizedQuestion: string;
 
   topic: QuestionTopic;
+  objectLabel?: string;
   intent: QuestionIntent;
   motive: QuestionMotive;
   decisionTarget: DecisionTarget;
@@ -278,6 +279,7 @@ type MeaningCandidateSet = {
  */
 type NormalizedAxes = {
   topic: QuestionTopic;
+  objectLabel?: string;
   intent: QuestionIntent;
   decisionTarget: DecisionTarget;
   evidence: {
@@ -3685,6 +3687,7 @@ function normalizeAxes(
 
   return {
     topic,
+    objectLabel: topicEvidence[0],
     intent,
     decisionTarget,
     evidence: {
@@ -5202,6 +5205,7 @@ export function readQuestion(
           normalizedQuestion,
 
           topic: resolvedTopic,
+          objectLabel: normalizedAxes.objectLabel,
           intent: normalizedAxes.intent,
           motive: motiveMatch.result,
           decisionTarget:
