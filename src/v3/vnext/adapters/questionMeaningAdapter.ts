@@ -223,7 +223,7 @@ function resolveEvent(
 
 /**
  * 기존 consumer 호환용 object.
- * label=decisionTarget / category=topic 혼합 표현을 유지한다.
+ * label은 objectLabel만 사용하고, 없으면 "". category=topic 혼합 표현을 유지한다.
  * 분리된 축은 actionNature / askedObject를 사용한다.
  */
 function resolveObject(
@@ -234,7 +234,7 @@ function resolveObject(
   }
 
   return {
-    label: input.objectLabel ?? input.decisionTarget,
+    label: input.objectLabel ?? "",
     category: input.topic,
     description: input.decisionQuestion || undefined,
   };
