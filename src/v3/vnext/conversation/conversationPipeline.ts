@@ -1523,12 +1523,19 @@ export async function runVNextConversationPipeline(
   const questionInterpretation =
     hasStoredCounterpartFacts(mergedCounterpartFacts)
     || counterpartContinuity === "switch"
-      ? buildQuestionInterpretationForAnalysis(
-          humanContext,
-          pipelineRequest.question,
-          mergedCounterpartFacts,
-          counterpartContinuity,
-        )
+      ? followUpType === "clarificationAnswer"
+        ? buildQuestionInterpretationForAnalysis(
+            humanContext,
+            pipelineRequest.question,
+            mergedCounterpartFacts,
+            counterpartContinuity,
+          )
+        : currentReaderResult && mergedCounterpartFacts
+          ? {
+              ...currentReaderResult,
+              counterpartFacts: mergedCounterpartFacts,
+            }
+          : undefined
       : undefined;
 
   const effectiveQuestion = resolveEffectiveQuestionForResponse(
