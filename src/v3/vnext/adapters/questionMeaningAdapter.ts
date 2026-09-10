@@ -30,6 +30,7 @@ export type QuestionMeaningAdapterInput = Pick<
   | "intent"
   | "decisionTarget"
   | "objectLabel"
+  | "objectReferent"
   | "urgency"
   | "timingType"
   | "analysisMode"
@@ -504,6 +505,7 @@ export function adaptQuestionMeaning(
       family: input.topic,
       specificity: resolveObjectSpecificity(input.objectLabel),
       surface: input.objectLabel ?? "",
+      referentKind: input.objectReferent,
     },
     missingContext: buildMissingContext(input),
     actionNature: input.decisionTarget,

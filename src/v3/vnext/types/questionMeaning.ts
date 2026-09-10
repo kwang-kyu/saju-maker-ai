@@ -12,6 +12,7 @@ import type {
   ConclusionNature,
   DecisionTarget,
   QuestionAnalysisMode,
+  QuestionObjectReferent,
   QuestionTopic,
 } from "../../consulting/question/questionReader.js";
 import type {
@@ -103,6 +104,19 @@ export type QuestionObject = {
   description?: string;
 };
 
+/**
+ * 객체의 의미 identity.
+ * family는 topic/askedObject를 대체하지 않는다.
+ */
+export type QuestionObjectIdentity = {
+  family: string;
+  specificity: "generic" | "specific" | "unknown";
+  surface: string;
+  instanceToken?: string;
+  /** Reader objectReferent 투영 — 재해석하지 않는다 */
+  referentKind?: QuestionObjectReferent;
+};
+
 /** 분석에 필요하지만 아직 제공되지 않은 맥락 */
 export type MissingContextItem = {
   key: string;
@@ -145,6 +159,7 @@ export type QuestionMeaning = {
   intent: QuestionMeaningIntent;
   time: QuestionTimeFocus;
   object: QuestionObject | null;
+  objectIdentity?: QuestionObjectIdentity;
   missingContext: MissingContextItem[];
   /** Reader decisionTarget — 행동 의미 */
   actionNature: QuestionActionNature;

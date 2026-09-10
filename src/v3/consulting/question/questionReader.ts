@@ -117,6 +117,15 @@ export type QuestionCounterpartReferent =
   | "different"
   | "unspecified";
 
+/**
+ * 현재 질문이 지칭하는 대상(object) referent 구조.
+ * deictic: 이거/그거 등 대상 지시어 / unspecified: 지시어 없음
+ * (해석·clarification 결정은 상위 레이어 책임)
+ */
+export type QuestionObjectReferent =
+  | "deictic"
+  | "unspecified";
+
 export type QuestionCounterpartFacts = {
   birthDate:
     string | null;
@@ -154,6 +163,13 @@ export type QuestionReaderResult = {
 
   topic: QuestionTopic;
   objectLabel?: string;
+  /**
+   * 질문 문장에 나타난 대상(object) 지시어 구조.
+   * Reader가 추출만 하고, clarification/해석은 상위 레이어가 결정한다.
+   * 기존 object literal 호환을 위해 optional이며,
+   * readQuestion은 항상 채운다.
+   */
+  objectReferent?: QuestionObjectReferent;
   intent: QuestionIntent;
   motive: QuestionMotive;
   decisionTarget: DecisionTarget;
@@ -5125,6 +5141,24 @@ function extractQuestionCounterpartFacts(
   };
 }
 
+/**
+ * 대상 지시어(closed class)만 추출한다.
+ * topic / objectLabel / decisionTarget / frames 선택에는 개입하지 않는다.
+ */
+const OBJECT_DEICTIC_REFERENT_PATTERN =
+  /이거|이걸|이것|그거|그걸|저거|저걸/;
+
+function extractObjectReferent(
+  question:
+    string,
+): QuestionObjectReferent {
+  return OBJECT_DEICTIC_REFERENT_PATTERN.test(
+    question,
+  )
+    ? "deictic"
+    : "unspecified";
+}
+
 function detectQuestionAnalysisScope(
   question:
     string,
@@ -5225,6 +5259,11 @@ export function readQuestion(
       normalizedQuestion,
     );
 
+  const objectReferent =
+    extractObjectReferent(
+      normalizedQuestion,
+    );
+
   const analysisMode =
     detectQuestionAnalysisMode(
       normalizedQuestion,
@@ -5281,6 +5320,7 @@ export function readQuestion(
 
           topic: resolvedTopic,
           objectLabel: normalizedAxes.objectLabel,
+          objectReferent,
           intent: normalizedAxes.intent,
           motive: motiveMatch.result,
           decisionTarget:
