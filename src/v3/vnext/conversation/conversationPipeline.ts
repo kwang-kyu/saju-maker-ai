@@ -1536,7 +1536,9 @@ export async function runVNextConversationPipeline(
               counterpartFacts: mergedCounterpartFacts,
             }
           : undefined
-      : undefined;
+      : followUpType === "clarificationAnswer"
+        ? undefined
+        : currentReaderResult ?? undefined;
 
   const effectiveQuestion = resolveEffectiveQuestionForResponse(
     params.question,
