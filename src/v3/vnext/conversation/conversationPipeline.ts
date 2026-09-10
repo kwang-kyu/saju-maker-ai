@@ -28,6 +28,9 @@ import {
   resolveLifeFlowTarget,
 } from "../../consulting/question/lifeFlowTargetResolver.js";
 import {
+  interpretQuestionSemantics,
+} from "../../consulting/question/questionSemanticInterpreter.js";
+import {
   adaptQuestionMeaning,
 } from "../adapters/questionMeaningAdapter.js";
 import {
@@ -67,6 +70,9 @@ import type {
 import {
   buildResponsePromptFromAction,
 } from "../prompt/responsePromptBuilder.js";
+import {
+  shouldEnrichQuestion,
+} from "../question/shouldEnrichQuestion.js";
 import {
   analyzeVNextConsultingRequest,
   type VNextConsultingAnalysisResult,
@@ -1513,6 +1519,20 @@ export async function runVNextConversationPipeline(
       })
     : null;
 
+  // New-analysis turns only: clarification / continuation / cache reuse skip Interpreter.
+  const needsNewQuestionAnalysis =
+    followUpType === "initial"
+    || reusePlan?.requiresNewQuestionAnalysis === true;
+  const isClarificationAnswer =
+    followUpType === "clarificationAnswer";
+  const shouldAttemptQuestionEnrichment =
+    needsNewQuestionAnalysis
+    && !isClarificationAnswer
+    && currentReaderResult !== null
+    && shouldEnrichQuestion(currentReaderResult);
+  // Free/API-free Mock gateway: skip Interpreter; keep Reader-only.
+  const isMockGateway = "getCallRecord" in params.input.gateway;
+
   const pipelineRequest = resolvePipelineRequest(
     params.input.request,
     params.question,
@@ -1520,7 +1540,7 @@ export async function runVNextConversationPipeline(
     followUpType,
   );
 
-  const questionInterpretation =
+  let questionInterpretation =
     hasStoredCounterpartFacts(mergedCounterpartFacts)
     || counterpartContinuity === "switch"
       ? followUpType === "clarificationAnswer"
@@ -1539,6 +1559,26 @@ export async function runVNextConversationPipeline(
       : followUpType === "clarificationAnswer"
         ? undefined
         : currentReaderResult ?? undefined;
+
+  if (
+    shouldAttemptQuestionEnrichment
+    && !isMockGateway
+    && currentReaderResult
+  ) {
+    try {
+      const interpreterResult = await interpretQuestionSemantics(
+        params.question,
+      );
+      const overlayBase = questionInterpretation ?? currentReaderResult;
+      questionInterpretation = {
+        ...overlayBase,
+        topic: interpreterResult.topic,
+        decisionTarget: interpreterResult.decisionTarget,
+      };
+    } catch {
+      // Reader-only fallback: keep current questionInterpretation.
+    }
+  }
 
   const effectiveQuestion = resolveEffectiveQuestionForResponse(
     params.question,
