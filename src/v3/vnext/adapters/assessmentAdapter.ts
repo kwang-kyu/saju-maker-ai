@@ -224,17 +224,44 @@ function buildTimeDifferences(
 }
 
 /**
+ * DecisionResult 방향 원문을 그대로 보존한다.
+ * 비어 있으면 필드를 생략한다. 요약·재해석하지 않는다.
+ */
+function readDirectionOriginal(
+  value: string,
+): string | undefined {
+  if (typeof value !== "string" || value.length === 0) {
+    return undefined;
+  }
+
+  return value;
+}
+
+/**
  * 기존 DecisionResult를 vNext Assessment로 읽기 전용 변환한다.
  */
 export function adaptAssessment(
   input: AssessmentAdapterInput,
 ): Assessment {
+  const recommendedDirection = readDirectionOriginal(
+    input.recommendedDirection,
+  );
+  const prohibitedDirection = readDirectionOriginal(
+    input.prohibitedDirection,
+  );
+
   return {
     possibility: VERDICT_TO_POSSIBILITY[input.verdict],
     direction: mapDirection(
       input.actionReadiness,
       input.recommendedDirection,
     ),
+    ...(recommendedDirection !== undefined
+      ? { recommendedDirection }
+      : {}),
+    ...(prohibitedDirection !== undefined
+      ? { prohibitedDirection }
+      : {}),
     conditions: input.conditions.map((condition) => ({
       key: condition.key,
       description: condition.description,

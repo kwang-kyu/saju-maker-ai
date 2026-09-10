@@ -66,10 +66,23 @@ export type TimeDifference = {
  *
  * possibility / direction / conditions / risks / changeIntensity /
  * timeDifferences / evidence / confidence를 표현한다.
+ *
+ * recommendedDirection / prohibitedDirection은 DecisionResult 원문 보존용이다.
+ * direction(taxonomy)과 별개이며, 재해석하지 않는다.
  */
 export type Assessment = {
   possibility: AssessmentPossibility;
   direction: AssessmentDirection;
+  /**
+   * DecisionResult.recommendedDirection 원문.
+   * direction taxonomy projection과 별개로 보존한다.
+   */
+  recommendedDirection?: string;
+  /**
+   * DecisionResult.prohibitedDirection 원문.
+   * direction taxonomy projection과 별개로 보존한다.
+   */
+  prohibitedDirection?: string;
   conditions: AssessmentCondition[];
   risks: AssessmentRisk[];
   changeIntensity: ChangeIntensity;

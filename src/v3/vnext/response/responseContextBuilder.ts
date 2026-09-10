@@ -93,6 +93,63 @@ function readQuestionSpecificMaterials(
   return stage.value;
 }
 
+/**
+ * Assessment.evidence.summary(= DecisionResult.coreDecision) 원문을 그대로 읽는다.
+ * 요약·재해석하지 않는다.
+ */
+function readLockedDecisionStatement(
+  analysisResult: AnalysisResult,
+): string | undefined {
+  const assessment = readReadyValue<Assessment>(
+    analysisResult.assessment,
+  );
+  const summary = assessment?.evidence.summary;
+
+  if (typeof summary !== "string" || summary.length === 0) {
+    return undefined;
+  }
+
+  return summary;
+}
+
+/**
+ * Assessment.recommendedDirection(= DecisionResult.recommendedDirection) 원문을 그대로 읽는다.
+ * 요약·재해석하지 않는다.
+ */
+function readRecommendedDirection(
+  analysisResult: AnalysisResult,
+): string | undefined {
+  const assessment = readReadyValue<Assessment>(
+    analysisResult.assessment,
+  );
+  const value = assessment?.recommendedDirection;
+
+  if (typeof value !== "string" || value.length === 0) {
+    return undefined;
+  }
+
+  return value;
+}
+
+/**
+ * Assessment.prohibitedDirection(= DecisionResult.prohibitedDirection) 원문을 그대로 읽는다.
+ * 요약·재해석하지 않는다.
+ */
+function readProhibitedDirection(
+  analysisResult: AnalysisResult,
+): string | undefined {
+  const assessment = readReadyValue<Assessment>(
+    analysisResult.assessment,
+  );
+  const value = assessment?.prohibitedDirection;
+
+  if (typeof value !== "string" || value.length === 0) {
+    return undefined;
+  }
+
+  return value;
+}
+
 function buildClarificationContext(
   input: ResponseContextBuilderInput,
   scenario: ConsultingScenario,
@@ -163,12 +220,31 @@ export function buildResponseContext(
     selectResponseBlockContext(blockId, selectionContext),
   );
 
+  const lockedDecisionStatement = readLockedDecisionStatement(
+    input.analysisResult,
+  );
+  const recommendedDirection = readRecommendedDirection(
+    input.analysisResult,
+  );
+  const prohibitedDirection = readProhibitedDirection(
+    input.analysisResult,
+  );
+
   return {
     originalQuestion: input.originalQuestion,
     answerMode: input.answerMode,
     scenario: scenario.type,
     blueprint,
     blocks,
+    ...(lockedDecisionStatement !== undefined
+      ? { lockedDecisionStatement, engineDecisionLocked: true }
+      : {}),
+    ...(recommendedDirection !== undefined
+      ? { recommendedDirection }
+      : {}),
+    ...(prohibitedDirection !== undefined
+      ? { prohibitedDirection }
+      : {}),
     questionSpecificMaterials: readQuestionSpecificMaterials(
       input.analysisResult,
     ),

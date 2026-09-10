@@ -44,6 +44,26 @@ export type ResponseContext = {
   scenario: ConsultingScenarioType;
   blueprint: AnswerBlueprint;
   blocks: ResponseBlockContext[];
+  /**
+   * DecisionResult.coreDecision 원문.
+   * Assessment.evidence.summary에서 그대로 전달하며 재해석하지 않는다.
+   */
+  lockedDecisionStatement?: string;
+  /**
+   * DecisionResult.recommendedDirection 원문.
+   * Assessment.recommendedDirection에서 그대로 전달하며 재해석하지 않는다.
+   */
+  recommendedDirection?: string;
+  /**
+   * DecisionResult.prohibitedDirection 원문.
+   * Assessment.prohibitedDirection에서 그대로 전달하며 재해석하지 않는다.
+   */
+  prohibitedDirection?: string;
+  /**
+   * lockedDecisionStatement가 non-empty일 때만 true.
+   * recommendedDirection / prohibitedDirection 단독 존재로는 잠기지 않는다.
+   */
+  engineDecisionLocked?: boolean;
   questionSpecificMaterials?: QuestionSpecificMaterialSelection;
   missingContext?: MissingContextItem[];
 };

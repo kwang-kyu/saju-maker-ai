@@ -46,6 +46,9 @@ const DETAILED_EVIDENCE_BLOCK_IDS = new Set([
 function isStructuralSection(section: PromptSection): boolean {
   return section.id === "question"
     || section.id === "answerGoal"
+    || section.id === "lockedDecisionStatement"
+    || section.id === "lockedRecommendedDirection"
+    || section.id === "lockedProhibitedDirection"
     || section.id === "explanationRules";
 }
 

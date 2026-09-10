@@ -19,6 +19,7 @@ import {
 } from "./promptStrategyResolver.js";
 import {
   buildSystemInstruction,
+  promptTemplateOptionsFromContext,
 } from "./promptTemplate.js";
 import type {
   PromptBudgetLevel,
@@ -65,10 +66,16 @@ export function buildResponsePrompt(
     strategy,
   );
   const userPrompt = renderPromptSections(selectedSections);
-  const systemInstruction = buildSystemInstruction({
-    ...strategy,
-    verbosityLevel: budget,
-  });
+  const promptTemplateOptions = promptTemplateOptionsFromContext(
+    input.responseContext.engineDecisionLocked,
+  );
+  const systemInstruction = buildSystemInstruction(
+    {
+      ...strategy,
+      verbosityLevel: budget,
+    },
+    promptTemplateOptions,
+  );
   const selectedBlockIds = collectSectionBlockIds(selectedSections);
 
   return {

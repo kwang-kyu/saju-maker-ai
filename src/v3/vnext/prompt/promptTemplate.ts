@@ -6,6 +6,49 @@ import type {
   PromptStrategy,
 } from "../types/responsePrompt.js";
 
+/**
+ * promptTemplate 호출 options.
+ * 기존 호출부는 생략 가능하며, undefined/false는 기존 guidance를 유지한다.
+ */
+export type PromptTemplateOptions = {
+  engineDecisionLocked?: boolean;
+};
+
+/**
+ * ResponseContext.engineDecisionLocked를 promptTemplate options로 전달한다.
+ * undefined는 true로 취급하지 않으며, 값을 재계산하지 않는다.
+ */
+export function promptTemplateOptionsFromContext(
+  engineDecisionLocked: boolean | undefined,
+): PromptTemplateOptions | undefined {
+  if (engineDecisionLocked === undefined) {
+    return undefined;
+  }
+
+  return { engineDecisionLocked };
+}
+
+/**
+ * engineDecisionLocked === true일 때만 추가되는 Engine Decision Lock 계약.
+ * GPT는 explanationOnly이며, Engine 판단을 재계산·대체하지 않는다.
+ */
+const ENGINE_DECISION_LOCKED_GUIDANCE = [
+  "Engine Decision Lock: GPT 역할은 explanationOnly이다. Engine이 확정한 최종 판단을 전달하고 설명만 한다.",
+  "Engine의 최종 판단을 변경하지 않는다. 약화하거나 반대로 바꾸지 않는다.",
+  "possibility/direction/confidence로 새로운 verdict를 만들지 않는다.",
+  "recommendedDirection / prohibitedDirection을 변경하지 않는다.",
+  "facts/evidence/conditions/risks는 설명 근거로만 사용한다. verdict 생성 입력으로 쓰지 않는다.",
+  "[엔진이 확정한 최종 판단] 원문을 답변에 정확히 한 번 포함한다. 원문을 새로운 결론으로 요약하거나 대체하지 않는다.",
+  "직접적인 판단을 새로 제시하지 않는다.",
+].join("\n");
+
+/** lock ON일 때 CONSULTING_FLOW의 재판단 유도 문구 대체. */
+const CONSULTING_FLOW_LOCKED_OPENING =
+  "먼저 [엔진이 확정한 최종 판단] 원문을 전달한 뒤 그 판단을 설명한다.";
+
+const CONSULTING_FLOW_REJUDGE_OPENING =
+  "먼저 질문에 대한 직접적인 판단을 제시한다.";
+
 export const GLOBAL_FORBIDDEN_PATTERNS = [
   "새로운 사주 판단",
   "새로운 사주 계산",
@@ -60,35 +103,98 @@ export const CONSULTING_FLOW_GUIDANCE = [
   "자연스러운 상담 문장 흐름으로 작성한다.",
 ] as const;
 
-function buildStyleGuidance(strategy: PromptStrategy): string {
+/**
+ * engineDecisionLocked === true이면 재판단 유도 opening만 lock 전달·설명으로 바꾼다.
+ * 전역 삭제가 아니라 조건부 전환이다.
+ */
+function resolveConsultingFlowGuidance(
+  engineDecisionLocked: boolean,
+): readonly string[] {
+  if (!engineDecisionLocked) {
+    return CONSULTING_FLOW_GUIDANCE;
+  }
+
+  return CONSULTING_FLOW_GUIDANCE.map((line) => {
+    if (line === CONSULTING_FLOW_REJUDGE_OPENING) {
+      return CONSULTING_FLOW_LOCKED_OPENING;
+    }
+
+    if (line === "마지막에는 전체 판단을 짧고 분명하게 정리한다.") {
+      return "마지막에는 앞에서 전달·설명한 Engine 판단을 짧고 분명하게 정리한다.";
+    }
+
+    if (
+      line
+      === "마지막 정리에서는 새로운 근거, 새로운 조건, 새로운 실행 전략을 추가하지 않는다. 앞에서 설명한 내용을 바탕으로 최종 판단만 짧고 분명하게 정리한다."
+    ) {
+      return "마지막 정리에서는 새로운 근거, 새로운 조건, 새로운 실행 전략을 추가하지 않는다. 앞에서 전달·설명한 Engine 판단을 짧고 분명하게 정리한다.";
+    }
+
+    return line;
+  });
+}
+
+function buildDecisionSupportGuidance(
+  engineDecisionLocked: boolean,
+): string {
+  if (engineDecisionLocked) {
+    return [
+      "첫 문장에서 [엔진이 확정한 최종 판단] 원문을 자연스럽게 전달한다.",
+      "Engine 판단을 전달한 뒤 이유 → 조건과 실행 방향 → 위험 → 최종 정리 순으로 자연스럽게 연결한다.",
+      "판단, 조건, 위험, 시기를 이해하기 쉽게 연결하되 보고서 제목은 쓰지 않는다.",
+      "무조건 추천 또는 무조건 금지 표현을 사용하지 않는다.",
+      "같은 근거를 반복하지 않고 각 문단에서 새로운 실행 정보를 제공한다.",
+    ].join("\n");
+  }
+
+  return [
+    "첫 문장에서 질문에 대한 현재 판단을 자연스럽고 직접적으로 먼저 제시한다.",
+    "판단을 먼저 제시한 뒤 이유 → 조건과 실행 방향 → 위험 → 최종 정리 순으로 자연스럽게 연결한다.",
+    "판단, 조건, 위험, 시기를 이해하기 쉽게 연결하되 보고서 제목은 쓰지 않는다.",
+    "무조건 추천 또는 무조건 금지 표현을 사용하지 않는다.",
+    "같은 근거를 반복하지 않고 각 문단에서 새로운 실행 정보를 제공한다.",
+  ].join("\n");
+}
+
+function buildStyleGuidance(
+  strategy: PromptStrategy,
+  options?: PromptTemplateOptions,
+): string {
+  const engineDecisionLocked = options?.engineDecisionLocked === true;
+  let guidance: string;
+
   switch (strategy.conversationStyle) {
     case "conversational":
-      return [
+      guidance = [
         "자연스러운 상담형 문답 스타일을 사용한다.",
         "정형화된 보고서 제목(결론/근거/주의사항/실행방안)을 매번 강제하지 않는다.",
         "판단 → 이유 → 조건·실행 → 위험 → 정리 순으로 자연스럽게 연결한다.",
         "입력 블록별 기계적 나열 대신 하나의 상담 문장 흐름으로 통합한다.",
       ].join("\n");
+      break;
     case "consulting":
-      return [
+      guidance = [
         "상담형 설명을 유지하되, 관계·의미·변화를 연결해 설명한다.",
         "과도한 보고서 형식은 피한다.",
         "판단 → 이유 → 조건·실행 → 위험 → 정리 순으로 자연스럽게 연결한다.",
       ].join("\n");
+      break;
     case "decisionSupport":
-      return [
-        "첫 문장에서 질문에 대한 현재 판단을 자연스럽고 직접적으로 먼저 제시한다.",
-        "판단을 먼저 제시한 뒤 이유 → 조건과 실행 방향 → 위험 → 최종 정리 순으로 자연스럽게 연결한다.",
-        "판단, 조건, 위험, 시기를 이해하기 쉽게 연결하되 보고서 제목은 쓰지 않는다.",
-        "무조건 추천 또는 무조건 금지 표현을 사용하지 않는다.",
-        "같은 근거를 반복하지 않고 각 문단에서 새로운 실행 정보를 제공한다.",
-      ].join("\n");
+      guidance = buildDecisionSupportGuidance(engineDecisionLocked);
+      break;
     case "analyticalReport":
-      return [
+      guidance = [
         "분석 보고서형 구조를 유지한다.",
         "Blueprint sections 순서를 존중한다.",
       ].join("\n");
+      break;
   }
+
+  if (engineDecisionLocked) {
+    return `${guidance}\n${ENGINE_DECISION_LOCKED_GUIDANCE}`;
+  }
+
+  return guidance;
 }
 
 function buildForbiddenSection(strategy: PromptStrategy): string {
@@ -110,6 +216,7 @@ function buildForbiddenSection(strategy: PromptStrategy): string {
 
 export function buildSystemInstruction(
   strategy: PromptStrategy,
+  options?: PromptTemplateOptions,
 ): string {
   return [
     "[역할]",
@@ -119,7 +226,7 @@ export function buildSystemInstruction(
     strategy.answerGoal,
     "",
     "[대화 스타일]",
-    buildStyleGuidance(strategy),
+    buildStyleGuidance(strategy, options),
     "",
     "[허용]",
     ALLOWED_BEHAVIORS,
@@ -135,6 +242,7 @@ export function buildSystemInstruction(
 
 export function buildExplanationRulesSection(
   strategy: PromptStrategy,
+  options?: PromptTemplateOptions,
 ): string {
   const lines = [
     "아래 데이터만 근거로 사용한다.",
@@ -142,14 +250,20 @@ export function buildExplanationRulesSection(
     `대화 스타일: ${strategy.conversationStyle}`,
   ];
 
+  const engineDecisionLocked = options?.engineDecisionLocked === true;
+
   if (strategy.answerMode === "question") {
     lines.push(
-      ...CONSULTING_FLOW_GUIDANCE,
+      ...resolveConsultingFlowGuidance(engineDecisionLocked),
     );
   } else {
     lines.push(
       "Report Mode이므로 구조화된 설명을 허용한다.",
     );
+  }
+
+  if (engineDecisionLocked) {
+    lines.push(ENGINE_DECISION_LOCKED_GUIDANCE);
   }
 
   return lines.join("\n");

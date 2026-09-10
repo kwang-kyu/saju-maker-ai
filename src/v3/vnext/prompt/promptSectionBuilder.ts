@@ -10,6 +10,8 @@ import type {
 } from "./promptBudgetController.js";
 import {
   buildExplanationRulesSection,
+  promptTemplateOptionsFromContext,
+  type PromptTemplateOptions,
 } from "./promptTemplate.js";
 import type {
   ChangeSignal,
@@ -191,6 +193,72 @@ function buildAnswerGoalSection(
   };
 }
 
+/**
+ * DecisionResult.coreDecision 원문을 명시적 locked decision statement로 전달한다.
+ * 재해석·요약하지 않는다.
+ */
+function buildLockedDecisionSection(
+  context: ResponseContext,
+): PromptSection | null {
+  const statement = context.lockedDecisionStatement;
+
+  if (typeof statement !== "string" || statement.length === 0) {
+    return null;
+  }
+
+  return {
+    id: "lockedDecisionStatement",
+    title: "엔진이 확정한 최종 판단",
+    content: statement,
+    blockIds: [],
+    priority: 2,
+  };
+}
+
+/**
+ * DecisionResult.recommendedDirection 원문을 엔진이 정한 권장 방향으로 전달한다.
+ * 재해석·요약하지 않는다.
+ */
+function buildLockedRecommendedDirectionSection(
+  context: ResponseContext,
+): PromptSection | null {
+  const value = context.recommendedDirection;
+
+  if (typeof value !== "string" || value.length === 0) {
+    return null;
+  }
+
+  return {
+    id: "lockedRecommendedDirection",
+    title: "엔진이 정한 권장 방향",
+    content: value,
+    blockIds: [],
+    priority: 3,
+  };
+}
+
+/**
+ * DecisionResult.prohibitedDirection 원문을 엔진이 정한 금지 방향으로 전달한다.
+ * 재해석·요약하지 않는다.
+ */
+function buildLockedProhibitedDirectionSection(
+  context: ResponseContext,
+): PromptSection | null {
+  const value = context.prohibitedDirection;
+
+  if (typeof value !== "string" || value.length === 0) {
+    return null;
+  }
+
+  return {
+    id: "lockedProhibitedDirection",
+    title: "엔진이 정한 금지 방향",
+    content: value,
+    blockIds: [],
+    priority: 4,
+  };
+}
+
 function buildBlockSection(
   block: ResponseBlockContext,
   evidenceLimit: number,
@@ -207,11 +275,12 @@ function buildBlockSection(
 
 function buildExplanationRulesPromptSection(
   strategy: PromptStrategy,
+  options?: PromptTemplateOptions,
 ): PromptSection {
   return {
     id: "explanationRules",
     title: "설명 규칙",
-    content: buildExplanationRulesSection(strategy),
+    content: buildExplanationRulesSection(strategy, options),
     blockIds: [],
     priority: 900,
   };
@@ -233,6 +302,26 @@ export function buildPromptSections(
     buildAnswerGoalSection(strategy),
   ];
 
+  const lockedDecisionSection = buildLockedDecisionSection(context);
+
+  if (lockedDecisionSection) {
+    sections.push(lockedDecisionSection);
+  }
+
+  const lockedRecommendedDirectionSection =
+    buildLockedRecommendedDirectionSection(context);
+
+  if (lockedRecommendedDirectionSection) {
+    sections.push(lockedRecommendedDirectionSection);
+  }
+
+  const lockedProhibitedDirectionSection =
+    buildLockedProhibitedDirectionSection(context);
+
+  if (lockedProhibitedDirectionSection) {
+    sections.push(lockedProhibitedDirectionSection);
+  }
+
   context.blocks.forEach((block, index) => {
     const evidenceLimit = resolveBlockEvidenceLimit(block.id, options);
     const content = formatBlockContent(block, evidenceLimit);
@@ -246,7 +335,12 @@ export function buildPromptSections(
     );
   });
 
-  sections.push(buildExplanationRulesPromptSection(strategy));
+  sections.push(
+    buildExplanationRulesPromptSection(
+      strategy,
+      promptTemplateOptionsFromContext(context.engineDecisionLocked),
+    ),
+  );
 
   return sections;
 }
