@@ -3469,6 +3469,77 @@ function normalizeIntentSemanticMeaning(
  * 서로 덮어쓰지 않는 범위를 지킨다.
  * (termination/continuation decisionTarget 정리는 J-4-3-2 유지)
  */
+/**
+ * keyword의 Korean form 중 질문에서 가장 먼저 등장하는 위치를 반환한다.
+ * 매칭되지 않으면 -1.
+ */
+function findKoreanKeywordEarliestIndex(
+  question: string,
+  keyword: string,
+): number {
+  let earliest = -1;
+
+  for (const form of buildKoreanKeywordForms(keyword)) {
+    const index = question.indexOf(form);
+    if (index < 0) {
+      continue;
+    }
+    if (earliest < 0 || index < earliest) {
+      earliest = index;
+    }
+  }
+
+  return earliest;
+}
+
+/**
+ * objectLabel 선택.
+ * - topicEvidence 없으면 undefined
+ * - business 외 topic은 기존 선언 순서(topicEvidence[0]) 유지
+ * - business는 start signal(창업/개업 등)을 제외하고,
+ *   질문 문자열에 실제로 먼저 등장한 keyword를 선택
+ * - 제외 후 후보가 없으면 topicEvidence 전체로 다시 후보를 잡고
+ *   동일하게 질문 내 등장 순서가 가장 빠른 keyword를 선택
+ * - 질문에서 위치를 못 찾으면 undefined
+ *   (topicEvidence[0]으로 복구하지 않음)
+ */
+function selectObjectLabelFromTopicEvidence(
+  question: string,
+  topic: QuestionTopic,
+  topicEvidence: readonly string[],
+): string | undefined {
+  if (topicEvidence.length === 0) {
+    return undefined;
+  }
+
+  if (topic !== "business") {
+    return topicEvidence[0];
+  }
+
+  const objectCandidates = topicEvidence.filter(
+    (keyword) => !BUSINESS_START_SIGNAL_KEYWORDS.includes(keyword),
+  );
+
+  const labelCandidates =
+    objectCandidates.length > 0 ? objectCandidates : topicEvidence;
+
+  let selected: string | undefined;
+  let selectedIndex = Number.POSITIVE_INFINITY;
+
+  for (const keyword of labelCandidates) {
+    const index = findKoreanKeywordEarliestIndex(question, keyword);
+    if (index < 0) {
+      continue;
+    }
+    if (index < selectedIndex) {
+      selectedIndex = index;
+      selected = keyword;
+    }
+  }
+
+  return selected;
+}
+
 function normalizeAxes(
   question: string,
   candidates: MeaningCandidateSet,
@@ -3687,7 +3758,11 @@ function normalizeAxes(
 
   return {
     topic,
-    objectLabel: topicEvidence[0],
+    objectLabel: selectObjectLabelFromTopicEvidence(
+      question,
+      topic,
+      topicEvidence,
+    ),
     intent,
     decisionTarget,
     evidence: {

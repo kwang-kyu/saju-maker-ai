@@ -434,6 +434,48 @@ function buildQuestionRef(
   };
 }
 
+/** Existing business generic nouns — exact match only. */
+const BUSINESS_GENERIC_NOUNS = new Set<string>([
+  "사업",
+  "창업",
+  "장사",
+  "가게",
+  "개업",
+  "매장",
+  "자영업",
+  "프랜차이즈",
+]);
+
+/** Existing business specific nouns — exact match only. */
+const BUSINESS_SPECIFIC_NOUNS = new Set<string>([
+  "식당",
+  "카페",
+  "치킨",
+  "통닭",
+]);
+
+/**
+ * Resolve objectIdentity.specificity from objectLabel.
+ * Exact equality only — no includes / substring matching.
+ */
+function resolveObjectSpecificity(
+  objectLabel: string | null | undefined,
+): "generic" | "specific" | "unknown" {
+  if (!objectLabel) {
+    return "unknown";
+  }
+
+  if (BUSINESS_GENERIC_NOUNS.has(objectLabel)) {
+    return "generic";
+  }
+
+  if (BUSINESS_SPECIFIC_NOUNS.has(objectLabel)) {
+    return "specific";
+  }
+
+  return "unknown";
+}
+
 /**
  * 기존 QuestionReaderResult를 vNext QuestionMeaning으로 읽기 전용 변환한다.
  * Reader 값이 있으면 보존하고, 없으면 추론하지 않는다.
@@ -458,6 +500,11 @@ export function adaptQuestionMeaning(
     intent: resolveIntent(input),
     time: buildTimeFocus(input),
     object: resolveObject(input),
+    objectIdentity: {
+      family: input.topic,
+      specificity: resolveObjectSpecificity(input.objectLabel),
+      surface: input.objectLabel ?? "",
+    },
     missingContext: buildMissingContext(input),
     actionNature: input.decisionTarget,
     askedObject: input.topic,
