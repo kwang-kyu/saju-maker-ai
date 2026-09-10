@@ -23,6 +23,7 @@ import type {
 import type {
   ResponseBlockContext,
   ResponseContext,
+  ResponseQuestionMeaningAxes,
 } from "../response/responseContext.js";
 import type {
   VNextEvidenceItem,
@@ -181,6 +182,42 @@ function buildQuestionSection(
   };
 }
 
+/**
+ * ResponseContext.questionMeaningAxes를 읽기 전용 Prompt 섹션으로 전달한다.
+ * 재분류·변환·판단하지 않으며 enum/string 값을 그대로 쓴다.
+ * axes가 없으면 섹션을 만들지 않는다.
+ */
+function formatQuestionMeaningAxesContent(
+  axes: ResponseQuestionMeaningAxes,
+): string {
+  return [
+    `- 대상: ${axes.askedObject}`,
+    `- 의도: ${axes.intent}`,
+    `- 행동: ${axes.actionNature}`,
+    `- 결론 성격: ${axes.conclusionNature}`,
+    `- 분석 방식: ${axes.analysisMode}`,
+    `- 시기 유형: ${axes.timingType}`,
+  ].join("\n");
+}
+
+function buildQuestionMeaningSection(
+  context: ResponseContext,
+): PromptSection | null {
+  const axes = context.questionMeaningAxes;
+
+  if (!axes) {
+    return null;
+  }
+
+  return {
+    id: "questionMeaning",
+    title: "질문 의미",
+    content: formatQuestionMeaningAxesContent(axes),
+    blockIds: [],
+    priority: 1,
+  };
+}
+
 function buildAnswerGoalSection(
   strategy: PromptStrategy,
 ): PromptSection {
@@ -299,8 +336,15 @@ export function buildPromptSections(
 ): PromptSection[] {
   const sections: PromptSection[] = [
     buildQuestionSection(context),
-    buildAnswerGoalSection(strategy),
   ];
+
+  const questionMeaningSection = buildQuestionMeaningSection(context);
+
+  if (questionMeaningSection) {
+    sections.push(questionMeaningSection);
+  }
+
+  sections.push(buildAnswerGoalSection(strategy));
 
   const lockedDecisionSection = buildLockedDecisionSection(context);
 

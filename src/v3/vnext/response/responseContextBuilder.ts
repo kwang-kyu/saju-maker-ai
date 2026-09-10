@@ -27,6 +27,7 @@ import type {
 } from "../types/timeState.js";
 import type {
   ResponseContext,
+  ResponseQuestionMeaningAxes,
 } from "./responseContext.js";
 import type {
   QuestionSpecificMaterialSelection,
@@ -150,6 +151,25 @@ function readProhibitedDirection(
   return value;
 }
 
+/**
+ * scenario.questionMeaning에서 Prompt용 의미축 6개만 그대로 읽는다.
+ * 재분류·변환·전체 dump를 하지 않는다.
+ */
+function readQuestionMeaningAxes(
+  scenario: ConsultingScenario,
+): ResponseQuestionMeaningAxes {
+  const meaning = scenario.questionMeaning;
+
+  return {
+    askedObject: meaning.askedObject,
+    intent: meaning.intent,
+    actionNature: meaning.actionNature,
+    conclusionNature: meaning.conclusionNature,
+    analysisMode: meaning.analysisMode,
+    timingType: meaning.time.timingType,
+  };
+}
+
 function buildClarificationContext(
   input: ResponseContextBuilderInput,
   scenario: ConsultingScenario,
@@ -245,6 +265,7 @@ export function buildResponseContext(
     ...(prohibitedDirection !== undefined
       ? { prohibitedDirection }
       : {}),
+    questionMeaningAxes: readQuestionMeaningAxes(scenario),
     questionSpecificMaterials: readQuestionSpecificMaterials(
       input.analysisResult,
     ),

@@ -19,6 +19,12 @@ import type {
 } from "../types/humanState.js";
 import type {
   MissingContextItem,
+  QuestionActionNature,
+  QuestionAskedObject,
+  QuestionMeaningAnalysisMode,
+  QuestionMeaningConclusionNature,
+  QuestionMeaningIntent,
+  QuestionTimeFocus,
 } from "../types/questionMeaning.js";
 import type {
   QuestionSpecificMaterialSelection,
@@ -31,6 +37,30 @@ export type ResponseBlockContext = {
   relevantSignals: ChangeSignal[];
   relevantEvidence: VNextEvidenceItem[];
   emphasis: string[];
+};
+
+/**
+ * Prompt용 QuestionMeaning 의미축 최소 passthrough.
+ *
+ * QuestionMeaning 전체 dump가 아니다.
+ * objectIdentity / instanceToken / object / counterpart 등은 포함하지 않는다.
+ * Reader/Adapter가 확정한 필드명을 그대로 쓰며 재해석하지 않는다.
+ *
+ * 실제 QuestionMeaning 필드 대응:
+ * - askedObject ← QuestionMeaning.askedObject (Reader topic)
+ * - intent ← QuestionMeaning.intent
+ * - actionNature ← QuestionMeaning.actionNature (Reader decisionTarget)
+ * - conclusionNature ← QuestionMeaning.conclusionNature
+ * - analysisMode ← QuestionMeaning.analysisMode
+ * - timingType ← QuestionMeaning.time.timingType
+ */
+export type ResponseQuestionMeaningAxes = {
+  askedObject: QuestionAskedObject;
+  intent: QuestionMeaningIntent;
+  actionNature: QuestionActionNature;
+  conclusionNature: QuestionMeaningConclusionNature;
+  analysisMode: QuestionMeaningAnalysisMode;
+  timingType: QuestionTimeFocus["timingType"];
 };
 
 /**
@@ -64,6 +94,11 @@ export type ResponseContext = {
    * recommendedDirection / prohibitedDirection 단독 존재로는 잠기지 않는다.
    */
   engineDecisionLocked?: boolean;
+  /**
+   * QuestionMeaning 의미축 읽기 전용 passthrough.
+   * Builder가 채우기 전까지는 없을 수 있다. 재해석·판단하지 않는다.
+   */
+  questionMeaningAxes?: ResponseQuestionMeaningAxes;
   questionSpecificMaterials?: QuestionSpecificMaterialSelection;
   missingContext?: MissingContextItem[];
 };
