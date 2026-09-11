@@ -453,55 +453,6 @@ function collectMaterialKeysByTiers(
   return keys;
 }
 
-/**
- * evidence.primary / secondary에 없고 supporting에만 나타나는 source.
- * questionSpecificMaterials의 기존 evidence tier 분류를 그대로 재사용한다.
- */
-function resolveSupportingOnlyEvidenceSources(
-  materials: QuestionSpecificMaterialSelection,
-): Set<string> {
-  const directSources = new Set<string>();
-
-  for (const evidence of materials.evidence.primary) {
-    directSources.add(evidence.source);
-  }
-
-  for (const evidence of materials.evidence.secondary) {
-    directSources.add(evidence.source);
-  }
-
-  const supportingOnly = new Set<string>();
-
-  for (const evidence of materials.evidence.supporting) {
-    if (!directSources.has(evidence.source)) {
-      supportingOnly.add(evidence.source);
-    }
-  }
-
-  return supportingOnly;
-}
-
-function findRiskSourceInMaterials(
-  key: string,
-  materials: QuestionSpecificMaterialSelection,
-): string | undefined {
-  for (const tierKey of [
-    "primary",
-    "secondary",
-    "supporting",
-  ] as const) {
-    const matched = materials.risks[tierKey].find(
-      (risk) => risk.key === key,
-    );
-
-    if (matched) {
-      return matched.source;
-    }
-  }
-
-  return undefined;
-}
-
 function filterOrderedConditionsByQuestionSpecificMaterials(
   conditions: readonly AssessmentCondition[],
   materials: QuestionSpecificMaterialSelection | undefined,
@@ -546,28 +497,10 @@ function filterOrderedRisksByQuestionSpecificMaterials(
     return [...risks];
   }
 
-  const supportingOnlySources = resolveSupportingOnlyEvidenceSources(
-    materials,
-  );
-
-  return risks.filter((risk) => {
-    if (!directKeys.has(risk.key)) {
-      return false;
-    }
-
-    const source = findRiskSourceInMaterials(risk.key, materials);
-
-    // severity로 primary여도, evidence tier상 supporting-only source면
-    // 질문 직접 판단보다 일반 반복 조언으로 보고 제외한다.
-    if (
-      source
-      && supportingOnlySources.has(source)
-    ) {
-      return false;
-    }
-
-    return true;
-  });
+  // supporting-only evidence source 필터는 supporting tier risk용이다.
+  // directKeys(primary/secondary)로 이미 선정된 risk는
+  // source가 supporting-only라는 이유만으로 삭제하지 않는다.
+  return risks.filter((risk) => directKeys.has(risk.key));
 }
 
 function reorderFactsByQuestionSpecificPriority(
