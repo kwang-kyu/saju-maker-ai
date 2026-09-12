@@ -3936,6 +3936,32 @@ const CASHFLOW_MONEY_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
 ];
 
 /**
+ * structural realEstate buy에서 제외할 일반 상품 object.
+ * 부동산 과승격 방지용 closed vocabulary만 둔다.
+ * substring endsWith("차") 확장은 하지 않는다.
+ */
+const GENERAL_GOODS_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
+  "자동차",
+  "차",
+  "명품",
+  "상품",
+  "제품",
+  "물건",
+  "휴대폰",
+  "가전",
+  "기계",
+];
+
+/**
+ * structural realEstate buy에서 제외할 조직 object.
+ * 기업/법인 매수 과승격 방지용 closed vocabulary만 둔다.
+ */
+const ORGANIZATION_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
+  "기업",
+  "법인",
+];
+
+/**
  * J-4-13: realEstate × move compound용 relocation verb 의미군.
  * decisionRules move keyword를 재사용하되, surface 활용형까지 포함한다.
  * topicRules/decisionRules 배열에는 넣지 않는다(단독 forcing 방지).
@@ -4133,6 +4159,36 @@ function isCashflowMoneyBuyObjectSurface(
   });
 }
 
+function isGeneralGoodsBuyObjectSurface(
+  surface: string,
+): boolean {
+  const normalized = normalizeKoreanText(surface);
+  return GENERAL_GOODS_BUY_OBJECT_EXCLUSIONS.some((marker) => {
+    const normalizedMarker = normalizeKoreanText(marker);
+    return (
+      normalized === normalizedMarker
+      || normalized.endsWith(` ${normalizedMarker}`)
+      || normalized.startsWith(`${normalizedMarker} `)
+      || normalized.includes(` ${normalizedMarker} `)
+    );
+  });
+}
+
+function isOrganizationBuyObjectSurface(
+  surface: string,
+): boolean {
+  const normalized = normalizeKoreanText(surface);
+  return ORGANIZATION_BUY_OBJECT_EXCLUSIONS.some((marker) => {
+    const normalizedMarker = normalizeKoreanText(marker);
+    return (
+      normalized === normalizedMarker
+      || normalized.endsWith(` ${normalizedMarker}`)
+      || normalized.startsWith(`${normalizedMarker} `)
+      || normalized.includes(` ${normalizedMarker} `)
+    );
+  });
+}
+
 function isProtectedTopicCompoundObjectSurface(
   surface: string,
 ): boolean {
@@ -4152,6 +4208,8 @@ function isProtectedTopicCompoundObjectSurface(
  * - bare 매수(목적어 없음) → []
  * - 금융자산 object → [] (money|invest 유지)
  * - cashflow/general money object → [] (realEstate buy 과승격 방지)
+ * - 일반 상품 object → [] (realEstate buy 과승격 방지)
+ * - 조직 object → [] (realEstate buy 과승격 방지)
  * - business/job compound noun → [] (기존 pair 우선순위 보존)
  * - vocabulary에 고유명사를 추가하지 않고 판정용 마커만 반환
  */
@@ -4168,6 +4226,14 @@ function collectStructuralRealEstateBuyObjectEvidence(
   }
 
   if (isCashflowMoneyBuyObjectSurface(surface)) {
+    return [];
+  }
+
+  if (isGeneralGoodsBuyObjectSurface(surface)) {
+    return [];
+  }
+
+  if (isOrganizationBuyObjectSurface(surface)) {
     return [];
   }
 
