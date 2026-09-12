@@ -3933,6 +3933,9 @@ const FINANCIAL_ASSET_BUY_OBJECT_MARKERS: readonly string[] = [
 const CASHFLOW_MONEY_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
   "돈",
   "자금",
+  "현금",
+  "재물",
+  "재산",
 ];
 
 /**
