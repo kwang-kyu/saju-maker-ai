@@ -838,6 +838,8 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
     keywords: [
       "투자",
       "매수",
+      "매입",
+      "구입",
       "돈을 넣",
       "주식에 넣",
       "ETF에 넣",
@@ -1940,12 +1942,18 @@ function collectTopicDecisionCompoundCandidates(
     question,
     REAL_ESTATE_BUY_PROPERTY_NOUNS,
   );
+  // 알려진 property noun이 없으면 N을/를 + 매수|매입|구입 structural 증거만 보조한다.
+  // (고유명사 vocabulary 추가 없음; 금융자산·cashflow money·business/job noun은 제외)
+  const realEstateBuyObjectEvidence =
+    propertyEvidence.length > 0
+      ? propertyEvidence
+      : collectStructuralRealEstateBuyObjectEvidence(question);
   const buyVerbEvidence = collectRealEstateBuyCompoundVerbEvidence(question);
 
   pushPair(
     "realEstate",
     "buy",
-    propertyEvidence,
+    realEstateBuyObjectEvidence,
     buyVerbEvidence,
     2,
   );
@@ -3883,6 +3891,51 @@ const REAL_ESTATE_BUY_PROPERTY_NOUNS: readonly string[] = [
 ];
 
 /**
+ * structural realEstate×buy 판정용 topicEvidence 마커.
+ * unknown object surface 자체를 topicEvidence에 넣지 않아
+ * objectLabel 표시 계약과 판정 증거를 분리한다.
+ * vocabulary / remnant / objectSurfaceRemnant 계약에는 넣지 않는다.
+ */
+const STRUCTURAL_REAL_ESTATE_BUY_OBJECT_MARKER =
+  "structuralRealEstateBuyObject";
+
+/**
+ * N을/를 + 매수|매입|구입 structural 감지에만 쓰는 buy verb anchor.
+ * REAL_ESTATE_BUY_VERBS / remnant action anchor에는 추가하지 않는다.
+ */
+const STRUCTURAL_REAL_ESTATE_BUY_VERB_ANCHORS: readonly string[] = [
+  "매수",
+  "매입",
+  "구입",
+];
+
+/**
+ * structural realEstate buy 증거에서 제외할 금융자산 object 마커.
+ * topicRules.money의 instrument 명사만 분리 추출한다.
+ * (cashflow 일반 명사·bare 매수 invest 경로는 건드리지 않는다)
+ */
+const FINANCIAL_ASSET_BUY_OBJECT_MARKERS: readonly string[] = [
+  "주식",
+  "etf",
+  "펀드",
+  "채권",
+  "코인",
+  "가상자산",
+  "가상화폐",
+  "암호화폐",
+];
+
+/**
+ * structural realEstate buy에서 제외할 cashflow/general money object.
+ * FINANCIAL_ASSET이 아니며, instrument invest 경로와도 분리한다.
+ * N을/를 + 매수|매입|구입 과승격 방지용이다.
+ */
+const CASHFLOW_MONEY_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
+  "돈",
+  "자금",
+];
+
+/**
  * J-4-13: realEstate × move compound용 relocation verb 의미군.
  * decisionRules move keyword를 재사용하되, surface 활용형까지 포함한다.
  * topicRules/decisionRules 배열에는 넣지 않는다(단독 forcing 방지).
@@ -4013,6 +4066,118 @@ function collectMatchedDecisionKeywords(
   );
 }
 
+/**
+ * remnant와 동일한 particle regex로
+ * `N을/를 + 매수|매입|구입`의 object surface만 추출한다.
+ * remnant 계약/앵커는 변경하지 않는다.
+ */
+function extractStructuralBuyObjectSurface(
+  question: string,
+): string | undefined {
+  let earliestAnchorIndex = Number.POSITIVE_INFINITY;
+
+  for (const anchor of STRUCTURAL_REAL_ESTATE_BUY_VERB_ANCHORS) {
+    const index = findKoreanKeywordEarliestIndex(question, anchor);
+    if (index < 0) {
+      continue;
+    }
+    if (index < earliestAnchorIndex) {
+      earliestAnchorIndex = index;
+    }
+  }
+
+  if (!Number.isFinite(earliestAnchorIndex)) {
+    return undefined;
+  }
+
+  const beforeAnchor = question.slice(0, earliestAnchorIndex);
+  const particleMatch = beforeAnchor.match(
+    /([가-힣0-9]+(?:\s+[가-힣0-9]+){0,3})[을를]\s*$/,
+  );
+
+  if (!particleMatch) {
+    return undefined;
+  }
+
+  const surface = particleMatch[1]?.trim();
+  return surface || undefined;
+}
+
+function isFinancialAssetBuyObjectSurface(
+  surface: string,
+): boolean {
+  const normalized = normalizeKoreanText(surface);
+  return FINANCIAL_ASSET_BUY_OBJECT_MARKERS.some((marker) => {
+    const normalizedMarker = normalizeKoreanText(marker);
+    return (
+      normalized === normalizedMarker
+      || normalized.endsWith(` ${normalizedMarker}`)
+      || normalized.startsWith(`${normalizedMarker} `)
+      || normalized.includes(` ${normalizedMarker} `)
+    );
+  });
+}
+
+function isCashflowMoneyBuyObjectSurface(
+  surface: string,
+): boolean {
+  const normalized = normalizeKoreanText(surface);
+  return CASHFLOW_MONEY_BUY_OBJECT_EXCLUSIONS.some((marker) => {
+    const normalizedMarker = normalizeKoreanText(marker);
+    return (
+      normalized === normalizedMarker
+      || normalized.endsWith(` ${normalizedMarker}`)
+      || normalized.startsWith(`${normalizedMarker} `)
+      || normalized.includes(` ${normalizedMarker} `)
+    );
+  });
+}
+
+function isProtectedTopicCompoundObjectSurface(
+  surface: string,
+): boolean {
+  const normalized = normalizeKoreanText(surface);
+  return (
+    BUSINESS_TOPIC_COMPOUND_NOUNS.some(
+      (noun) => normalizeKoreanText(noun) === normalized,
+    )
+    || JOB_TOPIC_COMPOUND_NOUNS.some(
+      (noun) => normalizeKoreanText(noun) === normalized,
+    )
+  );
+}
+
+/**
+ * unknown object + 매수|매입|구입 structural realEstate buy 증거.
+ * - bare 매수(목적어 없음) → []
+ * - 금융자산 object → [] (money|invest 유지)
+ * - cashflow/general money object → [] (realEstate buy 과승격 방지)
+ * - business/job compound noun → [] (기존 pair 우선순위 보존)
+ * - vocabulary에 고유명사를 추가하지 않고 판정용 마커만 반환
+ */
+function collectStructuralRealEstateBuyObjectEvidence(
+  question: string,
+): string[] {
+  const surface = extractStructuralBuyObjectSurface(question);
+  if (!surface) {
+    return [];
+  }
+
+  if (isFinancialAssetBuyObjectSurface(surface)) {
+    return [];
+  }
+
+  if (isCashflowMoneyBuyObjectSurface(surface)) {
+    return [];
+  }
+
+  if (isProtectedTopicCompoundObjectSurface(surface)) {
+    return [];
+  }
+
+  return [STRUCTURAL_REAL_ESTATE_BUY_OBJECT_MARKER];
+}
+
 function collectRealEstateBuySignalEvidence(
   question: string,
 ): string[] {
@@ -4020,8 +4185,12 @@ function collectRealEstateBuySignalEvidence(
     question,
     REAL_ESTATE_BUY_PROPERTY_NOUNS,
   );
+  const objectEvidence =
+    propertyEvidence.length > 0
+      ? propertyEvidence
+      : collectStructuralRealEstateBuyObjectEvidence(question);
 
-  if (propertyEvidence.length === 0) {
+  if (objectEvidence.length === 0) {
     return [];
   }
 
@@ -4034,7 +4203,7 @@ function collectRealEstateBuySignalEvidence(
     return [];
   }
 
-  return [...propertyEvidence, ...buyVerbEvidence];
+  return [...objectEvidence, ...buyVerbEvidence];
 }
 
 /**
