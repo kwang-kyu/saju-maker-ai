@@ -3962,6 +3962,23 @@ const ORGANIZATION_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
 ];
 
 /**
+ * structural realEstate buy에서 제외할 부정칭/지시칭 object.
+ * extractStructuralBuyObjectSurface 실제 surface만 closed vocabulary로 둔다.
+ * unknown 고유명사 전체를 막지 않는다.
+ */
+const INDEFINITE_DEICTIC_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
+  "이것",
+  "그것",
+  "저것",
+  "이거",
+  "그거",
+  "저거",
+  "무엇",
+  "뭐",
+  "뭔가",
+];
+
+/**
  * J-4-13: realEstate × move compound용 relocation verb 의미군.
  * decisionRules move keyword를 재사용하되, surface 활용형까지 포함한다.
  * topicRules/decisionRules 배열에는 넣지 않는다(단독 forcing 방지).
@@ -4189,6 +4206,21 @@ function isOrganizationBuyObjectSurface(
   });
 }
 
+function isIndefiniteDeicticBuyObjectSurface(
+  surface: string,
+): boolean {
+  const normalized = normalizeKoreanText(surface);
+  return INDEFINITE_DEICTIC_BUY_OBJECT_EXCLUSIONS.some((marker) => {
+    const normalizedMarker = normalizeKoreanText(marker);
+    return (
+      normalized === normalizedMarker
+      || normalized.endsWith(` ${normalizedMarker}`)
+      || normalized.startsWith(`${normalizedMarker} `)
+      || normalized.includes(` ${normalizedMarker} `)
+    );
+  });
+}
+
 function isProtectedTopicCompoundObjectSurface(
   surface: string,
 ): boolean {
@@ -4210,6 +4242,7 @@ function isProtectedTopicCompoundObjectSurface(
  * - cashflow/general money object → [] (realEstate buy 과승격 방지)
  * - 일반 상품 object → [] (realEstate buy 과승격 방지)
  * - 조직 object → [] (realEstate buy 과승격 방지)
+ * - 부정칭/지시칭 object → [] (realEstate buy 과승격 방지)
  * - business/job compound noun → [] (기존 pair 우선순위 보존)
  * - vocabulary에 고유명사를 추가하지 않고 판정용 마커만 반환
  */
@@ -4234,6 +4267,10 @@ function collectStructuralRealEstateBuyObjectEvidence(
   }
 
   if (isOrganizationBuyObjectSurface(surface)) {
+    return [];
+  }
+
+  if (isIndefiniteDeicticBuyObjectSurface(surface)) {
     return [];
   }
 
