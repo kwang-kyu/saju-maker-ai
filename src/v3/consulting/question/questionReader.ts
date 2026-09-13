@@ -1890,8 +1890,10 @@ function collectExclusiveAltConnectorEvidence(
     evidence.push("lifePathBinaryAlternative");
   }
 
+  // P10-E: 두 번째 arm은 기존 "~지"뿐 아니라 "~까요" 질문형도 허용.
+  // 첫 번째 arm은 숙고형 "~지"를 유지해 단독 "~까요" 승격을 막는다.
   const exclusiveAltMatch = question.match(
-    /([\uac00-\ud7a3]{1,12}지)\s+([\s\S]{0,24}?[\uac00-\ud7a3]{1,12}지)/,
+    /([\uac00-\ud7a3]{1,12}지)\s+([\s\S]{0,24}?[\uac00-\ud7a3]{1,12}(?:지|까요))/,
   );
 
   if (exclusiveAltMatch) {
@@ -3529,15 +3531,16 @@ function hasBinaryLifePathAlternativeStructure(
 }
 
 /**
- * P8-6: 일반 도메인 exclusive binary (A지 … B지).
+ * P8-6: 일반 도메인 exclusive binary (A지 … B지/B까요).
  *
  * 이미 수집된 exclusive_alt relation만 재사용한다.
  * - participant DT가 2개 이상이고
- * - connectorEvidence에 숙고형 ~지 arm이 2개 이상일 때만 true
+ * - connectorEvidence에 숙고형 ~지/~까요 arm이 2개 이상일 때만 true
  *
  * 보호:
  * - "할지" 단독 / WH+할지 / 단일 고민 → exclusive_alt 자체가 없음
- * - "중 어느/둘 중" only (lifePathBinaryAlternative만 있고 ~지 arm 없음)
+ * - 단독 "~까요" → 첫 arm "~지" 미충족으로 exclusive_alt 자체가 없음
+ * - "중 어느/둘 중" only (lifePathBinaryAlternative만 있고 ~지/~까요 arm 없음)
  *   → J-4-7 specific 보호 경로를 건드리지 않음
  */
 function hasGeneralBinaryAlternativeStructure(
@@ -3557,7 +3560,7 @@ function hasGeneralBinaryAlternativeStructure(
     (item) =>
       item !== "고민"
       && item !== "lifePathBinaryAlternative"
-      && /지/.test(item),
+      && /(?:지|까요)/.test(item),
   );
 
   return deliberativeArms.length >= 2;
