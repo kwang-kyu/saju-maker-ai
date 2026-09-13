@@ -1736,13 +1736,154 @@ function appendCompoundDecisionTargetCandidates(
     collectMoneyManageSignalEvidence(question),
     6,
   );
+  // P10-C F: exclusive alternative의 cash-holding arm만 wait로 흡수한다.
+  // 단순 보유 질문·buy exclusion(현금 매수)은 건드리지 않는다.
+  appendCashHoldingExclusiveAlternativeCandidate(
+    question,
+    decisionTargets,
+    basePriority,
+    7,
+  );
 }
+
+/**
+ * P10-C F: exclusive alternative 문맥의 cash-holding arm evidence.
+ * "현금" + 보유/유지 paraphrase만 모은다.
+ * 새 DecisionTarget을 만들지 않고 기존 wait 후보 evidence로만 쓴다.
+ */
+function collectCashHoldingAlternativeEvidence(
+  question: string,
+): string[] {
+  const nounEvidence = collectMatchedDecisionKeywords(
+    question,
+    MONEY_CASH_HOLDING_NOUNS,
+  );
+
+  if (nounEvidence.length === 0) {
+    return [];
+  }
+
+  const verbEvidence = collectMatchedDecisionKeywords(
+    question,
+    MONEY_CASH_HOLDING_VERBS,
+  );
+
+  if (verbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...nounEvidence, ...verbEvidence];
+}
+
+/**
+ * P10-C F: 숙고형 A지…B지 exclusive surface만 감지한다.
+ * 단순 보유 질문("현금을 가지고 있나요?")은 매칭하지 않는다.
+ */
+function hasCashHoldingExclusiveAlternativeSurface(
+  question: string,
+): boolean {
+  return /([\uac00-\ud7a3]{1,12}지)\s+([\s\S]{0,24}?[\uac00-\ud7a3]{1,12}지)/
+    .test(question);
+}
+
+/**
+ * P10-C F: A지…B지 exclusive surface에서만
+ * "현금을 가지고 있을지/보유할지/…" arm을 wait 후보로 추가한다.
+ *
+ * 보호:
+ * - "현금을 가지고 있나요?" 같은 단순 보유 질문 → exclusive arm 없음
+ * - "현금을 매수해도" buy exclusion → hold verb 없음
+ * - rival action DT가 이미 있을 때만 추가 (단독 cash-hold → choose 방지)
+ */
+function appendCashHoldingExclusiveAlternativeCandidate(
+  question: string,
+  decisionTargets: MeaningCandidate<DecisionTarget>[],
+  basePriority: number,
+  offset: number,
+): void {
+  if (!hasCashHoldingExclusiveAlternativeSurface(question)) {
+    return;
+  }
+
+  const evidence = collectCashHoldingAlternativeEvidence(question);
+
+  if (evidence.length === 0) {
+    return;
+  }
+
+  const hasRivalAction = decisionTargets.some(
+    (candidate) =>
+      candidate.value !== "wait"
+      && candidate.value !== "continue"
+      && candidate.value !== "none"
+      && candidate.value !== "choose",
+  );
+
+  if (!hasRivalAction) {
+    return;
+  }
+
+  decisionTargets.push({
+    axis: "decisionTarget",
+    value: "wait",
+    evidence,
+    source: "compoundSignal",
+    priority: basePriority + offset,
+    strength: evidence.length,
+    specificity: Math.max(...evidence.map((item) => item.length)),
+  });
+}
+
+
 
 /**
  * J-4-4: buy compound용 verb evidence.
  * decision matcher의 조사 축약이 "사" 단독으로 붕괴하는 것을 피한다.
  * (예: "이사해도"가 "을 사" → "사"로 오탐되지 않게)
  */
+
+/**
+ * P10-C F: cash-holding exclusive alternative가 wait 후보로 수집되었는지.
+ * 기존 generalBinary/P8-6이 없는 경로에서도 choose 흡수에만 사용한다.
+ */
+function hasCashHoldingExclusiveAlternativeParticipants(
+  question: string,
+  candidates: MeaningCandidateSet,
+): boolean {
+  if (!hasCashHoldingExclusiveAlternativeSurface(question)) {
+    return false;
+  }
+
+  if (collectCashHoldingAlternativeEvidence(question).length === 0) {
+    return false;
+  }
+
+  const hasCashHoldingWait = candidates.decisionTargets.some(
+    (candidate) =>
+      candidate.value === "wait"
+      && candidate.source === "compoundSignal"
+      && candidate.evidence.some(
+        (item) =>
+          (MONEY_CASH_HOLDING_NOUNS as readonly string[]).includes(item)
+          || (MONEY_CASH_HOLDING_VERBS as readonly string[]).some(
+            (verb) => item === verb || item.includes(verb),
+          ),
+      ),
+  );
+
+  if (!hasCashHoldingWait) {
+    return false;
+  }
+
+  return candidates.decisionTargets.some(
+    (candidate) =>
+      candidate.value !== "wait"
+      && candidate.value !== "continue"
+      && candidate.value !== "none"
+      && candidate.value !== "choose",
+  );
+}
+
 function collectRealEstateBuyCompoundVerbEvidence(
   question: string,
 ): string[] {
@@ -3110,6 +3251,22 @@ function normalizeDecisionTargetSemanticMeaning(
     };
   }
 
+  // D3) P10-C F: cash-holding exclusive alternative → choose.
+  //     wait 후보 인식만으로 scalar invest에 고정되지 않게 한다.
+  //     단순 보유 질문·일반 exclusive(P8-6)와 분리한다.
+  if (
+    decisionTarget !== "choose"
+    && hasCashHoldingExclusiveAlternativeParticipants(question, candidates)
+  ) {
+    return {
+      decisionTarget: "choose",
+      decisionEvidence: mergeUniqueEvidence(
+        ["cashHoldingExclusiveAlternative"],
+        decisionEvidence,
+      ),
+    };
+  }
+
   // E) lifeDirection/path에서 bare choose(옵션 비교 frame 없음)
   //    → confirmDirection (열린 방향 확정)
   if (
@@ -3326,16 +3483,30 @@ function normalizeIntentSemanticMeaning(
   const lifeDirectionTopic = topic === "lifeDirection";
   const lifePathSignal = hasLifeDirectionChoiceOrTransitionSignal(question);
   const binaryLifePath = hasBinaryLifePathAlternativeStructure(question);
+  const cashHoldingExclusive = hasCashHoldingExclusiveAlternativeParticipants(
+    question,
+    candidates,
+  );
 
   // 2) life-path / option-fit choose에서
   //    유지/정리 같은 action surface가 continuation/termination으로
   //    갈라지지 않게 selection으로 수렴한다.
   //    (J-4-7은 option-fit frame이 있을 때만 처리; binary-only gap 보완)
+  //    P10-C F: cash-holding exclusive choose도 selection으로 수렴.
   if (
     decisionTarget === "choose"
-    && (optionFitStrong || binaryLifePath)
-    && (lifeDirectionTopic || lifePathSignal)
-    && (intent === "continuation" || intent === "termination")
+    && (
+      intent === "continuation"
+      || intent === "termination"
+      || intent === "generalJudgement"
+    )
+    && (
+      cashHoldingExclusive
+      || (
+        (optionFitStrong || binaryLifePath)
+        && (lifeDirectionTopic || lifePathSignal)
+      )
+    )
   ) {
     const selectionCandidate = findIntentCandidate(
       candidates.intents,
@@ -3345,10 +3516,17 @@ function normalizeIntentSemanticMeaning(
     return {
       intent: "selection",
       intentEvidence: mergeUniqueEvidence(
-        optionFitFrame?.evidence ?? ["lifePathBinaryAlternative"],
+        optionFitFrame?.evidence
+          ?? (cashHoldingExclusive
+            ? ["cashHoldingExclusiveAlternative"]
+            : ["lifePathBinaryAlternative"]),
         selectionCandidate?.evidence ?? [],
         intentEvidence,
-        ["intentSemanticLifePathSelection"],
+        [
+          cashHoldingExclusive
+            ? "intentSemanticCashHoldingExclusiveSelection"
+            : "intentSemanticLifePathSelection",
+        ],
       ),
     };
   }
@@ -4019,6 +4197,27 @@ const MONEY_CASHFLOW_COMPOUND_NOUNS: readonly string[] = [
   "급여",
   "지출",
   "현금흐름",
+];
+
+/**
+ * P10-C F: exclusive alternative cash-holding arm용 명사.
+ * money buy exclusion의 "현금" 보호와 역할을 분리한다.
+ * (매수 object exclusion ≠ hold-cash alternative arm)
+ */
+const MONEY_CASH_HOLDING_NOUNS: readonly string[] = [
+  "현금",
+];
+
+/**
+ * P10-C F: exclusive alternative cash-holding arm용 보유 paraphrase.
+ * wait/continue keyword vocabulary에 단독 추가하지 않는다.
+ */
+const MONEY_CASH_HOLDING_VERBS: readonly string[] = [
+  "가지고 있",
+  "들고 있",
+  "보유",
+  "남겨둘",
+  "남겨 둘",
 ];
 
 /**
