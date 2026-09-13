@@ -1839,18 +1839,22 @@ function orderExistingDecisionTargetCandidates(
 /**
  * P6-12 sequential connector surfaces.
  * decisionRules/DT vocab에 추가하지 않으며 relation Evidence 보존용이다.
+ * 연결형 changeJob compound surface는 후보가 2개 이상일 때만 사용한다.
  */
 const ACTION_RELATION_SEQUENTIAL_CONNECTORS: readonly string[] = [
   "그만두고",
   "시작하고",
+  "바꾸고 나서",
   "하고 나서",
+  "바꾼 뒤",
+  "바꾸고",
   "하고서",
 ];
 
 /**
  * P6-12 concurrent connector surfaces.
- * "면서" 계열은 현재 changeJob compound에서 제외되어 있어
- * participant가 2개 미만이면 relation을 만들지 않는다.
+ * job noun × 연결형 changeJob compound가 후보를 만들면
+ * "바꾸면서" 등으로 concurrent relation을 보존한다.
  */
 const ACTION_RELATION_CONCURRENT_CONNECTORS: readonly string[] = [
   "하면서",
@@ -4956,13 +4960,26 @@ const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
  * job noun × change-verb compound용 활용형.
  * CHANGE_JOB_SIGNAL_KEYWORDS / decisionRules에 단독 추가하지 않는다.
  * "바꾸다"/"바" 단독 substring 금지.
- * 연결형(바꿔서/바꾸고)은 후속 start 등 복합행동 primary를 빼앗지 않도록 제외한다.
+ * 연결형(바꾸면서/바꾸고/…)은 아래 CONNECTIVE 목록으로만 취급한다.
  */
 const CHANGE_JOB_COMPOUND_VERBS: readonly string[] = [
   "바꿔도",
   "바꿔야",
   "바꾸는",
   "바꿀",
+];
+
+/**
+ * job noun × change-verb compound용 연결형 활용.
+ * 일반 changeJob vocabulary / CHANGE_JOB_COMPOUND_VERBS / decisionRules에
+ * 전역 추가하지 않는다. job noun과 결합될 때만 evidence로 쓴다.
+ * primary DecisionTarget 승격 정책이 아니며, start primary를 빼앗지 않는다.
+ */
+const CHANGE_JOB_COMPOUND_CONNECTIVE_VERBS: readonly string[] = [
+  "바꾸면서",
+  "바꾸고 나서",
+  "바꾼 뒤",
+  "바꾸고",
 ];
 
 function collectMatchedDecisionKeywords(
@@ -5286,21 +5303,31 @@ function hasLeaveJobSignal(
 /**
  * job noun + change-verb compound용 verb evidence.
  * changeJob 단독 keyword / 전역 "바꾸다"로 topic·decision을 만들지 않는다.
+ * 연결형은 job noun compound 경로에서만 합류한다.
  */
 function collectChangeJobCompoundVerbEvidence(
   question: string,
 ): string[] {
-  return collectMatchedDecisionKeywords(
-    question,
-    CHANGE_JOB_COMPOUND_VERBS,
-  );
+  return [
+    ...new Set([
+      ...collectMatchedDecisionKeywords(
+        question,
+        CHANGE_JOB_COMPOUND_VERBS,
+      ),
+      ...collectMatchedDecisionKeywords(
+        question,
+        CHANGE_JOB_COMPOUND_CONNECTIVE_VERBS,
+      ),
+    ]),
+  ];
 }
 
 /**
  * changeJob evidence:
  * 1) inherent signal (이직/전직/직장·회사+옮)
  * 2) JOB_TOPIC_COMPOUND_NOUNS × change-verb compound
- *    (직업/직장/회사 + 바꿔도/바꿔야/바꾸는/바꿀)
+ *    (직업/직장/회사 + 바꿔도/바꿔야/바꾸는/바꿀
+ *     또는 바꾸면서/바꾸고/바꾼 뒤/바꾸고 나서)
  */
 function collectChangeJobSignalEvidence(
   question: string,
