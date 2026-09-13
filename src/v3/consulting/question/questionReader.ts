@@ -3537,7 +3537,11 @@ function selectObjectLabelFromTopicEvidence(
   }
 
   if (topic !== "business") {
-    return topicEvidence[0];
+    // structural buy 판정용 마커는 object 표시 surface가 아니다.
+    const displayEvidence = topicEvidence.filter(
+      (item) => item !== STRUCTURAL_REAL_ESTATE_BUY_OBJECT_MARKER,
+    );
+    return displayEvidence[0];
   }
 
   const objectCandidates = topicEvidence.filter(
