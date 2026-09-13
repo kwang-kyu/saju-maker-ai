@@ -5,6 +5,7 @@ import {
 } from "./roleRecommendationQuestionDetector.js";
 import {
   applyLifeFlowInterpretationNormalization,
+  hasFortuneExpression,
   isLifeFlowInterpretationQuestion,
 } from "./lifeFlowInterpretationQuestionDetector.js";
 import {
@@ -164,6 +165,12 @@ export type QuestionReaderResult = {
   topic: QuestionTopic;
   objectLabel?: string;
   /**
+   * closed vocabulary로 해석하지 못한 object surface remnant.
+   * topic / objectLabel / objectReferent / specificity 판단에 쓰지 않는다.
+   * 기존 호출 호환을 위해 optional이다.
+   */
+  objectSurfaceRemnant?: string;
+  /**
    * 질문 문장에 나타난 대상(object) 지시어 구조.
    * Reader가 추출만 하고, clarification/해석은 상위 레이어가 결정한다.
    * 기존 object literal 호환을 위해 optional이며,
@@ -222,6 +229,11 @@ export type QuestionReaderResult = {
       intent: boolean;
       decisionTarget: boolean;
     };
+    /**
+     * P6-12: DecisionTarget 후보 사이 행동 관계 Evidence 관찰용.
+     * primary 선택 결과와 독립이며 secondary/rival 판정이 아니다.
+     */
+    actionRelations?: QuestionActionRelation[];
   };
 };
 
@@ -281,12 +293,57 @@ type TopicDecisionCompoundCandidate = {
   strength: number;
 };
 
+/**
+ * P6-12: 행동 후보 간 관계 종류.
+ * Reader는 여기서 secondary/rival role을 판정하지 않는다.
+ */
+export type ActionRelationKind =
+  | "sequential"
+  | "concurrent"
+  | "exclusive_alt";
+
+/**
+ * P6-15: participant별 raw provenance 사실.
+ * secondary/rival·direct/compound/shadow 판정에 쓰지 않는다.
+ */
+export type QuestionActionParticipantProvenance = {
+  value: DecisionTarget;
+  sources: MeaningCandidateSource[];
+  evidenceBySource: Partial<Record<MeaningCandidateSource, string[]>>;
+  hasTopicDecisionCompound: boolean;
+  genericSpecificPair?: {
+    role: "generic" | "specific";
+    other: DecisionTarget;
+  };
+};
+
+/**
+ * P6-12: 이미 수집된 DecisionTarget 후보 사이의 관계 Evidence.
+ * participants에는 실제 후보에 존재하는 DT만 넣는다.
+ */
+export type QuestionActionRelation = {
+  kind: ActionRelationKind;
+  participants: DecisionTarget[];
+  order: DecisionTarget[];
+  connectorEvidence: string[];
+  /**
+   * P6-15: participants order를 유지한 raw provenance lookup.
+   * 판정/필터에 사용하지 않는다.
+   */
+  participantProvenance?: QuestionActionParticipantProvenance[];
+};
+
 type MeaningCandidateSet = {
   topics: MeaningCandidate<QuestionTopic>[];
   intents: MeaningCandidate<QuestionIntent>[];
   decisionTargets: MeaningCandidate<DecisionTarget>[];
   frames: MeaningCandidate<string>[];
   topicDecisionCompounds: TopicDecisionCompoundCandidate[];
+  /**
+   * P6-12: DecisionTarget 후보 사이 행동 관계 Evidence.
+   * primary 선택·secondary/rival 판정과 분리한다.
+   */
+  actionRelations: QuestionActionRelation[];
 };
 
 /**
@@ -296,6 +353,11 @@ type MeaningCandidateSet = {
 type NormalizedAxes = {
   topic: QuestionTopic;
   objectLabel?: string;
+  /**
+   * closed vocabulary miss object surface remnant.
+   * normalizeAxes가 보존만 하며, objectLabel 선택에는 개입하지 않는다.
+   */
+  objectSurfaceRemnant?: string;
   intent: QuestionIntent;
   decisionTarget: DecisionTarget;
   evidence: {
@@ -322,6 +384,7 @@ const topicRules: readonly KeywordRule<QuestionTopic>[] = [
       "자영업",
       "동업",
       "프랜차이즈",
+      "쇼핑몰",
     ],
   },
   {
@@ -806,6 +869,14 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
       "땅을 사",
       "주택을 사",
       "집을 사",
+      "부동산을 살",
+      "아파트를 살",
+      "건물을 살",
+      "상가를 살",
+      "토지를 살",
+      "땅을 살",
+      "주택을 살",
+      "집을 살",
       "부동산 매수",
       "아파트 매수",
       "건물 매수",
@@ -863,7 +934,7 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   },
   {
     result: "wait",
-    keywords: ["기다려", "미뤄", "보류", "아직 하지"],
+    keywords: ["기다려", "기다릴", "미뤄", "보류", "아직 하지"],
   },
   {
     result: "start",
@@ -871,9 +942,6 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
       "시작",
       "창업",
       "개업",
-      "해볼까",
-      "해도 될까",
-      "해도될까",
       "새로",
     ],
   },
@@ -1661,7 +1729,334 @@ function collectMeaningCandidates(
     decisionTargets,
     frames,
     topicDecisionCompounds,
+    // P6-12: relation은 collectMeaningCandidates 이후 별도 수집한다.
+    actionRelations: [],
   };
+}
+
+/**
+ * decision keyword form 중 질문에서 가장 먼저 등장하는 위치를 반환한다.
+ * 매칭되지 않으면 -1.
+ */
+function findDecisionKeywordEarliestIndex(
+  question: string,
+  keyword: string,
+): number {
+  let earliest = -1;
+
+  for (const form of buildDecisionKeywordForms(keyword)) {
+    const index = question.indexOf(form);
+    if (index < 0) {
+      continue;
+    }
+    if (earliest < 0 || index < earliest) {
+      earliest = index;
+    }
+  }
+
+  return earliest;
+}
+
+/**
+ * 후보 evidence 문자열 중 질문에서 가장 먼저 등장하는 위치.
+ * evidence가 질문 surface가 아니면 -1.
+ */
+function findDecisionTargetEvidenceEarliestIndex(
+  question: string,
+  candidates: readonly MeaningCandidate<DecisionTarget>[],
+  value: DecisionTarget,
+): number {
+  let earliest = -1;
+
+  for (const candidate of candidates) {
+    if (candidate.value !== value) {
+      continue;
+    }
+
+    for (const evidence of candidate.evidence) {
+      const decisionIndex = findDecisionKeywordEarliestIndex(
+        question,
+        evidence,
+      );
+      const koreanIndex = findKoreanKeywordEarliestIndex(
+        question,
+        evidence,
+      );
+      const index = decisionIndex >= 0 && koreanIndex >= 0
+        ? Math.min(decisionIndex, koreanIndex)
+        : decisionIndex >= 0
+        ? decisionIndex
+        : koreanIndex;
+
+      if (index < 0) {
+        continue;
+      }
+      if (earliest < 0 || index < earliest) {
+        earliest = index;
+      }
+    }
+  }
+
+  return earliest;
+}
+
+/**
+ * 이미 수집된 DecisionTarget 후보만으로 등장 순서를 복원한다.
+ * 없는 DT는 만들지 않는다.
+ */
+function orderExistingDecisionTargetCandidates(
+  question: string,
+  candidates: readonly MeaningCandidate<DecisionTarget>[],
+): DecisionTarget[] {
+  const uniqueValues: DecisionTarget[] = [];
+
+  for (const candidate of candidates) {
+    if (!uniqueValues.includes(candidate.value)) {
+      uniqueValues.push(candidate.value);
+    }
+  }
+
+  return uniqueValues
+    .map((value) => ({
+      value,
+      index: findDecisionTargetEvidenceEarliestIndex(
+        question,
+        candidates,
+        value,
+      ),
+    }))
+    .filter((entry) => entry.index >= 0)
+    .sort((left, right) => {
+      if (left.index !== right.index) {
+        return left.index - right.index;
+      }
+      return uniqueValues.indexOf(left.value)
+        - uniqueValues.indexOf(right.value);
+    })
+    .map((entry) => entry.value);
+}
+
+/**
+ * P6-12 sequential connector surfaces.
+ * decisionRules/DT vocab에 추가하지 않으며 relation Evidence 보존용이다.
+ */
+const ACTION_RELATION_SEQUENTIAL_CONNECTORS: readonly string[] = [
+  "그만두고",
+  "시작하고",
+  "하고 나서",
+  "하고서",
+];
+
+/**
+ * P6-12 concurrent connector surfaces.
+ * "면서" 계열은 현재 changeJob compound에서 제외되어 있어
+ * participant가 2개 미만이면 relation을 만들지 않는다.
+ */
+const ACTION_RELATION_CONCURRENT_CONNECTORS: readonly string[] = [
+  "하면서",
+  "바꾸면서",
+  "면서",
+];
+
+function collectMatchedActionRelationConnectors(
+  question: string,
+  connectors: readonly string[],
+): string[] {
+  const matched: string[] = [];
+
+  for (const connector of connectors) {
+    if (!question.includes(connector)) {
+      continue;
+    }
+    if (!matched.includes(connector)) {
+      matched.push(connector);
+    }
+  }
+
+  return matched;
+}
+
+/**
+ * exclusive_alt surface.
+ * 기존 binary helper + A지…B지 배타 선택 형태.
+ * DT 후보는 생성하지 않고, 이미 있는 후보가 2개 이상일 때만 사용한다.
+ */
+function collectExclusiveAltConnectorEvidence(
+  question: string,
+): string[] {
+  const evidence: string[] = [];
+
+  if (hasBinaryLifePathAlternativeStructure(question)) {
+    evidence.push("lifePathBinaryAlternative");
+  }
+
+  const exclusiveAltMatch = question.match(
+    /([\uac00-\ud7a3]{1,12}지)\s+([\s\S]{0,24}?[\uac00-\ud7a3]{1,12}지)/,
+  );
+
+  if (exclusiveAltMatch) {
+    evidence.push(exclusiveAltMatch[1], exclusiveAltMatch[2]);
+  }
+
+  if (question.includes("고민")) {
+    evidence.push("고민");
+  }
+
+  return evidence;
+}
+
+/**
+ * P6-15: 확정된 participants에 대해 MeaningCandidate / compound /
+ * GENERIC_TO_SPECIFIC 조회 가능한 raw fact만 집계한다.
+ * participants 자체는 추가·제거하지 않는다.
+ */
+function collectParticipantProvenance(
+  participants: readonly DecisionTarget[],
+  candidates: MeaningCandidateSet,
+): QuestionActionParticipantProvenance[] {
+  return participants.map((value) => {
+    const rows = candidates.decisionTargets.filter(
+      (candidate) => candidate.value === value,
+    );
+
+    const sources: MeaningCandidateSource[] = [];
+    const evidenceBySource: Partial<
+      Record<MeaningCandidateSource, string[]>
+    > = {};
+
+    for (const row of rows) {
+      if (!sources.includes(row.source)) {
+        sources.push(row.source);
+      }
+
+      const evidence = evidenceBySource[row.source] ?? [];
+      for (const item of row.evidence) {
+        if (!evidence.includes(item)) {
+          evidence.push(item);
+        }
+      }
+      evidenceBySource[row.source] = evidence;
+    }
+
+    const hasTopicDecisionCompound = candidates.topicDecisionCompounds.some(
+      (compound) => compound.decisionTarget === value,
+    );
+
+    let genericSpecificPair:
+      QuestionActionParticipantProvenance["genericSpecificPair"];
+
+    for (const conflict of GENERIC_TO_SPECIFIC_DECISION_CONFLICTS) {
+      if (
+        value === conflict.generic
+        && participants.includes(conflict.specific)
+      ) {
+        genericSpecificPair = {
+          role: "generic",
+          other: conflict.specific,
+        };
+        break;
+      }
+
+      if (
+        value === conflict.specific
+        && participants.includes(conflict.generic)
+      ) {
+        genericSpecificPair = {
+          role: "specific",
+          other: conflict.generic,
+        };
+        break;
+      }
+    }
+
+    const provenance: QuestionActionParticipantProvenance = {
+      value,
+      sources,
+      evidenceBySource,
+      hasTopicDecisionCompound,
+    };
+
+    if (genericSpecificPair) {
+      provenance.genericSpecificPair = genericSpecificPair;
+    }
+
+    return provenance;
+  });
+}
+
+/**
+ * P6-12: collectMeaningCandidates 이후, normalizeAxes와 분리된
+ * QuestionActionRelation Evidence 수집.
+ * decisionTargets 배열/값을 변경하지 않는다.
+ */
+function collectQuestionActionRelations(
+  question: string,
+  candidates: MeaningCandidateSet,
+): QuestionActionRelation[] {
+  const orderedParticipants = orderExistingDecisionTargetCandidates(
+    question,
+    candidates.decisionTargets,
+  );
+
+  if (orderedParticipants.length < 2) {
+    return [];
+  }
+
+  const exclusiveEvidence = collectExclusiveAltConnectorEvidence(question);
+  const hasExclusiveSurface = exclusiveEvidence.some(
+    (item) => item !== "고민",
+  );
+
+  let relation: QuestionActionRelation | null = null;
+
+  if (hasExclusiveSurface) {
+    relation = {
+      kind: "exclusive_alt",
+      participants: [...orderedParticipants],
+      order: [...orderedParticipants],
+      connectorEvidence: exclusiveEvidence,
+    };
+  } else {
+    const sequentialConnectors = collectMatchedActionRelationConnectors(
+      question,
+      ACTION_RELATION_SEQUENTIAL_CONNECTORS,
+    );
+
+    if (sequentialConnectors.length > 0) {
+      relation = {
+        kind: "sequential",
+        participants: [...orderedParticipants],
+        order: [...orderedParticipants],
+        connectorEvidence: sequentialConnectors,
+      };
+    } else {
+      const concurrentConnectors = collectMatchedActionRelationConnectors(
+        question,
+        ACTION_RELATION_CONCURRENT_CONNECTORS,
+      );
+
+      if (concurrentConnectors.length > 0) {
+        relation = {
+          kind: "concurrent",
+          participants: [...orderedParticipants],
+          order: [...orderedParticipants],
+          connectorEvidence: concurrentConnectors,
+        };
+      }
+    }
+  }
+
+  if (!relation) {
+    return [];
+  }
+
+  // P6-15: kind/participants/order 확정 후 raw provenance만 부착한다.
+  relation.participantProvenance = collectParticipantProvenance(
+    relation.participants,
+    candidates,
+  );
+
+  return [relation];
 }
 
 /**
@@ -1834,14 +2229,6 @@ function appendCashHoldingExclusiveAlternativeCandidate(
   });
 }
 
-
-
-/**
- * J-4-4: buy compound용 verb evidence.
- * decision matcher의 조사 축약이 "사" 단독으로 붕괴하는 것을 피한다.
- * (예: "이사해도"가 "을 사" → "사"로 오탐되지 않게)
- */
-
 /**
  * P10-C F: cash-holding exclusive alternative가 wait 후보로 수집되었는지.
  * 기존 generalBinary/P8-6이 없는 경로에서도 choose 흡수에만 사용한다.
@@ -1884,6 +2271,11 @@ function hasCashHoldingExclusiveAlternativeParticipants(
   );
 }
 
+/**
+ * J-4-4: buy compound용 verb evidence.
+ * decision matcher의 조사 축약이 "사" 단독으로 붕괴하는 것을 피한다.
+ * (예: "이사해도"가 "을 사" → "사"로 오탐되지 않게)
+ */
 function collectRealEstateBuyCompoundVerbEvidence(
   question: string,
 ): string[] {
@@ -1896,6 +2288,7 @@ function collectRealEstateBuyCompoundVerbEvidence(
       "사도",
       "사야",
       "살까",
+      "살지",
     ],
   );
 
@@ -2113,10 +2506,7 @@ function collectTopicDecisionCompoundCandidates(
     question,
     BUSINESS_TOPIC_COMPOUND_NOUNS,
   );
-  const startSignals = collectMatchedDecisionKeywords(
-    question,
-    BUSINESS_START_SIGNAL_KEYWORDS,
-  );
+  const startSignals = collectBusinessStartActionEvidence(question);
 
   pushPair(
     "business",
@@ -3139,6 +3529,41 @@ function hasBinaryLifePathAlternativeStructure(
 }
 
 /**
+ * P8-6: 일반 도메인 exclusive binary (A지 … B지).
+ *
+ * 이미 수집된 exclusive_alt relation만 재사용한다.
+ * - participant DT가 2개 이상이고
+ * - connectorEvidence에 숙고형 ~지 arm이 2개 이상일 때만 true
+ *
+ * 보호:
+ * - "할지" 단독 / WH+할지 / 단일 고민 → exclusive_alt 자체가 없음
+ * - "중 어느/둘 중" only (lifePathBinaryAlternative만 있고 ~지 arm 없음)
+ *   → J-4-7 specific 보호 경로를 건드리지 않음
+ */
+function hasGeneralBinaryAlternativeStructure(
+  candidates: MeaningCandidateSet,
+): boolean {
+  const exclusive = candidates.actionRelations.find(
+    (relation) =>
+      relation.kind === "exclusive_alt"
+      && relation.participants.length >= 2,
+  );
+
+  if (!exclusive) {
+    return false;
+  }
+
+  const deliberativeArms = exclusive.connectorEvidence.filter(
+    (item) =>
+      item !== "고민"
+      && item !== "lifePathBinaryAlternative"
+      && /지/.test(item),
+  );
+
+  return deliberativeArms.length >= 2;
+}
+
+/**
  * J-4-10: decisionTarget(=object.label) 의미축 정규화.
  *
  * object.label은 adapter에서 decisionTarget passthrough이므로
@@ -3182,6 +3607,28 @@ function normalizeDecisionTargetSemanticMeaning(
       decisionTarget: "respondToConflict",
       decisionEvidence: mergeUniqueEvidence(
         ["conflictResponseSoftFrame"],
+        decisionEvidence,
+      ),
+    };
+  }
+
+  // A2) love + permission("해도 괜찮") + start 후보 없음 → start
+  //     start rule은 "해도 될까"만 보고 "해도 괜찮"은 놓친다.
+  //     permission frame 전체 → decisionTarget 자동 생성은 하지 않는다.
+  if (
+    decisionTarget === "none"
+    && intent === "possibility"
+    && topic === "love"
+    && !findDecisionTargetCandidate(candidates.decisionTargets, "start")
+    && (
+      matchesKoreanKeyword(question, "해도 괜찮")
+      || matchesKoreanKeyword(question, "해도괜찮")
+    )
+  ) {
+    return {
+      decisionTarget: "start",
+      decisionEvidence: mergeUniqueEvidence(
+        ["lovePermissionOkStartSoftPromotion"],
         decisionEvidence,
       ),
     };
@@ -3235,6 +3682,29 @@ function normalizeDecisionTargetSemanticMeaning(
     }
   }
 
+  // C2) lifeDirection compound+전환 + generic/action/none → confirmDirection
+  //     confirmDirection 후보(방향/…)가 없어도 인생·삶 전환 축을 유지한다.
+  //     strong option-fit choose는 승격하지 않는다.
+  if (
+    (lifeDirectionTopic || lifePathSignal)
+    && hasLifeDirectionCompoundSignal(question)
+    && matchesKoreanKeyword(question, "전환")
+    && (
+      decisionTarget === "choose"
+      || decisionTarget === "none"
+      || GENERIC_ACTION_DECISION_TARGETS.has(decisionTarget)
+    )
+    && !(optionFitStrong && decisionTarget === "choose")
+  ) {
+    return {
+      decisionTarget: "confirmDirection",
+      decisionEvidence: mergeUniqueEvidence(
+        ["lifeDirectionCompoundTransitionOverGeneric"],
+        decisionEvidence,
+      ),
+    };
+  }
+
   // D) life path + binary alternative에서 generic action → choose
   //    (유지할지/바꿀지 같은 paraphrase가 continue로 갈라지지 않게)
   if (
@@ -3246,6 +3716,23 @@ function normalizeDecisionTargetSemanticMeaning(
       decisionTarget: "choose",
       decisionEvidence: mergeUniqueEvidence(
         ["lifePathBinaryAlternative"],
+        decisionEvidence,
+      ),
+    };
+  }
+
+  // D2) P8-6: 일반 도메인 exclusive binary (A지…B지).
+  //     단일 action DT가 binary 전체를 대표하지 못할 때만 choose.
+  //     "중 어느/둘 중" only(지 arm 없음)는 J-4-7 specific 보호 유지.
+  //     할지 단독 / WH+할지는 exclusive_alt 미형성으로 여기 진입하지 않는다.
+  if (
+    decisionTarget !== "choose"
+    && hasGeneralBinaryAlternativeStructure(candidates)
+  ) {
+    return {
+      decisionTarget: "choose",
+      decisionEvidence: mergeUniqueEvidence(
+        ["generalBinaryAlternative"],
         decisionEvidence,
       ),
     };
@@ -3483,15 +3970,19 @@ function normalizeIntentSemanticMeaning(
   const lifeDirectionTopic = topic === "lifeDirection";
   const lifePathSignal = hasLifeDirectionChoiceOrTransitionSignal(question);
   const binaryLifePath = hasBinaryLifePathAlternativeStructure(question);
+  const generalBinary = hasGeneralBinaryAlternativeStructure(candidates);
   const cashHoldingExclusive = hasCashHoldingExclusiveAlternativeParticipants(
     question,
     candidates,
   );
 
-  // 2) life-path / option-fit choose에서
+  // 2) life-path / option-fit / general exclusive binary choose에서
   //    유지/정리 같은 action surface가 continuation/termination으로
   //    갈라지지 않게 selection으로 수렴한다.
   //    (J-4-7은 option-fit frame이 있을 때만 처리; binary-only gap 보완)
+  //    P8-6: lifeDirection이 아닌 일반 도메인 A지…B지도 동일 수렴.
+  //    P8-9: buy/wait처럼 continuation·termination surface가 없는
+  //    exclusive binary도 generalJudgement → selection.
   //    P10-C F: cash-holding exclusive choose도 selection으로 수렴.
   if (
     decisionTarget === "choose"
@@ -3501,7 +3992,8 @@ function normalizeIntentSemanticMeaning(
       || intent === "generalJudgement"
     )
     && (
-      cashHoldingExclusive
+      generalBinary
+      || cashHoldingExclusive
       || (
         (optionFitStrong || binaryLifePath)
         && (lifeDirectionTopic || lifePathSignal)
@@ -3517,13 +4009,17 @@ function normalizeIntentSemanticMeaning(
       intent: "selection",
       intentEvidence: mergeUniqueEvidence(
         optionFitFrame?.evidence
-          ?? (cashHoldingExclusive
+          ?? (generalBinary
+            ? ["generalBinaryAlternative"]
+            : cashHoldingExclusive
             ? ["cashHoldingExclusiveAlternative"]
             : ["lifePathBinaryAlternative"]),
         selectionCandidate?.evidence ?? [],
         intentEvidence,
         [
-          cashHoldingExclusive
+          generalBinary
+            ? "intentSemanticGeneralBinarySelection"
+            : cashHoldingExclusive
             ? "intentSemanticCashHoldingExclusiveSelection"
             : "intentSemanticLifePathSelection",
         ],
@@ -3698,6 +4194,8 @@ function findKoreanKeywordEarliestIndex(
  * objectLabel 선택.
  * - topicEvidence 없으면 undefined
  * - business 외 topic은 기존 선언 순서(topicEvidence[0]) 유지
+ * - lifeFlow는 LIFE_FLOW_TEMPORAL_SURFACE_MARKERS를 objectLabel 후보에서 제외
+ *   (시간 surface는 semantic object가 아님; 후보가 없으면 undefined)
  * - business는 start signal(창업/개업 등)을 제외하고,
  *   질문 문자열에 실제로 먼저 등장한 keyword를 선택
  * - 제외 후 후보가 없으면 topicEvidence 전체로 다시 후보를 잡고
@@ -3715,6 +4213,12 @@ function selectObjectLabelFromTopicEvidence(
   }
 
   if (topic !== "business") {
+    if (topic === "lifeFlow") {
+      return topicEvidence.find(
+        (item) => !LIFE_FLOW_TEMPORAL_SURFACE_MARKERS.has(item),
+      );
+    }
+
     // structural buy 판정용 마커는 object 표시 surface가 아니다.
     const displayEvidence = topicEvidence.filter(
       (item) => item !== STRUCTURAL_REAL_ESTATE_BUY_OBJECT_MARKER,
@@ -3962,12 +4466,18 @@ function normalizeAxes(
     intentEvidence = intentSemanticNormalized.intentEvidence;
   }
 
+  const objectLabel = selectObjectLabelFromTopicEvidence(
+    question,
+    topic,
+    topicEvidence,
+  );
+
   return {
     topic,
-    objectLabel: selectObjectLabelFromTopicEvidence(
+    objectLabel,
+    objectSurfaceRemnant: extractObjectSurfaceRemnant(
       question,
-      topic,
-      topicEvidence,
+      objectLabel,
     ),
     intent,
     decisionTarget,
@@ -4118,6 +4628,7 @@ const CASHFLOW_MONEY_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
   "현금",
   "재물",
   "재산",
+  "자산",
 ];
 
 /**
@@ -4241,6 +4752,7 @@ const REAL_ESTATE_BUY_VERBS: readonly string[] = [
   "사도",
   "사야",
   "살까",
+  "살지",
 ];
 
 /**
@@ -4271,6 +4783,7 @@ const BUSINESS_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "통닭",
   "자영업",
   "프랜차이즈",
+  "쇼핑몰",
 ];
 
 /**
@@ -4284,6 +4797,136 @@ const BUSINESS_START_SIGNAL_KEYWORDS: readonly string[] = [
   "개업",
   "새로",
 ];
+
+/**
+ * business noun × start paraphrase compound용 활용형.
+ * decisionRules / BUSINESS_START_SIGNAL_KEYWORDS에 전역 추가하지 않는다.
+ * bare "차리"/"열" 단독 substring 금지.
+ * business noun과 결합될 때만 start evidence가 된다.
+ */
+const BUSINESS_START_COMPOUND_VERBS: readonly string[] = [
+  "차려도",
+  "차려야",
+  "차릴까요",
+  "차릴까",
+  "차리면",
+  "차리고",
+  "차려",
+  "열어도",
+  "열어야",
+  "열까요",
+  "열까",
+  "열면",
+  "열고",
+  "열어",
+];
+
+/**
+ * object surface remnant 포착용 action anchor만.
+ * "시작/창업/개업"은 BUSINESS_START_SIGNAL_KEYWORDS에서 가져오되,
+ * "새로"는 부사/action modifier이므로 remnant anchor에서 제외한다.
+ * "차리"/"차려"/"열어"는 remnant capture 전용 surface이며,
+ * topic/decisionRules 전역 vocab에는 넣지 않는다.
+ *
+ * remnant 계약:
+ * Reader가 closed vocabulary로 해석하지 못한
+ * "N을/를 (+ optional 새로) + 시작/창업/개업/차리/차려/열어" 구조에서
+ * action anchor와 직접 결합된 surface 후보를 원문 그대로 보존한다.
+ * (일반 명사 분류/의미 blacklist 없음)
+ */
+const OBJECT_SURFACE_REMNANT_ACTION_ANCHORS: readonly string[] = [
+  ...BUSINESS_START_SIGNAL_KEYWORDS.filter(
+    (keyword) => keyword !== "새로",
+  ),
+  "차리",
+  "차려",
+  "열어",
+];
+
+/**
+ * objectLabel이 이미 closed vocabulary의 실제 object surface면 remnant를 만들지 않는다.
+ * start signal만 objectLabel로 남은 경우(창업/개업/시작/새로)나
+ * objectLabel 부재일 때만 보존 후보로 본다.
+ */
+function shouldPreserveObjectSurfaceRemnant(
+  objectLabel: string | undefined,
+): boolean {
+  if (!objectLabel) {
+    return true;
+  }
+
+  return (
+    BUSINESS_START_SIGNAL_KEYWORDS as readonly string[]
+  ).includes(objectLabel);
+}
+
+/**
+ * closed vocabulary에 매칭되지 않은 object surface remnant를 보존한다.
+ * - objectLabel 선택/변경 없음
+ * - topic / specificity / business 여부 판단 없음
+ * - "N을/를 (+ optional 새로) + action anchor" 형태만 매우 좁게 포착한다
+ * - "새로"는 remnant 추출 시에만 leading/trailing modifier로 허용하며,
+ *   objectLabel 선택 로직은 건드리지 않는다
+ */
+function extractObjectSurfaceRemnant(
+  question: string,
+  objectLabel: string | undefined,
+): string | undefined {
+  if (!shouldPreserveObjectSurfaceRemnant(objectLabel)) {
+    return undefined;
+  }
+
+  let earliestAnchorIndex = Number.POSITIVE_INFINITY;
+
+  for (const anchor of OBJECT_SURFACE_REMNANT_ACTION_ANCHORS) {
+    const index = findKoreanKeywordEarliestIndex(question, anchor);
+    if (index < 0) {
+      continue;
+    }
+    if (index < earliestAnchorIndex) {
+      earliestAnchorIndex = index;
+    }
+  }
+
+  if (!Number.isFinite(earliestAnchorIndex)) {
+    return undefined;
+  }
+
+  const beforeAnchor = question.slice(0, earliestAnchorIndex);
+  // "새로"는 object surface가 아니라 action modifier다.
+  // "베이커리를 새로 시작"처럼 particle과 action 사이에만 허용한다.
+  const beforeForParticle = beforeAnchor.replace(/\s*새로\s*$/, "");
+  const particleMatch = beforeForParticle.match(
+    /([가-힣0-9]+(?:\s+[가-힣0-9]+){0,3})[을를]\s*$/,
+  );
+
+  if (!particleMatch) {
+    return undefined;
+  }
+
+  // "새로 N을/를 시작"의 leading "새로"도 modifier로만 취급한다.
+  // "새로운 N"은 공백이 없어 이 strip에 걸리지 않는다.
+  const remnant = particleMatch[1]
+    ?.trim()
+    .replace(/^새로\s+/, "")
+    .trim();
+  if (!remnant) {
+    return undefined;
+  }
+
+  if (objectLabel && remnant === objectLabel) {
+    return undefined;
+  }
+
+  // objectReferent closed class — remnant로 중복 보존하지 않는다.
+  if (
+    /^(?:이거|이걸|이것|그거|그걸|저거|저걸)$/.test(remnant)
+  ) {
+    return undefined;
+  }
+
+  return remnant;
+}
 
 const LEAVE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
   "퇴사",
@@ -4304,6 +4947,19 @@ const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
   "회사를 옮",
   "회사 옮",
   "회사로 옮",
+];
+
+/**
+ * job noun × change-verb compound용 활용형.
+ * CHANGE_JOB_SIGNAL_KEYWORDS / decisionRules에 단독 추가하지 않는다.
+ * "바꾸다"/"바" 단독 substring 금지.
+ * 연결형(바꿔서/바꾸고)은 후속 start 등 복합행동 primary를 빼앗지 않도록 제외한다.
+ */
+const CHANGE_JOB_COMPOUND_VERBS: readonly string[] = [
+  "바꿔도",
+  "바꿔야",
+  "바꾸는",
+  "바꿀",
 ];
 
 function collectMatchedDecisionKeywords(
@@ -4431,13 +5087,18 @@ function isProtectedTopicCompoundObjectSurface(
   surface: string,
 ): boolean {
   const normalized = normalizeKoreanText(surface);
+  const matchesProtectedNoun = (noun: string): boolean => {
+    const normalizedNoun = normalizeKoreanText(noun);
+    return (
+      normalized === normalizedNoun
+      || normalized.endsWith(` ${normalizedNoun}`)
+      || normalized.startsWith(`${normalizedNoun} `)
+      || normalized.includes(` ${normalizedNoun} `)
+    );
+  };
   return (
-    BUSINESS_TOPIC_COMPOUND_NOUNS.some(
-      (noun) => normalizeKoreanText(noun) === normalized,
-    )
-    || JOB_TOPIC_COMPOUND_NOUNS.some(
-      (noun) => normalizeKoreanText(noun) === normalized,
-    )
+    BUSINESS_TOPIC_COMPOUND_NOUNS.some(matchesProtectedNoun)
+    || JOB_TOPIC_COMPOUND_NOUNS.some(matchesProtectedNoun)
   );
 }
 
@@ -4541,6 +5202,37 @@ function collectRealEstateSellSignalEvidence(
 }
 
 /**
+ * business × start compound용 action evidence.
+ * 1) inherent start signal (시작/창업/개업/새로)
+ * 2) business paraphrase 활용형 (차려·열어 계열)
+ * decisionRules 전역 keyword로 승격하지 않는다.
+ */
+function collectBusinessStartActionEvidence(
+  question: string,
+): string[] {
+  return [
+    ...collectMatchedDecisionKeywords(
+      question,
+      BUSINESS_START_SIGNAL_KEYWORDS,
+    ),
+    ...collectBusinessStartCompoundVerbEvidence(question),
+  ];
+}
+
+/**
+ * business noun × 차려/열어 paraphrase용 verb evidence.
+ * bare "차리"/"열" 단독 substring은 쓰지 않는다.
+ */
+function collectBusinessStartCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_START_COMPOUND_VERBS,
+  );
+}
+
+/**
  * J-4-4: business noun + start signal compound evidence.
  * start 단독 keyword만으로는 빈 배열을 반환한다.
  */
@@ -4556,10 +5248,7 @@ function collectBusinessStartSignalEvidence(
     return [];
   }
 
-  const startSignalEvidence = collectMatchedDecisionKeywords(
-    question,
-    BUSINESS_START_SIGNAL_KEYWORDS,
-  );
+  const startSignalEvidence = collectBusinessStartActionEvidence(question);
 
   if (startSignalEvidence.length === 0) {
     return [];
@@ -4591,13 +5280,55 @@ function hasLeaveJobSignal(
   return collectLeaveJobSignalEvidence(question).length > 0;
 }
 
-function collectChangeJobSignalEvidence(
+/**
+ * job noun + change-verb compound용 verb evidence.
+ * changeJob 단독 keyword / 전역 "바꾸다"로 topic·decision을 만들지 않는다.
+ */
+function collectChangeJobCompoundVerbEvidence(
   question: string,
 ): string[] {
   return collectMatchedDecisionKeywords(
     question,
+    CHANGE_JOB_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * changeJob evidence:
+ * 1) inherent signal (이직/전직/직장·회사+옮)
+ * 2) JOB_TOPIC_COMPOUND_NOUNS × change-verb compound
+ *    (직업/직장/회사 + 바꿔도/바꿔야/바꾸는/바꿀)
+ */
+function collectChangeJobSignalEvidence(
+  question: string,
+): string[] {
+  const inherentEvidence = collectMatchedDecisionKeywords(
+    question,
     CHANGE_JOB_SIGNAL_KEYWORDS,
   );
+
+  const jobNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_TOPIC_COMPOUND_NOUNS,
+  );
+
+  if (jobNounEvidence.length === 0) {
+    return inherentEvidence;
+  }
+
+  const changeVerbEvidence = collectChangeJobCompoundVerbEvidence(question);
+
+  if (changeVerbEvidence.length === 0) {
+    return inherentEvidence;
+  }
+
+  return [
+    ...new Set([
+      ...inherentEvidence,
+      ...jobNounEvidence,
+      ...changeVerbEvidence,
+    ]),
+  ];
 }
 
 function hasChangeJobSignal(
@@ -5136,6 +5867,28 @@ const INTERPERSONAL_FIT_PATTERN =
 const SELF_FIT_EXCLUSION_PATTERN =
   /(?:나에게|내게)\s*(?:어울|맞)|(?:나|내).*(?:직업|사업|투자\s*방식|투자|취미|성격|연애).*(?:맞|어울)|(?:직업|사업|투자|취미|집|부동산).*(?:나|내).*(?:맞|어울)|이\s*(?:직업|집).*(?:나|내).*(?:맞|어울)/;
 
+/**
+ * 결혼/재혼/혼인 상대 후보 문맥.
+ * INTERPERSONAL_FIT_PATTERN을 전역으로 넓히지 않고,
+ * spouse-candidate + bare fit 분석 신호에만 사용한다.
+ */
+const SPOUSE_CANDIDATE_CONTEXT_PATTERN =
+  /(?:결혼|재혼|혼인)\s*상대/;
+
+/**
+ * "잘 맞"이 없는 bare fit 평가 표현.
+ * 전역 INTERPERSONAL_FIT_PATTERN에는 넣지 않는다.
+ */
+const BARE_INTERPERSONAL_FIT_ASSESSMENT_PATTERN =
+  /(?:맞을까(?:요)?|맞나(?:요|이|임)?|맞는가(?:요)?)/;
+
+/**
+ * "~하는 게 맞을까요" / "~사는 게 맞을까요" 같은 실행 판단형.
+ * spouse-candidate bare fit과 구분한다.
+ */
+const EXECUTION_JUDGEMENT_FIT_EXCLUSION_PATTERN =
+  /(?:하는|할|는)\s*게\s*맞/;
+
 const EXPLICIT_EXECUTION_DECISION_TARGETS:
   readonly DecisionTarget[] = [
     "separate",
@@ -5242,6 +5995,53 @@ export function isCompatibilityAnalysisQuestion(
 }
 
 /**
+ * spouse-candidate + bare fit 평가 신호.
+ * INTERPERSONAL_FIT_PATTERN / isCompatibilityAnalysisQuestion을
+ * 전역으로 넓히지 않는다.
+ * analysisMode=compatibility 판정과
+ * J-4-5-1 hasStrongCompatibilityFrameOverMarry에만 사용한다.
+ */
+function hasSpouseCandidateBareFitCompatibilitySignal(
+  question: string,
+): boolean {
+  if (
+    SELF_FIT_EXCLUSION_PATTERN.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    EXECUTION_JUDGEMENT_FIT_EXCLUSION_PATTERN.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !hasRelationshipCounterpartContext(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !SPOUSE_CANDIDATE_CONTEXT_PATTERN.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  return BARE_INTERPERSONAL_FIT_ASSESSMENT_PATTERN.test(
+    question,
+  );
+}
+
+/**
  * J-4-11: 궁합 명시 + 맞음/좋음 품질 판단 soft frame.
  * 기존 COMPATIBILITY_EXPLICIT_PATTERN을 재사용한다.
  * "맞을까" keyword miss여도 compatibility 의미 신호와
@@ -5319,7 +6119,8 @@ function shouldProtectMarryActionDecision(
 /**
  * J-4-5-1: compatibility/fit frame이 marry action보다 강한지.
  * 기존 isCompatibilityAnalysisQuestion을 우선 재사용하고,
- * marry keyword만으로 잡힌 "결혼생활 잘 맞"류 interpersonal fit도 포함한다.
+ * marry keyword만으로 잡힌 "결혼생활 잘 맞"류 interpersonal fit과
+ * spouse-candidate + bare fit 신호도 포함한다.
  */
 function hasStrongCompatibilityFrameOverMarry(
   question: string,
@@ -5329,6 +6130,14 @@ function hasStrongCompatibilityFrameOverMarry(
     isCompatibilityAnalysisQuestion(
       question,
       decisionTarget,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    hasSpouseCandidateBareFitCompatibilitySignal(
+      question,
     )
   ) {
     return true;
@@ -5421,15 +6230,36 @@ function detectQuestionAnalysisMode(
     return "interpretation";
   }
 
+  // fortune-turn timing: timing + none + fortune 문맥은
+  // action decision이 아니라 운의 전환/풀림 시점 해석이다.
+  // 기존 timing + action(start/invest/marry 등)은 decisionTarget
+  // 가드로 그대로 decision을 유지한다.
+  if (
+    intent
+      === "timing"
+    && decisionTarget
+      === "none"
+    && hasFortuneExpression(
+      question,
+    )
+  ) {
+    return "interpretation";
+  }
+
   if (
     !isExplicitExecutionDecision(
       question,
       intent,
       decisionTarget,
     )
-    && isCompatibilityAnalysisQuestion(
-      question,
-      decisionTarget,
+    && (
+      isCompatibilityAnalysisQuestion(
+        question,
+        decisionTarget,
+      )
+      || hasSpouseCandidateBareFitCompatibilitySignal(
+        question,
+      )
     )
   ) {
     return "compatibility";
@@ -5696,6 +6526,11 @@ export function readQuestion(
 
   // J-2: 후보 수집 → normalizeAxes에서 topic/intent/decisionTarget 최종 선택
   const meaningCandidates = collectMeaningCandidates(normalizedQuestion);
+  // P6-12: relation Evidence는 primary 선택과 분리해 수집한다.
+  meaningCandidates.actionRelations = collectQuestionActionRelations(
+    normalizedQuestion,
+    meaningCandidates,
+  );
   const normalizedAxes = normalizeAxes(
     normalizedQuestion,
     meaningCandidates,
@@ -5785,6 +6620,7 @@ export function readQuestion(
         meaningCandidates.decisionTargets,
       ),
     },
+    actionRelations: meaningCandidates.actionRelations,
   };
 
   return attachConclusionNature(
@@ -5798,6 +6634,7 @@ export function readQuestion(
 
           topic: resolvedTopic,
           objectLabel: normalizedAxes.objectLabel,
+          objectSurfaceRemnant: normalizedAxes.objectSurfaceRemnant,
           objectReferent,
           intent: normalizedAxes.intent,
           motive: motiveMatch.result,
