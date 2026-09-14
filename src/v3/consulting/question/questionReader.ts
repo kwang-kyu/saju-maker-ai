@@ -4882,6 +4882,7 @@ const JOB_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "직장",
   "회사",
   "직업",
+  "직무",
 ];
 
 /**
@@ -5112,7 +5113,7 @@ const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
 /**
  * job noun × change-verb compound용 활용형.
  * CHANGE_JOB_SIGNAL_KEYWORDS / decisionRules에 단독 추가하지 않는다.
- * "바꾸다"/"바" 단독 substring 금지.
+ * "바꾸다"/"바"/"변경"/"전환"/"갈아타" 단독 substring 금지.
  * 연결형(바꾸면서/바꾸고/…)은 아래 CONNECTIVE 목록으로만 취급한다.
  */
 const CHANGE_JOB_COMPOUND_VERBS: readonly string[] = [
@@ -5120,6 +5121,20 @@ const CHANGE_JOB_COMPOUND_VERBS: readonly string[] = [
   "바꿔야",
   "바꾸는",
   "바꿀",
+  "바꾸어도",
+  "바꾸어야",
+  "변경해도",
+  "변경해야",
+  "변경하는",
+  "변경할",
+  "전환해도",
+  "전환해야",
+  "전환하는",
+  "전환할",
+  "갈아타도",
+  "갈아타야",
+  "갈아타는",
+  "갈아탈",
 ];
 
 /**
@@ -5133,6 +5148,18 @@ const CHANGE_JOB_COMPOUND_CONNECTIVE_VERBS: readonly string[] = [
   "바꾸고 나서",
   "바꾼 뒤",
   "바꾸고",
+  "변경하면서",
+  "변경하고 나서",
+  "변경한 뒤",
+  "변경하고",
+  "전환하면서",
+  "전환하고 나서",
+  "전환한 뒤",
+  "전환하고",
+  "갈아타면서",
+  "갈아타고 나서",
+  "갈아탄 뒤",
+  "갈아타고",
 ];
 
 function collectMatchedDecisionKeywords(
@@ -5554,8 +5581,8 @@ function collectChangeJobCompoundVerbEvidence(
  * changeJob evidence:
  * 1) inherent signal (이직/전직/직장·회사+옮)
  * 2) JOB_TOPIC_COMPOUND_NOUNS × change-verb compound
- *    (직업/직장/회사 + 바꿔도/바꿔야/바꾸는/바꿀
- *     또는 바꾸면서/바꾸고/바꾼 뒤/바꾸고 나서)
+ *    (직업/직장/회사/직무 + 바꿔도/변경해도/전환해도/갈아타도/바꾸어도 계열
+ *     또는 바꾸면서/변경하고/전환하고/갈아타고 등 연결형)
  */
 function collectChangeJobSignalEvidence(
   question: string,
