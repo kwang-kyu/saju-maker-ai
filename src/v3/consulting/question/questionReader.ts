@@ -2151,8 +2151,8 @@ function appendCompoundDecisionTargetCandidates(
   pushCompound("changeJob", collectChangeJobSignalEvidence(question), 0);
   pushCompound("leaveJob", collectLeaveJobSignalEvidence(question), 1);
   pushCompound("buy", collectRealEstateBuySignalEvidence(question), 2);
-  // P10 G2-2: business/entity noun + 인수 → buy compound.
-  // bare "인수"를 전역 buy keyword로 넣지 않는다.
+  // P10 G2-2 / P11-6-6 A3-1: business/entity noun + 인수|매입|구입 → buy compound.
+  // bare "인수"/"매입"/"구입"을 전역 buy keyword로 넣지 않는다.
   pushCompound("buy", collectBusinessAcquireBuySignalEvidence(question), 2);
   pushCompound("sell", collectRealEstateSellSignalEvidence(question), 3);
   pushCompound("start", collectBusinessStartSignalEvidence(question), 4);
@@ -2547,7 +2547,7 @@ function collectMoneyInvestSignalEvidence(
  * - business noun + 접다/폐업 paraphrase → stop (P10 G5)
  * - business noun + 접고/손을 떼다 paraphrase → stop (P11-6-3 A2)
  * - property noun + 보유/가지고 있 paraphrase → continue (P10 G6)
- * - business/entity noun + 인수 → buy (P10 G2-2)
+ * - business/entity noun + 인수|매입|구입 → buy (P10 G2-2 / P11-6-6 A3-1)
  * - money cashflow noun + manage verb (J-4-13)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
@@ -2721,8 +2721,8 @@ function collectTopicDecisionCompoundCandidates(
     11,
   );
 
-  // P10 G2-2: entity noun + 인수 → business × buy
-  // start(설립/창업)와 대칭. bare 인수·인수인계만으로는 만들지 않는다.
+  // P10 G2-2 / P11-6-6 A3-1: entity noun + 인수|매입|구입 → business × buy
+  // start(설립/창업)와 대칭. bare 인수·매입·구입·인수인계만으로는 만들지 않는다.
   const acquireSignals = collectBusinessAcquireBuyActionEvidence(question);
   const acquireEntityNouns = collectMatchedDecisionKeywords(
     question,
@@ -5259,12 +5259,15 @@ const BUSINESS_ACQUIRE_ENTITY_NOUNS: readonly string[] =
   BUSINESS_ESTABLISH_ENTITY_NOUNS;
 
 /**
- * P10 G2-2: 인수는 bare global buy keyword가 아니다.
+ * P10 G2-2 / P11-6-6 A3-1: 인수·매입·구입은 bare global buy keyword가 아니다.
  * decisionRules에 넣지 않고, entity noun과 결합될 때만 buy evidence가 된다.
  * "인수인계"는 반드시 제외한다.
+ * 사다/사들이다/넘겨받다/권리금은 A3-1 범위 밖이다.
  */
 const BUSINESS_ACQUIRE_BUY_SIGNALS: readonly string[] = [
   "인수",
+  "매입",
+  "구입",
 ];
 
 /**
@@ -6059,8 +6062,8 @@ function questionWithoutHandoverAcquireSurface(
 }
 
 /**
- * P10 G2-2: entity noun × 인수 compound용 buy signal evidence.
- * bare "인수" 단독으로는 topic/decision을 만들지 않는다.
+ * P10 G2-2 / P11-6-6 A3-1: entity noun × 인수|매입|구입 compound용 buy signal evidence.
+ * bare "인수"/"매입"/"구입" 단독으로는 topic/decision을 만들지 않는다.
  * "인수인계"는 제외한다.
  */
 function collectBusinessAcquireBuyActionEvidence(
@@ -6073,9 +6076,10 @@ function collectBusinessAcquireBuyActionEvidence(
 }
 
 /**
- * P10 G2-2: business/entity noun + 인수 compound evidence.
- * 인수 단독 keyword만으로는 빈 배열을 반환한다.
- * entity noun × 인수 → business × buy 로 수렴한다 (새 acquire DT 없음).
+ * P10 G2-2 / P11-6-6 A3-1: business/entity noun + 인수|매입|구입 compound evidence.
+ * 인수·매입·구입 단독 keyword만으로는 빈 배열을 반환한다.
+ * entity noun × 인수|매입|구입 → business × buy 로 수렴한다 (새 acquire DT 없음).
+ * realEstate × 매입/구입·money × 매입/구입 경로는 기존 규칙을 유지한다.
  */
 function collectBusinessAcquireBuySignalEvidence(
   question: string,
