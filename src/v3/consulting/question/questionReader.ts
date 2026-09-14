@@ -2557,11 +2557,19 @@ function collectTopicDecisionCompoundCandidates(
     3,
   );
 
+  const establishSignals = collectBusinessEstablishStartSignalEvidence(
+    question,
+  );
   const businessNouns = collectMatchedDecisionKeywords(
     question,
-    BUSINESS_TOPIC_COMPOUND_NOUNS,
+    establishSignals.length > 0
+      ? BUSINESS_ESTABLISH_ENTITY_NOUNS
+      : BUSINESS_TOPIC_COMPOUND_NOUNS,
   );
-  const startSignals = collectBusinessStartActionEvidence(question);
+  const startSignals = [
+    ...collectBusinessStartActionEvidence(question),
+    ...establishSignals,
+  ];
 
   pushPair(
     "business",
@@ -4913,6 +4921,29 @@ const BUSINESS_START_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
+ * P10 G2: entity noun + 설립 compound용 조직/사업 entity.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS를 재사용하고,
+ * 회사/법인/사업체/기업은 설립 문맥에서만 business topic evidence로 합류한다.
+ * 회사 단독(이직/퇴사/유지)은 JOB_TOPIC_COMPOUND_NOUNS 경로를 유지한다.
+ */
+const BUSINESS_ESTABLISH_ENTITY_NOUNS: readonly string[] = [
+  ...BUSINESS_TOPIC_COMPOUND_NOUNS,
+  "회사",
+  "법인",
+  "사업체",
+  "기업",
+];
+
+/**
+ * P10 G2: 설립은 bare global start keyword가 아니다.
+ * decisionRules / BUSINESS_START_SIGNAL_KEYWORDS에 넣지 않고,
+ * entity noun과 결합될 때만 start evidence가 된다.
+ */
+const BUSINESS_ESTABLISH_START_SIGNALS: readonly string[] = [
+  "설립",
+];
+
+/**
  * object surface remnant 포착용 action anchor만.
  * "시작/창업/개업"은 BUSINESS_START_SIGNAL_KEYWORDS에서 가져오되,
  * "새로"는 부사/action modifier이므로 remnant anchor에서 제외한다.
@@ -5310,6 +5341,7 @@ function collectRealEstateSellSignalEvidence(
  * 1) inherent start signal (시작/창업/개업/새로)
  * 2) business paraphrase 활용형 (차려·열어 계열)
  * decisionRules 전역 keyword로 승격하지 않는다.
+ * 설립은 entity compound 전용이므로 여기 포함하지 않는다.
  */
 function collectBusinessStartActionEvidence(
   question: string,
@@ -5337,22 +5369,44 @@ function collectBusinessStartCompoundVerbEvidence(
 }
 
 /**
+ * P10 G2: entity noun × 설립 compound용 start signal evidence.
+ * bare "설립" 단독으로는 topic/decision을 만들지 않는다.
+ */
+function collectBusinessEstablishStartSignalEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_ESTABLISH_START_SIGNALS,
+  );
+}
+
+/**
  * J-4-4: business noun + start signal compound evidence.
  * start 단독 keyword만으로는 빈 배열을 반환한다.
+ * P10 G2: entity noun + 설립도 동일하게 business × start로 수렴한다.
  */
 function collectBusinessStartSignalEvidence(
   question: string,
 ): string[] {
+  const establishSignalEvidence = collectBusinessEstablishStartSignalEvidence(
+    question,
+  );
   const businessNounEvidence = collectMatchedDecisionKeywords(
     question,
-    BUSINESS_TOPIC_COMPOUND_NOUNS,
+    establishSignalEvidence.length > 0
+      ? BUSINESS_ESTABLISH_ENTITY_NOUNS
+      : BUSINESS_TOPIC_COMPOUND_NOUNS,
   );
 
   if (businessNounEvidence.length === 0) {
     return [];
   }
 
-  const startSignalEvidence = collectBusinessStartActionEvidence(question);
+  const startSignalEvidence = [
+    ...collectBusinessStartActionEvidence(question),
+    ...establishSignalEvidence,
+  ];
 
   if (startSignalEvidence.length === 0) {
     return [];
