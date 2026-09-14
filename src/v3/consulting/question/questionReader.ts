@@ -5019,6 +5019,7 @@ const JOB_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "회사",
   "직업",
   "직무",
+  "소속",
 ];
 
 /**
@@ -6226,7 +6227,7 @@ function collectChangeJobCompoundVerbEvidence(
  * changeJob evidence:
  * 1) inherent signal (이직/전직/직장·회사+옮)
  * 2) JOB_TOPIC_COMPOUND_NOUNS × change-verb compound
- *    (직업/직장/회사/직무 + 바꿔도/변경해도/전환해도/갈아타도/바꾸어도 계열
+ *    (직업/직장/회사/직무/소속 + 바꿔도/변경해도/전환해도/갈아타도/바꾸어도 계열
  *     또는 바꾸면서/변경하고/전환하고/갈아타고 등 연결형)
  */
 function collectChangeJobSignalEvidence(
