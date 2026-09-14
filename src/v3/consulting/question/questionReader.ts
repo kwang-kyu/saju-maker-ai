@@ -1639,6 +1639,14 @@ function collectMeaningCandidates(
     decisionTargets,
   );
 
+  // P11-6-3 / A2: business noun × 접고/손을 떼다 paraphrase → termination intent.
+  // bare "접다"/"손을 떼다"는 전역 termination keyword가 아니다.
+  appendBusinessStopWithdrawIntentCandidates(
+    normalizedQuestion,
+    intents,
+    decisionTargets,
+  );
+
   const topicDecisionCompounds = collectTopicDecisionCompoundCandidates(
     normalizedQuestion,
   );
@@ -2206,8 +2214,9 @@ function appendCompoundDecisionTargetCandidates(
       );
     }
   }
-  // P10 G5: business noun + 접다/폐업 paraphrase → stop compound.
-  // bare "접다"/"폐업"을 전역 stop keyword로 넣지 않는다.
+  // P10 G5 / P11-6-3 A2: business noun + 접다|폐업|손을 떼다 paraphrase
+  // → stop compound.
+  // bare "접다"/"폐업"/"손을 떼다"를 전역 stop keyword로 넣지 않는다.
   // 기존 decisionRules의 "접어야"는 유지하고, 여기서는 noun-gated로만 확장한다.
   pushCompound(
     "stop",
@@ -2534,6 +2543,7 @@ function collectMoneyInvestSignalEvidence(
  * - business noun + 운영 paraphrase → continue (P10 G4)
  * - business noun + 끊지 않고/굴려가 paraphrase → continue (P11-6-2 A1)
  * - business noun + 접다/폐업 paraphrase → stop (P10 G5)
+ * - business noun + 접고/손을 떼다 paraphrase → stop (P11-6-3 A2)
  * - property noun + 보유/가지고 있 paraphrase → continue (P10 G6)
  * - business/entity noun + 인수 → buy (P10 G2-2)
  * - money cashflow noun + manage verb (J-4-13)
@@ -2542,7 +2552,7 @@ function collectMoneyInvestSignalEvidence(
  * invest/move/start/buy/sell/manageMoney/continue/stop 단독 keyword만으로는 만들지 않는다.
  * bare "운영"은 전역 continue evidence가 아니다.
  * bare "끊다"/"굴리다"는 전역 continue evidence가 아니다.
- * bare "접다"/"폐업"은 전역 stop evidence가 아니다.
+ * bare "접다"/"폐업"/"손을 떼다"는 전역 stop evidence가 아니다.
  * bare "보유"/"가지고 있"은 전역 continue evidence가 아니다.
  */
 function collectTopicDecisionCompoundCandidates(
@@ -2675,9 +2685,11 @@ function collectTopicDecisionCompoundCandidates(
     9,
   );
 
-  // P10 G5: business noun + 접다/폐업 paraphrase → business × stop
-  // bare 접다·폐업·비사업 목적어(계획/책/일/프로젝트/마음/회사/직장 등)만으로는
-  // 만들지 않는다. 기존 DecisionTarget `stop`을 재사용한다.
+  // P10 G5 / P11-6-3 A2: business noun + 접다|폐업|손을 떼다
+  // paraphrase → business × stop
+  // bare 접다·폐업·손을 떼다·비사업 목적어(계획/책/일/프로젝트/마음/회사/직장/
+  // 관계/투자/업무/팀 등)만으로는 만들지 않는다.
+  // 기존 DecisionTarget `stop`을 재사용한다.
   const stopCloseSignals = collectBusinessStopCompoundVerbEvidence(question);
   const stopCloseNouns = collectMatchedDecisionKeywords(
     question,
@@ -5119,19 +5131,78 @@ const BUSINESS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
  * noun-gated compound evidence로만 재사용·확장한다.
  * 계획/책/일/프로젝트/마음/회사/직장은 BUSINESS noun 밖이므로 경계를 보존한다.
  */
-const BUSINESS_STOP_COMPOUND_VERBS: readonly string[] = [
+const BUSINESS_STOP_FOLD_COMPOUND_VERBS: readonly string[] = [
   "접어도",
   "접어야",
   "접는",
   "접을",
   "접을까",
   "접을지",
+];
+
+/**
+ * P11-6-3 / A2: business noun × 접다 extended conjugations.
+ * bare "접다"/"접어" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 stop evidence가 된다.
+ */
+const BUSINESS_STOP_FOLD_EXTENDED_COMPOUND_VERBS: readonly string[] = [
+  "접고",
+  "접으면서",
+  "접은 뒤",
+];
+
+/**
+ * P10 G5: business noun × 폐업 paraphrase compound용 활용형.
+ * bare "폐업" 단독 substring 금지.
+ */
+const BUSINESS_STOP_CLOSURE_COMPOUND_VERBS: readonly string[] = [
   "폐업해도",
   "폐업해야",
   "폐업하는",
   "폐업할",
   "폐업할까",
   "폐업할지",
+];
+
+/**
+ * P11-6-3 / A2: business noun × 손을 떼다 withdraw paraphrase.
+ * decisionRules / stop·termination keyword에 전역 추가하지 않는다.
+ * bare "떼다"/"손을" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 stop evidence가 된다.
+ * 관계/투자/업무/팀/프로젝트 등은 BUSINESS noun 밖이므로 경계를 보존한다.
+ */
+const BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS: readonly string[] = [
+  "손을 떼다",
+  "손을 떼도",
+  "손을 떼야",
+  "손을 떼는",
+  "손을 뗄",
+  "손을 뗄까",
+  "손을 뗄지",
+  "손을 떼고",
+  "손을 떼면서",
+  "손을 뗀 뒤",
+  "손을 떼려",
+];
+
+/**
+ * P10 G5 + P11-6-3: business stop compound verb 전체.
+ * fold(접*) / closure(폐업*) / withdraw(손을 떼*)를 합친다.
+ */
+const BUSINESS_STOP_COMPOUND_VERBS: readonly string[] = [
+  ...BUSINESS_STOP_FOLD_COMPOUND_VERBS,
+  ...BUSINESS_STOP_FOLD_EXTENDED_COMPOUND_VERBS,
+  ...BUSINESS_STOP_CLOSURE_COMPOUND_VERBS,
+  ...BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS,
+];
+
+/**
+ * P11-6-3 / A2: termination intent 주입용 paraphrase만.
+ * 기존 P10 G5 fold/폐업 surface는 intentRules를 건드리지 않고 유지한다.
+ */
+const BUSINESS_STOP_A2_COMPOUND_VERBS: readonly string[] = [
+  ...BUSINESS_STOP_FOLD_EXTENDED_COMPOUND_VERBS,
+  ...BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS,
 ];
 
 /**
@@ -5797,6 +5868,7 @@ function collectBusinessContinueSignalEvidence(
 /**
  * P10 G5: business noun × 접다/폐업 paraphrase용 verb evidence.
  * bare "접다"/"접어"/"폐업" 단독 substring은 쓰지 않는다.
+ * P11-6-3: 접고/접으면서/접은 뒤 + 손을 떼다 withdraw paraphrase도 동일 gate로 수집한다.
  */
 function collectBusinessStopCompoundVerbEvidence(
   question: string,
@@ -5808,10 +5880,89 @@ function collectBusinessStopCompoundVerbEvidence(
 }
 
 /**
+ * P11-6-3 / A2: business noun × 접고/손을 떼다 paraphrase용 verb evidence.
+ * bare "접다"/"떼다" 단독 substring은 쓰지 않는다.
+ */
+function collectBusinessStopA2VerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_STOP_A2_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * P11-6-3 / A2: business noun + 접고/손을 떼다 compound evidence.
+ * A2 paraphrase 단독 keyword만으로는 빈 배열을 반환한다.
+ * 관계/투자/업무/팀 등 non-business noun은 진입하지 않는다.
+ */
+function collectBusinessStopA2SignalEvidence(
+  question: string,
+): string[] {
+  const businessNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_TOPIC_COMPOUND_NOUNS,
+  );
+
+  if (businessNounEvidence.length === 0) {
+    return [];
+  }
+
+  const a2VerbEvidence = collectBusinessStopA2VerbEvidence(question);
+
+  if (a2VerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...businessNounEvidence, ...a2VerbEvidence];
+}
+
+/**
+ * P11-6-3 / A2: 접고/손을 떼다 paraphrase → termination intent candidate.
+ * intentRules termination vocabulary에는 추가하지 않는다.
+ * business noun gate를 통과한 A2 compound evidence만 사용한다.
+ *
+ * 보호:
+ * - termination frame은 주입하지 않는다.
+ * - Phase 1 decisionTarget이 stop/none이 아니면 intent도 주입하지 않는다.
+ *   (시작/투자/이직 등 기존 scalar 우선순위·composite 보호)
+ */
+function appendBusinessStopWithdrawIntentCandidates(
+  question: string,
+  intents: MeaningCandidate<QuestionIntent>[],
+  decisionTargets: readonly MeaningCandidate<DecisionTarget>[],
+): void {
+  const evidence = collectBusinessStopA2SignalEvidence(question);
+
+  if (evidence.length === 0) {
+    return;
+  }
+
+  const phase1Decision = selectLowestPriorityCandidate(decisionTargets);
+  const phase1Value = phase1Decision?.value ?? "none";
+
+  if (phase1Value !== "none" && phase1Value !== "stop") {
+    return;
+  }
+
+  intents.push({
+    axis: "intent",
+    value: "termination",
+    evidence,
+    source: "compoundSignal",
+    priority: intentRules.length + 1,
+    strength: evidence.length,
+    specificity: Math.max(...evidence.map((item) => item.length)),
+  });
+}
+
+/**
  * P10 G5: business noun + 접다/폐업 paraphrase compound evidence.
  * 접다/폐업 단독 keyword만으로는 빈 배열을 반환한다.
  * 회사/직장 등 JOB noun·계획/책/일 등 비사업 목적어는
  * BUSINESS_TOPIC_COMPOUND_NOUNS 밖이라 진입하지 않는다.
+ * P11-6-3: 접고/손을 떼다 withdraw paraphrase도 동일 noun gate를 쓴다.
  */
 function collectBusinessStopSignalEvidence(
   question: string,
