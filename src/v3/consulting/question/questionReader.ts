@@ -4662,6 +4662,7 @@ const GENERAL_GOODS_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
 const ORGANIZATION_BUY_OBJECT_EXCLUSIONS: readonly string[] = [
   "기업",
   "법인",
+  "사업체",
 ];
 
 /**
