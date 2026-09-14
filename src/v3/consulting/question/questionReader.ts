@@ -1867,18 +1867,20 @@ const ACTION_RELATION_SEQUENTIAL_CONNECTORS: readonly string[] = [
   "떠난 뒤",
   "바꾸고",
   "떠나고",
+  "관두고",
   "하고서",
 ];
 
 /**
  * P6-12 concurrent connector surfaces.
  * job noun × 연결형 changeJob/leaveJob compound가 후보를 만들면
- * "바꾸면서"/"떠나면서" 등으로 concurrent relation을 보존한다.
+ * "바꾸면서"/"떠나면서"/"관두면서" 등으로 concurrent relation을 보존한다.
  */
 const ACTION_RELATION_CONCURRENT_CONNECTORS: readonly string[] = [
   "하면서",
   "바꾸면서",
   "떠나면서",
+  "관두면서",
   "면서",
 ];
 
@@ -5386,14 +5388,18 @@ const LEAVE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
 /**
  * job noun × leave-verb compound용 활용형.
  * LEAVE_JOB_SIGNAL_KEYWORDS / decisionRules에 단독 추가하지 않는다.
- * bare "떠나"/"떠나다" 단독 substring 금지.
- * 연결형(떠나면서/떠나고/…)은 아래 CONNECTIVE 목록으로만 취급한다.
+ * bare "떠나"/"떠나다"/"관두"/"관두다" 단독 substring 금지.
+ * 연결형(떠나면서/떠나고/관두면서/관두고/…)은 아래 CONNECTIVE 목록으로만 취급한다.
  */
 const JOB_LEAVE_COMPOUND_VERBS: readonly string[] = [
   "떠나도",
   "떠나야",
   "떠나는",
   "떠날",
+  "관둬도",
+  "관둬야",
+  "관두는",
+  "관둘",
 ];
 
 /**
@@ -5407,6 +5413,8 @@ const JOB_LEAVE_COMPOUND_CONNECTIVE_VERBS: readonly string[] = [
   "떠나고 나서",
   "떠난 뒤",
   "떠나고",
+  "관두면서",
+  "관두고",
 ];
 
 const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
@@ -6159,8 +6167,9 @@ function collectLeaveJobCompoundVerbEvidence(
  * leaveJob evidence:
  * 1) inherent signal (퇴사/그만두·직장·회사+그만)
  * 2) JOB_TOPIC_COMPOUND_NOUNS × leave-verb compound
- *    (직장/회사/직업/직무 + 떠나도/떠나야/떠나는/떠날 계열
- *     또는 떠나면서/떠나고 등 연결형)
+ *    (직장/회사/직업/직무/소속 + 떠나도/떠나야/떠나는/떠날
+ *     또는 관둬도/관둬야/관두는/관둘 계열
+ *     또는 떠나면서/떠나고/관두면서/관두고 등 연결형)
  */
 function collectLeaveJobSignalEvidence(
   question: string,
