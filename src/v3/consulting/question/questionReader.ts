@@ -2154,6 +2154,9 @@ function appendCompoundDecisionTargetCandidates(
   // P10 G2-2 / P11-6-6 A3-1: business/entity noun + 인수|매입|구입 → buy compound.
   // bare "인수"/"매입"/"구입"을 전역 buy keyword로 넣지 않는다.
   pushCompound("buy", collectBusinessAcquireBuySignalEvidence(question), 2);
+  // P11-6-6 A3-2: business entity/object + colloquial 사* → buy compound.
+  // bare "사다"를 전역 buy keyword로 넣지 않는다. 회사는 제외한다.
+  pushCompound("buy", collectBusinessColloquialBuySignalEvidence(question), 2);
   pushCompound("sell", collectRealEstateSellSignalEvidence(question), 3);
   pushCompound("start", collectBusinessStartSignalEvidence(question), 4);
   pushCompound("move", collectRealEstateMoveSignalEvidence(question), 5);
@@ -2548,6 +2551,7 @@ function collectMoneyInvestSignalEvidence(
  * - business noun + 접고/손을 떼다 paraphrase → stop (P11-6-3 A2)
  * - property noun + 보유/가지고 있 paraphrase → continue (P10 G6)
  * - business/entity noun + 인수|매입|구입 → buy (P10 G2-2 / P11-6-6 A3-1)
+ * - business entity/object + colloquial 사* → buy (P11-6-6 A3-2; 회사 제외)
  * - money cashflow noun + manage verb (J-4-13)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
@@ -2734,6 +2738,24 @@ function collectTopicDecisionCompoundCandidates(
     "buy",
     acquireEntityNouns,
     acquireSignals,
+    8,
+  );
+
+  // P11-6-6 A3-2: business entity/object + colloquial 사* → business × buy
+  // bare 사다·일반물건·부동산·금융자산·회사만으로는 만들지 않는다.
+  const colloquialBuySignals = collectBusinessColloquialBuyActionEvidence(
+    question,
+  );
+  const colloquialBuyNouns = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_COLLOQUIAL_BUY_ENTITY_NOUNS,
+  );
+
+  pushPair(
+    "business",
+    "buy",
+    colloquialBuyNouns,
+    colloquialBuySignals,
     8,
   );
 
@@ -5271,6 +5293,37 @@ const BUSINESS_ACQUIRE_BUY_SIGNALS: readonly string[] = [
 ];
 
 /**
+ * P11-6-6 A3-2: colloquial 사* buy compound용 business entity/object.
+ * BUSINESS_ACQUIRE_ENTITY_NOUNS를 재사용하지 않는다(회사 제외).
+ * 회사 단독(이직/퇴사/유지)은 JOB_TOPIC_COMPOUND_NOUNS 경로를 유지한다.
+ * 사들이다/넘겨받다/권리금은 A3-2 범위 밖이다.
+ */
+const BUSINESS_COLLOQUIAL_BUY_ENTITY_NOUNS: readonly string[] = [
+  "가게",
+  "매장",
+  "식당",
+  "사업체",
+  "법인",
+  "기업",
+];
+
+/**
+ * P11-6-6 A3-2: business entity × colloquial 사* compound용 buy surface.
+ * decisionRules / REAL_ESTATE_BUY_VERBS / MONEY_FINANCIAL_ASSET_BUY_VERBS /
+ * BUSINESS_ACQUIRE_BUY_SIGNALS에는 넣지 않는다.
+ * bare "사다" 단독으로는 topic/decision을 만들지 않는다.
+ */
+const BUSINESS_COLLOQUIAL_BUY_VERBS: readonly string[] = [
+  "사도",
+  "사야",
+  "살까",
+  "살지",
+  "사는",
+  "사려고",
+  "사볼까",
+];
+
+/**
  * object surface remnant 포착용 action anchor만.
  * "시작/창업/개업"은 BUSINESS_START_SIGNAL_KEYWORDS에서 가져오되,
  * "새로"는 부사/action modifier이므로 remnant anchor에서 제외한다.
@@ -6102,6 +6155,46 @@ function collectBusinessAcquireBuySignalEvidence(
   }
 
   return [...businessNounEvidence, ...acquireSignalEvidence];
+}
+
+/**
+ * P11-6-6 A3-2: business entity × colloquial 사* compound용 buy verb evidence.
+ * bare "사다" 계열 단독으로는 topic/decision을 만들지 않는다.
+ * REAL_ESTATE_BUY_VERBS / MONEY_FINANCIAL_ASSET_BUY_VERBS는 수정하지 않는다.
+ */
+function collectBusinessColloquialBuyActionEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_COLLOQUIAL_BUY_VERBS,
+  );
+}
+
+/**
+ * P11-6-6 A3-2: business entity/object + colloquial 사* compound evidence.
+ * 사* 단독·회사·부동산·금융자산·일반물건만으로는 빈 배열을 반환한다.
+ * entity × 사* → business × buy 로 수렴한다 (새 DT 없음).
+ */
+function collectBusinessColloquialBuySignalEvidence(
+  question: string,
+): string[] {
+  const buyVerbEvidence = collectBusinessColloquialBuyActionEvidence(question);
+
+  if (buyVerbEvidence.length === 0) {
+    return [];
+  }
+
+  const businessNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_COLLOQUIAL_BUY_ENTITY_NOUNS,
+  );
+
+  if (businessNounEvidence.length === 0) {
+    return [];
+  }
+
+  return [...businessNounEvidence, ...buyVerbEvidence];
 }
 
 /**
