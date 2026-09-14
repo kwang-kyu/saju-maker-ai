@@ -1839,26 +1839,30 @@ function orderExistingDecisionTargetCandidates(
 /**
  * P6-12 sequential connector surfaces.
  * decisionRules/DT vocab에 추가하지 않으며 relation Evidence 보존용이다.
- * 연결형 changeJob compound surface는 후보가 2개 이상일 때만 사용한다.
+ * 연결형 changeJob/leaveJob compound surface는 후보가 2개 이상일 때만 사용한다.
  */
 const ACTION_RELATION_SEQUENTIAL_CONNECTORS: readonly string[] = [
   "그만두고",
   "시작하고",
   "바꾸고 나서",
+  "떠나고 나서",
   "하고 나서",
   "바꾼 뒤",
+  "떠난 뒤",
   "바꾸고",
+  "떠나고",
   "하고서",
 ];
 
 /**
  * P6-12 concurrent connector surfaces.
- * job noun × 연결형 changeJob compound가 후보를 만들면
- * "바꾸면서" 등으로 concurrent relation을 보존한다.
+ * job noun × 연결형 changeJob/leaveJob compound가 후보를 만들면
+ * "바꾸면서"/"떠나면서" 등으로 concurrent relation을 보존한다.
  */
 const ACTION_RELATION_CONCURRENT_CONNECTORS: readonly string[] = [
   "하면서",
   "바꾸면서",
+  "떠나면서",
   "면서",
 ];
 
@@ -5100,6 +5104,32 @@ const LEAVE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
   "회사를 그만",
 ];
 
+/**
+ * job noun × leave-verb compound용 활용형.
+ * LEAVE_JOB_SIGNAL_KEYWORDS / decisionRules에 단독 추가하지 않는다.
+ * bare "떠나"/"떠나다" 단독 substring 금지.
+ * 연결형(떠나면서/떠나고/…)은 아래 CONNECTIVE 목록으로만 취급한다.
+ */
+const JOB_LEAVE_COMPOUND_VERBS: readonly string[] = [
+  "떠나도",
+  "떠나야",
+  "떠나는",
+  "떠날",
+];
+
+/**
+ * job noun × leave-verb compound용 연결형 활용.
+ * 일반 leaveJob vocabulary / JOB_LEAVE_COMPOUND_VERBS / decisionRules에
+ * 전역 추가하지 않는다. job noun과 결합될 때만 evidence로 쓴다.
+ * primary DecisionTarget 승격 정책이 아니며, start primary를 빼앗지 않는다.
+ */
+const JOB_LEAVE_COMPOUND_CONNECTIVE_VERBS: readonly string[] = [
+  "떠나면서",
+  "떠나고 나서",
+  "떠난 뒤",
+  "떠나고",
+];
+
 const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
   "이직",
   "전직",
@@ -5539,13 +5569,65 @@ function hasRealEstateBuySignal(
   return collectRealEstateBuySignalEvidence(question).length > 0;
 }
 
+/**
+ * job noun + leave-verb compound용 verb evidence.
+ * leaveJob 단독 keyword / 전역 "떠나다"로 topic·decision을 만들지 않는다.
+ * 연결형은 job noun compound 경로에서만 합류한다.
+ */
+function collectLeaveJobCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return [
+    ...new Set([
+      ...collectMatchedDecisionKeywords(
+        question,
+        JOB_LEAVE_COMPOUND_VERBS,
+      ),
+      ...collectMatchedDecisionKeywords(
+        question,
+        JOB_LEAVE_COMPOUND_CONNECTIVE_VERBS,
+      ),
+    ]),
+  ];
+}
+
+/**
+ * leaveJob evidence:
+ * 1) inherent signal (퇴사/그만두·직장·회사+그만)
+ * 2) JOB_TOPIC_COMPOUND_NOUNS × leave-verb compound
+ *    (직장/회사/직업/직무 + 떠나도/떠나야/떠나는/떠날 계열
+ *     또는 떠나면서/떠나고 등 연결형)
+ */
 function collectLeaveJobSignalEvidence(
   question: string,
 ): string[] {
-  return collectMatchedDecisionKeywords(
+  const inherentEvidence = collectMatchedDecisionKeywords(
     question,
     LEAVE_JOB_SIGNAL_KEYWORDS,
   );
+
+  const jobNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_TOPIC_COMPOUND_NOUNS,
+  );
+
+  if (jobNounEvidence.length === 0) {
+    return inherentEvidence;
+  }
+
+  const leaveVerbEvidence = collectLeaveJobCompoundVerbEvidence(question);
+
+  if (leaveVerbEvidence.length === 0) {
+    return inherentEvidence;
+  }
+
+  return [
+    ...new Set([
+      ...inherentEvidence,
+      ...jobNounEvidence,
+      ...leaveVerbEvidence,
+    ]),
+  ];
 }
 
 function hasLeaveJobSignal(
