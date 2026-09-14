@@ -1631,6 +1631,14 @@ function collectMeaningCandidates(
     decisionTargets,
   );
 
+  // P11-6-2 / A1: business noun × keep-going paraphrase → continuation intent.
+  // bare "끊지 않고"/"굴려가"는 전역 continuation keyword가 아니다.
+  appendBusinessContinueKeepGoingIntentCandidates(
+    normalizedQuestion,
+    intents,
+    decisionTargets,
+  );
+
   const topicDecisionCompounds = collectTopicDecisionCompoundCandidates(
     normalizedQuestion,
   );
@@ -2161,13 +2169,43 @@ function appendCompoundDecisionTargetCandidates(
     basePriority,
     8,
   );
-  // P10 G4: business noun + 운영 paraphrase → continue compound.
-  // bare "운영"을 전역 continue keyword로 넣지 않는다.
-  pushCompound(
-    "continue",
-    collectBusinessContinueSignalEvidence(question),
-    9,
-  );
+  // P10 G4 / P11-6-2 A1: business noun + 운영|끊지 않고|굴려가 paraphrase
+  // → continue compound.
+  // bare "운영"/"끊다"/"굴리다"를 전역 continue keyword로 넣지 않는다.
+  //
+  // P11-6-2: keep-going-only evidence는 Phase-1이 none/continue일 때만 DT로 승격한다.
+  // invest/start 등 경쟁 scalar가 이미 있으면 continue DT를 추가하지 않아
+  // "끊지 … 까요" 가짜 exclusive_alt → choose 오염을 막는다.
+  // operate(운영*) paraphrase는 기존 P10 G4 경로를 유지한다.
+  {
+    const businessContinueEvidence = collectBusinessContinueSignalEvidence(
+      question,
+    );
+    const operateVerbEvidence = collectMatchedDecisionKeywords(
+      question,
+      BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS,
+    );
+    const keepGoingVerbEvidence = collectBusinessContinueKeepGoingVerbEvidence(
+      question,
+    );
+    const keepGoingOnly =
+      keepGoingVerbEvidence.length > 0
+      && operateVerbEvidence.length === 0;
+    const phase1Decision = selectLowestPriorityCandidate(decisionTargets);
+    const phase1Value = phase1Decision?.value ?? "none";
+    const allowKeepGoingContinueDt =
+      !keepGoingOnly
+      || phase1Value === "none"
+      || phase1Value === "continue";
+
+    if (allowKeepGoingContinueDt) {
+      pushCompound(
+        "continue",
+        businessContinueEvidence,
+        9,
+      );
+    }
+  }
   // P10 G5: business noun + 접다/폐업 paraphrase → stop compound.
   // bare "접다"/"폐업"을 전역 stop keyword로 넣지 않는다.
   // 기존 decisionRules의 "접어야"는 유지하고, 여기서는 noun-gated로만 확장한다.
@@ -2494,6 +2532,7 @@ function collectMoneyInvestSignalEvidence(
  * - property noun + buy / sell / move
  * - business noun + start
  * - business noun + 운영 paraphrase → continue (P10 G4)
+ * - business noun + 끊지 않고/굴려가 paraphrase → continue (P11-6-2 A1)
  * - business noun + 접다/폐업 paraphrase → stop (P10 G5)
  * - property noun + 보유/가지고 있 paraphrase → continue (P10 G6)
  * - business/entity noun + 인수 → buy (P10 G2-2)
@@ -2502,6 +2541,7 @@ function collectMoneyInvestSignalEvidence(
  *
  * invest/move/start/buy/sell/manageMoney/continue/stop 단독 keyword만으로는 만들지 않는다.
  * bare "운영"은 전역 continue evidence가 아니다.
+ * bare "끊다"/"굴리다"는 전역 continue evidence가 아니다.
  * bare "접다"/"폐업"은 전역 stop evidence가 아니다.
  * bare "보유"/"가지고 있"은 전역 continue evidence가 아니다.
  */
@@ -2615,8 +2655,10 @@ function collectTopicDecisionCompoundCandidates(
     4,
   );
 
-  // P10 G4: business noun + 운영 paraphrase → business × continue
-  // bare 운영·비사업 목적어(회사/직장/업무/채널 등)만으로는 만들지 않는다.
+  // P10 G4 / P11-6-2 A1: business noun + 운영|끊지 않고|굴려가
+  // paraphrase → business × continue
+  // bare 운영/끊다/굴리다·비사업 목적어(회사/직장/업무/채널/관계 등)만으로는
+  // 만들지 않는다.
   const continueOperateSignals = collectBusinessContinueCompoundVerbEvidence(
     question,
   );
@@ -5030,13 +5072,42 @@ const BUSINESS_START_COMPOUND_VERBS: readonly string[] = [
  * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 continue evidence가 된다.
  * 회사/직장은 BUSINESS noun 밖이므로 job 경계를 보존한다.
  */
-const BUSINESS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
+const BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS: readonly string[] = [
   "운영해도",
   "운영해야",
   "운영하는",
   "운영할",
   "운영할까",
   "운영할지",
+];
+
+/**
+ * P11-6-2 / A1: business noun × 끊지 않고 / 굴려가 paraphrase.
+ * decisionRules / continue·continuation keyword에 전역 추가하지 않는다.
+ * bare "끊다"/"굴리다"/"굴리" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 continue evidence가 된다.
+ * 관계/연락/거래/업무/운동/공부/프로젝트/팀/시스템/자동차 등은
+ * BUSINESS noun 밖이므로 경계를 보존한다.
+ */
+const BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS: readonly string[] = [
+  "끊지 않고",
+  "굴려가도",
+  "굴려가야",
+  "굴려가는",
+  "굴려갈",
+  "굴려갈까",
+  "굴려갈지",
+  "굴려가면서",
+  "굴려가",
+];
+
+/**
+ * P10 G4 + P11-6-2: business continue compound verb 전체.
+ * operate(운영*)와 keep-going(끊지 않고/굴려가*)을 합친다.
+ */
+const BUSINESS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
+  ...BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS,
+  ...BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS,
 ];
 
 /**
@@ -5602,6 +5673,7 @@ function collectBusinessStartCompoundVerbEvidence(
 /**
  * P10 G4: business noun × 운영 paraphrase용 verb evidence.
  * bare "운영" 단독 substring은 쓰지 않는다.
+ * P11-6-2: keep-going(끊지 않고/굴려가*) paraphrase도 동일 gate로 수집한다.
  */
 function collectBusinessContinueCompoundVerbEvidence(
   question: string,
@@ -5613,9 +5685,91 @@ function collectBusinessContinueCompoundVerbEvidence(
 }
 
 /**
+ * P11-6-2 / A1: business noun × keep-going paraphrase용 verb evidence.
+ * bare "끊다"/"굴리다" 단독 substring은 쓰지 않는다.
+ */
+function collectBusinessContinueKeepGoingVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * P11-6-2 / A1: business noun + 끊지 않고/굴려가 compound evidence.
+ * keep-going 단독 keyword만으로는 빈 배열을 반환한다.
+ * 관계/연락/프로젝트/팀 등 non-business noun은 진입하지 않는다.
+ */
+function collectBusinessContinueKeepGoingSignalEvidence(
+  question: string,
+): string[] {
+  const businessNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_TOPIC_COMPOUND_NOUNS,
+  );
+
+  if (businessNounEvidence.length === 0) {
+    return [];
+  }
+
+  const keepGoingVerbEvidence = collectBusinessContinueKeepGoingVerbEvidence(
+    question,
+  );
+
+  if (keepGoingVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...businessNounEvidence, ...keepGoingVerbEvidence];
+}
+
+/**
+ * P11-6-2 / A1: keep-going paraphrase → continuation intent candidate.
+ * intentRules continuation vocabulary에는 추가하지 않는다.
+ * business noun gate를 통과한 compound evidence만 사용한다.
+ *
+ * 보호:
+ * - continuation frame은 주입하지 않는다.
+ *   (J-4-3-2가 invest 등 specific/generic action을 continue로 덮는 것을 방지)
+ * - Phase 1 decisionTarget이 continue/none이 아니면 intent도 주입하지 않는다.
+ *   (매수/투자 등 기존 scalar 우선순위·option-fit 보호)
+ */
+function appendBusinessContinueKeepGoingIntentCandidates(
+  question: string,
+  intents: MeaningCandidate<QuestionIntent>[],
+  decisionTargets: readonly MeaningCandidate<DecisionTarget>[],
+): void {
+  const evidence = collectBusinessContinueKeepGoingSignalEvidence(question);
+
+  if (evidence.length === 0) {
+    return;
+  }
+
+  const phase1Decision = selectLowestPriorityCandidate(decisionTargets);
+  const phase1Value = phase1Decision?.value ?? "none";
+
+  if (phase1Value !== "none" && phase1Value !== "continue") {
+    return;
+  }
+
+  intents.push({
+    axis: "intent",
+    value: "continuation",
+    evidence,
+    source: "compoundSignal",
+    priority: intentRules.length + 1,
+    strength: evidence.length,
+    specificity: Math.max(...evidence.map((item) => item.length)),
+  });
+}
+
+/**
  * P10 G4: business noun + 운영 paraphrase compound evidence.
  * 운영 단독 keyword만으로는 빈 배열을 반환한다.
  * 회사/직장 등 JOB noun은 BUSINESS_TOPIC_COMPOUND_NOUNS 밖이라 진입하지 않는다.
+ * P11-6-2: 끊지 않고/굴려가 keep-going paraphrase도 동일 noun gate를 쓴다.
  */
 function collectBusinessContinueSignalEvidence(
   question: string,
