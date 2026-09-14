@@ -2129,6 +2129,9 @@ function appendCompoundDecisionTargetCandidates(
   pushCompound("changeJob", collectChangeJobSignalEvidence(question), 0);
   pushCompound("leaveJob", collectLeaveJobSignalEvidence(question), 1);
   pushCompound("buy", collectRealEstateBuySignalEvidence(question), 2);
+  // P10 G2-2: business/entity noun + 인수 → buy compound.
+  // bare "인수"를 전역 buy keyword로 넣지 않는다.
+  pushCompound("buy", collectBusinessAcquireBuySignalEvidence(question), 2);
   pushCompound("sell", collectRealEstateSellSignalEvidence(question), 3);
   pushCompound("start", collectBusinessStartSignalEvidence(question), 4);
   pushCompound("move", collectRealEstateMoveSignalEvidence(question), 5);
@@ -2464,6 +2467,7 @@ function collectMoneyInvestSignalEvidence(
  * - job noun/inherent signal + changeJob/leaveJob
  * - property noun + buy / sell / move
  * - business noun + start
+ * - business/entity noun + 인수 → buy (P10 G2-2)
  * - money cashflow noun + manage verb (J-4-13)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
@@ -2577,6 +2581,22 @@ function collectTopicDecisionCompoundCandidates(
     businessNouns,
     startSignals,
     4,
+  );
+
+  // P10 G2-2: entity noun + 인수 → business × buy
+  // start(설립/창업)와 대칭. bare 인수·인수인계만으로는 만들지 않는다.
+  const acquireSignals = collectBusinessAcquireBuyActionEvidence(question);
+  const acquireEntityNouns = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_ACQUIRE_ENTITY_NOUNS,
+  );
+
+  pushPair(
+    "business",
+    "buy",
+    acquireEntityNouns,
+    acquireSignals,
+    8,
   );
 
   // J-4-13: property noun + relocation verb → realEstate × move
@@ -4944,6 +4964,24 @@ const BUSINESS_ESTABLISH_START_SIGNALS: readonly string[] = [
 ];
 
 /**
+ * P10 G2-2: entity noun + 인수 compound용 조직/사업 entity.
+ * BUSINESS_ESTABLISH_ENTITY_NOUNS와 동일 집합을 재사용한다.
+ * 회사 단독(이직/퇴사/유지)은 JOB_TOPIC_COMPOUND_NOUNS 경로를 유지하고,
+ * 회사+인수에서만 business topic evidence로 합류한다.
+ */
+const BUSINESS_ACQUIRE_ENTITY_NOUNS: readonly string[] =
+  BUSINESS_ESTABLISH_ENTITY_NOUNS;
+
+/**
+ * P10 G2-2: 인수는 bare global buy keyword가 아니다.
+ * decisionRules에 넣지 않고, entity noun과 결합될 때만 buy evidence가 된다.
+ * "인수인계"는 반드시 제외한다.
+ */
+const BUSINESS_ACQUIRE_BUY_SIGNALS: readonly string[] = [
+  "인수",
+];
+
+/**
  * object surface remnant 포착용 action anchor만.
  * "시작/창업/개업"은 BUSINESS_START_SIGNAL_KEYWORDS에서 가져오되,
  * "새로"는 부사/action modifier이므로 remnant anchor에서 제외한다.
@@ -5379,6 +5417,58 @@ function collectBusinessEstablishStartSignalEvidence(
     question,
     BUSINESS_ESTABLISH_START_SIGNALS,
   );
+}
+
+/**
+ * P10 G2-2: "인수인계" 구간을 제거한 질의에서만 인수 signal을 본다.
+ * bare includes("인수")가 인수인계를 오탐하지 않게 한다.
+ */
+function questionWithoutHandoverAcquireSurface(
+  question: string,
+): string {
+  return question.split("인수인계").join("");
+}
+
+/**
+ * P10 G2-2: entity noun × 인수 compound용 buy signal evidence.
+ * bare "인수" 단독으로는 topic/decision을 만들지 않는다.
+ * "인수인계"는 제외한다.
+ */
+function collectBusinessAcquireBuyActionEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    questionWithoutHandoverAcquireSurface(question),
+    BUSINESS_ACQUIRE_BUY_SIGNALS,
+  );
+}
+
+/**
+ * P10 G2-2: business/entity noun + 인수 compound evidence.
+ * 인수 단독 keyword만으로는 빈 배열을 반환한다.
+ * entity noun × 인수 → business × buy 로 수렴한다 (새 acquire DT 없음).
+ */
+function collectBusinessAcquireBuySignalEvidence(
+  question: string,
+): string[] {
+  const acquireSignalEvidence = collectBusinessAcquireBuyActionEvidence(
+    question,
+  );
+
+  if (acquireSignalEvidence.length === 0) {
+    return [];
+  }
+
+  const businessNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_ACQUIRE_ENTITY_NOUNS,
+  );
+
+  if (businessNounEvidence.length === 0) {
+    return [];
+  }
+
+  return [...businessNounEvidence, ...acquireSignalEvidence];
 }
 
 /**
