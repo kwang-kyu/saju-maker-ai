@@ -2168,6 +2168,14 @@ function appendCompoundDecisionTargetCandidates(
     collectBusinessContinueSignalEvidence(question),
     9,
   );
+  // P10 G5: business noun + 접다/폐업 paraphrase → stop compound.
+  // bare "접다"/"폐업"을 전역 stop keyword로 넣지 않는다.
+  // 기존 decisionRules의 "접어야"는 유지하고, 여기서는 noun-gated로만 확장한다.
+  pushCompound(
+    "stop",
+    collectBusinessStopSignalEvidence(question),
+    10,
+  );
 }
 
 /**
@@ -2479,12 +2487,14 @@ function collectMoneyInvestSignalEvidence(
  * - property noun + buy / sell / move
  * - business noun + start
  * - business noun + 운영 paraphrase → continue (P10 G4)
+ * - business noun + 접다/폐업 paraphrase → stop (P10 G5)
  * - business/entity noun + 인수 → buy (P10 G2-2)
  * - money cashflow noun + manage verb (J-4-13)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
- * invest/move/start/buy/sell/manageMoney/continue 단독 keyword만으로는 만들지 않는다.
+ * invest/move/start/buy/sell/manageMoney/continue/stop 단독 keyword만으로는 만들지 않는다.
  * bare "운영"은 전역 continue evidence가 아니다.
+ * bare "접다"/"폐업"은 전역 stop evidence가 아니다.
  */
 function collectTopicDecisionCompoundCandidates(
   question: string,
@@ -2612,6 +2622,23 @@ function collectTopicDecisionCompoundCandidates(
     continueOperateNouns,
     continueOperateSignals,
     9,
+  );
+
+  // P10 G5: business noun + 접다/폐업 paraphrase → business × stop
+  // bare 접다·폐업·비사업 목적어(계획/책/일/프로젝트/마음/회사/직장 등)만으로는
+  // 만들지 않는다. 기존 DecisionTarget `stop`을 재사용한다.
+  const stopCloseSignals = collectBusinessStopCompoundVerbEvidence(question);
+  const stopCloseNouns = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_TOPIC_COMPOUND_NOUNS,
+  );
+
+  pushPair(
+    "business",
+    "stop",
+    stopCloseNouns,
+    stopCloseSignals,
+    10,
   );
 
   // P10 G2-2: entity noun + 인수 → business × buy
@@ -4989,6 +5016,30 @@ const BUSINESS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
+ * P10 G5: business noun × 접다/폐업 paraphrase compound용 활용형.
+ * decisionRules / stop keyword에 전역 추가하지 않는다.
+ * bare "접다"/"접어"/"폐업" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 stop evidence가 된다.
+ * 기존 decisionRules의 "접어야"는 유지하고, 여기서는 동일 surface를
+ * noun-gated compound evidence로만 재사용·확장한다.
+ * 계획/책/일/프로젝트/마음/회사/직장은 BUSINESS noun 밖이므로 경계를 보존한다.
+ */
+const BUSINESS_STOP_COMPOUND_VERBS: readonly string[] = [
+  "접어도",
+  "접어야",
+  "접는",
+  "접을",
+  "접을까",
+  "접을지",
+  "폐업해도",
+  "폐업해야",
+  "폐업하는",
+  "폐업할",
+  "폐업할까",
+  "폐업할지",
+];
+
+/**
  * P10 G2: entity noun + 설립 compound용 조직/사업 entity.
  * BUSINESS_TOPIC_COMPOUND_NOUNS를 재사용하고,
  * 회사/법인/사업체/기업은 설립 문맥에서만 business topic evidence로 합류한다.
@@ -5545,6 +5596,46 @@ function collectBusinessContinueSignalEvidence(
   }
 
   return [...businessNounEvidence, ...operateVerbEvidence];
+}
+
+/**
+ * P10 G5: business noun × 접다/폐업 paraphrase용 verb evidence.
+ * bare "접다"/"접어"/"폐업" 단독 substring은 쓰지 않는다.
+ */
+function collectBusinessStopCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_STOP_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * P10 G5: business noun + 접다/폐업 paraphrase compound evidence.
+ * 접다/폐업 단독 keyword만으로는 빈 배열을 반환한다.
+ * 회사/직장 등 JOB noun·계획/책/일 등 비사업 목적어는
+ * BUSINESS_TOPIC_COMPOUND_NOUNS 밖이라 진입하지 않는다.
+ */
+function collectBusinessStopSignalEvidence(
+  question: string,
+): string[] {
+  const businessNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_TOPIC_COMPOUND_NOUNS,
+  );
+
+  if (businessNounEvidence.length === 0) {
+    return [];
+  }
+
+  const stopVerbEvidence = collectBusinessStopCompoundVerbEvidence(question);
+
+  if (stopVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...businessNounEvidence, ...stopVerbEvidence];
 }
 
 /**
