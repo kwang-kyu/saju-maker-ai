@@ -2161,6 +2161,13 @@ function appendCompoundDecisionTargetCandidates(
     basePriority,
     8,
   );
+  // P10 G4: business noun + 운영 paraphrase → continue compound.
+  // bare "운영"을 전역 continue keyword로 넣지 않는다.
+  pushCompound(
+    "continue",
+    collectBusinessContinueSignalEvidence(question),
+    9,
+  );
 }
 
 /**
@@ -2471,11 +2478,13 @@ function collectMoneyInvestSignalEvidence(
  * - job noun/inherent signal + changeJob/leaveJob
  * - property noun + buy / sell / move
  * - business noun + start
+ * - business noun + 운영 paraphrase → continue (P10 G4)
  * - business/entity noun + 인수 → buy (P10 G2-2)
  * - money cashflow noun + manage verb (J-4-13)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
- * invest/move/start/buy/sell/manageMoney 단독 keyword만으로는 만들지 않는다.
+ * invest/move/start/buy/sell/manageMoney/continue 단독 keyword만으로는 만들지 않는다.
+ * bare "운영"은 전역 continue evidence가 아니다.
  */
 function collectTopicDecisionCompoundCandidates(
   question: string,
@@ -2585,6 +2594,24 @@ function collectTopicDecisionCompoundCandidates(
     businessNouns,
     startSignals,
     4,
+  );
+
+  // P10 G4: business noun + 운영 paraphrase → business × continue
+  // bare 운영·비사업 목적어(회사/직장/업무/채널 등)만으로는 만들지 않는다.
+  const continueOperateSignals = collectBusinessContinueCompoundVerbEvidence(
+    question,
+  );
+  const continueOperateNouns = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_TOPIC_COMPOUND_NOUNS,
+  );
+
+  pushPair(
+    "business",
+    "continue",
+    continueOperateNouns,
+    continueOperateSignals,
+    9,
   );
 
   // P10 G2-2: entity noun + 인수 → business × buy
@@ -4946,6 +4973,22 @@ const BUSINESS_START_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
+ * P10 G4: business noun × 운영 paraphrase compound용 활용형.
+ * decisionRules / continue keyword에 전역 추가하지 않는다.
+ * bare "운영"/"운영하다" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 continue evidence가 된다.
+ * 회사/직장은 BUSINESS noun 밖이므로 job 경계를 보존한다.
+ */
+const BUSINESS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
+  "운영해도",
+  "운영해야",
+  "운영하는",
+  "운영할",
+  "운영할까",
+  "운영할지",
+];
+
+/**
  * P10 G2: entity noun + 설립 compound용 조직/사업 entity.
  * BUSINESS_TOPIC_COMPOUND_NOUNS를 재사용하고,
  * 회사/법인/사업체/기업은 설립 문맥에서만 business topic evidence로 합류한다.
@@ -5461,6 +5504,47 @@ function collectBusinessStartCompoundVerbEvidence(
     question,
     BUSINESS_START_COMPOUND_VERBS,
   );
+}
+
+/**
+ * P10 G4: business noun × 운영 paraphrase용 verb evidence.
+ * bare "운영" 단독 substring은 쓰지 않는다.
+ */
+function collectBusinessContinueCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_CONTINUE_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * P10 G4: business noun + 운영 paraphrase compound evidence.
+ * 운영 단독 keyword만으로는 빈 배열을 반환한다.
+ * 회사/직장 등 JOB noun은 BUSINESS_TOPIC_COMPOUND_NOUNS 밖이라 진입하지 않는다.
+ */
+function collectBusinessContinueSignalEvidence(
+  question: string,
+): string[] {
+  const businessNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_TOPIC_COMPOUND_NOUNS,
+  );
+
+  if (businessNounEvidence.length === 0) {
+    return [];
+  }
+
+  const operateVerbEvidence = collectBusinessContinueCompoundVerbEvidence(
+    question,
+  );
+
+  if (operateVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...businessNounEvidence, ...operateVerbEvidence];
 }
 
 /**
