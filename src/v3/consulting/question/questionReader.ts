@@ -2137,13 +2137,22 @@ function appendCompoundDecisionTargetCandidates(
     collectMoneyManageSignalEvidence(question),
     6,
   );
+  // P10 G1: financial asset noun + colloquial buy → invest compound.
+  // 사다 계열을 전역 invest keyword로 넣지 않는다.
+  // cash-holding exclusive rival 검사보다 먼저 등록해야
+  // "주식을 살지 현금을 가지고 있을지"가 choose로 수렴한다.
+  pushCompound(
+    "invest",
+    collectMoneyInvestSignalEvidence(question),
+    7,
+  );
   // P10-C F: exclusive alternative의 cash-holding arm만 wait로 흡수한다.
   // 단순 보유 질문·buy exclusion(현금 매수)은 건드리지 않는다.
   appendCashHoldingExclusiveAlternativeCandidate(
     question,
     decisionTargets,
     basePriority,
-    7,
+    8,
   );
 }
 
@@ -2410,6 +2419,45 @@ function collectMoneyManageSignalEvidence(
 }
 
 /**
+ * P10 G1: money × invest compound용 colloquial buy verb evidence.
+ * decisionRules invest keyword에 사다 계열을 전역 추가하지 않는다.
+ * (부동산/일반물건/조직 buy와 충돌 방지)
+ */
+function collectMoneyInvestBuyCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    MONEY_FINANCIAL_ASSET_BUY_VERBS,
+  );
+}
+
+/**
+ * P10 G1: financial asset noun + colloquial buy surface → money × invest.
+ * instrument noun 또는 buy surface 단독으로는 빈 배열을 반환한다.
+ */
+function collectMoneyInvestSignalEvidence(
+  question: string,
+): string[] {
+  const assetEvidence = collectMatchedDecisionKeywords(
+    question,
+    FINANCIAL_ASSET_BUY_OBJECT_MARKERS,
+  );
+
+  if (assetEvidence.length === 0) {
+    return [];
+  }
+
+  const buyVerbEvidence = collectMoneyInvestBuyCompoundVerbEvidence(question);
+
+  if (buyVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...assetEvidence, ...buyVerbEvidence];
+}
+
+/**
  * J-4-4: 강한 topic × decisionTarget compound 후보를 수집한다.
  *
  * 단순 decisionTarget keyword hit와 구분한다.
@@ -2417,6 +2465,7 @@ function collectMoneyManageSignalEvidence(
  * - property noun + buy / sell / move
  * - business noun + start
  * - money cashflow noun + manage verb (J-4-13)
+ * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
  * invest/move/start/buy/sell/manageMoney 단독 keyword만으로는 만들지 않는다.
  */
@@ -2548,6 +2597,24 @@ function collectTopicDecisionCompoundCandidates(
     moneyFlowEvidence,
     manageVerbEvidence,
     6,
+  );
+
+  // P10 G1: financial asset noun + colloquial buy → money × invest
+  // 사다 계열 전역 invest keyword 추가 없이 compound로만 연결한다.
+  // 현금/부동산/일반물건/조직 object는 FINANCIAL_ASSET marker 밖이라 진입하지 않는다.
+  const financialAssetEvidence = collectMatchedDecisionKeywords(
+    question,
+    FINANCIAL_ASSET_BUY_OBJECT_MARKERS,
+  );
+  const financialBuyVerbEvidence =
+    collectMoneyInvestBuyCompoundVerbEvidence(question);
+
+  pushPair(
+    "money",
+    "invest",
+    financialAssetEvidence,
+    financialBuyVerbEvidence,
+    7,
   );
 
   return compounds;
@@ -4622,6 +4689,22 @@ const FINANCIAL_ASSET_BUY_OBJECT_MARKERS: readonly string[] = [
   "가상자산",
   "가상화폐",
   "암호화폐",
+];
+
+/**
+ * P10 G1: money × invest compound에만 쓰는 colloquial buy surface.
+ * decisionRules invest keywords / REAL_ESTATE_BUY_VERBS에는 넣지 않는다.
+ * financial asset noun과 결합될 때만 invest 의미를 만든다.
+ */
+const MONEY_FINANCIAL_ASSET_BUY_VERBS: readonly string[] = [
+  "사도",
+  "사면",
+  "살까",
+  "살지",
+  "사는",
+  "사야",
+  "사려고",
+  "사볼까",
 ];
 
 /**
