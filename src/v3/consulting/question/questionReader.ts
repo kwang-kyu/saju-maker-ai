@@ -2176,6 +2176,13 @@ function appendCompoundDecisionTargetCandidates(
     collectBusinessStopSignalEvidence(question),
     10,
   );
+  // P10 G6: property noun + 보유/가지고 있 paraphrase → continue compound.
+  // bare "보유"/"가지고 있"을 전역 continue keyword로 넣지 않는다.
+  pushCompound(
+    "continue",
+    collectRealEstateContinueSignalEvidence(question),
+    11,
+  );
 }
 
 /**
@@ -2488,6 +2495,7 @@ function collectMoneyInvestSignalEvidence(
  * - business noun + start
  * - business noun + 운영 paraphrase → continue (P10 G4)
  * - business noun + 접다/폐업 paraphrase → stop (P10 G5)
+ * - property noun + 보유/가지고 있 paraphrase → continue (P10 G6)
  * - business/entity noun + 인수 → buy (P10 G2-2)
  * - money cashflow noun + manage verb (J-4-13)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
@@ -2495,6 +2503,7 @@ function collectMoneyInvestSignalEvidence(
  * invest/move/start/buy/sell/manageMoney/continue/stop 단독 keyword만으로는 만들지 않는다.
  * bare "운영"은 전역 continue evidence가 아니다.
  * bare "접다"/"폐업"은 전역 stop evidence가 아니다.
+ * bare "보유"/"가지고 있"은 전역 continue evidence가 아니다.
  */
 function collectTopicDecisionCompoundCandidates(
   question: string,
@@ -2639,6 +2648,21 @@ function collectTopicDecisionCompoundCandidates(
     stopCloseNouns,
     stopCloseSignals,
     10,
+  );
+
+  // P10 G6: property noun + 보유/가지고 있 paraphrase → realEstate × continue
+  // bare 보유·가지고 있·비부동산 목적어(현금/주식/ETF/코인/물건/상품 등)만으로는
+  // 만들지 않는다. 기존 DecisionTarget `continue`를 재사용한다(hold DT 없음).
+  const continueHoldSignals = collectRealEstateContinueCompoundVerbEvidence(
+    question,
+  );
+
+  pushPair(
+    "realEstate",
+    "continue",
+    propertyEvidence,
+    continueHoldSignals,
+    11,
   );
 
   // P10 G2-2: entity noun + 인수 → business × buy
@@ -5040,6 +5064,24 @@ const BUSINESS_STOP_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
+ * P10 G6: property noun × 보유/가지고 있 paraphrase compound용 활용형.
+ * decisionRules / continue keyword에 전역 추가하지 않는다.
+ * bare "보유"/"가지고 있다" 단독 substring 금지.
+ * REAL_ESTATE_BUY_PROPERTY_NOUNS와 결합될 때만 continue evidence가 된다.
+ * 현금/주식/ETF/코인/물건/상품은 property noun 밖이므로 money/general 경계를 보존한다.
+ * buy/sell surface(사도/매수/매도 등)와 섞지 않는다.
+ */
+const REAL_ESTATE_CONTINUE_COMPOUND_VERBS: readonly string[] = [
+  "보유해도",
+  "보유해야",
+  "보유하는",
+  "보유할",
+  "보유할까",
+  "보유할지",
+  "가지고 있",
+];
+
+/**
  * P10 G2: entity noun + 설립 compound용 조직/사업 entity.
  * BUSINESS_TOPIC_COMPOUND_NOUNS를 재사용하고,
  * 회사/법인/사업체/기업은 설립 문맥에서만 business topic evidence로 합류한다.
@@ -5636,6 +5678,47 @@ function collectBusinessStopSignalEvidence(
   }
 
   return [...businessNounEvidence, ...stopVerbEvidence];
+}
+
+/**
+ * P10 G6: property noun × 보유/가지고 있 paraphrase용 verb evidence.
+ * bare "보유"/"가지고 있" 단독 substring은 쓰지 않는다.
+ */
+function collectRealEstateContinueCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    REAL_ESTATE_CONTINUE_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * P10 G6: property noun + 보유/가지고 있 paraphrase compound evidence.
+ * 보유/가지고 있 단독 keyword만으로는 빈 배열을 반환한다.
+ * 현금/주식/ETF/코인/물건/상품은 REAL_ESTATE_BUY_PROPERTY_NOUNS 밖이라 진입하지 않는다.
+ */
+function collectRealEstateContinueSignalEvidence(
+  question: string,
+): string[] {
+  const propertyEvidence = collectMatchedDecisionKeywords(
+    question,
+    REAL_ESTATE_BUY_PROPERTY_NOUNS,
+  );
+
+  if (propertyEvidence.length === 0) {
+    return [];
+  }
+
+  const holdVerbEvidence = collectRealEstateContinueCompoundVerbEvidence(
+    question,
+  );
+
+  if (holdVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...propertyEvidence, ...holdVerbEvidence];
 }
 
 /**
