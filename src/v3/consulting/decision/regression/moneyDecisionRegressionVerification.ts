@@ -217,7 +217,7 @@ import {
 
       intentIsPossibility:
         input.question.intent
-        === "possibility",
+        === "permission",
 
       motiveIsSurvival:
         input.question.motive

@@ -233,7 +233,7 @@ import type {
 
       intentIsPossibility:
         input.question.intent
-        === "possibility",
+        === "permission",
 
       motiveIsLifeTransition:
         input.question.motive

@@ -41,18 +41,16 @@ const QUESTION_TOPICS:
 
 const QUESTION_INTENTS:
   readonly QuestionIntent[] = [
-    "possibility",
+    "permission",
+    "evaluation",
+    "selection",
+    "comparison",
     "timing",
     "reason",
     "method",
     "risk",
-    "comparison",
-    "selection",
-    "continuation",
-    "termination",
     "prediction",
     "existence",
-    "generalJudgement",
   ];
 
 const QUESTION_MOTIVES:

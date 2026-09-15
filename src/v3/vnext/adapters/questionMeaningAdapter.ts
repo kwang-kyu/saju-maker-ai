@@ -100,24 +100,36 @@ function refineDomainFromQuestionText(
 function resolveIntent(
   input: QuestionMeaningAdapterInput,
 ): QuestionMeaningIntent {
-  if (input.intent !== "generalJudgement") {
+  // Former continuation/termination speech-acts map to evaluation;
+  // action meaning is recovered from DecisionTarget.
+  if (input.intent === "evaluation") {
+    if (
+      input.decisionTarget === "continue"
+      || input.decisionTarget === "stop"
+      || input.decisionTarget === "leaveJob"
+      || input.decisionTarget === "separate"
+      || input.decisionTarget === "sell"
+    ) {
+      return "direction";
+    }
+
+    if (/있을까|있나요|있을지|있을\s*수/.test(input.normalizedQuestion)) {
+      return "existence";
+    }
+
+    if (/어떨까|해도\s*될까|가능할까/.test(input.normalizedQuestion)) {
+      return "possibility";
+    }
+
+    const conclusionIntent = mapConclusionNatureToIntent(
+      input.conclusionNature,
+    );
+
+    if (conclusionIntent) {
+      return conclusionIntent;
+    }
+
     return INTENT_TO_MEANING[input.intent];
-  }
-
-  if (/있을까|있나요|있을지|있을\s*수/.test(input.normalizedQuestion)) {
-    return "existence";
-  }
-
-  if (/어떨까|해도\s*될까|가능할까/.test(input.normalizedQuestion)) {
-    return "possibility";
-  }
-
-  const conclusionIntent = mapConclusionNatureToIntent(
-    input.conclusionNature,
-  );
-
-  if (conclusionIntent) {
-    return conclusionIntent;
   }
 
   return INTENT_TO_MEANING[input.intent];
@@ -149,19 +161,17 @@ const INTENT_TO_MEANING: Record<
   QuestionIntent,
   QuestionMeaningIntent
 > = {
-  possibility: "possibility",
+  permission: "possibility",
   timing: "timing",
   reason: "reason",
   method: "method",
   risk: "risk",
   comparison: "comparison",
   selection: "selection",
-  continuation: "direction",
-  termination: "direction",
   // Preserve Reader prediction; do not collapse to possibility.
   prediction: "prediction",
   existence: "existence",
-  generalJudgement: "general",
+  evaluation: "general",
 };
 
 function mapUrgency(

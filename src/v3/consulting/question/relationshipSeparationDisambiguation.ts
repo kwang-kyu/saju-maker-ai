@@ -156,7 +156,7 @@ export function applyRelationshipSeparationNormalization<
 
   const intent:
     QuestionIntent =
-    "termination";
+    "evaluation";
 
   const decisionTarget:
     DecisionTarget =

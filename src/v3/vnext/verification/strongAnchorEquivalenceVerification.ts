@@ -37,6 +37,7 @@ import type {
   QuestionActionRelation,
   QuestionAnalysisMode,
   QuestionIntent,
+  QuestionIntentOrLegacy,
   QuestionReaderResult,
   QuestionTimingType,
   QuestionTopic,
@@ -87,7 +88,7 @@ export type StrongAnchorCaseKind =
 
 export type AnchorSemanticContract = {
   topic: QuestionTopic;
-  intent: QuestionIntent;
+  intent: QuestionIntentOrLegacy;
   decisionTarget: DecisionTarget;
   timingType?: QuestionTimingType;
   analysisMode?: QuestionAnalysisMode;
@@ -198,7 +199,11 @@ function toActual(
 }
 
 function primaryAxisKey(
-  value: Pick<AnchorSemanticActual, "topic" | "intent" | "decisionTarget">,
+  value: {
+    topic: QuestionTopic;
+    intent: QuestionIntentOrLegacy;
+    decisionTarget: DecisionTarget;
+  },
 ): string {
   return `${value.topic}|${value.intent}|${value.decisionTarget}`;
 }

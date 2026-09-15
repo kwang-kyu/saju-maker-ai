@@ -34,19 +34,63 @@ export type QuestionTopic =
   | "lifeDirection"
   | "general";
 
+/**
+ * MODEL B production QuestionIntent (P11-7-2 I-18/I-19 freeze).
+ * Speech-act only — action meaning lives on DecisionTarget.
+ */
 export type QuestionIntent =
-  | "possibility"
+  | "permission"
+  | "evaluation"
+  | "selection"
+  | "comparison"
   | "timing"
   | "reason"
   | "method"
   | "risk"
-  | "comparison"
-  | "selection"
+  | "prediction"
+  | "existence";
+
+/**
+ * Removed from production QuestionIntent (MODEL B).
+ * Fixture / Reader-generation compatibility only — not the production contract.
+ * Phase 2 migrates Reader generation; Phase 6 migrates fixtures.
+ */
+export type LegacyReaderIntentLiteral =
+  | "possibility"
   | "continuation"
   | "termination"
-  | "prediction"
-  | "existence"
   | "generalJudgement";
+
+/** Phase 1 compile/fixture bridge. Prefer QuestionIntent in production paths. */
+export type QuestionIntentOrLegacy =
+  | QuestionIntent
+  | LegacyReaderIntentLiteral;
+
+/**
+ * Reader keyword/normalizer generation-time intent.
+ * Still emits legacy literals until Phase 2; mapped at production boundary.
+ */
+type ReaderIntentLiteral = QuestionIntentOrLegacy;
+
+/**
+ * Map Reader-generated / legacy intent literals onto MODEL B QuestionIntent.
+ * continuation/termination action meaning stays on DecisionTarget.
+ */
+export function toModelBQuestionIntent(
+  intent: ReaderIntentLiteral,
+): QuestionIntent {
+  switch (intent) {
+    case "possibility":
+      return "permission";
+    case "generalJudgement":
+      return "evaluation";
+    case "continuation":
+    case "termination":
+      return "evaluation";
+    default:
+      return intent;
+  }
+}
 
 export type ConclusionNature =
   | "decision"
@@ -335,7 +379,7 @@ export type QuestionActionRelation = {
 
 type MeaningCandidateSet = {
   topics: MeaningCandidate<QuestionTopic>[];
-  intents: MeaningCandidate<QuestionIntent>[];
+  intents: MeaningCandidate<ReaderIntentLiteral>[];
   decisionTargets: MeaningCandidate<DecisionTarget>[];
   frames: MeaningCandidate<string>[];
   topicDecisionCompounds: TopicDecisionCompoundCandidate[];
@@ -349,6 +393,7 @@ type MeaningCandidateSet = {
 /**
  * J-2: Phase 1 compatible selection 결과.
  * topic / intent / decisionTarget 최종 선택은 여기서만 수행한다.
+ * intent remains ReaderIntentLiteral until production boundary mapping.
  */
 type NormalizedAxes = {
   topic: QuestionTopic;
@@ -358,7 +403,7 @@ type NormalizedAxes = {
    * normalizeAxes가 보존만 하며, objectLabel 선택에는 개입하지 않는다.
    */
   objectSurfaceRemnant?: string;
-  intent: QuestionIntent;
+  intent: ReaderIntentLiteral;
   decisionTarget: DecisionTarget;
   evidence: {
     topic: string[];
@@ -563,7 +608,7 @@ const topicRules: readonly KeywordRule<QuestionTopic>[] = [
   },
 ];
 
-const intentRules: readonly KeywordRule<QuestionIntent>[] = [
+const intentRules: readonly KeywordRule<ReaderIntentLiteral>[] = [
   {
     result: "timing",
     keywords: [
@@ -1351,7 +1396,7 @@ function resolveQuestionIntent(
     string,
 ): {
   result:
-    QuestionIntent;
+    ReaderIntentLiteral;
 
   evidence:
     string[];
@@ -3563,9 +3608,9 @@ function resolveGenericSpecificDecisionTargetConflict(
 }
 
 function findIntentCandidate(
-  intents: readonly MeaningCandidate<QuestionIntent>[],
-  value: QuestionIntent,
-): MeaningCandidate<QuestionIntent> | null {
+  intents: readonly MeaningCandidate<ReaderIntentLiteral>[],
+  value: ReaderIntentLiteral,
+): MeaningCandidate<ReaderIntentLiteral> | null {
   return intents.find((candidate) => candidate.value === value) ?? null;
 }
 
@@ -3600,7 +3645,7 @@ function mergeUniqueEvidence(
 function resolveStrongPermissionIntent(
   candidates: MeaningCandidateSet,
 ): {
-  intent: QuestionIntent;
+  intent: ReaderIntentLiteral;
   evidence: string[];
 } | null {
   const frame = hasFrame(
@@ -3629,7 +3674,7 @@ function resolveStrongPermissionIntent(
 function resolveStrongComparisonOrSelectionIntent(
   candidates: MeaningCandidateSet,
 ): {
-  intent: QuestionIntent;
+  intent: ReaderIntentLiteral;
   evidence: string[];
 } | null {
   const frame = hasFrame(
@@ -3974,13 +4019,13 @@ function resolveTerminationOrContinuationDecisionTarget(
  * - option-fit frame이 없는 단일 continuation/termination은 유지
  */
 function normalizeOptionFitMeaning(
-  intent: QuestionIntent,
+  intent: ReaderIntentLiteral,
   intentEvidence: readonly string[],
   decisionTarget: DecisionTarget,
   decisionEvidence: readonly string[],
   candidates: MeaningCandidateSet,
 ): {
-  intent: QuestionIntent;
+  intent: ReaderIntentLiteral;
   intentEvidence: string[];
   decisionTarget: DecisionTarget;
   decisionEvidence: string[];
@@ -4090,12 +4135,12 @@ function normalizeOptionFitMeaning(
  * - decisionTarget 자체는 변경하지 않음
  */
 function normalizePermissionActionNatureMeaning(
-  intent: QuestionIntent,
+  intent: ReaderIntentLiteral,
   intentEvidence: readonly string[],
   decisionTarget: DecisionTarget,
   candidates: MeaningCandidateSet,
 ): {
-  intent: QuestionIntent;
+  intent: ReaderIntentLiteral;
   intentEvidence: string[];
 } | null {
   if (intent !== "possibility") {
@@ -4374,7 +4419,7 @@ function hasGeneralBinaryAlternativeStructure(
 function normalizeDecisionTargetSemanticMeaning(
   question: string,
   topic: QuestionTopic,
-  intent: QuestionIntent,
+  intent: ReaderIntentLiteral,
   decisionTarget: DecisionTarget,
   decisionEvidence: readonly string[],
   candidates: MeaningCandidateSet,
@@ -4749,12 +4794,12 @@ function normalizeTopicSemanticEvidenceCoverage(
 function normalizeIntentSemanticMeaning(
   question: string,
   topic: QuestionTopic,
-  intent: QuestionIntent,
+  intent: ReaderIntentLiteral,
   intentEvidence: readonly string[],
   decisionTarget: DecisionTarget,
   candidates: MeaningCandidateSet,
 ): {
-  intent: QuestionIntent;
+  intent: ReaderIntentLiteral;
   intentEvidence: string[];
 } | null {
   const predictionFrame = hasFrame(
@@ -5065,7 +5110,7 @@ function normalizeAxes(
 
   // Phase 1: intentRules first-match를 기본값으로 둔다.
   const intentCandidate = selectLowestPriorityCandidate(candidates.intents);
-  let intent: QuestionIntent = intentCandidate?.value ?? "generalJudgement";
+  let intent: ReaderIntentLiteral = intentCandidate?.value ?? "generalJudgement";
   let intentEvidence: string[] = intentCandidate?.evidence ?? [];
 
   // 기존 resolveQuestionIntent 우선순위 보존:
@@ -6717,7 +6762,7 @@ function collectBusinessContinueKeepGoingSignalEvidence(
  */
 function appendBusinessContinueKeepGoingIntentCandidates(
   question: string,
-  intents: MeaningCandidate<QuestionIntent>[],
+  intents: MeaningCandidate<ReaderIntentLiteral>[],
   decisionTargets: readonly MeaningCandidate<DecisionTarget>[],
 ): void {
   // P11-7-2I-14 / A1-06: preference split이 있으면 after-arm evidence만 사용한다.
@@ -6863,7 +6908,7 @@ function collectBusinessStopA2SignalEvidence(
  */
 function appendBusinessStopWithdrawIntentCandidates(
   question: string,
-  intents: MeaningCandidate<QuestionIntent>[],
+  intents: MeaningCandidate<ReaderIntentLiteral>[],
   decisionTargets: readonly MeaningCandidate<DecisionTarget>[],
 ): void {
   const evidence = collectBusinessStopA2SignalEvidence(question);
@@ -7725,18 +7770,16 @@ export function buildAsksWhat(topic: QuestionTopic, intent: QuestionIntent): str
   };
 
   const intentText: Record<QuestionIntent, string> = {
-    possibility: "가능한지",
+    permission: "가능한지",
+    evaluation: "전체적으로 어떻게 판단해야 하는지",
     timing: "언제 움직여야 하는지",
     reason: "왜 이런 상황이 생겼는지",
     method: "어떻게 대응해야 하는지",
     risk: "어떤 위험이 있는지",
     comparison: "두 선택 중 무엇이 나은지",
     selection: "무엇을 선택해야 하는지",
-    continuation: "계속 유지해야 하는지",
-    termination: "중단하거나 정리해야 하는지",
     prediction: "앞으로 어떤 결과가 예상되는지",
     existence: "관련 운이나 구조의 존재 여부",
-    generalJudgement: "전체적으로 어떻게 판단해야 하는지",
   };
 
   return `${topicText[topic]}이 ${intentText[intent]}를 묻고 있다.`;
@@ -7809,7 +7852,7 @@ function resolveDecisionTargetByTopic(
   topic:
     QuestionTopic,
   intent:
-    QuestionIntent,
+    ReaderIntentLiteral,
   question:
     string,
 ): DecisionTarget {
@@ -8180,7 +8223,7 @@ function isExplicitExecutionDecision(
   question:
     string,
   intent:
-    QuestionIntent,
+    ReaderIntentLiteral,
   decisionTarget:
     DecisionTarget,
 ): boolean {
@@ -8343,7 +8386,7 @@ function hasCompatibilityQualityAssessmentSoftSignal(
  */
 function shouldProtectMarryActionDecision(
   question: string,
-  intent: QuestionIntent,
+  intent: ReaderIntentLiteral,
   decisionTarget: DecisionTarget,
   candidates: MeaningCandidateSet,
 ): boolean {
@@ -8427,7 +8470,7 @@ function hasStrongCompatibilityFrameOverMarry(
  */
 function resolveCompatibilityOverMarryDecisionTarget(
   question: string,
-  intent: QuestionIntent,
+  intent: ReaderIntentLiteral,
   selected: DecisionTarget,
   candidates: MeaningCandidateSet,
   decisionEvidence: readonly string[],
@@ -8472,7 +8515,7 @@ function detectQuestionAnalysisMode(
   question:
     string,
   intent:
-    QuestionIntent,
+    ReaderIntentLiteral,
   decisionTarget:
     DecisionTarget,
 ): QuestionAnalysisMode {
@@ -8820,6 +8863,8 @@ export function readQuestion(
       normalizedQuestion,
     );
 
+  const productionIntent = toModelBQuestionIntent(normalizedAxes.intent);
+
   const urgencyMatch =
     detectUrgency(
       normalizedQuestion,
@@ -8899,7 +8944,7 @@ export function readQuestion(
           objectLabel: normalizedAxes.objectLabel,
           objectSurfaceRemnant: normalizedAxes.objectSurfaceRemnant,
           objectReferent,
-          intent: normalizedAxes.intent,
+          intent: productionIntent,
           motive: motiveMatch.result,
           decisionTarget:
             resolvedDecisionTarget,
@@ -8912,7 +8957,7 @@ export function readQuestion(
 
           asksWhat: buildAsksWhat(
             resolvedTopic,
-            normalizedAxes.intent,
+            productionIntent,
           ),
           asksWhy: buildAsksWhy(
             motiveMatch.result,

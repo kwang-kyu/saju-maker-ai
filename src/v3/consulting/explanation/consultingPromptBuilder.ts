@@ -100,10 +100,10 @@ const TOPIC_KOREAN_LABELS:
 
 const INTENT_KOREAN_LABELS:
   Readonly<Record<string, string>> = {
-    generalJudgement:
+    evaluation:
       "현재 선택이 적절한지 판단",
 
-    possibility:
+    permission:
       "실현 가능성 판단",
 
     prediction:
@@ -117,12 +117,6 @@ const INTENT_KOREAN_LABELS:
 
     selection:
       "가장 적합한 선택 판단",
-
-    continuation:
-      "계속 유지할지 판단",
-
-    termination:
-      "정리하거나 변경할지 판단",
 
     risk:
       "위험과 주의점 판단",

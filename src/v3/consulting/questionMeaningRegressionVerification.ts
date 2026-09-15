@@ -13,7 +13,7 @@ import {
 import type {
   DecisionTarget,
   QuestionAnalysisMode,
-  QuestionIntent,
+  QuestionIntentOrLegacy,
   QuestionReaderResult,
   QuestionTimingType,
   QuestionTopic,
@@ -24,7 +24,7 @@ type QuestionMeaningExpectation = {
     QuestionTopic;
 
   intent:
-    QuestionIntent;
+    QuestionIntentOrLegacy;
 
   decisionTarget:
     DecisionTarget;

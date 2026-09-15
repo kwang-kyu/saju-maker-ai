@@ -216,7 +216,7 @@ function buildLifeDirectionAsksWhat(
     QuestionIntent,
     string
   > = {
-    possibility:
+    permission:
       "가능한지",
     timing:
       "언제 움직여야 하는지",
@@ -230,15 +230,11 @@ function buildLifeDirectionAsksWhat(
       "두 선택 중 무엇이 나은지",
     selection:
       "무엇을 선택해야 하는지",
-    continuation:
-      "계속 유지해야 하는지",
-    termination:
-      "중단하거나 정리해야 하는지",
     prediction:
       "앞으로 어떤 결과가 예상되는지",
     existence:
       "관련 운이나 구조의 존재 여부",
-    generalJudgement:
+    evaluation:
       "전체적으로 어떻게 판단해야 하는지",
   };
 

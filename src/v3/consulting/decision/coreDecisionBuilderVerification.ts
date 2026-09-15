@@ -127,7 +127,7 @@
             "이번에 대여금을 받을 가능성이 있을까요?",
 
           intent:
-            "possibility",
+            "permission",
 
           decisionTarget:
             "manageMoney",
@@ -175,7 +175,7 @@
             "지금 이 투자에 들어가도 될까요?",
 
           intent:
-            "generalJudgement",
+            "evaluation",
 
           decisionTarget:
             "invest",

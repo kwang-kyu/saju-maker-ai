@@ -941,7 +941,7 @@ function buildContextualCoreDecision(
   }
 
   switch (context.intent) {
-    case "possibility":
+    case "permission":
       return buildPossibilityAnswer(verdict);
 
     case "prediction":
@@ -963,9 +963,7 @@ function buildContextualCoreDecision(
     case "reason":
     case "method":
     case "risk":
-    case "continuation":
-    case "termination":
-    case "generalJudgement":
+    case "evaluation":
       return buildActionAnswer(verdict);
   }
 }

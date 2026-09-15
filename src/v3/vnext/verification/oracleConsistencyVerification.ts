@@ -33,7 +33,7 @@ import {
 import type {
   DecisionTarget,
   QuestionAnalysisMode,
-  QuestionIntent,
+  QuestionIntentOrLegacy,
   QuestionTimingType,
   QuestionTopic,
 } from "../../consulting/question/questionReader.js";
@@ -50,14 +50,14 @@ export type OracleConsistencyStatus =
 
 export type OracleSemanticSnapshot = {
   topic: QuestionTopic;
-  intent: QuestionIntent;
+  intent: QuestionIntentOrLegacy;
   decisionTarget: DecisionTarget;
   timingType?: QuestionTimingType;
   analysisMode?: QuestionAnalysisMode;
 };
 
 export type OraclePrimaryAxisKey =
-  `${QuestionTopic}|${QuestionIntent}|${DecisionTarget}`;
+  `${QuestionTopic}|${QuestionIntentOrLegacy}|${DecisionTarget}`;
 
 export type OracleDiagnosticFlags = {
   crossSuiteConflict: boolean;

@@ -1,7 +1,7 @@
 import type {
   DecisionTarget,
   QuestionAnalysisMode,
-  QuestionIntent,
+  QuestionIntentOrLegacy,
   QuestionTimingType,
   QuestionTopic,
 } from "./question/questionReader.js";
@@ -28,7 +28,7 @@ export type QuestionMeaningExpectation = {
     QuestionTopic;
 
   intent:
-    QuestionIntent;
+    QuestionIntentOrLegacy;
 
   decisionTarget:
     DecisionTarget;
@@ -45,7 +45,7 @@ export type QuestionMeaningExpectation = {
  * topic|intent|decisionTarget 조합으로 boundary를 명시한다.
  */
 export type QuestionMeaningPrimaryAxis =
-  `${QuestionTopic}|${QuestionIntent}|${DecisionTarget}`;
+  `${QuestionTopic}|${QuestionIntentOrLegacy}|${DecisionTarget}`;
 
 export type QuestionMeaningVariationKind =
   | "paraphrase"

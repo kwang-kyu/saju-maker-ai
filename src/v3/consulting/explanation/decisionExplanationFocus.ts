@@ -208,18 +208,14 @@ export function resolveDecisionExplanationFocus(
   }
 
   if (
-    input.intent
-    === "continuation"
-    || input.decisionTarget
+    input.decisionTarget
     === "continue"
   ) {
     return "continuation";
   }
 
   if (
-    input.intent
-    === "termination"
-    || TERMINATION_TARGETS.includes(
+    TERMINATION_TARGETS.includes(
       input.decisionTarget,
     )
   ) {

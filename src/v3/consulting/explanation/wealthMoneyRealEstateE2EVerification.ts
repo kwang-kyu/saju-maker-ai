@@ -10,7 +10,7 @@ import {
   } from "../decision/readerDecisionSelectionBuilder.js";
   import type {
     DecisionTarget,
-    QuestionIntent,
+    QuestionIntentOrLegacy,
   } from "../question/questionReader.js";
   import type {
     QuestionRealitySignal,
@@ -44,7 +44,7 @@ import {
       WealthE2ETopic;
 
     expectedIntent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
 
     expectedDecisionTarget:
       DecisionTarget;

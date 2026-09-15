@@ -202,7 +202,7 @@ export function applyRelationshipReconcileNormalization<
 
   const intent:
     QuestionIntent =
-    "possibility";
+    "permission";
 
   const decisionTarget:
     DecisionTarget =

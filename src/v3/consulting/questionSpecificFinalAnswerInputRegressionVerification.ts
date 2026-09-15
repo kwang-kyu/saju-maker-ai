@@ -29,6 +29,7 @@ import type {
   DecisionTarget,
   QuestionAnalysisMode,
   QuestionIntent,
+  QuestionIntentOrLegacy,
   QuestionTimingType,
   QuestionTopic,
 } from "./question/questionReader.js";
@@ -38,7 +39,7 @@ type ClassificationExpectation = {
     QuestionTopic;
 
   intent:
-    QuestionIntent;
+    QuestionIntentOrLegacy;
 
   decisionTarget:
     DecisionTarget;
@@ -701,7 +702,7 @@ function buildClassificationSignature(
       QuestionTopic;
 
     intent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
 
     decisionTarget:
       DecisionTarget;

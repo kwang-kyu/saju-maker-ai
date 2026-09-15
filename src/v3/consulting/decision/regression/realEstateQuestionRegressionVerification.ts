@@ -1,6 +1,6 @@
 import type {
     DecisionTarget,
-    QuestionIntent,
+    QuestionIntentOrLegacy,
   } from "../../question/questionReader.js";
   import {
     selectReaderDecisionSources,
@@ -16,7 +16,7 @@ import type {
     questionText: string;
 
     expectedIntent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
 
     expectedDecisionTarget:
       DecisionTarget;

@@ -11,7 +11,7 @@ import type {
   ConclusionNature,
   DecisionTarget,
   QuestionAnalysisMode,
-  QuestionIntent,
+  QuestionIntentOrLegacy,
   QuestionMotive,
   QuestionTopic,
 } from "./questionReader.js";
@@ -186,7 +186,7 @@ type QuestionReaderPathExpectation = {
     QuestionTopic;
 
   intent:
-    QuestionIntent;
+    QuestionIntentOrLegacy;
 
   decisionTarget:
     DecisionTarget;
@@ -207,7 +207,7 @@ type NegativeRoleRecommendationCase = {
       QuestionTopic;
 
     intent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
 
     decisionTarget:
       DecisionTarget;
@@ -1205,7 +1205,7 @@ const EXISTENCE_POSITIVE_CASES:
       string;
 
     expectedIntent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
   }[] = [
     {
       question:
@@ -1257,7 +1257,7 @@ const EXISTENCE_NEGATIVE_CASES:
       string;
 
     expectedIntent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
   }[] = [
     {
       question:
@@ -1295,7 +1295,7 @@ const FUTURE_OUTCOME_PREDICTION_CASES:
       string;
 
     expectedIntent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
 
     expectedConclusionNature:
       ConclusionNature;
@@ -1398,7 +1398,7 @@ const TIMING_METHOD_PROTECTION_CASES:
       string;
 
     expectedIntent:
-      QuestionIntent;
+      QuestionIntentOrLegacy;
   }[] = [
     {
       question:
