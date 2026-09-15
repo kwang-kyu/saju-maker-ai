@@ -1209,6 +1209,62 @@ function matchesDecisionKeyword(
   );
 }
 
+/**
+ * P11-7-2I-6 / B9: 부정 continue compound surface가 있으면 true.
+ * stop evidence 자체는 business noun gate에서만 만든다.
+ * 여기서는 긍정 stem(이어가/계속) shadowing 판별에만 쓴다.
+ */
+function hasNegatedContinueCompoundSurface(
+  question: string,
+): boolean {
+  return BUSINESS_STOP_NEGATED_CONTINUE_COMPOUND_VERBS.some((verb) =>
+    matchesDecisionKeyword(question, verb)
+  );
+}
+
+/**
+ * P11-7-2I-6 / B9: 긍정 continue stem이 부정 continue compound에
+ * 가려지면 매칭하지 않는다. 전역 "않 → 반대" polarity가 아니다.
+ */
+function matchesDecisionKeywordWithNegatedContinueGuard(
+  question: string,
+  keyword: string,
+): boolean {
+  if (!matchesDecisionKeyword(question, keyword)) {
+    return false;
+  }
+
+  if (
+    CONTINUE_STEMS_SHADOWED_BY_NEGATED_CONTINUE.has(keyword)
+    && hasNegatedContinueCompoundSurface(question)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * P11-7-2I-6 / B9: intent/frame용 동일 shadowing guard.
+ */
+function matchesKoreanKeywordWithNegatedContinueGuard(
+  question: string,
+  keyword: string,
+): boolean {
+  if (!matchesKoreanKeyword(question, keyword)) {
+    return false;
+  }
+
+  if (
+    CONTINUE_STEMS_SHADOWED_BY_NEGATED_CONTINUE.has(keyword)
+    && hasNegatedContinueCompoundSurface(question)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 const FUTURE_OUTCOME_PREDICTION_PATTERNS:
   readonly RegExp[] = [
     /어떻게\s*될\s*까/,
@@ -1616,6 +1672,9 @@ function collectMeaningCandidates(
     intentRules,
     "intent",
     "intentRules",
+    // P11-7-2I-6 / B9: "이어가지 않"/"계속하지 않"이 있으면
+    // 긍정 stem "이어가"/"계속"을 continuation evidence로 쓰지 않는다.
+    matchesKoreanKeywordWithNegatedContinueGuard,
   );
 
   const decisionTargets = collectRuleCandidates(
@@ -1623,7 +1682,8 @@ function collectMeaningCandidates(
     decisionRules,
     "decisionTarget",
     "decisionRules",
-    matchesDecisionKeyword,
+    // P11-7-2I-6 / B9: 동일 shadowing — 부정 continue를 continue DT로 올리지 않는다.
+    matchesDecisionKeywordWithNegatedContinueGuard,
   );
 
   appendCompoundDecisionTargetCandidates(
@@ -1631,16 +1691,21 @@ function collectMeaningCandidates(
     decisionTargets,
   );
 
-  // P11-6-2 / A1: business noun × keep-going paraphrase → continuation intent.
-  // bare "끊지 않고"/"굴려가"는 전역 continuation keyword가 아니다.
+  // P11-6-2 / A1 / P11-7-2I-1 B1: business noun × keep-going|keep-alive
+  // paraphrase → continuation intent.
+  // bare "끊지 않고"/"굴려가"/"살려두"/"붙잡아두"/"접지 않고"/"스톨시키지 않"은
+  // 전역 continuation keyword가 아니다.
   appendBusinessContinueKeepGoingIntentCandidates(
     normalizedQuestion,
     intents,
     decisionTargets,
   );
 
-  // P11-6-3 / A2: business noun × 접고/손을 떼다 paraphrase → termination intent.
-  // bare "접다"/"손을 떼다"는 전역 termination keyword가 아니다.
+  // P11-6-3 / A2 / P11-7-2I-5 B2 / P11-7-2I-6 B9: business noun ×
+  // 접고/손을 떼다/끝내*|종료*|마무리*|닫아버리*|이어가지 않*|계속하지 않*
+  // paraphrase → termination intent.
+  // bare "접다"/"손을 떼다"/"끝내다"/"종료"/"마무리"/"닫아버리다"/
+  // "이어가"/"계속"/"더 이상"/"않"은 전역 termination keyword가 아니다.
   appendBusinessStopWithdrawIntentCandidates(
     normalizedQuestion,
     intents,
@@ -1722,7 +1787,8 @@ function collectMeaningCandidates(
   }
 
   const continuationMarkers = getContinuationIntentKeywords().filter(
-    (marker) => matchesKoreanKeyword(normalizedQuestion, marker),
+    (marker) =>
+      matchesKoreanKeywordWithNegatedContinueGuard(normalizedQuestion, marker),
   );
 
   if (continuationMarkers.length > 0) {
@@ -2157,6 +2223,9 @@ function appendCompoundDecisionTargetCandidates(
   // P11-6-6 A3-2: business entity/object + colloquial 사* → buy compound.
   // bare "사다"를 전역 buy keyword로 넣지 않는다. 회사는 제외한다.
   pushCompound("buy", collectBusinessColloquialBuySignalEvidence(question), 2);
+  // P11-7-2I-2 / B3: operating-right/entity × transfer-in → buy compound.
+  // bare 이전/양수/승계/가져오/테이크오버를 전역 buy keyword로 넣지 않는다.
+  pushCompound("buy", collectBusinessAcquisitionBuySignalEvidence(question), 2);
   pushCompound("sell", collectRealEstateSellSignalEvidence(question), 3);
   pushCompound("start", collectBusinessStartSignalEvidence(question), 4);
   pushCompound("move", collectRealEstateMoveSignalEvidence(question), 5);
@@ -2182,9 +2251,10 @@ function appendCompoundDecisionTargetCandidates(
     basePriority,
     8,
   );
-  // P10 G4 / P11-6-2 A1: business noun + 운영|끊지 않고|굴려가 paraphrase
-  // → continue compound.
-  // bare "운영"/"끊다"/"굴리다"를 전역 continue keyword로 넣지 않는다.
+  // P10 G4 / P11-6-2 A1 / P11-7-2I-1 B1: business noun +
+  // 운영|끊지 않고|굴려가|keep-alive paraphrase → continue compound.
+  // bare "운영"/"끊다"/"굴리다"/"살리다"/"붙잡다"/"가져가다"/"스톨"을
+  // 전역 continue keyword로 넣지 않는다.
   //
   // P11-6-2: keep-going-only evidence는 Phase-1이 none/continue일 때만 DT로 승격한다.
   // invest/start 등 경쟁 scalar가 이미 있으면 continue DT를 추가하지 않아
@@ -2206,10 +2276,17 @@ function appendCompoundDecisionTargetCandidates(
       && operateVerbEvidence.length === 0;
     const phase1Decision = selectLowestPriorityCandidate(decisionTargets);
     const phase1Value = phase1Decision?.value ?? "none";
+    // P11-7-2I-14 / A1-06: start-before + keep-alive-after preference일 때만
+    // keep-going-only continue DT를 Phase1 start 위에서도 후단 arbitration에 올린다.
+    // 전역 keep-going-only guard는 완화하지 않는다.
     const allowKeepGoingContinueDt =
       !keepGoingOnly
       || phase1Value === "none"
-      || phase1Value === "continue";
+      || phase1Value === "continue"
+      || (
+        phase1Value === "start"
+        && hasBusinessStartContinuePreferenceContrast(question)
+      );
 
     if (allowKeepGoingContinueDt) {
       pushCompound(
@@ -2219,10 +2296,12 @@ function appendCompoundDecisionTargetCandidates(
       );
     }
   }
-  // P10 G5 / P11-6-3 A2: business noun + 접다|폐업|손을 떼다 paraphrase
-  // → stop compound.
-  // bare "접다"/"폐업"/"손을 떼다"를 전역 stop keyword로 넣지 않는다.
-  // 기존 decisionRules의 "접어야"는 유지하고, 여기서는 noun-gated로만 확장한다.
+  // P10 G5 / P11-6-3 A2 / P11-7-2I-5 B2 / P11-7-2I-6 B9: business noun +
+  // 접다|폐업|손을 떼다|끝내*|종료*|마무리*|닫아버리*|이어가지 않*|계속하지 않*
+  // paraphrase → stop compound.
+  // bare end/close·접다·폐업·손을 떼다·이어가·계속·더 이상·않을
+  // 전역 stop keyword로 넣지 않는다.
+  // 기존 decisionRules의 "접어야"/"끝내"는 유지하고, 여기서는 noun-gated로만 확장한다.
   pushCompound(
     "stop",
     collectBusinessStopSignalEvidence(question),
@@ -2547,18 +2626,31 @@ function collectMoneyInvestSignalEvidence(
  * - business noun + start
  * - business noun + 운영 paraphrase → continue (P10 G4)
  * - business noun + 끊지 않고/굴려가 paraphrase → continue (P11-6-2 A1)
+ * - business noun + keep-alive(살려두/붙잡아두/접지 않고/스톨시키지 않)
+ *   paraphrase → continue (P11-7-2I-1 B1)
  * - business noun + 접다/폐업 paraphrase → stop (P10 G5)
  * - business noun + 접고/손을 떼다 paraphrase → stop (P11-6-3 A2)
+ * - business noun + 끝내*|종료*|마무리*|닫아버리* paraphrase → stop
+ *   (P11-7-2I-5 B2; bare end/close 금지)
+ * - business noun + 이어가지 않*|계속하지 않* paraphrase → stop
+ *   (P11-7-2I-6 B9; bare 이어가/계속/더 이상/않 금지;
+ *    끊지 않고/스톨시키지 않 긍정 keep-track과 분리)
  * - property noun + 보유/가지고 있 paraphrase → continue (P10 G6)
  * - business/entity noun + 인수|매입|구입 → buy (P10 G2-2 / P11-6-6 A3-1)
  * - business entity/object + colloquial 사* → buy (P11-6-6 A3-2; 회사 제외)
+ * - operating-right/entity + transfer-in(이전받|양수|승계|통째로 가져오|테이크오버)
+ *   / right×가져오 → buy (P11-7-2I-2 B3; bare 이전·가져오 금지)
+ * - employment noun × disconnect|exit|end(끝내*) / job noun × put-down → leaveJob
+ *   (P11-7-2I-3 B5 / P11-7-2I-7 B6; bare 끊다/끝내다/내려놓다/엑시트/공백기 금지)
  * - money cashflow noun + manage verb (J-4-13)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
  * invest/move/start/buy/sell/manageMoney/continue/stop 단독 keyword만으로는 만들지 않는다.
  * bare "운영"은 전역 continue evidence가 아니다.
  * bare "끊다"/"굴리다"는 전역 continue evidence가 아니다.
- * bare "접다"/"폐업"/"손을 떼다"는 전역 stop evidence가 아니다.
+ * bare "살리다"/"붙잡다"/"가져가다"/"스톨"은 전역 continue evidence가 아니다.
+ * bare "접다"/"폐업"/"손을 떼다"/"끝내다"/"종료"/"마무리"/"닫아버리다"/
+ * "이어가"/"계속"/"더 이상"/"않"은 전역 stop evidence가 아니다.
  * bare "보유"/"가지고 있"은 전역 continue evidence가 아니다.
  */
 function collectTopicDecisionCompoundCandidates(
@@ -2601,20 +2693,34 @@ function collectTopicDecisionCompoundCandidates(
     question,
     JOB_TOPIC_COMPOUND_NOUNS,
   );
+  const employmentChangeNouns = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS,
+  );
+  const changeJobTopicNouns = [
+    ...new Set([...jobNouns, ...employmentChangeNouns]),
+  ];
+  const employmentLeaveNouns = collectMatchedDecisionKeywords(
+    question,
+    JOB_EMPLOYMENT_LEAVE_CONTEXT_NOUNS,
+  );
+  const leaveJobTopicNouns = [
+    ...new Set([...jobNouns, ...employmentLeaveNouns]),
+  ];
   const changeJobEvidence = collectChangeJobSignalEvidence(question);
   const leaveJobEvidence = collectLeaveJobSignalEvidence(question);
 
   pushPair(
     "job",
     "changeJob",
-    jobNouns,
+    changeJobTopicNouns,
     changeJobEvidence,
     0,
   );
   pushPair(
     "job",
     "leaveJob",
-    jobNouns,
+    leaveJobTopicNouns,
     leaveJobEvidence,
     1,
   );
@@ -2671,10 +2777,10 @@ function collectTopicDecisionCompoundCandidates(
     4,
   );
 
-  // P10 G4 / P11-6-2 A1: business noun + 운영|끊지 않고|굴려가
-  // paraphrase → business × continue
-  // bare 운영/끊다/굴리다·비사업 목적어(회사/직장/업무/채널/관계 등)만으로는
-  // 만들지 않는다.
+  // P10 G4 / P11-6-2 A1 / P11-7-2I-1 B1: business noun +
+  // 운영|끊지 않고|굴려가|keep-alive paraphrase → business × continue
+  // bare 운영/끊다/굴리다/살리다/붙잡다/가져가다/스톨·비사업 목적어
+  // (회사/직장/업무/채널/관계 등)만으로는 만들지 않는다.
   const continueOperateSignals = collectBusinessContinueCompoundVerbEvidence(
     question,
   );
@@ -2691,11 +2797,13 @@ function collectTopicDecisionCompoundCandidates(
     9,
   );
 
-  // P10 G5 / P11-6-3 A2: business noun + 접다|폐업|손을 떼다
+  // P10 G5 / P11-6-3 A2 / P11-7-2I-5 B2 / P11-7-2I-6 B9: business noun +
+  // 접다|폐업|손을 떼다|끝내*|종료*|마무리*|닫아버리*|이어가지 않*|계속하지 않*
   // paraphrase → business × stop
-  // bare 접다·폐업·손을 떼다·비사업 목적어(계획/책/일/프로젝트/마음/회사/직장/
-  // 관계/투자/업무/팀 등)만으로는 만들지 않는다.
-  // 기존 DecisionTarget `stop`을 재사용한다.
+  // bare 접다·폐업·손을 떼다·끝내다·종료·마무리·닫아버리다·이어가·계속·더 이상·않
+  // ·비사업 목적어
+  // (계획/책/일/프로젝트/마음/회사/직장/관계/투자/업무/팀/고용/인생/임대 등)
+  // 만으로는 만들지 않는다. 기존 DecisionTarget `stop`을 재사용한다.
   const stopCloseSignals = collectBusinessStopCompoundVerbEvidence(question);
   const stopCloseNouns = collectMatchedDecisionKeywords(
     question,
@@ -2756,6 +2864,24 @@ function collectTopicDecisionCompoundCandidates(
     "buy",
     colloquialBuyNouns,
     colloquialBuySignals,
+    8,
+  );
+
+  // P11-7-2I-2 / B3: operating-right/entity + transfer-in → business × buy
+  // bare 이전·양수·승계·가져오·테이크오버·비사업 목적어만으로는 만들지 않는다.
+  const acquisitionBuySignals = collectBusinessAcquisitionTransferInVerbEvidence(
+    question,
+  );
+  const acquisitionBuyNouns = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_ACQUISITION_ENTITY_NOUNS,
+  );
+
+  pushPair(
+    "business",
+    "buy",
+    acquisitionBuyNouns,
+    acquisitionBuySignals,
     8,
   );
 
@@ -2827,6 +2953,10 @@ function isInherentTopicDecisionSignal(
       || item === "전직"
       || item.includes("직장")
       || item.includes("회사")
+      || item.includes("고용주")
+      || item.includes("근무처")
+      || item.includes("근무")
+      || isJobChangeGeneralizationEvidenceToken(item)
     );
   }
 
@@ -2835,6 +2965,10 @@ function isInherentTopicDecisionSignal(
       item === "퇴사"
       || item.includes("직장")
       || item.includes("회사")
+      || item.includes("고용")
+      || item.includes("급여직")
+      || item.includes("월급 자리")
+      || item.includes("월급자리")
     );
   }
 
@@ -2875,12 +3009,184 @@ function isPhase1DecisionCompatibleWithCompound(
 }
 
 /**
+ * P11-7-2I-7 / B6: excluded/rival clause contrast markers.
+ * 전역 routing trigger가 아니다.
+ * topic×decision compound A와 B가 함께 있을 때만
+ * marker 앞 rival evidence demotion에 사용한다.
+ */
+const TOPIC_BOUNDARY_CONTRAST_EXCLUSION_MARKERS: readonly string[] = [
+  "아니라",
+  "아닌",
+  "말고",
+  "대신",
+  "아니고",
+];
+
+function findTopicBoundaryContrastSplitIndex(
+  question: string,
+): number {
+  let earliest = -1;
+
+  for (const marker of TOPIC_BOUNDARY_CONTRAST_EXCLUSION_MARKERS) {
+    const index = question.indexOf(marker);
+    if (index < 0) {
+      continue;
+    }
+    if (earliest < 0 || index < earliest) {
+      earliest = index;
+    }
+  }
+
+  return earliest;
+}
+
+function scoreCompoundContrastPlacement(
+  question: string,
+  compound: TopicDecisionCompoundCandidate,
+  splitIndex: number,
+): {
+  before: number;
+  after: number;
+} {
+  let before = 0;
+  let after = 0;
+  const tokens = [
+    ...new Set([
+      ...compound.topicEvidence,
+      ...compound.decisionEvidence,
+    ]),
+  ];
+
+  for (const token of tokens) {
+    const index = question.indexOf(token);
+    if (index < 0) {
+      continue;
+    }
+    if (index < splitIndex) {
+      before += 1;
+    } else {
+      after += 1;
+    }
+  }
+
+  return { before, after };
+}
+
+/**
+ * P11-7-2I-14 / A1-06: compound decisionEvidence만으로 before/after 배치를 본다.
+ * topic noun(사업 등)이 양쪽에 걸쳐 I-7식 demotion을 깨지 않게 한다.
+ */
+function scoreCompoundDecisionEvidencePlacement(
+  question: string,
+  compound: TopicDecisionCompoundCandidate,
+  splitIndex: number,
+): {
+  before: number;
+  after: number;
+} {
+  let before = 0;
+  let after = 0;
+
+  for (const token of new Set(compound.decisionEvidence)) {
+    const index = question.indexOf(token);
+    if (index < 0) {
+      continue;
+    }
+    if (index < splitIndex) {
+      before += 1;
+    } else {
+      after += 1;
+    }
+  }
+
+  return { before, after };
+}
+
+/**
+ * P11-7-2I-14 / A1-06: business start-before + keep-alive/keep-going-after
+ * "보다" preference contrast split.
+ *
+ * TOPIC_BOUNDARY_CONTRAST_EXCLUSION_MARKERS에 "보다"를 넣지 않는다.
+ * 아래 surface gate를 모두 만족할 때만 split index를 반환한다.
+ */
+function findBusinessStartContinuePreferenceSplitIndex(
+  question: string,
+): number {
+  const marker = "보다";
+  const splitIndex = question.indexOf(marker);
+
+  if (splitIndex < 0) {
+    return -1;
+  }
+
+  const before = question.slice(0, splitIndex);
+  const after = question.slice(splitIndex + marker.length);
+
+  // G1: business topic noun evidence
+  if (
+    collectMatchedDecisionKeywords(
+      question,
+      BUSINESS_TOPIC_COMPOUND_NOUNS,
+    ).length === 0
+  ) {
+    return -1;
+  }
+
+  // G3: BEFORE = business start evidence (창업 등 기존 start signal 재사용)
+  const startBefore = [
+    ...collectBusinessStartActionEvidence(before),
+    ...collectBusinessEstablishStartSignalEvidence(before),
+  ];
+
+  if (startBefore.length === 0) {
+    return -1;
+  }
+
+  // G4: AFTER = business keep-alive/keep-going continue + business noun
+  if (
+    collectMatchedDecisionKeywords(
+      after,
+      BUSINESS_TOPIC_COMPOUND_NOUNS,
+    ).length === 0
+  ) {
+    return -1;
+  }
+
+  if (collectBusinessContinueKeepGoingVerbEvidence(after).length === 0) {
+    return -1;
+  }
+
+  // G8: AFTER에 start signal이 함께 있으면 preference keep-alive 경로가 아니다.
+  // (예: 계속하기보다 새로 창업 — reverse는 이번 scope 밖)
+  if (
+    collectBusinessStartActionEvidence(after).length > 0
+    || collectBusinessEstablishStartSignalEvidence(after).length > 0
+  ) {
+    return -1;
+  }
+
+  return splitIndex;
+}
+
+function hasBusinessStartContinuePreferenceContrast(
+  question: string,
+): boolean {
+  return findBusinessStartContinuePreferenceSplitIndex(question) >= 0;
+}
+
+/**
  * J-4-4: 강한 compound가 있으면 topic + decisionTarget을 한 쌍으로 고른다.
  *
  * 단순 keyword forcing이 아니라 compound candidate만 사용한다.
  * Phase 1 decision과 호환되지 않으면 null → Phase 1 유지.
+ *
+ * P11-7-2I-7 / B6: contrast marker가 있고 compound 경쟁이 있으면
+ * marker 앞(excluded) evidence-only rival보다
+ * marker 뒤 accepted compound를 우선한다.
+ * 전역 topic priority·단독 "아니라" routing은 하지 않는다.
  */
 function resolveStrongTopicDecisionCompound(
+  question: string,
   candidates: MeaningCandidateSet,
   phase1DecisionTarget: DecisionTarget,
 ): {
@@ -2889,12 +3195,123 @@ function resolveStrongTopicDecisionCompound(
   topicEvidence: string[];
   decisionEvidence: string[];
 } | null {
-  const compatible = candidates.topicDecisionCompounds.filter((compound) =>
-    isPhase1DecisionCompatibleWithCompound(
-      phase1DecisionTarget,
-      compound.decisionTarget,
-    )
-  );
+  const compatible = candidates.topicDecisionCompounds.filter((compound) => {
+    if (
+      isPhase1DecisionCompatibleWithCompound(
+        phase1DecisionTarget,
+        compound.decisionTarget,
+      )
+    ) {
+      return true;
+    }
+
+    // P11-7-2I-3 / B5: employment/job leave compound는
+    // selection|choose surface를 덮을 수 있다 (B14).
+    // bare 끊/내려놓/엑시트 단독은 compound 자체가 만들어지지 않는다.
+    if (
+      phase1DecisionTarget === "choose"
+      && compound.topic === "job"
+      && compound.decisionTarget === "leaveJob"
+      && compound.decisionEvidence.some((token) =>
+        isJobLeaveGeneralizationEvidenceToken(token)
+      )
+    ) {
+      return true;
+    }
+
+    // P11-7-2I-4 / B4: employment/workplace change compound는
+    // choose|confirmDirection surface를 덮을 수 있다 (B14 부분 보호).
+    // bare 바꾸다/이동/경로/재배치/오퍼 단독은 compound 자체가 만들어지지 않는다.
+    if (
+      (phase1DecisionTarget === "choose"
+        || phase1DecisionTarget === "confirmDirection")
+      && compound.topic === "job"
+      && compound.decisionTarget === "changeJob"
+      && compound.decisionEvidence.some((token) =>
+        isJobChangeGeneralizationEvidenceToken(token)
+      )
+    ) {
+      return true;
+    }
+
+    // P11-7-2I-5 / B2: business end/close stop compound는
+    // selection|choose surface를 덮을 수 있다 (B14 부분 보호).
+    // bare 끝내/종료/마무리/닫아버리 단독은 compound 자체가 만들어지지 않는다.
+    if (
+      phase1DecisionTarget === "choose"
+      && compound.topic === "business"
+      && compound.decisionTarget === "stop"
+      && compound.decisionEvidence.some((token) =>
+        isBusinessStopEndCloseEvidenceToken(token)
+      )
+    ) {
+      return true;
+    }
+
+    // P11-7-2I-6 / B9: business negated-continue stop compound는
+    // continue|choose surface를 덮을 수 있다.
+    // "끊지 않고"/"스톨시키지 않" 긍정 keep-track과는 별도 vocab.
+    // bare 이어가/계속/더 이상/않 단독은 compound 자체가 만들어지지 않는다.
+    if (
+      (phase1DecisionTarget === "continue"
+        || phase1DecisionTarget === "choose")
+      && compound.topic === "business"
+      && compound.decisionTarget === "stop"
+      && compound.decisionEvidence.some((token) =>
+        isBusinessStopNegatedContinueEvidenceToken(token)
+      )
+    ) {
+      return true;
+    }
+
+    // P11-7-2I-10 / A1: business keep-alive/keep-going continue compound는
+    // selection|choose surface를 덮을 수 있다 (B14 부분 보호).
+    // Intent(selection)는 유지하고 DT만 concrete continue로 보존한다.
+    // bare 살려두/붙잡아두/스톨/끊다/굴리다 단독은 compound 자체가 만들어지지 않는다.
+    if (
+      phase1DecisionTarget === "choose"
+      && compound.topic === "business"
+      && compound.decisionTarget === "continue"
+      && compound.decisionEvidence.some((token) =>
+        isBusinessContinueKeepAliveOrKeepGoingEvidenceToken(token)
+      )
+    ) {
+      return true;
+    }
+
+    // P11-7-2I-14 / A1-06: business start-before + keep-alive/keep-going-after
+    // "보다" preference contrast에서만 start → continue 호환을 허용한다.
+    // start↔continue를 전역 compatible로 열지 않는다.
+    if (
+      phase1DecisionTarget === "start"
+      && compound.topic === "business"
+      && compound.decisionTarget === "continue"
+      && compound.decisionEvidence.some((token) =>
+        isBusinessContinueKeepAliveOrKeepGoingEvidenceToken(token)
+      )
+      && hasBusinessStartContinuePreferenceContrast(question)
+    ) {
+      return true;
+    }
+
+    // P11-7-2I-2 / B3: operating-right transfer-in buy는
+    // 이전받*의 false move·지분 contrast의 partner를 덮을 수 있다.
+    // 인수|매입|구입|사* 등 기존 buy compound는 기존 호환 규칙을 유지한다.
+    if (
+      phase1DecisionTarget !== "move"
+      && phase1DecisionTarget !== "partner"
+    ) {
+      return false;
+    }
+
+    if (compound.topic !== "business" || compound.decisionTarget !== "buy") {
+      return false;
+    }
+
+    return compound.decisionEvidence.some((token) =>
+      isBusinessAcquisitionTransferInEvidenceToken(token)
+    );
+  });
 
   if (compatible.length === 0) {
     return null;
@@ -2913,6 +3330,123 @@ function resolveStrongTopicDecisionCompound(
       )
     ) {
       selected = next;
+    }
+  }
+
+  const contrastSplitIndex = findTopicBoundaryContrastSplitIndex(question);
+
+  if (contrastSplitIndex >= 0 && compatible.length > 1) {
+    const selectedPlacement = scoreCompoundContrastPlacement(
+      question,
+      selected,
+      contrastSplitIndex,
+    );
+    const selectedIsExcludedRival =
+      selectedPlacement.before > 0 && selectedPlacement.after === 0;
+
+    if (selectedIsExcludedRival) {
+      let accepted: TopicDecisionCompoundCandidate | null = null;
+
+      for (const compound of compatible) {
+        if (compound === selected) {
+          continue;
+        }
+
+        const placement = scoreCompoundContrastPlacement(
+          question,
+          compound,
+          contrastSplitIndex,
+        );
+
+        if (placement.after === 0) {
+          continue;
+        }
+
+        if (
+          accepted === null
+          || compound.priority < accepted.priority
+          || (
+            compound.priority === accepted.priority
+            && compound.strength > accepted.strength
+          )
+        ) {
+          accepted = compound;
+        }
+      }
+
+      if (accepted) {
+        selected = accepted;
+      }
+    }
+  }
+
+  // P11-7-2I-14 / A1-06: "보다" preference contrast.
+  // before-only business start rival 보다 after keep-alive/keep-going continue target.
+  // I-7(아니라/아닌/말고/대신/아니고) demotion은 그대로 보존한다.
+  const preferenceSplitIndex =
+    findBusinessStartContinuePreferenceSplitIndex(question);
+
+  if (preferenceSplitIndex >= 0 && compatible.length > 1) {
+    const selectedPlacement = scoreCompoundDecisionEvidencePlacement(
+      question,
+      selected,
+      preferenceSplitIndex,
+    );
+    const selectedIsStartRival =
+      selected.topic === "business"
+      && selected.decisionTarget === "start"
+      && selectedPlacement.before > 0
+      && selectedPlacement.after === 0;
+
+    if (selectedIsStartRival) {
+      let accepted: TopicDecisionCompoundCandidate | null = null;
+
+      for (const compound of compatible) {
+        if (compound === selected) {
+          continue;
+        }
+
+        if (
+          compound.topic !== "business"
+          || compound.decisionTarget !== "continue"
+        ) {
+          continue;
+        }
+
+        if (
+          !compound.decisionEvidence.some((token) =>
+            isBusinessContinueKeepAliveOrKeepGoingEvidenceToken(token)
+          )
+        ) {
+          continue;
+        }
+
+        const placement = scoreCompoundDecisionEvidencePlacement(
+          question,
+          compound,
+          preferenceSplitIndex,
+        );
+
+        // G6/G7: continue evidence는 after-arm에 있어야 한다.
+        if (placement.after === 0 || placement.before > 0) {
+          continue;
+        }
+
+        if (
+          accepted === null
+          || compound.priority < accepted.priority
+          || (
+            compound.priority === accepted.priority
+            && compound.strength > accepted.strength
+          )
+        ) {
+          accepted = compound;
+        }
+      }
+
+      if (accepted) {
+        selected = accepted;
+      }
     }
   }
 
@@ -3987,9 +4521,18 @@ function normalizeDecisionTargetSemanticMeaning(
   //     단일 action DT가 binary 전체를 대표하지 못할 때만 choose.
   //     "중 어느/둘 중" only(지 arm 없음)는 J-4-7 specific 보호 유지.
   //     할지 단독 / WH+할지는 exclusive_alt 미형성으로 여기 진입하지 않는다.
+  //
+  // P11-7-2I-10: business keep-alive continue / negated-continue stop는
+  // "이어가지"/"스톨시키지" 형태소 ~지 가짜 exclusive_alt에 덮이지 않는다.
+  // Intent(selection)는 바꾸지 않고 concrete DT만 보호한다.
   if (
     decisionTarget !== "choose"
     && hasGeneralBinaryAlternativeStructure(candidates)
+    && !isBusinessKeepAliveOrNegatedContinueProtectedFromExclusiveAltChoose(
+      topic,
+      decisionTarget,
+      decisionEvidence,
+    )
   ) {
     return {
       decisionTarget: "choose",
@@ -4573,6 +5116,7 @@ function normalizeAxes(
   // 단순 decisionTarget keyword만으로 topic을 forcing하지 않는다.
   // Phase 1 decision과 호환되지 않는 compound는 적용하지 않는다.
   const compoundPair = resolveStrongTopicDecisionCompound(
+    question,
     candidates,
     decisionTarget,
   );
@@ -5055,6 +5599,7 @@ const BUSINESS_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "사업",
   "창업",
   "장사",
+  "영업",
   "가게",
   "개업",
   "매장",
@@ -5139,12 +5684,28 @@ const BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
- * P10 G4 + P11-6-2: business continue compound verb 전체.
- * operate(운영*)와 keep-going(끊지 않고/굴려가*)을 합친다.
+ * P11-7-2I-1 / B1: business noun × keep-alive paraphrase.
+ * 기존 keep-going(끊지 않고/굴려가*)과 동일하게 noun gate 하에서만 continue evidence.
+ * decisionRules / continue·continuation keyword에 전역 추가하지 않는다.
+ * bare "살리다"/"붙잡다"/"가져가다"/"스톨" 단독 substring 금지.
+ * "접지 않고"는 stop(접*)의 부정 keep-track이며, 기존 fold-stop surfaces와 겹치지 않는다.
+ */
+const BUSINESS_CONTINUE_KEEP_ALIVE_COMPOUND_VERBS: readonly string[] = [
+  "살려두",
+  "붙잡아두",
+  "붙잡아 두",
+  "접지 않고",
+  "스톨시키지 않",
+];
+
+/**
+ * P10 G4 + P11-6-2 + P11-7-2I-1: business continue compound verb 전체.
+ * operate(운영*) / keep-going(끊지 않고/굴려가*) / keep-alive(살려두* 등)를 합친다.
  */
 const BUSINESS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
   ...BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS,
   ...BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS,
+  ...BUSINESS_CONTINUE_KEEP_ALIVE_COMPOUND_VERBS,
 ];
 
 /**
@@ -5211,23 +5772,104 @@ const BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
- * P10 G5 + P11-6-3: business stop compound verb 전체.
- * fold(접*) / closure(폐업*) / withdraw(손을 떼*)를 합친다.
+ * P11-7-2I-5 / B2: business noun × end/close paraphrase.
+ * decisionRules / stop·termination keyword에 전역 추가하지 않는다.
+ * bare "끝내다"/"마무리하다"/"종료"/"닫다"/"닫아버리다" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS(영업/사업/가게 등)와 결합될 때만 stop evidence.
+ * bare "끝내"는 decisionRules에 이미 있으므로 여기에는 짧은 stem을 넣지 않고
+ * 활용형만 두어 "끝내지 않고" 부정 keep-track과의 겹침을 줄인다.
+ * 고용/직장/관계/인생/삶/투자/계약/프로젝트/임대 등은 BUSINESS noun 밖.
+ */
+const BUSINESS_STOP_END_CLOSE_COMPOUND_VERBS: readonly string[] = [
+  "끝내도",
+  "끝내야",
+  "끝내는",
+  "끝낼",
+  "끝낼까",
+  "끝낼지",
+  "끝내고",
+  "끝내면",
+  "끝낸",
+  "끝내려",
+  "끝내기",
+  "종료해도",
+  "종료해야",
+  "종료하는",
+  "종료할",
+  "종료할까",
+  "종료할지",
+  "종료하고",
+  "종료하면",
+  "종료하",
+  "종료",
+  "마무리해도",
+  "마무리해야",
+  "마무리하는",
+  "마무리할",
+  "마무리할까",
+  "마무리할지",
+  "마무리하고",
+  "마무리하면",
+  "마무리하",
+  "마무리",
+  "닫아버려도",
+  "닫아버려야",
+  "닫아버리는",
+  "닫아버릴",
+  "닫아버릴까",
+  "닫아버릴지",
+  "닫아버리고",
+  "닫아버리면서",
+  "닫아버린",
+  "닫아버리",
+];
+
+/**
+ * P11-7-2I-6 / B9: business noun × negated continue paraphrase.
+ * decisionRules / stop·termination keyword에 전역 추가하지 않는다.
+ * bare "이어가"/"계속"/"더 이상"/"않" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 stop evidence.
+ * "끊지 않고"/"접지 않고"/"스톨시키지 않" 등 긍정 keep-track과 분리한다.
+ * 직장/관계/삶/투자/프로젝트 등 BUSINESS noun 밖은 경계를 보존한다.
+ */
+const BUSINESS_STOP_NEGATED_CONTINUE_COMPOUND_VERBS: readonly string[] = [
+  "이어가지 않",
+  "계속하지 않",
+];
+
+/**
+ * 긍정 continue stem이 부정 continue compound에 가려질 때 제외할 keyword.
+ * 전역 polarity engine이 아니라 longer negated surface shadowing만 한다.
+ */
+const CONTINUE_STEMS_SHADOWED_BY_NEGATED_CONTINUE: ReadonlySet<string> = new Set([
+  "이어가",
+  "계속",
+]);
+
+/**
+ * P10 G5 + P11-6-3 + P11-7-2I-5 + P11-7-2I-6: business stop compound verb 전체.
+ * fold(접*) / closure(폐업*) / withdraw(손을 떼*) / end-close(끝내*|종료*|마무리*|닫아버리*)
+ * / negated-continue(이어가지 않*|계속하지 않*)를 합친다.
  */
 const BUSINESS_STOP_COMPOUND_VERBS: readonly string[] = [
   ...BUSINESS_STOP_FOLD_COMPOUND_VERBS,
   ...BUSINESS_STOP_FOLD_EXTENDED_COMPOUND_VERBS,
   ...BUSINESS_STOP_CLOSURE_COMPOUND_VERBS,
   ...BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS,
+  ...BUSINESS_STOP_END_CLOSE_COMPOUND_VERBS,
+  ...BUSINESS_STOP_NEGATED_CONTINUE_COMPOUND_VERBS,
 ];
 
 /**
- * P11-6-3 / A2: termination intent 주입용 paraphrase만.
+ * P11-6-3 / A2 + P11-7-2I-5 / B2 + P11-7-2I-6 / B9: termination intent 주입용 paraphrase.
  * 기존 P10 G5 fold/폐업 surface는 intentRules를 건드리지 않고 유지한다.
+ * end-close·negated-continue는 noun gate 하에서만 termination candidate.
  */
 const BUSINESS_STOP_A2_COMPOUND_VERBS: readonly string[] = [
   ...BUSINESS_STOP_FOLD_EXTENDED_COMPOUND_VERBS,
   ...BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS,
+  ...BUSINESS_STOP_END_CLOSE_COMPOUND_VERBS,
+  ...BUSINESS_STOP_NEGATED_CONTINUE_COMPOUND_VERBS,
 ];
 
 /**
@@ -5321,6 +5963,50 @@ const BUSINESS_COLLOQUIAL_BUY_VERBS: readonly string[] = [
   "사는",
   "사려고",
   "사볼까",
+];
+
+/**
+ * P11-7-2I-2 / B3: operating-right / going-concern acquisition entity nouns.
+ * topicRules/decisionRules에 전역 추가하지 않는다.
+ * transfer-in verb와 결합될 때만 business × buy evidence가 된다.
+ * 회사 단독은 JOB 경로를 유지한다(BUSINESS_COLLOQUIAL과 동일).
+ */
+const BUSINESS_ACQUISITION_ENTITY_NOUNS: readonly string[] = [
+  ...BUSINESS_COLLOQUIAL_BUY_ENTITY_NOUNS,
+  "영업권",
+  "사업권",
+  "비즈니스",
+];
+
+/**
+ * P11-7-2I-2 / B3: 영업권/사업권 전용 bring-in surface.
+ * bare "가져오" 단독·일반물건/사업 단독과는 결합하지 않는다.
+ */
+const BUSINESS_ACQUISITION_RIGHT_NOUNS: readonly string[] = [
+  "영업권",
+  "사업권",
+];
+
+const BUSINESS_ACQUISITION_RIGHT_BRING_VERBS: readonly string[] = [
+  "가져오",
+];
+
+/**
+ * P11-7-2I-2 / B3: transfer-in / succession / takeover surfaces.
+ * decisionRules에 넣지 않는다.
+ * "이전받*"(acquisition)만 허용하고 "이전"/"이전하*"(move)는 넣지 않는다.
+ * bare "가져오"는 RIGHT_BRING 경로로만 허용한다.
+ */
+const BUSINESS_ACQUISITION_TRANSFER_IN_VERBS: readonly string[] = [
+  "이전받",
+  "양수",
+  "승계",
+  "통째로 가져오",
+  "테이크오버",
+  "테이크 오버",
+  "takeover",
+  "take-over",
+  "take over",
 ];
 
 /**
@@ -5473,14 +6159,155 @@ const JOB_LEAVE_COMPOUND_CONNECTIVE_VERBS: readonly string[] = [
   "관두고",
 ];
 
+/**
+ * P11-7-2I-3 / B5: employment-context nouns for leaveJob compound.
+ * topicRules/decisionRules에 전역 추가하지 않는다.
+ * disconnect/exit surface와 결합될 때만 job × leaveJob evidence가 된다.
+ * bare "관계"/"고리"/"자리" 단독으로는 topic/decision을 만들지 않는다.
+ */
+const JOB_EMPLOYMENT_LEAVE_CONTEXT_NOUNS: readonly string[] = [
+  "고용",
+  "급여직",
+  "월급 자리",
+  "월급자리",
+];
+
+/**
+ * P11-7-2I-3 / B5: employment noun × disconnect surfaces.
+ * bare "끊"/"끊다"/"끊지" 단독 substring 금지 ("끊지 않고" continue 경계).
+ * 연인·연락·거래·사업·투자 등 non-employment 목적어와는 결합하지 않는다.
+ */
+const JOB_LEAVE_DISCONNECT_COMPOUND_VERBS: readonly string[] = [
+  "끊어도",
+  "끊어야",
+  "끊는",
+  "끊을",
+  "끊고",
+  "끊을까",
+  "끊을지",
+];
+
+/**
+ * P11-7-2I-7 / B6: employment noun × end(끝내*) surfaces.
+ * bare "끝내" 단독·비고용 목적어("관계를 끝내다" 등)만으로는 leaveJob이 아니다.
+ * BUSINESS_STOP_END_CLOSE의 끝내* surface와 형태는 공유하되 employment gate로만 결합한다.
+ * "종료/마무리/닫아버리"는 employment leave 경로에 넣지 않는다.
+ */
+const JOB_LEAVE_END_COMPOUND_VERBS: readonly string[] = [
+  "끝내도",
+  "끝내야",
+  "끝내는",
+  "끝낼",
+  "끝낼까",
+  "끝낼지",
+  "끝내고",
+  "끝내면",
+  "끝낸",
+  "끝내려",
+  "끝내기",
+];
+
+/**
+ * P11-7-2I-3 / B5: job noun × put-down surfaces.
+ * bare "내려놓" 단독 substring 금지. JOB_TOPIC_COMPOUND_NOUNS와만 결합한다.
+ */
+const JOB_LEAVE_PUTDOWN_COMPOUND_VERBS: readonly string[] = [
+  "내려놓아도",
+  "내려놓아야",
+  "내려놓는",
+  "내려놓을",
+  "내려놓고",
+  "내려놓은",
+  "내려놓을까",
+  "내려놓을지",
+];
+
+/**
+ * P11-7-2I-3 / B5: employment noun × exit surfaces.
+ * bare "엑시트"/"exit" 단독·사업 엑시트는 전역 leaveJob이 아니다.
+ */
+const JOB_LEAVE_EXIT_COMPOUND_VERBS: readonly string[] = [
+  "엑시트",
+  "exit",
+];
+
 const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
   "이직",
   "전직",
   "직장을 옮",
   "직장 옮",
+  "직장으로 옮",
   "회사를 옮",
   "회사 옮",
   "회사로 옮",
+];
+
+/**
+ * P11-7-2I-4 / B4: employment/workplace nouns for changeJob compound.
+ * topicRules/decisionRules에 전역 추가하지 않는다.
+ * change-verb / alternate-destination / path-turn / offer-rearrange와
+ * 결합될 때만 job × changeJob evidence가 된다.
+ * bare "고용주"/"근무처" 단독으로는 topic/decision을 만들지 않는다.
+ * "회사"는 기존 JOB_TOPIC_COMPOUND_NOUNS 경로를 유지한다.
+ */
+const JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS: readonly string[] = [
+  "고용주",
+  "근무처",
+];
+
+/**
+ * P11-7-2I-4 / B4: alternate employer/workplace destination markers.
+ * bare "다른"/"이동"/"옮" 단독 substring 금지.
+ * destination marker × move surface일 때만 changeJob evidence가 된다.
+ */
+const JOB_CHANGE_ALTERNATE_DESTINATION_MARKERS: readonly string[] = [
+  "다른 고용주",
+  "다른 근무처",
+  "다른 직장",
+  "다른 회사",
+  "다른 조직",
+];
+
+/**
+ * P11-7-2I-4 / B4: alternate-destination × move surfaces.
+ * bare "이동"/"옮기다"를 전역 changeJob keyword로 넣지 않는다.
+ * "다른 곳(으로) 이동" 같은 non-employer destination은 marker 밖이다.
+ */
+const JOB_CHANGE_ALTERNATE_MOVE_COMPOUND_VERBS: readonly string[] = [
+  "이동해도",
+  "이동해야",
+  "이동하는",
+  "이동할",
+  "이동할지",
+  "옮겨도",
+  "옮겨야",
+  "옮기는",
+  "옮길",
+  "옮겨",
+];
+
+/**
+ * P11-7-2I-4 / B4: workplace path-turn surfaces.
+ * bare "경로"/"틀다"/"재배치" 전역 금지.
+ * "근무 경로를 틀*"만 허용해 인생/삶/자산 경로와 분리한다.
+ */
+const JOB_CHANGE_WORKPLACE_PATH_TURN_SURFACES: readonly string[] = [
+  "근무 경로를 틀",
+  "근무경로를 틀",
+];
+
+/**
+ * P11-7-2I-4 / B4: offer × workplace rearrange surfaces.
+ * bare "오퍼"/"재배치"/"축" 단독 changeJob 금지.
+ * offer context와 "근무 축을 재배치"가 함께일 때만 evidence가 된다.
+ */
+const JOB_CHANGE_OFFER_CONTEXT_MARKERS: readonly string[] = [
+  "오퍼",
+];
+
+const JOB_CHANGE_WORKPLACE_REARRANGE_SURFACES: readonly string[] = [
+  "근무 축을 재배치",
+  "근무축을 재배치",
 ];
 
 /**
@@ -5508,6 +6335,17 @@ const CHANGE_JOB_COMPOUND_VERBS: readonly string[] = [
   "갈아타야",
   "갈아타는",
   "갈아탈",
+  // P11-7-2I-7 / B6: 근무처/고용주 × 재선택*
+  // bare "재선택"/"선택" 단독·인생/진로 재선택은 job noun gate 밖.
+  "재선택해도",
+  "재선택해야",
+  "재선택하는",
+  "재선택할",
+  "재선택할지",
+  "재선택할까",
+  "재선택하고",
+  "재선택한",
+  "재선택",
 ];
 
 /**
@@ -5823,13 +6661,18 @@ function collectBusinessContinueCompoundVerbEvidence(
 /**
  * P11-6-2 / A1: business noun × keep-going paraphrase용 verb evidence.
  * bare "끊다"/"굴리다" 단독 substring은 쓰지 않는다.
+ * P11-7-2I-1: keep-alive(살려두·붙잡아두·접지 않고·스톨시키지 않)도
+ * 동일 keep-going evidence 경로로 수집한다.
  */
 function collectBusinessContinueKeepGoingVerbEvidence(
   question: string,
 ): string[] {
   return collectMatchedDecisionKeywords(
     question,
-    BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS,
+    [
+      ...BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS,
+      ...BUSINESS_CONTINUE_KEEP_ALIVE_COMPOUND_VERBS,
+    ],
   );
 }
 
@@ -5877,7 +6720,17 @@ function appendBusinessContinueKeepGoingIntentCandidates(
   intents: MeaningCandidate<QuestionIntent>[],
   decisionTargets: readonly MeaningCandidate<DecisionTarget>[],
 ): void {
-  const evidence = collectBusinessContinueKeepGoingSignalEvidence(question);
+  // P11-7-2I-14 / A1-06: preference split이 있으면 after-arm evidence만 사용한다.
+  // 최종 DT→intent 덮어쓰기가 아니라 실제 keep-alive/keep-going evidence 기반이다.
+  const preferenceSplitIndex =
+    findBusinessStartContinuePreferenceSplitIndex(question);
+  const evidenceQuestion =
+    preferenceSplitIndex >= 0
+      ? question.slice(preferenceSplitIndex + "보다".length)
+      : question;
+  const evidence = collectBusinessContinueKeepGoingSignalEvidence(
+    evidenceQuestion,
+  );
 
   if (evidence.length === 0) {
     return;
@@ -5887,7 +6740,15 @@ function appendBusinessContinueKeepGoingIntentCandidates(
   const phase1Value = phase1Decision?.value ?? "none";
 
   if (phase1Value !== "none" && phase1Value !== "continue") {
-    return;
+    // 전역 Phase1 guard는 유지하고, A1-06 preference gate만 예외로 허용한다.
+    if (
+      !(
+        phase1Value === "start"
+        && preferenceSplitIndex >= 0
+      )
+    ) {
+      return;
+    }
   }
 
   intents.push({
@@ -5934,6 +6795,8 @@ function collectBusinessContinueSignalEvidence(
  * P10 G5: business noun × 접다/폐업 paraphrase용 verb evidence.
  * bare "접다"/"접어"/"폐업" 단독 substring은 쓰지 않는다.
  * P11-6-3: 접고/접으면서/접은 뒤 + 손을 떼다 withdraw paraphrase도 동일 gate로 수집한다.
+ * P11-7-2I-5: 끝내*|종료*|마무리*|닫아버리* end/close paraphrase도 동일 gate로 수집한다.
+ * P11-7-2I-6: 이어가지 않*|계속하지 않* negated-continue paraphrase도 동일 gate로 수집한다.
  */
 function collectBusinessStopCompoundVerbEvidence(
   question: string,
@@ -5945,8 +6808,10 @@ function collectBusinessStopCompoundVerbEvidence(
 }
 
 /**
- * P11-6-3 / A2: business noun × 접고/손을 떼다 paraphrase용 verb evidence.
- * bare "접다"/"떼다" 단독 substring은 쓰지 않는다.
+ * P11-6-3 / A2 + P11-7-2I-5 / B2 + P11-7-2I-6 / B9:
+ * business noun × A2/B2/B9 paraphrase용 verb evidence.
+ * bare "접다"/"떼다"/"끝내다"/"종료"/"마무리"/"닫아버리다"/
+ * "이어가"/"계속"/"더 이상"/"않" 단독 substring은 쓰지 않는다.
  */
 function collectBusinessStopA2VerbEvidence(
   question: string,
@@ -5984,14 +6849,17 @@ function collectBusinessStopA2SignalEvidence(
 }
 
 /**
- * P11-6-3 / A2: 접고/손을 떼다 paraphrase → termination intent candidate.
+ * P11-6-3 / A2 + P11-7-2I-5 / B2 + P11-7-2I-6 / B9: business noun + A2/B2/B9
+ * paraphrase → termination intent candidate.
  * intentRules termination vocabulary에는 추가하지 않는다.
- * business noun gate를 통과한 A2 compound evidence만 사용한다.
+ * business noun gate를 통과한 A2/B2/B9 compound evidence만 사용한다.
  *
  * 보호:
  * - termination frame은 주입하지 않는다.
  * - Phase 1 decisionTarget이 stop/none이 아니면 intent도 주입하지 않는다.
  *   (시작/투자/이직 등 기존 scalar 우선순위·composite 보호)
+ * - reason 등 Phase 1 intent가 이미 있으면 selectLowestPriorityCandidate가
+ *   rule priority를 유지하므로 reason을 termination으로 덮지 않는다.
  */
 function appendBusinessStopWithdrawIntentCandidates(
   question: string,
@@ -6198,6 +7066,131 @@ function collectBusinessColloquialBuySignalEvidence(
 }
 
 /**
+ * P11-7-2I-2 / B3: transfer-in verb evidence.
+ * right noun이 있을 때만 영업권/사업권 × 가져오*를 합류한다.
+ * bare 이전·양수·승계·가져오·테이크오버 단독으로는 topic/decision을 만들지 않는다.
+ */
+function collectBusinessAcquisitionTransferInVerbEvidence(
+  question: string,
+): string[] {
+  const transferInEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_ACQUISITION_TRANSFER_IN_VERBS,
+  );
+
+  const rightNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_ACQUISITION_RIGHT_NOUNS,
+  );
+  const rightBringEvidence = rightNounEvidence.length > 0
+    ? collectMatchedDecisionKeywords(
+      question,
+      BUSINESS_ACQUISITION_RIGHT_BRING_VERBS,
+    )
+    : [];
+
+  return [...transferInEvidence, ...rightBringEvidence];
+}
+
+function isBusinessAcquisitionTransferInEvidenceToken(
+  token: string,
+): boolean {
+  return BUSINESS_ACQUISITION_TRANSFER_IN_VERBS.includes(token)
+    || BUSINESS_ACQUISITION_RIGHT_BRING_VERBS.includes(token);
+}
+
+/**
+ * P11-7-2I-5 / B2: end/close paraphrase evidence token.
+ * BUSINESS_STOP_END_CLOSE_COMPOUND_VERBS 소속만 true.
+ * bare 끝내/종료/마무리/닫아버리 전역 승격에는 쓰지 않는다.
+ */
+function isBusinessStopEndCloseEvidenceToken(
+  token: string,
+): boolean {
+  return BUSINESS_STOP_END_CLOSE_COMPOUND_VERBS.includes(token);
+}
+
+/**
+ * P11-7-2I-6 / B9: negated-continue paraphrase evidence token.
+ * BUSINESS_STOP_NEGATED_CONTINUE_COMPOUND_VERBS 소속만 true.
+ * bare 이어가/계속/더 이상/않 전역 승격에는 쓰지 않는다.
+ */
+function isBusinessStopNegatedContinueEvidenceToken(
+  token: string,
+): boolean {
+  return BUSINESS_STOP_NEGATED_CONTINUE_COMPOUND_VERBS.includes(token);
+}
+
+/**
+ * P11-7-2I-10 / A1: keep-alive/keep-going continue evidence token.
+ * operate(운영*)는 포함하지 않는다 — selection+운영 generic은 기존 경로 유지.
+ * bare 살려두/붙잡/스톨/끊다/굴리다 전역 승격에는 쓰지 않는다.
+ */
+function isBusinessContinueKeepAliveOrKeepGoingEvidenceToken(
+  token: string,
+): boolean {
+  return BUSINESS_CONTINUE_KEEP_ALIVE_COMPOUND_VERBS.includes(token)
+    || BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS.includes(token);
+}
+
+/**
+ * P11-7-2I-10: J-4-10 D2 exclusive_alt → choose 로부터
+ * business keep-alive continue / negated-continue stop concrete DT를 보호한다.
+ * Intent는 변경하지 않는다.
+ */
+function isBusinessKeepAliveOrNegatedContinueProtectedFromExclusiveAltChoose(
+  topic: QuestionTopic,
+  decisionTarget: DecisionTarget,
+  decisionEvidence: readonly string[],
+): boolean {
+  if (topic !== "business") {
+    return false;
+  }
+
+  if (decisionTarget === "continue") {
+    return decisionEvidence.some((token) =>
+      isBusinessContinueKeepAliveOrKeepGoingEvidenceToken(token)
+    );
+  }
+
+  if (decisionTarget === "stop") {
+    return decisionEvidence.some((token) =>
+      isBusinessStopNegatedContinueEvidenceToken(token)
+    );
+  }
+
+  return false;
+}
+
+/**
+ * P11-7-2I-2 / B3: operating-right/entity + transfer-in compound evidence.
+ * transfer-in 단독·비사업 목적어만으로는 빈 배열을 반환한다.
+ * entity × transfer-in → business × buy 로 수렴한다 (새 DT 없음).
+ */
+function collectBusinessAcquisitionBuySignalEvidence(
+  question: string,
+): string[] {
+  const transferInEvidence = collectBusinessAcquisitionTransferInVerbEvidence(
+    question,
+  );
+
+  if (transferInEvidence.length === 0) {
+    return [];
+  }
+
+  const businessNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_ACQUISITION_ENTITY_NOUNS,
+  );
+
+  if (businessNounEvidence.length === 0) {
+    return [];
+  }
+
+  return [...businessNounEvidence, ...transferInEvidence];
+}
+
+/**
  * J-4-4: business noun + start signal compound evidence.
  * start 단독 keyword만으로는 빈 배열을 반환한다.
  * P10 G2: entity noun + 설립도 동일하게 business × start로 수렴한다.
@@ -6261,12 +7254,91 @@ function collectLeaveJobCompoundVerbEvidence(
 }
 
 /**
+ * P11-7-2I-3 / B5: employment noun × disconnect|exit|end evidence.
+ * bare disconnect/exit/end 단독·비고용 목적어만으로는 빈 배열을 반환한다.
+ */
+function collectLeaveJobEmploymentTerminationEvidence(
+  question: string,
+): string[] {
+  const employmentNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_EMPLOYMENT_LEAVE_CONTEXT_NOUNS,
+  );
+
+  if (employmentNounEvidence.length === 0) {
+    return [];
+  }
+
+  const terminationVerbEvidence = [
+    ...collectMatchedDecisionKeywords(
+      question,
+      JOB_LEAVE_DISCONNECT_COMPOUND_VERBS,
+    ),
+    ...collectMatchedDecisionKeywords(
+      question,
+      JOB_LEAVE_END_COMPOUND_VERBS,
+    ),
+    ...collectMatchedDecisionKeywords(
+      question,
+      JOB_LEAVE_EXIT_COMPOUND_VERBS,
+    ),
+  ];
+
+  if (terminationVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...employmentNounEvidence, ...terminationVerbEvidence];
+}
+
+/**
+ * P11-7-2I-3 / B5: job noun × 내려놓* evidence.
+ * bare 내려놓 단독·비job 목적어만으로는 빈 배열을 반환한다.
+ */
+function collectLeaveJobPutdownEvidence(
+  question: string,
+): string[] {
+  const jobNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_TOPIC_COMPOUND_NOUNS,
+  );
+
+  if (jobNounEvidence.length === 0) {
+    return [];
+  }
+
+  const putdownVerbEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_LEAVE_PUTDOWN_COMPOUND_VERBS,
+  );
+
+  if (putdownVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...jobNounEvidence, ...putdownVerbEvidence];
+}
+
+function isJobLeaveGeneralizationEvidenceToken(
+  token: string,
+): boolean {
+  return JOB_LEAVE_DISCONNECT_COMPOUND_VERBS.includes(token)
+    || JOB_LEAVE_END_COMPOUND_VERBS.includes(token)
+    || JOB_LEAVE_PUTDOWN_COMPOUND_VERBS.includes(token)
+    || JOB_LEAVE_EXIT_COMPOUND_VERBS.includes(token)
+    || JOB_EMPLOYMENT_LEAVE_CONTEXT_NOUNS.includes(token);
+}
+
+/**
  * leaveJob evidence:
  * 1) inherent signal (퇴사/그만두·직장·회사+그만)
  * 2) JOB_TOPIC_COMPOUND_NOUNS × leave-verb compound
  *    (직장/회사/직업/직무/소속 + 떠나도/떠나야/떠나는/떠날
  *     또는 관둬도/관둬야/관두는/관둘 계열
  *     또는 떠나면서/떠나고/관두면서/관두고 등 연결형)
+ * 3) P11-7-2I-3 / B5 + P11-7-2I-7 / B6:
+ *    employment noun × disconnect|exit|end (고용/급여직/월급 자리 × disconnect/exit/끝내*)
+ *    또는 job noun × put-down (직장/회사 등 × put-down)
  */
 function collectLeaveJobSignalEvidence(
   question: string,
@@ -6281,21 +7353,25 @@ function collectLeaveJobSignalEvidence(
     JOB_TOPIC_COMPOUND_NOUNS,
   );
 
-  if (jobNounEvidence.length === 0) {
-    return inherentEvidence;
-  }
+  const leaveVerbEvidence = jobNounEvidence.length > 0
+    ? collectLeaveJobCompoundVerbEvidence(question)
+    : [];
 
-  const leaveVerbEvidence = collectLeaveJobCompoundVerbEvidence(question);
+  const classicCompoundEvidence = jobNounEvidence.length > 0
+    && leaveVerbEvidence.length > 0
+    ? [...jobNounEvidence, ...leaveVerbEvidence]
+    : [];
 
-  if (leaveVerbEvidence.length === 0) {
-    return inherentEvidence;
-  }
+  const employmentTerminationEvidence =
+    collectLeaveJobEmploymentTerminationEvidence(question);
+  const putdownEvidence = collectLeaveJobPutdownEvidence(question);
 
   return [
     ...new Set([
       ...inherentEvidence,
-      ...jobNounEvidence,
-      ...leaveVerbEvidence,
+      ...classicCompoundEvidence,
+      ...employmentTerminationEvidence,
+      ...putdownEvidence,
     ]),
   ];
 }
@@ -6305,6 +7381,26 @@ function hasLeaveJobSignal(
     string,
 ): boolean {
   return collectLeaveJobSignalEvidence(question).length > 0;
+}
+
+/**
+ * P11-7-2I-3 / B5: employment/job leaveJob이 확정·증거되면
+ * "관계…끊" interpersonal separation post-normalize를 건너뛴다.
+ * bare 연인/연락 관계 끊은 leaveJob signal이 없어 기존 separate 경로를 유지한다.
+ */
+function applyRelationshipSeparationNormalizationUnlessJobLeave<
+  T extends Parameters<typeof applyRelationshipSeparationNormalization>[0],
+>(
+  result: T,
+): T {
+  if (
+    result.decisionTarget === "leaveJob"
+    || hasLeaveJobSignal(result.normalizedQuestion)
+  ) {
+    return result;
+  }
+
+  return applyRelationshipSeparationNormalization(result);
 }
 
 /**
@@ -6330,11 +7426,125 @@ function collectChangeJobCompoundVerbEvidence(
 }
 
 /**
+ * P11-7-2I-4 / B4: alternate employer/workplace destination × move evidence.
+ * bare 이동/옮·"다른 곳"만으로는 빈 배열을 반환한다.
+ */
+function collectChangeJobAlternateDestinationMoveEvidence(
+  question: string,
+): string[] {
+  const destinationEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_ALTERNATE_DESTINATION_MARKERS,
+  );
+
+  if (destinationEvidence.length === 0) {
+    return [];
+  }
+
+  const moveVerbEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_ALTERNATE_MOVE_COMPOUND_VERBS,
+  );
+
+  if (moveVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...destinationEvidence, ...moveVerbEvidence];
+}
+
+/**
+ * P11-7-2I-4 / B4: employment/workplace context × 근무 경로 틀* evidence.
+ * bare 경로/틀다·인생/삶 경로만으로는 빈 배열을 반환한다.
+ */
+function collectChangeJobWorkplacePathTurnEvidence(
+  question: string,
+): string[] {
+  const employmentContextEvidence = [
+    ...collectMatchedDecisionKeywords(
+      question,
+      JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS,
+    ),
+    ...collectMatchedDecisionKeywords(
+      question,
+      JOB_TOPIC_COMPOUND_NOUNS,
+    ),
+    ...collectMatchedDecisionKeywords(
+      question,
+      JOB_CHANGE_ALTERNATE_DESTINATION_MARKERS,
+    ),
+  ];
+
+  if (employmentContextEvidence.length === 0) {
+    return [];
+  }
+
+  const pathTurnEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_WORKPLACE_PATH_TURN_SURFACES,
+  );
+
+  if (pathTurnEvidence.length === 0) {
+    return [];
+  }
+
+  return [
+    ...new Set([
+      ...employmentContextEvidence,
+      ...pathTurnEvidence,
+    ]),
+  ];
+}
+
+/**
+ * P11-7-2I-4 / B4: offer context × 근무 축 재배치 evidence.
+ * bare 오퍼/재배치/축만으로는 빈 배열을 반환한다.
+ */
+function collectChangeJobOfferWorkplaceRearrangeEvidence(
+  question: string,
+): string[] {
+  const offerEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_OFFER_CONTEXT_MARKERS,
+  );
+
+  if (offerEvidence.length === 0) {
+    return [];
+  }
+
+  const rearrangeEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_WORKPLACE_REARRANGE_SURFACES,
+  );
+
+  if (rearrangeEvidence.length === 0) {
+    return [];
+  }
+
+  return [...offerEvidence, ...rearrangeEvidence];
+}
+
+function isJobChangeGeneralizationEvidenceToken(
+  token: string,
+): boolean {
+  return JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS.includes(token)
+    || JOB_CHANGE_ALTERNATE_DESTINATION_MARKERS.includes(token)
+    || JOB_CHANGE_ALTERNATE_MOVE_COMPOUND_VERBS.includes(token)
+    || JOB_CHANGE_WORKPLACE_PATH_TURN_SURFACES.includes(token)
+    || JOB_CHANGE_OFFER_CONTEXT_MARKERS.includes(token)
+    || JOB_CHANGE_WORKPLACE_REARRANGE_SURFACES.includes(token);
+}
+
+/**
  * changeJob evidence:
  * 1) inherent signal (이직/전직/직장·회사+옮)
- * 2) JOB_TOPIC_COMPOUND_NOUNS × change-verb compound
- *    (직업/직장/회사/직무/소속 + 바꿔도/변경해도/전환해도/갈아타도/바꾸어도 계열
+ * 2) JOB_TOPIC_COMPOUND_NOUNS ∪ employment/workplace noun × change-verb compound
+ *    (직업/직장/회사/직무/소속/고용주/근무처 + 바꿔도/변경해도/전환해도/갈아타도 계열
  *     또는 바꾸면서/변경하고/전환하고/갈아타고 등 연결형)
+ * 3) P11-7-2I-4 / B4:
+ *    alternate employer/workplace destination × move
+ *    또는 employment/workplace × 근무 경로 틀*
+ *    또는 offer × 근무 축 재배치
  */
 function collectChangeJobSignalEvidence(
   question: string,
@@ -6344,26 +7554,42 @@ function collectChangeJobSignalEvidence(
     CHANGE_JOB_SIGNAL_KEYWORDS,
   );
 
-  const jobNounEvidence = collectMatchedDecisionKeywords(
-    question,
-    JOB_TOPIC_COMPOUND_NOUNS,
-  );
+  const jobNounEvidence = [
+    ...new Set([
+      ...collectMatchedDecisionKeywords(
+        question,
+        JOB_TOPIC_COMPOUND_NOUNS,
+      ),
+      ...collectMatchedDecisionKeywords(
+        question,
+        JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS,
+      ),
+    ]),
+  ];
 
-  if (jobNounEvidence.length === 0) {
-    return inherentEvidence;
-  }
+  const changeVerbEvidence = jobNounEvidence.length > 0
+    ? collectChangeJobCompoundVerbEvidence(question)
+    : [];
 
-  const changeVerbEvidence = collectChangeJobCompoundVerbEvidence(question);
+  const classicCompoundEvidence = jobNounEvidence.length > 0
+    && changeVerbEvidence.length > 0
+    ? [...jobNounEvidence, ...changeVerbEvidence]
+    : [];
 
-  if (changeVerbEvidence.length === 0) {
-    return inherentEvidence;
-  }
+  const alternateDestinationMoveEvidence =
+    collectChangeJobAlternateDestinationMoveEvidence(question);
+  const workplacePathTurnEvidence =
+    collectChangeJobWorkplacePathTurnEvidence(question);
+  const offerRearrangeEvidence =
+    collectChangeJobOfferWorkplaceRearrangeEvidence(question);
 
   return [
     ...new Set([
       ...inherentEvidence,
-      ...jobNounEvidence,
-      ...changeVerbEvidence,
+      ...classicCompoundEvidence,
+      ...alternateDestinationMoveEvidence,
+      ...workplacePathTurnEvidence,
+      ...offerRearrangeEvidence,
     ]),
   ];
 }
@@ -7664,7 +8890,7 @@ export function readQuestion(
     applyLifeDirectionTopicNormalization(
       applyLifeFlowInterpretationNormalization(
         applyRelationshipReconcileNormalization(
-          applyRelationshipSeparationNormalization(
+          applyRelationshipSeparationNormalizationUnlessJobLeave(
             applyRoleRecommendationNormalization({
           originalQuestion: question.trim(),
           normalizedQuestion,
