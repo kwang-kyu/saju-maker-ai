@@ -4015,6 +4015,8 @@ function inspectSecondaryMaterialsCoverage(
       payload.intent,
     decisionTarget:
       question.decisionTarget,
+    timingType:
+      question.timingType,
     asksWhat:
       question.asksWhat,
     focus:
@@ -4574,6 +4576,282 @@ function verifyNonRiskPrimaryCompositeEvaluationMethodRegression():
   };
 }
 
+function verifyTimingPrimaryCompositeSecondaryRiskMethodRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const timingRiskComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 시기와 위험은 무엇인가요?",
+    );
+
+  const timingMethodComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 시기와 어떤 방법으로 준비해야 할까요?",
+    );
+
+  const timingOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 시기인가요?",
+    );
+
+  const riskOnlyStart =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 때 위험한 점은 무엇인가요?",
+    );
+
+  const timingRiskText =
+    combinedPromptText(
+      timingRiskComposite.prompt,
+    );
+
+  const timingMethodText =
+    combinedPromptText(
+      timingMethodComposite.prompt,
+    );
+
+  const timingOnlyText =
+    combinedPromptText(
+      timingOnly.prompt,
+    );
+
+  const checks = {
+    A_primaryIntentIsTimingNotRisk:
+      timingRiskComposite.intent
+      === "timing"
+      && timingRiskComposite.decisionTarget
+      === "start"
+      && timingRiskComposite.timingType
+      === "bestTiming",
+
+    A_asksWhatStaysTimingCentered:
+      timingRiskComposite.asksWhat.includes(
+        "언제",
+      )
+      && !timingRiskComposite.asksWhat.includes(
+        "위험",
+      )
+      && timingRiskComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${timingRiskComposite.asksWhat}`,
+      ),
+
+    A_originalPreservesSecondaryRisk:
+      timingRiskComposite.originalQuestion.includes(
+        "시기",
+      )
+      && timingRiskComposite.originalQuestion.includes(
+        "위험",
+      )
+      && timingRiskComposite.prompt.userPrompt.includes(
+        timingRiskComposite.originalQuestion,
+      ),
+
+    A_multiSpeechActKeepsPrimaryCenter:
+      timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && !timingRiskText.includes(
+        "secondaryIntent",
+      ),
+
+    A_secondaryRiskDoesNotRejudgeTimingMaterials:
+      timingRiskComposite.verdict
+      === timingOnly.verdict
+      && timingRiskComposite.finalDecision
+      === timingOnly.finalDecision
+      && timingRiskComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      )
+      && timingRiskComposite.risksCount
+      === timingOnly.risksCount
+      && engineDecisionLockedInPrompt(
+        timingRiskComposite.prompt,
+        timingRiskComposite.finalDecision,
+      ),
+
+    A_risksStayWithinExistingEngineMaterials:
+      timingRiskComposite.risksCount
+      > 0
+      && timingRiskComposite.hasDedicatedRisksMaterial
+      && timingRiskComposite.explanationTitles.includes(
+        "사업상 위험",
+      )
+      && timingRiskComposite.existingMaterialTexts.every(
+        (value) =>
+          timingRiskComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    B_primaryIntentIsTimingNotMethod:
+      timingMethodComposite.intent
+      === "timing"
+      && timingMethodComposite.decisionTarget
+      === "start"
+      && timingMethodComposite.timingType
+      === "bestTiming",
+
+    B_asksWhatStaysTimingCentered:
+      timingMethodComposite.asksWhat.includes(
+        "언제",
+      )
+      && !timingMethodComposite.asksWhat.includes(
+        "방법",
+      )
+      && timingMethodComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${timingMethodComposite.asksWhat}`,
+      ),
+
+    B_originalPreservesSecondaryMethod:
+      timingMethodComposite.originalQuestion.includes(
+        "시기",
+      )
+      && timingMethodComposite.originalQuestion.includes(
+        "방법",
+      )
+      && timingMethodComposite.prompt.userPrompt.includes(
+        timingMethodComposite.originalQuestion,
+      ),
+
+    B_multiSpeechActKeepsPrimaryCenter:
+      timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && !timingMethodText.includes(
+        "secondaryIntent",
+      ),
+
+    B_secondaryMethodDoesNotRejudgeTimingMaterials:
+      timingMethodComposite.verdict
+      === timingOnly.verdict
+      && timingMethodComposite.finalDecision
+      === timingOnly.finalDecision
+      && timingMethodComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      )
+      && timingMethodComposite.risksCount
+      === timingOnly.risksCount
+      && engineDecisionLockedInPrompt(
+        timingMethodComposite.prompt,
+        timingMethodComposite.finalDecision,
+      ),
+
+    B_methodProxyStaysCompatibleWithI39Boundary:
+      timingMethodComposite.hasConditionMaterial
+      && timingMethodComposite.hasDirectionMaterial
+      && promptHasMethodProxyBinding(
+        timingMethodText,
+      )
+      && !promptAllowsRisksAsMethodProxy(
+        timingMethodText,
+      )
+      && hasNoDedicatedMethodMaterialField(
+        timingMethodComposite.explanationTitles,
+      )
+      && timingMethodComposite.existingMaterialTexts.every(
+        (value) =>
+          timingMethodComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+
+    C_timingOnlyIsNotComposite:
+      timingOnly.intent
+      === "timing"
+      && timingOnly.decisionTarget
+      === "start"
+      && timingOnly.timingType
+      === "bestTiming"
+      && timingOnly.originalQuestion.includes(
+        "시기",
+      )
+      && !timingOnly.originalQuestion.includes(
+        "위험",
+      )
+      && !timingOnly.originalQuestion.includes(
+        "방법",
+      ),
+
+    C_multiSpeechActDoesNotMisFire:
+      timingOnly.asksWhat.includes(
+        "언제",
+      )
+      && !timingOnly.asksWhat.includes(
+        "위험",
+      )
+      && !timingOnly.asksWhat.includes(
+        "방법",
+      )
+      && !timingOnlyText.includes(
+        "secondaryIntent",
+      )
+      && timingOnly.prompt.userPrompt.includes(
+        `알고 싶은 점: ${timingOnly.asksWhat}`,
+      ),
+
+    D_riskOnlyStartIsNotTimingPrimary:
+      riskOnlyStart.intent
+      === "risk"
+      && riskOnlyStart.decisionTarget
+      === "start"
+      && riskOnlyStart.timingType
+      === "unknown"
+      && riskOnlyStart.originalQuestion.includes(
+        "위험",
+      )
+      && !riskOnlyStart.originalQuestion.includes(
+        "시기",
+      )
+      && riskOnlyStart.asksWhat.includes(
+        "위험",
+      )
+      && !riskOnlyStart.asksWhat.includes(
+        "언제",
+      ),
+  };
+
+  return {
+    name:
+      "I-41-timing-primary-composite-secondary-risk-method-regression",
+    question:
+      timingRiskComposite.originalQuestion,
+    focus:
+      timingRiskComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -4842,6 +5120,7 @@ export function verifyConsultingPromptBuilder():
     verifySecondaryMaterialsCoverageRegression(),
     verifySecondaryMethodProxyMaterialBindingRegression(),
     verifyNonRiskPrimaryCompositeEvaluationMethodRegression(),
+    verifyTimingPrimaryCompositeSecondaryRiskMethodRegression(),
   ];
 
   return {
