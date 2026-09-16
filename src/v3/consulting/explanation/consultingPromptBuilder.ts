@@ -1687,6 +1687,9 @@ ${groundingUsageRules ? `\n${groundingUsageRules}` : ""}
 - 원문에 서로 다른 요구가 함께 포함되어 있으면, primary Intent를 중심으로 답하되 원문에 명시된 secondary 요구도 엔진이 제공한 판단 자료(evidence, conditions, risks, recommendedDirection, prohibitedDirection 등) 범위 안에서 함께 설명한다.
 - secondary 요구를 이유로 엔진의 primary 판단을 재판단하거나, verdict·direction·conditions·risks를 변경하지 않는다.
 - 엔진이 제공하지 않은 새로운 사실이나 판단을 secondary 요구 설명이라도 만들지 않는다.
+- secondary 요구가 method이면, 이미 제공된 conditions와 recommendedDirection·prohibitedDirection(directions)만 방법 설명의 proxy로 쓴다.
+- risks는 primary risk 판단/설명용이며, secondary method를 설명하는 방법 자료로 쓰지 않는다.
+- secondary method 때문에 evidence를 별도 method 근거로 확장하거나, method 전용 material을 만들거나, 없는 material·무관한 Reader/domain 자료를 추가하지 않는다.
 - 성격이나 역할을 묻는 질문은 원국과 개인 Reader 근거를 그 상황에 직접 적용한다.
 - 역할이나 적합성을 묻는 질문에는 제공된 원국과 Reader 근거상 실제로 가까운 역할 또는 특성을 구체적인 이유와 함께 답한다.
 - 현실 조건은 사주와 현재 운의 결론을 대체하지 않고 실행 가능성을 보완하는 자료로만 사용한다.

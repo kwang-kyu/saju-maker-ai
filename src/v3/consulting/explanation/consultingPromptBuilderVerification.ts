@@ -152,6 +152,21 @@ const MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS = [
 const MULTI_SPEECHACT_OLD_FINAL_CHECK_MARKER =
   "질문 유형의 중심에 맞게 답했는가?";
 
+const METHOD_PROXY_MATERIAL_BINDING_MARKERS = [
+  "secondary 요구가 method이면, 이미 제공된 conditions와 recommendedDirection·prohibitedDirection(directions)만 방법 설명의 proxy로 쓴다.",
+  "risks는 primary risk 판단/설명용이며, secondary method를 설명하는 방법 자료로 쓰지 않는다.",
+  "secondary method 때문에 evidence를 별도 method 근거로 확장하거나, method 전용 material을 만들거나, 없는 material·무관한 Reader/domain 자료를 추가하지 않는다.",
+] as const;
+
+const METHOD_PROXY_FORBIDDEN_ALLOWING_MARKERS = [
+  "risks를 방법 설명의 proxy로 쓴다",
+  "risks도 방법 자료로 사용",
+  "secondary method를 설명하는 방법 자료로 쓴다",
+  "evidence를 별도 method 근거로 확장한다",
+  "method 전용 material을 만든다",
+  "없는 material·무관한 Reader/domain 자료를 추가한다",
+] as const;
+
 const REPORT_EVIDENCE_PRIORITY_MARKERS = [
   "리포트형 근거 사용 원칙",
   "리포트형은 질문형보다 더 많은 근거를 사용할 수 있다.",
@@ -4143,6 +4158,227 @@ function verifySecondaryMaterialsCoverageRegression():
   };
 }
 
+function promptHasMethodProxyBinding(
+  promptText:
+    string,
+): boolean {
+  return METHOD_PROXY_MATERIAL_BINDING_MARKERS.every(
+    (marker) =>
+      promptText.includes(
+        marker,
+      ),
+  );
+}
+
+function promptAllowsRisksAsMethodProxy(
+  promptText:
+    string,
+): boolean {
+  return METHOD_PROXY_FORBIDDEN_ALLOWING_MARKERS.some(
+    (marker) =>
+      promptText.includes(
+        marker,
+      ),
+  );
+}
+
+function hasNoDedicatedMethodMaterialField(
+  explanationTitles:
+    string[],
+): boolean {
+  return !explanationTitles.some(
+    (title) =>
+      title.includes(
+        "방법",
+      ),
+  );
+}
+
+function verifySecondaryMethodProxyMaterialBindingRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const continueMulti =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법과 위험한 점은 무엇일까요?",
+    );
+
+  const leaveMulti =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 끝낼 방법과 위험한 점은 무엇일까요?",
+    );
+
+  const continueSingle =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법이 있을까요?",
+    );
+
+  const continueMultiText =
+    combinedPromptText(
+      continueMulti.prompt,
+    );
+
+  const leaveMultiText =
+    combinedPromptText(
+      leaveMulti.prompt,
+    );
+
+  const continueSingleText =
+    combinedPromptText(
+      continueSingle.prompt,
+    );
+
+  const checks = {
+    A_multiSpeechActCoverageApplied:
+      continueMulti.originalQuestion.includes(
+        "방법",
+      )
+      && continueMulti.originalQuestion.includes(
+        "위험",
+      )
+      && continueMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && continueMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      ),
+
+    A_primaryIntentIsRisk:
+      continueMulti.intent
+      === "risk",
+
+    A_secondaryMethodPreservedInOriginal:
+      continueMulti.prompt.userPrompt.includes(
+        continueMulti.originalQuestion,
+      )
+      && continueMulti.originalQuestion.includes(
+        "방법",
+      )
+      && !continueMulti.asksWhat.includes(
+        "방법",
+      ),
+
+    A_methodProxyIsConditionsAndDirections:
+      continueMulti.hasConditionMaterial
+      && continueMulti.hasDirectionMaterial
+      && promptHasMethodProxyBinding(
+        continueMultiText,
+      ),
+
+    A_absentRisksAreNotMethodProxyMaterial:
+      continueMulti.risksCount
+      === 0
+      && !continueMulti.hasDedicatedRisksMaterial
+      && !promptAllowsRisksAsMethodProxy(
+        continueMultiText,
+      )
+      && hasNoDedicatedMethodMaterialField(
+        continueMulti.explanationTitles,
+      ),
+
+    B_multiSpeechActCoverageApplied:
+      leaveMulti.originalQuestion.includes(
+        "방법",
+      )
+      && leaveMulti.originalQuestion.includes(
+        "위험",
+      )
+      && leaveMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && leaveMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      ),
+
+    B_primaryIntentIsRisk:
+      leaveMulti.intent
+      === "risk",
+
+    B_risksMaterialExistsForPrimaryRisk:
+      leaveMulti.risksCount
+      > 0
+      && leaveMulti.hasDedicatedRisksMaterial
+      && leaveMulti.explanationTitles.includes(
+        "위험",
+      ),
+
+    B_methodProxyLimitedToConditionsAndDirections:
+      leaveMulti.hasConditionMaterial
+      && leaveMulti.hasDirectionMaterial
+      && promptHasMethodProxyBinding(
+        leaveMultiText,
+      )
+      && !promptAllowsRisksAsMethodProxy(
+        leaveMultiText,
+      ),
+
+    B_noEvidenceOrDedicatedMethodExpansion:
+      leaveMultiText.includes(
+        METHOD_PROXY_MATERIAL_BINDING_MARKERS[2],
+      )
+      && hasNoDedicatedMethodMaterialField(
+        leaveMulti.explanationTitles,
+      )
+      && !leaveMultiText.includes(
+        "secondaryIntent",
+      ),
+
+    C_singleSpeechActOnly:
+      continueSingle.originalQuestion.includes(
+        "방법",
+      )
+      && !continueSingle.originalQuestion.includes(
+        "위험",
+      )
+      && continueSingle.intent
+      === "method",
+
+    C_multiCoverageDoesNotMisFire:
+      !continueSingle.asksWhat.includes(
+        "위험",
+      )
+      && !continueSingleText.includes(
+        "secondaryIntent",
+      )
+      && continueSingle.prompt.userPrompt.includes(
+        `알고 싶은 점: ${continueSingle.asksWhat}`,
+      ),
+
+    C_continueMaterialsMatchConditionsDirectionsShape:
+      continueSingle.hasConditionMaterial
+      && continueSingle.hasDirectionMaterial
+      && continueSingle.risksCount
+      === 0
+      && !continueSingle.hasDedicatedRisksMaterial
+      && continueSingle.explanationTitles.join(
+        "|",
+      )
+      === continueMulti.explanationTitles.join(
+        "|",
+      )
+      && promptHasMethodProxyBinding(
+        continueSingleText,
+      )
+      && !promptAllowsRisksAsMethodProxy(
+        continueSingleText,
+      ),
+  };
+
+  return {
+    name:
+      "I-39-secondary-method-proxy-material-binding-regression",
+    question:
+      continueMulti.originalQuestion,
+    focus:
+      continueMulti.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -4409,6 +4645,7 @@ export function verifyConsultingPromptBuilder():
     verifyWhenQuestionModeClassification(),
     verifyMultiSpeechActResponsePolicyRegression(),
     verifySecondaryMaterialsCoverageRegression(),
+    verifySecondaryMethodProxyMaterialBindingRegression(),
   ];
 
   return {
