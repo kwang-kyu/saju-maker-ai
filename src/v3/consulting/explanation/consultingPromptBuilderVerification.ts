@@ -5684,6 +5684,198 @@ function verifyRiskPrimaryReasonSecondaryEvidenceProxyRegression():
   };
 }
 
+function verifyTimingPrimaryReasonSecondaryEvidenceProxyRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const timingReasonComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 시기와 그 이유가 궁금합니다.",
+    );
+
+  const timingOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 시기가 궁금합니다.",
+    );
+
+  const timingReasonText =
+    combinedPromptText(
+      timingReasonComposite.prompt,
+    );
+
+  const checks = {
+    timingPrimaryMaintained:
+      timingReasonComposite.intent
+      === "timing",
+
+    decisionTargetStartMaintained:
+      timingReasonComposite.decisionTarget
+      === "start",
+
+    timingTypeBestTimingMaintained:
+      timingReasonComposite.timingType
+      === "bestTiming",
+
+    originalPreservesReasonDemand:
+      timingReasonComposite.originalQuestion.includes(
+        "시기",
+      )
+      && timingReasonComposite.originalQuestion.includes(
+        "이유",
+      )
+      && timingReasonComposite.prompt.userPrompt.includes(
+        timingReasonComposite.originalQuestion,
+      ),
+
+    asksWhatStaysTimingCentered:
+      timingReasonComposite.asksWhat.includes(
+        "언제",
+      )
+      && !timingReasonComposite.asksWhat.includes(
+        "이유",
+      )
+      && !timingReasonComposite.asksWhat.includes(
+        "방법",
+      )
+      && timingReasonComposite.asksWhat
+      === timingOnly.asksWhat
+      && timingReasonComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${timingReasonComposite.asksWhat}`,
+      ),
+
+    reasonSecondaryDoesNotCreateReasonIntent:
+      timingReasonComposite.intent
+      === "timing"
+      && !timingReasonText.includes(
+        "secondaryIntent",
+      ),
+
+    reasonDemandBindsToEvidenceProxyCoreGeungeo:
+      timingReasonComposite.explanationTitles.includes(
+        "이번 질문을 판단한 핵심 근거",
+      )
+      && timingReasonComposite.prompt.userPrompt.includes(
+        "이번 질문을 판단한 핵심 근거",
+      )
+      && timingReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      ),
+
+    evidenceMaterialDoesNotDisappearVsTimingOnly:
+      timingOnly.explanationTitles.includes(
+        "이번 질문을 판단한 핵심 근거",
+      )
+      && timingReasonComposite.explanationTitles.includes(
+        "이번 질문을 판단한 핵심 근거",
+      )
+      && timingReasonComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      ),
+
+    reasonSecondaryDoesNotOverExpandConditions:
+      timingReasonComposite.hasConditionMaterial
+      === timingOnly.hasConditionMaterial
+      && timingReasonComposite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      ),
+
+    reasonSecondaryDoesNotOverExpandRisks:
+      timingReasonComposite.risksCount
+      === timingOnly.risksCount
+      && timingReasonComposite.hasDedicatedRisksMaterial
+      === timingOnly.hasDedicatedRisksMaterial,
+
+    reasonSecondaryDoesNotOverExpandDirections:
+      timingReasonComposite.hasDirectionMaterial
+      === timingOnly.hasDirectionMaterial
+      && timingReasonComposite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && timingReasonComposite.prohibitedDirection
+      === timingOnly.prohibitedDirection
+      && timingReasonComposite.verdict
+      === timingOnly.verdict
+      && timingReasonComposite.finalDecision
+      === timingOnly.finalDecision
+      && engineDecisionLockedInPrompt(
+        timingReasonComposite.prompt,
+        timingReasonComposite.finalDecision,
+      ),
+
+    methodSpecificMaterialNotCreatedByReason:
+      hasNoDedicatedMethodMaterialField(
+        timingReasonComposite.explanationTitles,
+      )
+      && !timingReasonComposite.asksWhat.includes(
+        "방법",
+      )
+      && !timingReasonComposite.originalQuestion.includes(
+        "방법",
+      ),
+
+    reasonDoesNotPromoteOtherSpeechActs:
+      timingReasonComposite.intent
+      !== "method"
+      && timingReasonComposite.intent
+      !== "evaluation"
+      && timingReasonComposite.intent
+      !== "risk"
+      && timingReasonComposite.timingType
+      === timingOnly.timingType
+      && timingReasonComposite.decisionTarget
+      === timingOnly.decisionTarget
+      && timingReasonComposite.intent
+      === timingOnly.intent,
+
+    multiSpeechActKeepsPrimaryCenter:
+      timingReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && timingReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && timingReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      timingReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && timingReasonComposite.existingMaterialTexts.every(
+        (value) =>
+          timingReasonComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-46-timing-primary-reason-secondary-evidence-proxy-regression",
+    question:
+      timingReasonComposite.originalQuestion,
+    focus:
+      timingReasonComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -5957,6 +6149,7 @@ export function verifyConsultingPromptBuilder():
     verifyMethodPrimaryReasonSecondaryEvidenceProxyRegression(),
     verifyFalseMultiSpeechAntiExpansionNegativeBoundaryRegression(),
     verifyRiskPrimaryReasonSecondaryEvidenceProxyRegression(),
+    verifyTimingPrimaryReasonSecondaryEvidenceProxyRegression(),
   ];
 
   return {
