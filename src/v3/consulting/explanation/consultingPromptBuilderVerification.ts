@@ -3938,6 +3938,211 @@ function verifyMultiSpeechActResponsePolicyRegression():
   };
 }
 
+function inspectSecondaryMaterialsCoverage(
+  questionText:
+    string,
+) {
+  const input =
+    buildDecisionEngineRegressionInput({
+      questionText,
+    });
+
+  const question =
+    readQuestion(
+      input.humanContext,
+      questionText,
+    );
+
+  const questionContext =
+    buildQuestionContext(
+      question,
+    );
+
+  const explanationInput =
+    readDecisionResult(
+      runDecisionEngine({
+        ...input,
+        question,
+        questionContext,
+      }),
+    );
+
+  const plan =
+    buildDecisionExplanationPlan(
+      explanationInput,
+      question.originalQuestion,
+      questionContext,
+    );
+
+  const payload =
+    buildDecisionExplanationPayload(
+      plan,
+    );
+
+  const prompt =
+    buildConsultingPrompt(
+      payload,
+      buildConsultingGroundingContext({
+        humanContext:
+          input.humanContext,
+        lifeContext:
+          input.lifeContext,
+        question:
+          questionText,
+      }),
+      questionContext,
+    );
+
+  return {
+    originalQuestion:
+      question.originalQuestion,
+    intent:
+      payload.intent,
+    asksWhat:
+      question.asksWhat,
+    focus:
+      plan.explanationFocus
+      ?? null,
+    prompt,
+    explanationTitles:
+      payload.explanationOrder.map(
+        (item) =>
+          item.title,
+      ),
+    existingMaterialTexts: [
+      ...explanationInput.conditions.map(
+        (item) =>
+          item.description,
+      ),
+      explanationInput.recommendedDirection,
+      explanationInput.prohibitedDirection,
+      ...payload.explanationOrder.map(
+        (item) =>
+          item.content,
+      ),
+    ].filter(
+      (value) =>
+        value.trim().length
+        > 0,
+    ),
+    risksCount:
+      explanationInput.risks.length,
+    hasDedicatedRisksMaterial:
+      plan.blocks.some(
+        (block) =>
+          block.step
+          === "risks"
+          && block.required,
+      ),
+    hasConditionMaterial:
+      explanationInput.conditions.length
+      > 0,
+    hasDirectionMaterial:
+      explanationInput.recommendedDirection.trim().length
+      > 0
+      && explanationInput.prohibitedDirection.trim().length
+      > 0,
+  };
+}
+
+function verifySecondaryMaterialsCoverageRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const multi =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법과 위험한 점은 무엇일까요?",
+    );
+
+  const single =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법이 있을까요?",
+    );
+
+  const multiText =
+    combinedPromptText(
+      multi.prompt,
+    );
+
+  const checks = {
+    multiOriginalKeepsMethodAndRisk:
+      multi.prompt.userPrompt.includes(
+        multi.originalQuestion,
+      ),
+
+    multiPrimaryIntentIsRisk:
+      multi.intent
+      === "risk",
+
+    multiAsksWhatStaysPrimaryCentered:
+      multi.asksWhat.includes(
+        "위험",
+      )
+      && !multi.asksWhat.includes(
+        "방법",
+      )
+      && multi.prompt.userPrompt.includes(
+        `알고 싶은 점: ${multi.asksWhat}`,
+      )
+      && !multiText.includes(
+        "secondaryIntent",
+      ),
+
+    existingMaterialsAppearInPrompt:
+      multi.hasConditionMaterial
+      && multi.hasDirectionMaterial
+      && multi.existingMaterialTexts.every(
+        (value) =>
+          multi.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+
+    absentDedicatedRisksAreNotInvented:
+      multi.risksCount
+      === 0
+      && !multi.hasDedicatedRisksMaterial
+      && !multi.explanationTitles.includes(
+        "변경·이탈을 고려해야 하는 신호",
+      )
+      && !multi.explanationTitles.includes(
+        "사업상 위험",
+      ),
+
+    noDedicatedMethodMaterialField:
+      !multi.explanationTitles.some(
+        (title) =>
+          title.includes(
+            "방법",
+          ),
+      ),
+
+    singleDoesNotTriggerMultiCoverage:
+      single.originalQuestion.includes(
+        "방법",
+      )
+      && !single.originalQuestion.includes(
+        "위험",
+      )
+      && single.intent
+      === "method",
+  };
+
+  return {
+    name:
+      "I-38-secondary-materials-coverage-regression",
+    question:
+      multi.originalQuestion,
+    focus:
+      multi.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -4203,6 +4408,7 @@ export function verifyConsultingPromptBuilder():
     verifyQuestionSpecificEvidencePriority(),
     verifyWhenQuestionModeClassification(),
     verifyMultiSpeechActResponsePolicyRegression(),
+    verifySecondaryMaterialsCoverageRegression(),
   ];
 
   return {
