@@ -6671,6 +6671,259 @@ function verifyTimingPrimaryEvaluationSecondaryContinueAntiExpansionRegression()
   };
 }
 
+function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const timingRiskComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 시기와 위험한 점이 궁금합니다.",
+    );
+
+  const timingOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 시기가 궁금합니다.",
+    );
+
+  const timingRiskText =
+    combinedPromptText(
+      timingRiskComposite.prompt,
+    );
+
+  const checks = {
+    timingPrimaryMaintained:
+      timingRiskComposite.intent
+      === "timing",
+
+    decisionTargetContinueMaintained:
+      timingRiskComposite.decisionTarget
+      === "continue",
+
+    timingTypeBestTimingMaintained:
+      timingRiskComposite.timingType
+      === "bestTiming",
+
+    riskDoesNotReclassifyPrimary:
+      timingRiskComposite.intent
+      !== "risk"
+      && timingRiskComposite.intent
+      === timingOnly.intent,
+
+    riskDoesNotChangeDecisionTargetToStart:
+      timingRiskComposite.decisionTarget
+      !== "start"
+      && timingRiskComposite.decisionTarget
+      === "continue"
+      && timingRiskComposite.decisionTarget
+      === timingOnly.decisionTarget,
+
+    originalPreservesRiskSurface:
+      timingRiskComposite.originalQuestion.includes(
+        "시기",
+      )
+      && timingRiskComposite.originalQuestion.includes(
+        "위험",
+      )
+      && timingRiskComposite.prompt.userPrompt.includes(
+        timingRiskComposite.originalQuestion,
+      ),
+
+    asksWhatStaysTimingCentered:
+      timingRiskComposite.asksWhat.includes(
+        "언제",
+      )
+      && !timingRiskComposite.asksWhat.includes(
+        "위험",
+      )
+      && !timingRiskComposite.asksWhat.includes(
+        "좋을지",
+      )
+      && !timingRiskComposite.asksWhat.includes(
+        "방법",
+      )
+      && timingRiskComposite.asksWhat
+      === timingOnly.asksWhat
+      && timingRiskComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${timingRiskComposite.asksWhat}`,
+      ),
+
+    riskSecondaryDoesNotCreateSecondaryIntent:
+      timingRiskComposite.intent
+      === "timing"
+      && !timingRiskText.includes(
+        "secondaryIntent",
+      ),
+
+    evidenceMaterialDoesNotDisappearVsTimingOnly:
+      timingOnly.explanationTitles.includes(
+        "유지의 근거",
+      )
+      && timingRiskComposite.explanationTitles.includes(
+        "유지의 근거",
+      )
+      && timingRiskComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      ),
+
+    riskSecondaryDoesNotOverExpandTitles:
+      timingRiskComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      ),
+
+    riskSecondaryDoesNotOverExpandConditions:
+      timingRiskComposite.hasConditionMaterial
+      === timingOnly.hasConditionMaterial
+      && timingRiskComposite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      ),
+
+    riskSecondaryDoesNotInventRiskMaterials:
+      timingRiskComposite.risksCount
+      === 0
+      && timingOnly.risksCount
+      === 0
+      && timingRiskComposite.risksCount
+      === timingOnly.risksCount
+      && !timingRiskComposite.hasDedicatedRisksMaterial
+      && !timingOnly.hasDedicatedRisksMaterial
+      && timingRiskComposite.hasDedicatedRisksMaterial
+      === timingOnly.hasDedicatedRisksMaterial
+      && !timingRiskComposite.explanationTitles.includes(
+        "위험",
+      )
+      && !timingRiskComposite.explanationTitles.includes(
+        "사업상 위험",
+      )
+      && !timingRiskComposite.explanationTitles.includes(
+        "변경·이탈을 고려해야 하는 신호",
+      ),
+
+    riskSecondaryDoesNotOverExpandDirections:
+      timingRiskComposite.hasDirectionMaterial
+      === timingOnly.hasDirectionMaterial
+      && timingRiskComposite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && timingRiskComposite.prohibitedDirection
+      === timingOnly.prohibitedDirection
+      && timingRiskComposite.verdict
+      === timingOnly.verdict
+      && timingRiskComposite.finalDecision
+      === timingOnly.finalDecision
+      && engineDecisionLockedInPrompt(
+        timingRiskComposite.prompt,
+        timingRiskComposite.finalDecision,
+      ),
+
+    riskSecondaryDoesNotExpandTimingMaterials:
+      timingRiskComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      )
+      && timingRiskComposite.hasConditionMaterial
+      === timingOnly.hasConditionMaterial
+      && timingRiskComposite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      )
+      && timingRiskComposite.risksCount
+      === timingOnly.risksCount
+      && timingRiskComposite.hasDedicatedRisksMaterial
+      === timingOnly.hasDedicatedRisksMaterial
+      && timingRiskComposite.hasDirectionMaterial
+      === timingOnly.hasDirectionMaterial
+      && timingRiskComposite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && timingRiskComposite.prohibitedDirection
+      === timingOnly.prohibitedDirection
+      && timingRiskComposite.verdict
+      === timingOnly.verdict
+      && timingRiskComposite.finalDecision
+      === timingOnly.finalDecision
+      && timingRiskComposite.timingType
+      === timingOnly.timingType,
+
+    methodSpecificMaterialNotCreatedByRisk:
+      hasNoDedicatedMethodMaterialField(
+        timingRiskComposite.explanationTitles,
+      )
+      && !timingRiskComposite.asksWhat.includes(
+        "방법",
+      )
+      && !timingRiskComposite.originalQuestion.includes(
+        "방법",
+      ),
+
+    riskDoesNotPromoteOtherSpeechActs:
+      timingRiskComposite.intent
+      !== "method"
+      && timingRiskComposite.intent
+      !== "evaluation"
+      && timingRiskComposite.intent
+      !== "risk"
+      && timingRiskComposite.timingType
+      === timingOnly.timingType
+      && timingRiskComposite.decisionTarget
+      === timingOnly.decisionTarget
+      && timingRiskComposite.intent
+      === timingOnly.intent,
+
+    multiSpeechActKeepsPrimaryCenter:
+      timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingRiskText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && timingRiskComposite.existingMaterialTexts.every(
+        (value) =>
+          timingRiskComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-50-timing-primary-risk-secondary-continue-anti-expansion-regression",
+    question:
+      timingRiskComposite.originalQuestion,
+    focus:
+      timingRiskComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -6948,6 +7201,7 @@ export function verifyConsultingPromptBuilder():
     verifyRiskPrimaryEvaluationSecondaryAntiExpansionRegression(),
     verifyTimingPrimaryEvaluationSecondaryAntiExpansionRegression(),
     verifyTimingPrimaryEvaluationSecondaryContinueAntiExpansionRegression(),
+    verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression(),
   ];
 
   return {
