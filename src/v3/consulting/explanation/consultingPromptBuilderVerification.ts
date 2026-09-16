@@ -7186,6 +7186,295 @@ function verifyTimingPrimaryMethodSecondaryContinueAntiExpansionRegression():
   };
 }
 
+function verifyRiskPrimaryMethodSecondaryStartAntiExpansionRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const riskMethodComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 때 위험한 점과 어떤 방법으로 준비해야 할지 궁금합니다.",
+    );
+
+  const riskOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 때 위험한 점은 무엇인가요?",
+    );
+
+  const riskMethodText =
+    combinedPromptText(
+      riskMethodComposite.prompt,
+    );
+
+  const checks = {
+    riskPrimaryMaintained:
+      riskMethodComposite.intent
+      === "risk",
+
+    decisionTargetStartMaintained:
+      riskMethodComposite.decisionTarget
+      === "start",
+
+    timingTypeUnknownMaintained:
+      riskMethodComposite.timingType
+      === "unknown",
+
+    asksWhatStaysRiskCentered:
+      riskMethodComposite.asksWhat.includes(
+        "위험",
+      )
+      && !riskMethodComposite.asksWhat.includes(
+        "방법",
+      )
+      && !riskMethodComposite.asksWhat.includes(
+        "언제",
+      )
+      && !riskMethodComposite.asksWhat.includes(
+        "좋을지",
+      )
+      && riskMethodComposite.asksWhat
+      === riskOnly.asksWhat
+      && riskMethodComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${riskMethodComposite.asksWhat}`,
+      ),
+
+    baselineRiskPrimaryMaintained:
+      riskOnly.intent
+      === "risk",
+
+    baselineDecisionTargetStartMaintained:
+      riskOnly.decisionTarget
+      === "start",
+
+    primaryDecisionSurfaceMatchesBaseline:
+      riskMethodComposite.intent
+      === riskOnly.intent
+      && riskMethodComposite.decisionTarget
+      === riskOnly.decisionTarget
+      && riskMethodComposite.timingType
+      === riskOnly.timingType
+      && riskMethodComposite.verdict
+      === riskOnly.verdict
+      && riskMethodComposite.finalDecision
+      === riskOnly.finalDecision
+      && riskMethodComposite.conditionsTexts.join(
+        "|",
+      )
+      === riskOnly.conditionsTexts.join(
+        "|",
+      )
+      && riskMethodComposite.recommendedDirection
+      === riskOnly.recommendedDirection
+      && riskMethodComposite.prohibitedDirection
+      === riskOnly.prohibitedDirection
+      && riskMethodComposite.risksCount
+      === riskOnly.risksCount
+      && riskMethodComposite.hasDedicatedRisksMaterial
+      === riskOnly.hasDedicatedRisksMaterial
+      && riskMethodComposite.explanationTitles.join(
+        "|",
+      )
+      === riskOnly.explanationTitles.join(
+        "|",
+      )
+      && riskMethodComposite.focus
+      === riskOnly.focus,
+
+    originalPreservesMethodSurface:
+      riskMethodComposite.originalQuestion.includes(
+        "위험한 점",
+      )
+      && riskMethodComposite.originalQuestion.includes(
+        "어떤 방법으로",
+      )
+      && riskMethodComposite.originalQuestion.includes(
+        "방법",
+      )
+      && riskMethodComposite.prompt.userPrompt.includes(
+        riskMethodComposite.originalQuestion,
+      ),
+
+    methodSecondaryDoesNotCreateSecondaryIntent:
+      riskMethodComposite.intent
+      === "risk"
+      && !riskMethodText.includes(
+        "secondaryIntent",
+      ),
+
+    methodDoesNotReclassifyPrimaryAsksWhat:
+      riskMethodComposite.asksWhat
+      === riskOnly.asksWhat
+      && !riskMethodComposite.asksWhat.includes(
+        "방법",
+      ),
+
+    methodSecondaryDoesNotInventMethodMaterials:
+      hasNoDedicatedMethodMaterialField(
+        riskMethodComposite.explanationTitles,
+      )
+      && hasNoDedicatedMethodMaterialField(
+        riskOnly.explanationTitles,
+      )
+      && !riskMethodComposite.explanationTitles.includes(
+        "방법",
+      )
+      && !riskMethodComposite.explanationTitles.includes(
+        "준비 방법",
+      )
+      && !riskMethodComposite.explanationTitles.includes(
+        "대응 방법",
+      ),
+
+    methodProxyStaysWithinConditionsAndDirections:
+      riskMethodComposite.hasConditionMaterial
+      && riskMethodComposite.hasDirectionMaterial
+      && promptHasMethodProxyBinding(
+        riskMethodText,
+      )
+      && !promptAllowsRisksAsMethodProxy(
+        riskMethodText,
+      )
+      && riskMethodComposite.hasConditionMaterial
+      === riskOnly.hasConditionMaterial
+      && riskMethodComposite.hasDirectionMaterial
+      === riskOnly.hasDirectionMaterial
+      && riskMethodComposite.conditionsTexts.join(
+        "|",
+      )
+      === riskOnly.conditionsTexts.join(
+        "|",
+      )
+      && riskMethodComposite.recommendedDirection
+      === riskOnly.recommendedDirection
+      && riskMethodComposite.prohibitedDirection
+      === riskOnly.prohibitedDirection,
+
+    baselineHasActualRiskMaterial:
+      riskOnly.risksCount
+      > 0
+      && riskOnly.hasDedicatedRisksMaterial
+      && riskOnly.explanationTitles.includes(
+        "사업상 위험",
+      ),
+
+    riskMaterialMatchesBaseline:
+      riskMethodComposite.risksCount
+      > 0
+      && riskMethodComposite.hasDedicatedRisksMaterial
+      && riskMethodComposite.explanationTitles.includes(
+        "사업상 위험",
+      )
+      && riskMethodComposite.risksCount
+      === riskOnly.risksCount
+      && riskMethodComposite.hasDedicatedRisksMaterial
+      === riskOnly.hasDedicatedRisksMaterial,
+
+    methodSecondaryDoesNotChangeDecisionSurface:
+      riskMethodComposite.verdict
+      === riskOnly.verdict
+      && riskMethodComposite.finalDecision
+      === riskOnly.finalDecision
+      && riskMethodComposite.conditionsTexts.join(
+        "|",
+      )
+      === riskOnly.conditionsTexts.join(
+        "|",
+      )
+      && riskMethodComposite.recommendedDirection
+      === riskOnly.recommendedDirection
+      && riskMethodComposite.prohibitedDirection
+      === riskOnly.prohibitedDirection
+      && riskMethodComposite.risksCount
+      === riskOnly.risksCount
+      && riskMethodComposite.hasDedicatedRisksMaterial
+      === riskOnly.hasDedicatedRisksMaterial
+      && engineDecisionLockedInPrompt(
+        riskMethodComposite.prompt,
+        riskMethodComposite.finalDecision,
+      ),
+
+    methodSecondaryDoesNotInventMethodSpecificDecisionTitles:
+      riskMethodComposite.explanationTitles.join(
+        "|",
+      )
+      === riskOnly.explanationTitles.join(
+        "|",
+      )
+      && !riskMethodComposite.explanationTitles.some(
+        (title) =>
+          title.includes(
+            "방법",
+          ),
+      ),
+
+    methodDoesNotPromoteOtherSpeechActs:
+      riskMethodComposite.intent
+      !== "method"
+      && riskMethodComposite.intent
+      !== "evaluation"
+      && riskMethodComposite.intent
+      !== "timing"
+      && riskMethodComposite.timingType
+      === riskOnly.timingType
+      && riskMethodComposite.decisionTarget
+      === riskOnly.decisionTarget
+      && riskMethodComposite.intent
+      === riskOnly.intent,
+
+    multiSpeechActKeepsPrimaryCenter:
+      riskMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && riskMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && riskMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && riskMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    originalQuestionFullyPreserved:
+      riskMethodComposite.prompt.userPrompt.includes(
+        riskMethodComposite.originalQuestion,
+      )
+      && riskMethodComposite.originalQuestion.includes(
+        "위험한 점",
+      )
+      && riskMethodComposite.originalQuestion.includes(
+        "어떤 방법으로",
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      riskMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && riskMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && riskMethodComposite.existingMaterialTexts.every(
+        (value) =>
+          riskMethodComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-53-risk-primary-method-secondary-start-anti-expansion-regression",
+    question:
+      riskMethodComposite.originalQuestion,
+    focus:
+      riskMethodComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -7465,6 +7754,7 @@ export function verifyConsultingPromptBuilder():
     verifyTimingPrimaryEvaluationSecondaryContinueAntiExpansionRegression(),
     verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression(),
     verifyTimingPrimaryMethodSecondaryContinueAntiExpansionRegression(),
+    verifyRiskPrimaryMethodSecondaryStartAntiExpansionRegression(),
   ];
 
   return {
