@@ -4996,17 +4996,22 @@ function normalizeIntentSemanticMeaning(
 }
 
 /**
- * I-27: continuation + continue 위에서
+ * I-27 / I-31: action-nature + aligned DecisionTarget 위에서
  * strong method/risk speech-act만 Intent로 보존한다.
  *
- * Phase 1이 continuation을 method/risk보다 먼저 고르더라도
- * DecisionTarget(continue)은 유지하고 QuestionIntent만 method|risk로 되돌린다.
- * continuation을 전역적으로 뒤로 보내지 않는다.
+ * 정렬:
+ * - continuation → continue
+ * - termination → stop | leaveJob
+ *
+ * Phase 1이 continuation/termination을 method/risk보다 먼저 고르더라도
+ * DecisionTarget은 유지하고 QuestionIntent만 method|risk로 되돌린다.
+ * continuation/termination을 전역적으로 뒤로 보내지 않는다.
  *
  * 보호:
  * - prediction / option-fit / strong selection frame
- * - strong marker 없는 permission+continue (J-4-8)
- * - method/risk-only (DT !== continue)
+ * - strong marker 없는 permission+action (J-4-8)
+ * - method/risk-only (DT가 action-nature 정렬이 아님)
+ * - start / changeJob 등 다른 DT 경로
  * - weak method("하면 좋을까") / weak risk("문제"|"실패"|"손해"|"망할")
  */
 const STRONG_METHOD_SPEECH_ACT_MARKERS = [
@@ -5034,7 +5039,25 @@ function evidenceHasStrongSpeechActMarker(
   );
 }
 
-function findStrongContinuationSpeechActPreservation(
+function isActionNatureSpeechActAligned(
+  intent: ReaderIntentLiteral,
+  decisionTarget: DecisionTarget,
+): boolean {
+  if (intent === "continuation" && decisionTarget === "continue") {
+    return true;
+  }
+
+  if (
+    intent === "termination"
+    && (decisionTarget === "stop" || decisionTarget === "leaveJob")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function findStrongActionNatureSpeechActPreservation(
   intent: ReaderIntentLiteral,
   intentEvidence: readonly string[],
   decisionTarget: DecisionTarget,
@@ -5043,7 +5066,7 @@ function findStrongContinuationSpeechActPreservation(
   intent: "method" | "risk";
   intentEvidence: string[];
 } | null {
-  if (intent !== "continuation" || decisionTarget !== "continue") {
+  if (!isActionNatureSpeechActAligned(intent, decisionTarget)) {
     return null;
   }
 
@@ -5106,7 +5129,7 @@ function findStrongContinuationSpeechActPreservation(
       intentEvidence: mergeUniqueEvidence(
         selected.evidence,
         intentEvidence,
-        ["continuationSpeechActPreservation"],
+        ["actionNatureSpeechActPreservation"],
       ),
     };
   }
@@ -5117,7 +5140,7 @@ function findStrongContinuationSpeechActPreservation(
       intentEvidence: mergeUniqueEvidence(
         riskCandidate.evidence,
         intentEvidence,
-        ["continuationSpeechActPreservation"],
+        ["actionNatureSpeechActPreservation"],
       ),
     };
   }
@@ -5128,7 +5151,7 @@ function findStrongContinuationSpeechActPreservation(
       intentEvidence: mergeUniqueEvidence(
         methodCandidate.evidence,
         intentEvidence,
-        ["continuationSpeechActPreservation"],
+        ["actionNatureSpeechActPreservation"],
       ),
     };
   }
@@ -5464,19 +5487,20 @@ function normalizeAxes(
     intentEvidence = intentSemanticNormalized.intentEvidence;
   }
 
-  // I-27: J-4-11 인접 — continuation + continue에서
+  // I-27 / I-31: J-4-11 인접 — action-nature + aligned DT에서
   // strong method/risk speech-act Intent만 보존한다. DT는 불변.
-  const continuationSpeechActPreserved =
-    findStrongContinuationSpeechActPreservation(
+  // continuation→continue, termination→stop|leaveJob
+  const actionNatureSpeechActPreserved =
+    findStrongActionNatureSpeechActPreservation(
       intent,
       intentEvidence,
       decisionTarget,
       candidates,
     );
 
-  if (continuationSpeechActPreserved) {
-    intent = continuationSpeechActPreserved.intent;
-    intentEvidence = continuationSpeechActPreserved.intentEvidence;
+  if (actionNatureSpeechActPreserved) {
+    intent = actionNatureSpeechActPreserved.intent;
+    intentEvidence = actionNatureSpeechActPreserved.intentEvidence;
   }
 
   const objectLabel = selectObjectLabelFromTopicEvidence(
