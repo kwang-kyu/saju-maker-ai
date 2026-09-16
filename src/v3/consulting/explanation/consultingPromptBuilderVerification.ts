@@ -5179,6 +5179,207 @@ function verifyMethodPrimaryReasonSecondaryEvidenceProxyRegression():
   };
 }
 
+function verifyFalseMultiSpeechAntiExpansionNegativeBoundaryRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const falseMulti =
+    inspectSecondaryMaterialsCoverage(
+      "위험한 방법으로 사업을 계속해도 될까요?",
+    );
+
+  const riskOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하면 위험할까요?",
+    );
+
+  const evaluationSurface =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속해도 될까요?",
+    );
+
+  const trueMethodRiskMulti =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법과 위험한 점은 무엇일까요?",
+    );
+
+  const falseMultiText =
+    combinedPromptText(
+      falseMulti.prompt,
+    );
+
+  const checks = {
+    riskPrimaryMaintained:
+      falseMulti.intent
+      === "risk",
+
+    decisionTargetContinueMaintained:
+      falseMulti.decisionTarget
+      === "continue",
+
+    secondaryMethodIntentNotCreated:
+      falseMulti.intent
+      !== "method"
+      && !falseMultiText.includes(
+        "secondaryIntent",
+      ),
+
+    asksWhatStaysRiskCentered:
+      falseMulti.asksWhat.includes(
+        "위험",
+      )
+      && !falseMulti.asksWhat.includes(
+        "방법",
+      )
+      && falseMulti.asksWhat
+      === riskOnly.asksWhat
+      && falseMulti.prompt.userPrompt.includes(
+        `알고 싶은 점: ${falseMulti.asksWhat}`,
+      ),
+
+    lexicalMethodPreservedWithoutSpeechActDemand:
+      falseMulti.originalQuestion.includes(
+        "방법",
+      )
+      && falseMulti.originalQuestion.includes(
+        "위험",
+      )
+      && falseMulti.prompt.userPrompt.includes(
+        falseMulti.originalQuestion,
+      )
+      && !falseMulti.asksWhat.includes(
+        "방법",
+      )
+      && trueMethodRiskMulti.originalQuestion.includes(
+        "방법",
+      )
+      && trueMethodRiskMulti.originalQuestion.includes(
+        "위험",
+      )
+      && trueMethodRiskMulti.intent
+      === "risk",
+
+    materialsDoNotExpandLikeTrueMethodRiskComposite:
+      falseMulti.explanationTitles.join(
+        "|",
+      )
+      === riskOnly.explanationTitles.join(
+        "|",
+      )
+      && falseMulti.risksCount
+      === riskOnly.risksCount
+      && falseMulti.hasDedicatedRisksMaterial
+      === riskOnly.hasDedicatedRisksMaterial
+      && hasNoDedicatedMethodMaterialField(
+        falseMulti.explanationTitles,
+      ),
+
+    methodProxyMaterialsNotCreatedWithoutMethodDemand:
+      falseMulti.hasConditionMaterial
+      === riskOnly.hasConditionMaterial
+      && falseMulti.conditionsTexts.join(
+        "|",
+      )
+      === riskOnly.conditionsTexts.join(
+        "|",
+      )
+      && falseMulti.hasDirectionMaterial
+      === riskOnly.hasDirectionMaterial
+      && falseMulti.recommendedDirection
+      === riskOnly.recommendedDirection
+      && falseMulti.prohibitedDirection
+      === riskOnly.prohibitedDirection,
+
+    evaluationPermissionSurfaceDoesNotFlipRiskPrimary:
+      evaluationSurface.intent
+      === "evaluation"
+      && evaluationSurface.decisionTarget
+      === "continue"
+      && falseMulti.intent
+      === "risk"
+      && falseMulti.originalQuestion.includes(
+        "해도 될까요",
+      )
+      && falseMulti.asksWhat
+      !== evaluationSurface.asksWhat,
+
+    multiSpeechPolicyNotMisclassifiedAsTrueMulti:
+      !falseMultiText.includes(
+        "secondaryIntent",
+      )
+      && falseMulti.asksWhat
+      === riskOnly.asksWhat
+      && falseMulti.explanationTitles.join(
+        "|",
+      )
+      === riskOnly.explanationTitles.join(
+        "|",
+      )
+      && falseMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && falseMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    baselineRiskOnlyMaterialsAndVerdictUnchanged:
+      falseMulti.verdict
+      === riskOnly.verdict
+      && falseMulti.finalDecision
+      === riskOnly.finalDecision
+      && falseMulti.explanationTitles.join(
+        "|",
+      )
+      === riskOnly.explanationTitles.join(
+        "|",
+      )
+      && falseMulti.conditionsTexts.join(
+        "|",
+      )
+      === riskOnly.conditionsTexts.join(
+        "|",
+      )
+      && falseMulti.risksCount
+      === riskOnly.risksCount
+      && falseMulti.recommendedDirection
+      === riskOnly.recommendedDirection
+      && falseMulti.prohibitedDirection
+      === riskOnly.prohibitedDirection
+      && engineDecisionLockedInPrompt(
+        falseMulti.prompt,
+        falseMulti.finalDecision,
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      falseMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && falseMultiText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && falseMulti.existingMaterialTexts.every(
+        (value) =>
+          falseMulti.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-44-false-multi-speech-anti-expansion-negative-boundary-regression",
+    question:
+      falseMulti.originalQuestion,
+    focus:
+      falseMulti.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -5450,6 +5651,7 @@ export function verifyConsultingPromptBuilder():
     verifyTimingPrimaryCompositeSecondaryRiskMethodRegression(),
     verifyEvaluationPrimaryReasonSecondaryEvidenceProxyRegression(),
     verifyMethodPrimaryReasonSecondaryEvidenceProxyRegression(),
+    verifyFalseMultiSpeechAntiExpansionNegativeBoundaryRegression(),
   ];
 
   return {
