@@ -141,6 +141,17 @@ const QUESTION_EVIDENCE_PRIORITY_MARKERS = [
   "관계 질문이 아닌데 관계 특성을 장황하게 설명하지 않는다.",
 ] as const;
 
+const MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS = [
+  "제공된 질문 의도(primary Intent)는 답변의 판단 중심이다.",
+  "원문에 서로 다른 요구가 함께 포함되어 있으면, primary Intent를 중심으로 답하되 원문에 명시된 secondary 요구도 엔진이 제공한 판단 자료(evidence, conditions, risks, recommendedDirection, prohibitedDirection 등) 범위 안에서 함께 설명한다.",
+  "secondary 요구를 이유로 엔진의 primary 판단을 재판단하거나, verdict·direction·conditions·risks를 변경하지 않는다.",
+  "엔진이 제공하지 않은 새로운 사실이나 판단을 secondary 요구 설명이라도 만들지 않는다.",
+  "질문의 중심을 유지하면서 원문에 포함된 명시적 요구사항을 빠뜨리지 않았는가?",
+] as const;
+
+const MULTI_SPEECHACT_OLD_FINAL_CHECK_MARKER =
+  "질문 유형의 중심에 맞게 답했는가?";
+
 const REPORT_EVIDENCE_PRIORITY_MARKERS = [
   "리포트형 근거 사용 원칙",
   "리포트형은 질문형보다 더 많은 근거를 사용할 수 있다.",
@@ -3804,6 +3815,129 @@ function verifyQuestionSpecificEvidencePriority():
   };
 }
 
+function verifyMultiSpeechActResponsePolicyRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const multiSpeechAct =
+    buildFullArtifacts(
+      "사업을 계속할 방법과 위험한 점은 무엇일까요?",
+    );
+
+  const singleSpeechAct =
+    buildFullArtifacts(
+      "사업을 계속할 방법이 있을까요?",
+    );
+
+  const fixtures = [
+    multiSpeechAct,
+    singleSpeechAct,
+  ];
+
+  const promptTexts =
+    fixtures.map(
+      (artifacts) =>
+        combinedPromptText(
+          artifacts.prompt,
+        ),
+    );
+
+  const everyPrompt = (
+    predicate: (
+      text:
+        string,
+    ) => boolean,
+  ): boolean =>
+    promptTexts.every(
+      predicate,
+    );
+
+  const checks = {
+    A_primaryIntentIsJudgementCenter:
+      everyPrompt(
+        (text) =>
+          text.includes(
+            MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+          ),
+      ),
+
+    B_secondarySpeechActPolicyPresent:
+      everyPrompt(
+        (text) =>
+          text.includes(
+            MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+          ),
+      ),
+
+    C_secondaryDoesNotRejudgePrimary:
+      everyPrompt(
+        (text) =>
+          text.includes(
+            MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+          ),
+      ),
+
+    D_secondaryDoesNotInventFacts:
+      everyPrompt(
+        (text) =>
+          text.includes(
+            MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+          ),
+      ),
+
+    E_finalCheckKeepsCenterAndExplicitAsks:
+      everyPrompt(
+        (text) =>
+          text.includes(
+            MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[4],
+          ),
+      ),
+
+    F_oldFinalCheckMarkerAbsent:
+      everyPrompt(
+        (text) =>
+          !text.includes(
+            MULTI_SPEECHACT_OLD_FINAL_CHECK_MARKER,
+          ),
+      ),
+
+    keepsVerdictSection:
+      fixtures.every(
+        (artifacts) =>
+          artifacts.verdictLabelPresent
+          && artifacts.verdict.length
+          > 0,
+      ),
+
+    keepsEngineDecisionLockedInPrompt:
+      fixtures.every(
+        (artifacts) =>
+          engineDecisionLockedInPrompt(
+            artifacts.prompt,
+            artifacts.finalDecision,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-37-multi-speechact-response-policy-regression",
+
+    question:
+      multiSpeechAct.originalQuestion,
+
+    focus:
+      multiSpeechAct.focus,
+
+    checks,
+
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -4068,6 +4202,7 @@ export function verifyConsultingPromptBuilder():
     verifyEvidenceSelectionAndCompression(),
     verifyQuestionSpecificEvidencePriority(),
     verifyWhenQuestionModeClassification(),
+    verifyMultiSpeechActResponsePolicyRegression(),
   ];
 
   return {
