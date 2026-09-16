@@ -36,7 +36,9 @@ export type QuestionTopic =
 
 /**
  * MODEL B production QuestionIntent (P11-7-2 I-18/I-19 freeze).
- * Speech-act only — action meaning lives on DecisionTarget.
+ * Speech-act only — the user's question act, not vNext scenario-routing.
+ * Action direction lives on DecisionTarget.
+ * Routing taxonomy is QuestionMeaningIntent (separate; do not merge).
  */
 export type QuestionIntent =
   | "permission"
@@ -112,6 +114,10 @@ export type QuestionMotive =
   | "selfUnderstanding"
   | "unspecified";
 
+/**
+ * Action direction for the asked object.
+ * Distinct from QuestionIntent (speech-act); do not mix roles with Intent.
+ */
 export type DecisionTarget =
   | "start"
   | "continue"
@@ -4990,6 +4996,147 @@ function normalizeIntentSemanticMeaning(
 }
 
 /**
+ * I-27: continuation + continue 위에서
+ * strong method/risk speech-act만 Intent로 보존한다.
+ *
+ * Phase 1이 continuation을 method/risk보다 먼저 고르더라도
+ * DecisionTarget(continue)은 유지하고 QuestionIntent만 method|risk로 되돌린다.
+ * continuation을 전역적으로 뒤로 보내지 않는다.
+ *
+ * 보호:
+ * - prediction / option-fit / strong selection frame
+ * - strong marker 없는 permission+continue (J-4-8)
+ * - method/risk-only (DT !== continue)
+ * - weak method("하면 좋을까") / weak risk("문제"|"실패"|"손해"|"망할")
+ */
+const STRONG_METHOD_SPEECH_ACT_MARKERS = [
+  "방법",
+  "어떻게",
+  "전략",
+] as const;
+
+const STRONG_RISK_SPEECH_ACT_MARKERS = [
+  "위험",
+  "주의할",
+  "주의해야",
+  "주의할 점",
+  "주의사항",
+  "주의점",
+  "조심",
+] as const;
+
+function evidenceHasStrongSpeechActMarker(
+  evidence: readonly string[],
+  markers: readonly string[],
+): boolean {
+  return evidence.some((item) =>
+    markers.some((marker) => item === marker || item.includes(marker))
+  );
+}
+
+function findStrongContinuationSpeechActPreservation(
+  intent: ReaderIntentLiteral,
+  intentEvidence: readonly string[],
+  decisionTarget: DecisionTarget,
+  candidates: MeaningCandidateSet,
+): {
+  intent: "method" | "risk";
+  intentEvidence: string[];
+} | null {
+  if (intent !== "continuation" || decisionTarget !== "continue") {
+    return null;
+  }
+
+  const predictionFrame = hasFrame(
+    candidates.frames,
+    "futureOutcomePrediction",
+  );
+
+  if (predictionFrame) {
+    return null;
+  }
+
+  const optionFitFrame = hasFrame(
+    candidates.frames,
+    "comparisonOrOptionFit",
+  );
+  const optionFitStrong =
+    !!optionFitFrame && optionFitFrame.strength >= 1;
+
+  // option-fit = strong selection/comparison frame family
+  if (optionFitStrong) {
+    return null;
+  }
+
+  const methodCandidate = findIntentCandidate(
+    candidates.intents,
+    "method",
+  );
+  const riskCandidate = findIntentCandidate(
+    candidates.intents,
+    "risk",
+  );
+
+  const methodStrong =
+    !!methodCandidate
+    && evidenceHasStrongSpeechActMarker(
+      methodCandidate.evidence,
+      STRONG_METHOD_SPEECH_ACT_MARKERS,
+    );
+  const riskStrong =
+    !!riskCandidate
+    && evidenceHasStrongSpeechActMarker(
+      riskCandidate.evidence,
+      STRONG_RISK_SPEECH_ACT_MARKERS,
+    );
+
+  if (!methodStrong && !riskStrong) {
+    return null;
+  }
+
+  // 둘 다 strong이면 intentRules 순서(risk < method)를 존중한다.
+  if (riskStrong && methodStrong && riskCandidate && methodCandidate) {
+    const selected =
+      riskCandidate.priority <= methodCandidate.priority
+        ? riskCandidate
+        : methodCandidate;
+
+    return {
+      intent: selected.value as "method" | "risk",
+      intentEvidence: mergeUniqueEvidence(
+        selected.evidence,
+        intentEvidence,
+        ["continuationSpeechActPreservation"],
+      ),
+    };
+  }
+
+  if (riskStrong && riskCandidate) {
+    return {
+      intent: "risk",
+      intentEvidence: mergeUniqueEvidence(
+        riskCandidate.evidence,
+        intentEvidence,
+        ["continuationSpeechActPreservation"],
+      ),
+    };
+  }
+
+  if (methodStrong && methodCandidate) {
+    return {
+      intent: "method",
+      intentEvidence: mergeUniqueEvidence(
+        methodCandidate.evidence,
+        intentEvidence,
+        ["continuationSpeechActPreservation"],
+      ),
+    };
+  }
+
+  return null;
+}
+
+/**
  * J-2 + J-4-1 + J-4-2 + J-4-3-1 + J-4-3-2 + J-4-4 + J-4-5-1 + J-4-7 + J-4-8 + J-4-9 + J-4-10 + J-4-11 + J-4-13:
  * 후보 집합에서 topic / intent / decisionTarget을 한 곳에서 고른다.
  *
@@ -5315,6 +5462,21 @@ function normalizeAxes(
   if (intentSemanticNormalized) {
     intent = intentSemanticNormalized.intent;
     intentEvidence = intentSemanticNormalized.intentEvidence;
+  }
+
+  // I-27: J-4-11 인접 — continuation + continue에서
+  // strong method/risk speech-act Intent만 보존한다. DT는 불변.
+  const continuationSpeechActPreserved =
+    findStrongContinuationSpeechActPreservation(
+      intent,
+      intentEvidence,
+      decisionTarget,
+      candidates,
+    );
+
+  if (continuationSpeechActPreserved) {
+    intent = continuationSpeechActPreserved.intent;
+    intentEvidence = continuationSpeechActPreserved.intentEvidence;
   }
 
   const objectLabel = selectObjectLabelFromTopicEvidence(
