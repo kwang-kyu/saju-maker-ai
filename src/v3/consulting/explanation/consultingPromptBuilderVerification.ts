@@ -6924,6 +6924,268 @@ function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
   };
 }
 
+function verifyTimingPrimaryMethodSecondaryContinueAntiExpansionRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const timingMethodComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 시기와 어떤 방법으로 준비해야 할까요?",
+    );
+
+  const timingOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 시기가 궁금합니다.",
+    );
+
+  const timingMethodText =
+    combinedPromptText(
+      timingMethodComposite.prompt,
+    );
+
+  const checks = {
+    timingPrimaryMaintained:
+      timingMethodComposite.intent
+      === "timing",
+
+    decisionTargetContinueMaintained:
+      timingMethodComposite.decisionTarget
+      === "continue",
+
+    timingTypeBestTimingMaintained:
+      timingMethodComposite.timingType
+      === "bestTiming",
+
+    methodDoesNotReclassifyPrimary:
+      timingMethodComposite.intent
+      !== "method"
+      && timingMethodComposite.intent
+      === timingOnly.intent,
+
+    methodDoesNotChangeDecisionTargetToStart:
+      timingMethodComposite.decisionTarget
+      !== "start"
+      && timingMethodComposite.decisionTarget
+      === "continue"
+      && timingMethodComposite.decisionTarget
+      === timingOnly.decisionTarget,
+
+    originalPreservesMethodSurface:
+      timingMethodComposite.originalQuestion.includes(
+        "시기",
+      )
+      && timingMethodComposite.originalQuestion.includes(
+        "방법",
+      )
+      && timingMethodComposite.prompt.userPrompt.includes(
+        timingMethodComposite.originalQuestion,
+      ),
+
+    asksWhatStaysTimingCentered:
+      timingMethodComposite.asksWhat.includes(
+        "언제",
+      )
+      && !timingMethodComposite.asksWhat.includes(
+        "방법",
+      )
+      && !timingMethodComposite.asksWhat.includes(
+        "위험",
+      )
+      && !timingMethodComposite.asksWhat.includes(
+        "좋을지",
+      )
+      && timingMethodComposite.asksWhat
+      === timingOnly.asksWhat
+      && timingMethodComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${timingMethodComposite.asksWhat}`,
+      ),
+
+    methodSecondaryDoesNotCreateSecondaryIntent:
+      timingMethodComposite.intent
+      === "timing"
+      && !timingMethodText.includes(
+        "secondaryIntent",
+      ),
+
+    evidenceMaterialDoesNotDisappearVsTimingOnly:
+      timingOnly.explanationTitles.includes(
+        "유지의 근거",
+      )
+      && timingMethodComposite.explanationTitles.includes(
+        "유지의 근거",
+      )
+      && timingMethodComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      ),
+
+    methodSecondaryDoesNotOverExpandTitles:
+      timingMethodComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      ),
+
+    methodSecondaryDoesNotOverExpandConditions:
+      timingMethodComposite.hasConditionMaterial
+      === timingOnly.hasConditionMaterial
+      && timingMethodComposite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      ),
+
+    methodSecondaryDoesNotInventMethodMaterials:
+      hasNoDedicatedMethodMaterialField(
+        timingMethodComposite.explanationTitles,
+      )
+      && hasNoDedicatedMethodMaterialField(
+        timingOnly.explanationTitles,
+      )
+      && !timingMethodComposite.explanationTitles.includes(
+        "방법",
+      )
+      && !timingMethodComposite.explanationTitles.includes(
+        "준비 방법",
+      )
+      && !timingMethodComposite.explanationTitles.includes(
+        "대응 방법",
+      ),
+
+    methodProxyStaysWithinConditionsAndDirections:
+      timingMethodComposite.hasConditionMaterial
+      && timingMethodComposite.hasDirectionMaterial
+      && promptHasMethodProxyBinding(
+        timingMethodText,
+      )
+      && !promptAllowsRisksAsMethodProxy(
+        timingMethodText,
+      )
+      && timingMethodComposite.hasConditionMaterial
+      === timingOnly.hasConditionMaterial
+      && timingMethodComposite.hasDirectionMaterial
+      === timingOnly.hasDirectionMaterial
+      && timingMethodComposite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      )
+      && timingMethodComposite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && timingMethodComposite.prohibitedDirection
+      === timingOnly.prohibitedDirection,
+
+    methodSecondaryDoesNotOverExpandDirections:
+      timingMethodComposite.hasDirectionMaterial
+      === timingOnly.hasDirectionMaterial
+      && timingMethodComposite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && timingMethodComposite.prohibitedDirection
+      === timingOnly.prohibitedDirection
+      && timingMethodComposite.verdict
+      === timingOnly.verdict
+      && timingMethodComposite.finalDecision
+      === timingOnly.finalDecision
+      && engineDecisionLockedInPrompt(
+        timingMethodComposite.prompt,
+        timingMethodComposite.finalDecision,
+      ),
+
+    methodSecondaryDoesNotExpandTimingMaterials:
+      timingMethodComposite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      )
+      && timingMethodComposite.hasConditionMaterial
+      === timingOnly.hasConditionMaterial
+      && timingMethodComposite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      )
+      && timingMethodComposite.risksCount
+      === timingOnly.risksCount
+      && timingMethodComposite.hasDedicatedRisksMaterial
+      === timingOnly.hasDedicatedRisksMaterial
+      && timingMethodComposite.hasDirectionMaterial
+      === timingOnly.hasDirectionMaterial
+      && timingMethodComposite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && timingMethodComposite.prohibitedDirection
+      === timingOnly.prohibitedDirection
+      && timingMethodComposite.verdict
+      === timingOnly.verdict
+      && timingMethodComposite.finalDecision
+      === timingOnly.finalDecision
+      && timingMethodComposite.timingType
+      === timingOnly.timingType,
+
+    methodDoesNotPromoteOtherSpeechActs:
+      timingMethodComposite.intent
+      !== "method"
+      && timingMethodComposite.intent
+      !== "evaluation"
+      && timingMethodComposite.intent
+      !== "risk"
+      && timingMethodComposite.timingType
+      === timingOnly.timingType
+      && timingMethodComposite.decisionTarget
+      === timingOnly.decisionTarget
+      && timingMethodComposite.intent
+      === timingOnly.intent,
+
+    multiSpeechActKeepsPrimaryCenter:
+      timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && timingMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && timingMethodComposite.existingMaterialTexts.every(
+        (value) =>
+          timingMethodComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-51-timing-primary-method-secondary-continue-anti-expansion-regression",
+    question:
+      timingMethodComposite.originalQuestion,
+    focus:
+      timingMethodComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -7202,6 +7464,7 @@ export function verifyConsultingPromptBuilder():
     verifyTimingPrimaryEvaluationSecondaryAntiExpansionRegression(),
     verifyTimingPrimaryEvaluationSecondaryContinueAntiExpansionRegression(),
     verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression(),
+    verifyTimingPrimaryMethodSecondaryContinueAntiExpansionRegression(),
   ];
 
   return {
