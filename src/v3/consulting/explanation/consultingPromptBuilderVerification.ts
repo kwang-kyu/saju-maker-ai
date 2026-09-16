@@ -5021,6 +5021,164 @@ function verifyEvaluationPrimaryReasonSecondaryEvidenceProxyRegression():
   };
 }
 
+function verifyMethodPrimaryReasonSecondaryEvidenceProxyRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const methodReasonComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const methodSingle =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법이 있을까요?",
+    );
+
+  const methodReasonText =
+    combinedPromptText(
+      methodReasonComposite.prompt,
+    );
+
+  const checks = {
+    methodPrimaryMaintained:
+      methodReasonComposite.intent
+      === "method",
+
+    decisionTargetContinueMaintained:
+      methodReasonComposite.decisionTarget
+      === "continue",
+
+    originalPreservesMethodAndReasonDemand:
+      methodReasonComposite.originalQuestion.includes(
+        "방법",
+      )
+      && methodReasonComposite.originalQuestion.includes(
+        "이유",
+      )
+      && methodReasonComposite.prompt.userPrompt.includes(
+        methodReasonComposite.originalQuestion,
+      ),
+
+    asksWhatStaysMethodCentered:
+      methodReasonComposite.asksWhat.includes(
+        "대응",
+      )
+      && !methodReasonComposite.asksWhat.includes(
+        "판단",
+      )
+      && !methodReasonComposite.asksWhat.includes(
+        "이유",
+      )
+      && methodReasonComposite.asksWhat
+      === methodSingle.asksWhat
+      && methodReasonComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${methodReasonComposite.asksWhat}`,
+      ),
+
+    reasonSecondaryDoesNotCreateReasonIntent:
+      methodReasonComposite.intent
+      === "method"
+      && !methodReasonText.includes(
+        "secondaryIntent",
+      ),
+
+    methodProxyStructureMaintained:
+      methodReasonComposite.hasConditionMaterial
+      && methodReasonComposite.hasDirectionMaterial
+      && promptHasMethodProxyBinding(
+        methodReasonText,
+      )
+      && !promptAllowsRisksAsMethodProxy(
+        methodReasonText,
+      )
+      && hasNoDedicatedMethodMaterialField(
+        methodReasonComposite.explanationTitles,
+      ),
+
+    materialsDoNotOverExpandVsMethodOnly:
+      methodReasonComposite.explanationTitles.join(
+        "|",
+      )
+      === methodSingle.explanationTitles.join(
+        "|",
+      )
+      && methodReasonComposite.verdict
+      === methodSingle.verdict
+      && methodReasonComposite.finalDecision
+      === methodSingle.finalDecision,
+
+    reasonSecondaryDoesNotOverExpandConditions:
+      methodReasonComposite.hasConditionMaterial
+      === methodSingle.hasConditionMaterial
+      && methodReasonComposite.conditionsTexts.join(
+        "|",
+      )
+      === methodSingle.conditionsTexts.join(
+        "|",
+      ),
+
+    reasonSecondaryDoesNotOverExpandRisks:
+      methodReasonComposite.risksCount
+      === methodSingle.risksCount
+      && methodReasonComposite.hasDedicatedRisksMaterial
+      === methodSingle.hasDedicatedRisksMaterial,
+
+    reasonSecondaryDoesNotOverExpandDirections:
+      methodReasonComposite.hasDirectionMaterial
+      === methodSingle.hasDirectionMaterial
+      && methodReasonComposite.recommendedDirection
+      === methodSingle.recommendedDirection
+      && methodReasonComposite.prohibitedDirection
+      === methodSingle.prohibitedDirection
+      && engineDecisionLockedInPrompt(
+        methodReasonComposite.prompt,
+        methodReasonComposite.finalDecision,
+      ),
+
+    evaluationSpecificMaterialNotCreatedByReason:
+      methodReasonComposite.intent
+      !== "evaluation"
+      && !methodReasonComposite.asksWhat.includes(
+        "판단",
+      )
+      && methodReasonComposite.explanationTitles.join(
+        "|",
+      )
+      === methodSingle.explanationTitles.join(
+        "|",
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      methodReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && methodReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && methodReasonComposite.existingMaterialTexts.every(
+        (value) =>
+          methodReasonComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-43-method-primary-reason-secondary-evidence-proxy-regression",
+    question:
+      methodReasonComposite.originalQuestion,
+    focus:
+      methodReasonComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -5291,6 +5449,7 @@ export function verifyConsultingPromptBuilder():
     verifyNonRiskPrimaryCompositeEvaluationMethodRegression(),
     verifyTimingPrimaryCompositeSecondaryRiskMethodRegression(),
     verifyEvaluationPrimaryReasonSecondaryEvidenceProxyRegression(),
+    verifyMethodPrimaryReasonSecondaryEvidenceProxyRegression(),
   ];
 
   return {
