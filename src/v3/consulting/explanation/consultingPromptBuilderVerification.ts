@@ -5876,6 +5876,337 @@ function verifyTimingPrimaryReasonSecondaryEvidenceProxyRegression():
   };
 }
 
+function verifyRiskPrimaryEvaluationSecondaryAntiExpansionRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const continueRiskEval =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 좋을지, 위험한 점도 궁금합니다.",
+    );
+
+  const continueRiskOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하면 위험할까요?",
+    );
+
+  const stopRiskEval =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 끝낼 때 위험한지, 그래도 끝내도 될지 궁금합니다.",
+    );
+
+  const stopRiskOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 끝낼 때 위험할까요?",
+    );
+
+  const continueRiskEvalText =
+    combinedPromptText(
+      continueRiskEval.prompt,
+    );
+
+  const stopRiskEvalText =
+    combinedPromptText(
+      stopRiskEval.prompt,
+    );
+
+  const checks = {
+    continueRiskPrimaryMaintained:
+      continueRiskEval.intent
+      === "risk",
+
+    continueDecisionTargetMaintained:
+      continueRiskEval.decisionTarget
+      === "continue",
+
+    continueEvaluationDoesNotReclassifyPrimary:
+      continueRiskEval.intent
+      !== "evaluation"
+      && continueRiskEval.intent
+      === continueRiskOnly.intent,
+
+    continueOriginalPreservesEvaluationSurface:
+      continueRiskEval.originalQuestion.includes(
+        "좋을지",
+      )
+      && continueRiskEval.originalQuestion.includes(
+        "위험",
+      )
+      && continueRiskEval.prompt.userPrompt.includes(
+        continueRiskEval.originalQuestion,
+      ),
+
+    continueAsksWhatStaysRiskCentered:
+      continueRiskEval.asksWhat.includes(
+        "위험",
+      )
+      && !continueRiskEval.asksWhat.includes(
+        "판단",
+      )
+      && !continueRiskEval.asksWhat.includes(
+        "좋을지",
+      )
+      && !continueRiskEval.asksWhat.includes(
+        "방법",
+      )
+      && continueRiskEval.asksWhat
+      === continueRiskOnly.asksWhat
+      && continueRiskEval.prompt.userPrompt.includes(
+        `알고 싶은 점: ${continueRiskEval.asksWhat}`,
+      ),
+
+    continueEvaluationSecondaryDoesNotCreateSecondaryIntent:
+      continueRiskEval.intent
+      === "risk"
+      && !continueRiskEvalText.includes(
+        "secondaryIntent",
+      ),
+
+    continueRisksRemainZeroWithoutInvention:
+      continueRiskEval.risksCount
+      === 0
+      && continueRiskOnly.risksCount
+      === 0
+      && !continueRiskEval.hasDedicatedRisksMaterial
+      && !continueRiskOnly.hasDedicatedRisksMaterial
+      && !continueRiskEval.explanationTitles.includes(
+        "위험",
+      )
+      && !continueRiskEval.explanationTitles.includes(
+        "변경·이탈을 고려해야 하는 신호",
+      )
+      && !continueRiskEval.explanationTitles.includes(
+        "사업상 위험",
+      ),
+
+    continueMaterialsDoNotOverExpandVsRiskOnly:
+      continueRiskEval.explanationTitles.join(
+        "|",
+      )
+      === continueRiskOnly.explanationTitles.join(
+        "|",
+      )
+      && continueRiskEval.verdict
+      === continueRiskOnly.verdict
+      && continueRiskEval.finalDecision
+      === continueRiskOnly.finalDecision
+      && continueRiskEval.hasConditionMaterial
+      === continueRiskOnly.hasConditionMaterial
+      && continueRiskEval.conditionsTexts.join(
+        "|",
+      )
+      === continueRiskOnly.conditionsTexts.join(
+        "|",
+      )
+      && continueRiskEval.risksCount
+      === continueRiskOnly.risksCount
+      && continueRiskEval.hasDedicatedRisksMaterial
+      === continueRiskOnly.hasDedicatedRisksMaterial
+      && continueRiskEval.hasDirectionMaterial
+      === continueRiskOnly.hasDirectionMaterial
+      && continueRiskEval.recommendedDirection
+      === continueRiskOnly.recommendedDirection
+      && continueRiskEval.prohibitedDirection
+      === continueRiskOnly.prohibitedDirection
+      && engineDecisionLockedInPrompt(
+        continueRiskEval.prompt,
+        continueRiskEval.finalDecision,
+      ),
+
+    continueEvaluationDoesNotCreateOtherSpeechActs:
+      continueRiskEval.intent
+      !== "method"
+      && continueRiskEval.intent
+      !== "evaluation"
+      && continueRiskEval.timingType
+      === continueRiskOnly.timingType
+      && continueRiskEval.decisionTarget
+      === continueRiskOnly.decisionTarget
+      && hasNoDedicatedMethodMaterialField(
+        continueRiskEval.explanationTitles,
+      ),
+
+    continueMultiSpeechActKeepsPrimaryCenter:
+      continueRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && continueRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && continueRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && continueRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    stopRiskPrimaryMaintained:
+      stopRiskEval.intent
+      === "risk",
+
+    stopDecisionTargetMaintained:
+      stopRiskEval.decisionTarget
+      === "stop",
+
+    stopEvaluationDoesNotReclassifyPrimary:
+      stopRiskEval.intent
+      !== "evaluation"
+      && stopRiskEval.intent
+      === stopRiskOnly.intent,
+
+    stopOriginalPreservesEvaluationSurface:
+      (
+        stopRiskEval.originalQuestion.includes(
+          "끝내도 될지",
+        )
+        || stopRiskEval.originalQuestion.includes(
+          "해도 될지",
+        )
+      )
+      && stopRiskEval.originalQuestion.includes(
+        "위험",
+      )
+      && stopRiskEval.prompt.userPrompt.includes(
+        stopRiskEval.originalQuestion,
+      ),
+
+    stopAsksWhatStaysRiskCentered:
+      stopRiskEval.asksWhat.includes(
+        "위험",
+      )
+      && !stopRiskEval.asksWhat.includes(
+        "판단",
+      )
+      && !stopRiskEval.asksWhat.includes(
+        "해도 될지",
+      )
+      && !stopRiskEval.asksWhat.includes(
+        "방법",
+      )
+      && stopRiskEval.asksWhat
+      === stopRiskOnly.asksWhat
+      && stopRiskEval.prompt.userPrompt.includes(
+        `알고 싶은 점: ${stopRiskEval.asksWhat}`,
+      ),
+
+    stopEvaluationSecondaryDoesNotCreateSecondaryIntent:
+      stopRiskEval.intent
+      === "risk"
+      && !stopRiskEvalText.includes(
+        "secondaryIntent",
+      ),
+
+    stopRiskPrimaryMaterialMaintained:
+      stopRiskEval.risksCount
+      > 0
+      && stopRiskEval.hasDedicatedRisksMaterial
+      && stopRiskEval.explanationTitles.includes(
+        "위험",
+      )
+      && stopRiskEval.risksCount
+      === stopRiskOnly.risksCount
+      && stopRiskEval.hasDedicatedRisksMaterial
+      === stopRiskOnly.hasDedicatedRisksMaterial,
+
+    stopMaterialsDoNotOverExpandVsRiskOnly:
+      stopRiskEval.explanationTitles.join(
+        "|",
+      )
+      === stopRiskOnly.explanationTitles.join(
+        "|",
+      )
+      && stopRiskEval.verdict
+      === stopRiskOnly.verdict
+      && stopRiskEval.finalDecision
+      === stopRiskOnly.finalDecision
+      && stopRiskEval.hasConditionMaterial
+      === stopRiskOnly.hasConditionMaterial
+      && stopRiskEval.conditionsTexts.join(
+        "|",
+      )
+      === stopRiskOnly.conditionsTexts.join(
+        "|",
+      )
+      && stopRiskEval.hasDirectionMaterial
+      === stopRiskOnly.hasDirectionMaterial
+      && stopRiskEval.recommendedDirection
+      === stopRiskOnly.recommendedDirection
+      && stopRiskEval.prohibitedDirection
+      === stopRiskOnly.prohibitedDirection
+      && engineDecisionLockedInPrompt(
+        stopRiskEval.prompt,
+        stopRiskEval.finalDecision,
+      ),
+
+    stopEvaluationDoesNotCreateOtherSpeechActs:
+      stopRiskEval.intent
+      !== "method"
+      && stopRiskEval.intent
+      !== "evaluation"
+      && stopRiskEval.timingType
+      === stopRiskOnly.timingType
+      && stopRiskEval.decisionTarget
+      === stopRiskOnly.decisionTarget
+      && hasNoDedicatedMethodMaterialField(
+        stopRiskEval.explanationTitles,
+      ),
+
+    stopMultiSpeechActKeepsPrimaryCenter:
+      stopRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && stopRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && stopRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && stopRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      continueRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && continueRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && stopRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && stopRiskEvalText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && continueRiskEval.existingMaterialTexts.every(
+        (value) =>
+          continueRiskEval.prompt.userPrompt.includes(
+            value,
+          ),
+      )
+      && stopRiskEval.existingMaterialTexts.every(
+        (value) =>
+          stopRiskEval.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-47-risk-primary-evaluation-secondary-anti-expansion-regression",
+    question:
+      continueRiskEval.originalQuestion,
+    focus:
+      continueRiskEval.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -6150,6 +6481,7 @@ export function verifyConsultingPromptBuilder():
     verifyFalseMultiSpeechAntiExpansionNegativeBoundaryRegression(),
     verifyRiskPrimaryReasonSecondaryEvidenceProxyRegression(),
     verifyTimingPrimaryReasonSecondaryEvidenceProxyRegression(),
+    verifyRiskPrimaryEvaluationSecondaryAntiExpansionRegression(),
   ];
 
   return {
