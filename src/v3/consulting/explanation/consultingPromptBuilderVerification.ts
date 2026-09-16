@@ -4013,12 +4013,18 @@ function inspectSecondaryMaterialsCoverage(
       question.originalQuestion,
     intent:
       payload.intent,
+    decisionTarget:
+      question.decisionTarget,
     asksWhat:
       question.asksWhat,
     focus:
       plan.explanationFocus
       ?? null,
     prompt,
+    verdict:
+      payload.verdict,
+    finalDecision:
+      payload.finalDecision,
     explanationTitles:
       payload.explanationOrder.map(
         (item) =>
@@ -4379,6 +4385,195 @@ function verifySecondaryMethodProxyMaterialBindingRegression():
   };
 }
 
+function verifyNonRiskPrimaryCompositeEvaluationMethodRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const evalMethodComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 좋을지, 어떤 방법으로 해야 할지 궁금합니다.",
+    );
+
+  const evaluationSingle =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 좋을까요?",
+    );
+
+  const evaluationReasonComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 좋을지, 그 이유가 궁금합니다.",
+    );
+
+  const methodSingle =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법이 있을까요?",
+    );
+
+  const evalMethodText =
+    combinedPromptText(
+      evalMethodComposite.prompt,
+    );
+
+  const evaluationSingleText =
+    combinedPromptText(
+      evaluationSingle.prompt,
+    );
+
+  const evaluationReasonText =
+    combinedPromptText(
+      evaluationReasonComposite.prompt,
+    );
+
+  const checks = {
+    A_primaryIntentIsMethodNotEvaluation:
+      evalMethodComposite.intent
+      === "method"
+      && evalMethodComposite.decisionTarget
+      === "continue",
+
+    A_asksWhatStaysMethodCentered:
+      evalMethodComposite.asksWhat.includes(
+        "대응",
+      )
+      && !evalMethodComposite.asksWhat.includes(
+        "판단",
+      )
+      && evalMethodComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${evalMethodComposite.asksWhat}`,
+      ),
+
+    A_originalPreservesEvaluationAndMethod:
+      evalMethodComposite.originalQuestion.includes(
+        "좋을지",
+      )
+      && evalMethodComposite.originalQuestion.includes(
+        "방법",
+      )
+      && evalMethodComposite.prompt.userPrompt.includes(
+        evalMethodComposite.originalQuestion,
+      ),
+
+    A_multiSpeechActKeepsPrimaryCenter:
+      evalMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && evalMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && evalMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && evalMethodText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && !evalMethodText.includes(
+        "secondaryIntent",
+      ),
+
+    A_secondaryEvaluationDoesNotRejudgeMaterials:
+      evalMethodComposite.verdict
+      === methodSingle.verdict
+      && evalMethodComposite.finalDecision
+      === methodSingle.finalDecision
+      && evalMethodComposite.explanationTitles.join(
+        "|",
+      )
+      === methodSingle.explanationTitles.join(
+        "|",
+      )
+      && evalMethodComposite.risksCount
+      === methodSingle.risksCount
+      && engineDecisionLockedInPrompt(
+        evalMethodComposite.prompt,
+        evalMethodComposite.finalDecision,
+      ),
+
+    A_methodProxyNotMisappliedToEvaluationSecondary:
+      evalMethodComposite.intent
+      !== "risk"
+      && evalMethodComposite.asksWhat
+      === methodSingle.asksWhat
+      && promptHasMethodProxyBinding(
+        evalMethodText,
+      )
+      && evalMethodText.includes(
+        METHOD_PROXY_MATERIAL_BINDING_MARKERS[0],
+      )
+      && !evalMethodText.includes(
+        "secondary evaluation",
+      )
+      && hasNoDedicatedMethodMaterialField(
+        evalMethodComposite.explanationTitles,
+      ),
+
+    B_evaluationSingleIsNotComposite:
+      evaluationSingle.intent
+      === "evaluation"
+      && evaluationSingle.decisionTarget
+      === "continue"
+      && evaluationSingle.originalQuestion.includes(
+        "좋을까요",
+      )
+      && !evaluationSingle.originalQuestion.includes(
+        "방법",
+      )
+      && !evaluationSingle.originalQuestion.includes(
+        "이유",
+      ),
+
+    B_multiSpeechActDoesNotMisFire:
+      evaluationSingle.asksWhat.includes(
+        "판단",
+      )
+      && !evaluationSingle.asksWhat.includes(
+        "대응",
+      )
+      && !evaluationSingleText.includes(
+        "secondaryIntent",
+      )
+      && evaluationSingle.prompt.userPrompt.includes(
+        `알고 싶은 점: ${evaluationSingle.asksWhat}`,
+      ),
+
+    C_evaluationReasonKeepsEvaluationPrimary:
+      evaluationReasonComposite.intent
+      === "evaluation"
+      && evaluationReasonComposite.decisionTarget
+      === "continue"
+      && evaluationReasonComposite.originalQuestion.includes(
+        "좋을지",
+      )
+      && evaluationReasonComposite.originalQuestion.includes(
+        "이유",
+      )
+      && !evaluationReasonComposite.originalQuestion.includes(
+        "방법",
+      )
+      && evaluationReasonComposite.asksWhat
+      === evaluationSingle.asksWhat
+      && evaluationReasonComposite.prompt.userPrompt.includes(
+        evaluationReasonComposite.originalQuestion,
+      )
+      && !evaluationReasonText.includes(
+        "secondaryIntent",
+      ),
+  };
+
+  return {
+    name:
+      "I-40-non-risk-primary-composite-evaluation-method-regression",
+    question:
+      evalMethodComposite.originalQuestion,
+    focus:
+      evalMethodComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -4646,6 +4841,7 @@ export function verifyConsultingPromptBuilder():
     verifyMultiSpeechActResponsePolicyRegression(),
     verifySecondaryMaterialsCoverageRegression(),
     verifySecondaryMethodProxyMaterialBindingRegression(),
+    verifyNonRiskPrimaryCompositeEvaluationMethodRegression(),
   ];
 
   return {
