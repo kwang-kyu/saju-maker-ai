@@ -4057,9 +4057,18 @@ function inspectSecondaryMaterialsCoverage(
           === "risks"
           && block.required,
       ),
+    conditionsTexts:
+      explanationInput.conditions.map(
+        (item) =>
+          item.description,
+      ),
     hasConditionMaterial:
       explanationInput.conditions.length
       > 0,
+    recommendedDirection:
+      explanationInput.recommendedDirection,
+    prohibitedDirection:
+      explanationInput.prohibitedDirection,
     hasDirectionMaterial:
       explanationInput.recommendedDirection.trim().length
       > 0
@@ -4852,6 +4861,166 @@ function verifyTimingPrimaryCompositeSecondaryRiskMethodRegression():
   };
 }
 
+function verifyEvaluationPrimaryReasonSecondaryEvidenceProxyRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const evaluationReasonComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 좋을지, 그 이유가 궁금합니다.",
+    );
+
+  const evaluationSingle =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 좋을까요?",
+    );
+
+  const evaluationReasonText =
+    combinedPromptText(
+      evaluationReasonComposite.prompt,
+    );
+
+  const checks = {
+    evaluationPrimaryMaintained:
+      evaluationReasonComposite.intent
+      === "evaluation",
+
+    decisionTargetContinueMaintained:
+      evaluationReasonComposite.decisionTarget
+      === "continue",
+
+    originalPreservesReasonDemand:
+      evaluationReasonComposite.originalQuestion.includes(
+        "좋을지",
+      )
+      && evaluationReasonComposite.originalQuestion.includes(
+        "이유",
+      )
+      && evaluationReasonComposite.prompt.userPrompt.includes(
+        evaluationReasonComposite.originalQuestion,
+      ),
+
+    asksWhatStaysEvaluationCentered:
+      evaluationReasonComposite.asksWhat.includes(
+        "판단",
+      )
+      && !evaluationReasonComposite.asksWhat.includes(
+        "이유",
+      )
+      && !evaluationReasonComposite.asksWhat.includes(
+        "방법",
+      )
+      && evaluationReasonComposite.asksWhat
+      === evaluationSingle.asksWhat
+      && evaluationReasonComposite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${evaluationReasonComposite.asksWhat}`,
+      ),
+
+    reasonSecondaryDoesNotCreateReasonIntent:
+      evaluationReasonComposite.intent
+      === "evaluation"
+      && !evaluationReasonText.includes(
+        "secondaryIntent",
+      ),
+
+    reasonDemandBindsToEvidenceProxyYujiGeungeo:
+      evaluationReasonComposite.explanationTitles.includes(
+        "유지의 근거",
+      )
+      && evaluationReasonComposite.prompt.userPrompt.includes(
+        "유지의 근거",
+      )
+      && evaluationReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      ),
+
+    evidenceMaterialDoesNotDisappearVsSingle:
+      evaluationSingle.explanationTitles.includes(
+        "유지의 근거",
+      )
+      && evaluationReasonComposite.explanationTitles.includes(
+        "유지의 근거",
+      )
+      && evaluationReasonComposite.explanationTitles.join(
+        "|",
+      )
+      === evaluationSingle.explanationTitles.join(
+        "|",
+      ),
+
+    reasonSecondaryDoesNotOverExpandConditions:
+      evaluationReasonComposite.hasConditionMaterial
+      === evaluationSingle.hasConditionMaterial
+      && evaluationReasonComposite.conditionsTexts.join(
+        "|",
+      )
+      === evaluationSingle.conditionsTexts.join(
+        "|",
+      ),
+
+    reasonSecondaryDoesNotOverExpandRisks:
+      evaluationReasonComposite.risksCount
+      === evaluationSingle.risksCount
+      && evaluationReasonComposite.hasDedicatedRisksMaterial
+      === evaluationSingle.hasDedicatedRisksMaterial,
+
+    reasonSecondaryDoesNotOverExpandDirections:
+      evaluationReasonComposite.hasDirectionMaterial
+      === evaluationSingle.hasDirectionMaterial
+      && evaluationReasonComposite.recommendedDirection
+      === evaluationSingle.recommendedDirection
+      && evaluationReasonComposite.prohibitedDirection
+      === evaluationSingle.prohibitedDirection
+      && evaluationReasonComposite.verdict
+      === evaluationSingle.verdict
+      && evaluationReasonComposite.finalDecision
+      === evaluationSingle.finalDecision
+      && engineDecisionLockedInPrompt(
+        evaluationReasonComposite.prompt,
+        evaluationReasonComposite.finalDecision,
+      ),
+
+    methodSpecificMaterialNotCreatedByReason:
+      hasNoDedicatedMethodMaterialField(
+        evaluationReasonComposite.explanationTitles,
+      )
+      && !evaluationReasonComposite.asksWhat.includes(
+        "방법",
+      )
+      && !evaluationReasonComposite.originalQuestion.includes(
+        "방법",
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      evaluationReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && evaluationReasonText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && evaluationReasonComposite.existingMaterialTexts.every(
+        (value) =>
+          evaluationReasonComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-42-evaluation-primary-reason-secondary-evidence-proxy-regression",
+    question:
+      evaluationReasonComposite.originalQuestion,
+    focus:
+      evaluationReasonComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyWhenQuestionModeClassification():
   ConsultingPromptBuilderVerificationCase {
   const fixtures = [
@@ -5121,6 +5290,7 @@ export function verifyConsultingPromptBuilder():
     verifySecondaryMethodProxyMaterialBindingRegression(),
     verifyNonRiskPrimaryCompositeEvaluationMethodRegression(),
     verifyTimingPrimaryCompositeSecondaryRiskMethodRegression(),
+    verifyEvaluationPrimaryReasonSecondaryEvidenceProxyRegression(),
   ];
 
   return {
