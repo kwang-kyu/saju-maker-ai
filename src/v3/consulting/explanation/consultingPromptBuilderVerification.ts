@@ -6909,6 +6909,229 @@ function verifyTimingPrimaryEvaluationSecondaryLeaveJobAntiExpansionRegression()
   };
 }
 
+function verifyFalseMultiTimingModifierEvaluationExpansionRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const composite =
+    inspectSecondaryMaterialsCoverage(
+      "지금 시기에 사업을 계속하는 게 좋을까요?",
+    );
+
+  const baseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 좋을까요?",
+    );
+
+  const contrastNowPrefix =
+    inspectSecondaryMaterialsCoverage(
+      "지금 사업을 계속하는 게 좋을까요?",
+    );
+
+  const contrastNowSuffix =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속하는 게 지금 좋을까요?",
+    );
+
+  const compositeText =
+    combinedPromptText(
+      composite.prompt,
+    );
+
+  const checks = {
+    baselineEvaluationPrimaryMaintained:
+      baseline.intent
+      === "evaluation",
+
+    compositeTimingPrimaryFromFalseMultiModifier:
+      composite.intent
+      === "timing",
+
+    decisionTargetContinueMaintained:
+      baseline.decisionTarget
+      === "continue"
+      && composite.decisionTarget
+      === "continue",
+
+    baselineTimingTypeUnknownMaintained:
+      baseline.timingType
+      === "unknown",
+
+    compositeTimingTypeExecutionTiming:
+      composite.timingType
+      === "executionTiming",
+
+    timingModifierCausesEvaluationToTimingExpansion:
+      baseline.intent
+      === "evaluation"
+      && composite.intent
+      === "timing"
+      && baseline.timingType
+      === "unknown"
+      && composite.timingType
+      === "executionTiming"
+      && composite.originalQuestion.includes(
+        "지금 시기에",
+      )
+      && composite.originalQuestion.includes(
+        "좋을까요",
+      ),
+
+    compositeVerdictDiffersFromBaseline:
+      baseline.verdict
+      === "conditionallyRecommended"
+      && composite.verdict
+      === "wait",
+
+    compositeAsksWhatDiffersFromBaseline:
+      baseline.asksWhat.includes(
+        "전체적으로 어떻게 판단",
+      )
+      && composite.asksWhat.includes(
+        "언제 움직여야",
+      )
+      && composite.asksWhat
+      !== baseline.asksWhat
+      && composite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${composite.asksWhat}`,
+      ),
+
+    compositeConditionsDiffersFromBaseline:
+      baseline.conditionsTexts.join(
+        "|",
+      )
+      !== composite.conditionsTexts.join(
+        "|",
+      )
+      && baseline.conditionsTexts.length
+      === 1
+      && composite.conditionsTexts.length
+      === 2
+      && composite.conditionsTexts.some(
+        (text) =>
+          text.includes(
+            "실행 시기를 확정할 수 없다",
+          ),
+      ),
+
+    compositeDirectionsDiffersFromBaseline:
+      composite.recommendedDirection
+      !== baseline.recommendedDirection
+      && composite.prohibitedDirection
+      !== baseline.prohibitedDirection
+      && composite.finalDecision
+      !== baseline.finalDecision
+      && engineDecisionLockedInPrompt(
+        composite.prompt,
+        composite.finalDecision,
+      ),
+
+    falseMultiSpeechActSurfaceMatchesCurrentResult:
+      !compositeText.includes(
+        "secondaryIntent",
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[0],
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[1],
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    originalQuestionPreservedAsCompositeSource:
+      composite.originalQuestion
+      === "지금 시기에 사업을 계속하는 게 좋을까요?"
+      && composite.prompt.userPrompt.includes(
+        composite.originalQuestion,
+      ),
+
+    distinctFromI44FalseMultiAsTimingModifierBoundary:
+      composite.intent
+      === "timing"
+      && baseline.intent
+      === "evaluation"
+      && composite.originalQuestion.includes(
+        "지금 시기에",
+      )
+      && !composite.originalQuestion.includes(
+        "위험한 방법으로",
+      )
+      && !composite.asksWhat.includes(
+        "방법",
+      ),
+
+    contrastNowPrefixKeepsEvaluationPrimary:
+      contrastNowPrefix.intent
+      === "evaluation"
+      && contrastNowPrefix.decisionTarget
+      === "continue"
+      && contrastNowPrefix.asksWhat
+      === baseline.asksWhat
+      && contrastNowPrefix.intent
+      !== composite.intent,
+
+    contrastNowSuffixKeepsEvaluationPrimary:
+      contrastNowSuffix.intent
+      === "evaluation"
+      && contrastNowSuffix.decisionTarget
+      === "continue"
+      && contrastNowSuffix.asksWhat
+      === baseline.asksWhat
+      && contrastNowSuffix.intent
+      !== composite.intent,
+
+    jigeumsiGiePhraseIsDistinctTimingExpansionBoundary:
+      composite.intent
+      === "timing"
+      && contrastNowPrefix.intent
+      === "evaluation"
+      && contrastNowSuffix.intent
+      === "evaluation"
+      && composite.originalQuestion.includes(
+        "지금 시기에",
+      )
+      && !contrastNowPrefix.originalQuestion.includes(
+        "시기에",
+      )
+      && !contrastNowSuffix.originalQuestion.includes(
+        "시기에",
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && composite.existingMaterialTexts.every(
+        (value) =>
+          composite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-58-false-multi-timing-modifier-evaluation-expansion-regression",
+    question:
+      composite.originalQuestion,
+    focus:
+      composite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
   ConsultingPromptBuilderVerificationCase {
   const timingRiskComposite =
@@ -7994,6 +8217,7 @@ export function verifyConsultingPromptBuilder():
     verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression(),
     verifyTimingPrimaryMethodSecondaryContinueAntiExpansionRegression(),
     verifyRiskPrimaryMethodSecondaryStartAntiExpansionRegression(),
+    verifyFalseMultiTimingModifierEvaluationExpansionRegression(),
   ];
 
   return {
