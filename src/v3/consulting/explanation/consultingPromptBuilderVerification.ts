@@ -8633,6 +8633,276 @@ function verifyMethodPrimaryTimingSecondaryCollapseRegression():
   };
 }
 
+function verifyRiskPrimaryTimingSecondarySameDtCollapseRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const baseline =
+    inspectSecondaryMaterialsCoverage(
+      "이직할 때 위험한 점이 궁금합니다.",
+    );
+
+  const composite =
+    inspectSecondaryMaterialsCoverage(
+      "이직할 때 위험한 점과 이직 시기가 궁금합니다.",
+    );
+
+  const timingOnly =
+    inspectSecondaryMaterialsCoverage(
+      "이직 시기가 궁금합니다.",
+    );
+
+  const baselineText =
+    combinedPromptText(
+      baseline.prompt,
+    );
+  const compositeText =
+    combinedPromptText(
+      composite.prompt,
+    );
+  const timingOnlyText =
+    combinedPromptText(
+      timingOnly.prompt,
+    );
+
+  const checks = {
+    baselineRiskPrimaryMaintained:
+      baseline.intent
+      === "risk"
+      && baseline.decisionTarget
+      === "changeJob"
+      && baseline.timingType
+      === "unknown"
+      && baseline.asksWhat.includes(
+        "위험",
+      )
+      && !baseline.asksWhat.includes(
+        "언제",
+      ),
+
+    baselineRiskVerdictAndFinalDecisionSurface:
+      baseline.verdict
+      === "conditionallyRecommended"
+      && baseline.finalDecision.includes(
+        "진행할 수는 있지만",
+      ),
+
+    sameDecisionTargetChangeJobNotHijacked:
+      baseline.decisionTarget
+      === "changeJob"
+      && composite.decisionTarget
+      === "changeJob"
+      && timingOnly.decisionTarget
+      === "changeJob"
+      && String(composite.decisionTarget)
+      === String(baseline.decisionTarget)
+      && String(composite.decisionTarget)
+      === String(timingOnly.decisionTarget),
+
+    compositeTimingPrimaryCollapse:
+      composite.intent
+      === "timing"
+      && composite.timingType
+      === "bestTiming"
+      && composite.asksWhat.includes(
+        "언제",
+      )
+      && !composite.asksWhat.includes(
+        "위험",
+      ),
+
+    riskPrimaryNotMaintainedAsPrimarySurface:
+      baseline.intent
+      === "risk"
+      && composite.intent
+      !== "risk"
+      && composite.intent
+      === "timing"
+      && String(baseline.intent)
+      !== String(composite.intent)
+      && composite.asksWhat
+      !== baseline.asksWhat
+      && composite.finalDecision
+      !== baseline.finalDecision,
+
+    distinctFromI60TimingModifierLeakage:
+      composite.intent
+      !== "risk"
+      && composite.intent
+      === "timing"
+      && composite.timingType
+      === "bestTiming"
+      && composite.originalQuestion.includes(
+        "시기가",
+      )
+      && composite.asksWhat.includes(
+        "언제",
+      )
+      && !composite.asksWhat.includes(
+        "위험",
+      ),
+
+    distinctFromI63MethodPrimaryCollapse:
+      baseline.intent
+      === "risk"
+      && baseline.decisionTarget
+      === "changeJob"
+      && composite.decisionTarget
+      === "changeJob"
+      && baseline.asksWhat.includes(
+        "위험",
+      )
+      && !baseline.asksWhat.includes(
+        "방법",
+      ),
+
+    timingInfoPresentDistinctFromSecondaryIntentChannel:
+      composite.timingType
+      === "bestTiming"
+      && composite.originalQuestion.includes(
+        "시기",
+      )
+      && composite.originalQuestion.includes(
+        "위험",
+      )
+      && !compositeText.includes(
+        "secondaryIntent",
+      )
+      && composite.intent
+      === "timing"
+      && composite.asksWhat.includes(
+        "언제",
+      ),
+
+    secondaryIntentFalseCurrentReproduction:
+      !baselineText.includes(
+        "secondaryIntent",
+      )
+      && !compositeText.includes(
+        "secondaryIntent",
+      )
+      && !timingOnlyText.includes(
+        "secondaryIntent",
+      ),
+
+    compositeVerdictAndFinalDecisionShiftToTimingWait:
+      composite.verdict
+      === "wait"
+      && String(composite.verdict)
+      !== String(baseline.verdict)
+      && composite.finalDecision.includes(
+        "지켜보는",
+      )
+      && composite.recommendedDirection.includes(
+        "유보",
+      )
+      && engineDecisionLockedInPrompt(
+        composite.prompt,
+        composite.finalDecision,
+      ),
+
+    compositeConditionsDirectionsCollapseFromRiskBaseline:
+      composite.conditionsTexts.join(
+        "|",
+      )
+      !== baseline.conditionsTexts.join(
+        "|",
+      )
+      && composite.recommendedDirection
+      !== baseline.recommendedDirection
+      && composite.prohibitedDirection
+      !== baseline.prohibitedDirection
+      && composite.conditionsTexts.some(
+        (text) =>
+          text.includes(
+            "실행 시기를 확정할 수 없다",
+          ),
+      ),
+
+    compositeMatchesTimingOnlyPrimarySurfaceCollapse:
+      composite.intent
+      === timingOnly.intent
+      && String(composite.decisionTarget)
+      === String(timingOnly.decisionTarget)
+      && composite.timingType
+      === timingOnly.timingType
+      && composite.asksWhat
+      === timingOnly.asksWhat
+      && composite.focus
+      === timingOnly.focus
+      && composite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      )
+      && composite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      )
+      && composite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && composite.prohibitedDirection
+      === timingOnly.prohibitedDirection
+      && composite.verdict
+      === timingOnly.verdict
+      && composite.finalDecision
+      === timingOnly.finalDecision
+      && timingOnly.intent
+      === "timing"
+      && timingOnly.timingType
+      === "bestTiming"
+      && timingOnly.decisionTarget
+      === "changeJob",
+
+    originalQuestionPreservesRiskAndTimingDemand:
+      composite.originalQuestion
+      === "이직할 때 위험한 점과 이직 시기가 궁금합니다."
+      && composite.originalQuestion.includes(
+        "위험",
+      )
+      && composite.originalQuestion.includes(
+        "시기",
+      )
+      && composite.prompt.userPrompt.includes(
+        composite.originalQuestion,
+      )
+      && composite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${composite.asksWhat}`,
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      composite.existingMaterialTexts.every(
+        (value) =>
+          composite.prompt.userPrompt.includes(
+            value,
+          ),
+      )
+      && timingOnly.existingMaterialTexts.every(
+        (value) =>
+          timingOnly.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-64-risk-primary-timing-secondary-same-dt-collapse-regression",
+    question:
+      composite.originalQuestion,
+    focus:
+      composite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
   ConsultingPromptBuilderVerificationCase {
   const timingRiskComposite =
@@ -9724,6 +9994,7 @@ export function verifyConsultingPromptBuilder():
     verifyRiskPrimarySecondaryStopTimingDecisionTargetHijackRegression(),
     verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression(),
     verifyMethodPrimaryTimingSecondaryCollapseRegression(),
+    verifyRiskPrimaryTimingSecondarySameDtCollapseRegression(),
   ];
 
   return {
