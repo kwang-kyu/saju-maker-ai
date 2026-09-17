@@ -7132,6 +7132,197 @@ function verifyFalseMultiTimingModifierEvaluationExpansionRegression():
   };
 }
 
+function verifyActionNatureEvaluationReasonPrimaryHijackRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const baseline =
+    inspectSecondaryMaterialsCoverage(
+      "이직하는 게 좋을까요?",
+    );
+
+  const composite =
+    inspectSecondaryMaterialsCoverage(
+      "이직하는 게 좋을지, 그 이유가 궁금합니다.",
+    );
+
+  const compositeText =
+    combinedPromptText(
+      composite.prompt,
+    );
+
+  const checks = {
+    baselineEvaluationPrimaryMaintained:
+      baseline.intent
+      === "evaluation",
+
+    baselineDecisionTargetChangeJobMaintained:
+      baseline.decisionTarget
+      === "changeJob",
+
+    compositeReasonPrimaryHijack:
+      composite.intent
+      === "reason",
+
+    compositeDecisionTargetChangeJobMaintained:
+      composite.decisionTarget
+      === "changeJob",
+
+    reasonHijacksPrimaryIntentNotSecondary:
+      composite.intent
+      !== baseline.intent
+      && baseline.intent
+      === "evaluation"
+      && composite.intent
+      === "reason"
+      && !compositeText.includes(
+        "secondaryIntent",
+      ),
+
+    asksWhatShiftsEvaluationSurfaceToReasonSurface:
+      baseline.asksWhat.includes(
+        "어떻게 판단",
+      )
+      && composite.asksWhat.includes(
+        "왜 이런 상황",
+      )
+      && composite.asksWhat
+      !== baseline.asksWhat
+      && composite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${composite.asksWhat}`,
+      ),
+
+    finalDecisionShiftsConditionalProgressToCauseInterpretation:
+      baseline.finalDecision.includes(
+        "진행할 수는 있지만",
+      )
+      && composite.finalDecision.includes(
+        "해석된다",
+      )
+      && composite.finalDecision
+      !== baseline.finalDecision
+      && engineDecisionLockedInPrompt(
+        composite.prompt,
+        composite.finalDecision,
+      ),
+
+    decisionTargetUnchanged:
+      composite.decisionTarget
+      === baseline.decisionTarget
+      && composite.decisionTarget
+      === "changeJob",
+
+    timingTypeUnchanged:
+      baseline.timingType
+      === "unknown"
+      && composite.timingType
+      === baseline.timingType,
+
+    focusUnchanged:
+      composite.focus
+      === baseline.focus,
+
+    titlesUnchanged:
+      composite.explanationTitles.join(
+        "|",
+      )
+      === baseline.explanationTitles.join(
+        "|",
+      ),
+
+    conditionsUnchanged:
+      composite.conditionsTexts.join(
+        "|",
+      )
+      === baseline.conditionsTexts.join(
+        "|",
+      )
+      && composite.hasConditionMaterial
+      === baseline.hasConditionMaterial,
+
+    directionsUnchanged:
+      composite.recommendedDirection
+      === baseline.recommendedDirection
+      && composite.prohibitedDirection
+      === baseline.prohibitedDirection
+      && composite.hasDirectionMaterial
+      === baseline.hasDirectionMaterial,
+
+    risksUnchanged:
+      composite.risksCount
+      === baseline.risksCount
+      && composite.hasDedicatedRisksMaterial
+      === baseline.hasDedicatedRisksMaterial,
+
+    verdictUnchanged:
+      composite.verdict
+      === baseline.verdict
+      && baseline.verdict
+      === "conditionallyRecommended",
+
+    originalQuestionPreservedAsCompositeSource:
+      composite.originalQuestion
+      === "이직하는 게 좋을지, 그 이유가 궁금합니다."
+      && composite.prompt.userPrompt.includes(
+        composite.originalQuestion,
+      ),
+
+    reasonPrimaryDoesNotCreateExtraMaterialExpansion:
+      composite.explanationTitles.join(
+        "|",
+      )
+      === baseline.explanationTitles.join(
+        "|",
+      )
+      && composite.conditionsTexts.join(
+        "|",
+      )
+      === baseline.conditionsTexts.join(
+        "|",
+      )
+      && composite.recommendedDirection
+      === baseline.recommendedDirection
+      && composite.prohibitedDirection
+      === baseline.prohibitedDirection
+      && composite.risksCount
+      === baseline.risksCount
+      && composite.verdict
+      === baseline.verdict
+      && composite.intent
+      === "reason"
+      && baseline.intent
+      === "evaluation",
+
+    fixtureDoesNotInventFactsOrJudgements:
+      compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && composite.existingMaterialTexts.every(
+        (value) =>
+          composite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-59-action-nature-evaluation-reason-primary-hijack-regression",
+    question:
+      composite.originalQuestion,
+    focus:
+      composite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
   ConsultingPromptBuilderVerificationCase {
   const timingRiskComposite =
@@ -8218,6 +8409,7 @@ export function verifyConsultingPromptBuilder():
     verifyTimingPrimaryMethodSecondaryContinueAntiExpansionRegression(),
     verifyRiskPrimaryMethodSecondaryStartAntiExpansionRegression(),
     verifyFalseMultiTimingModifierEvaluationExpansionRegression(),
+    verifyActionNatureEvaluationReasonPrimaryHijackRegression(),
   ];
 
   return {
