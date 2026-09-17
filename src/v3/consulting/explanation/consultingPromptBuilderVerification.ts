@@ -7323,6 +7323,223 @@ function verifyActionNatureEvaluationReasonPrimaryHijackRegression():
   };
 }
 
+function verifyRiskPrimaryTimingModifierLeakageRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const baseline =
+    inspectSecondaryMaterialsCoverage(
+      "위험한 사업을 계속해도 될까요?",
+    );
+
+  const composite =
+    inspectSecondaryMaterialsCoverage(
+      "시기적으로 위험한 사업을 계속해도 될까요?",
+    );
+
+  const controlNowPrefix =
+    inspectSecondaryMaterialsCoverage(
+      "지금 위험한 사업을 계속해도 될까요?",
+    );
+
+  const compositeText =
+    combinedPromptText(
+      composite.prompt,
+    );
+
+  const checks = {
+    baselineRiskPrimaryMaintained:
+      baseline.intent
+      === "risk",
+
+    compositeRiskPrimaryMaintained:
+      composite.intent
+      === "risk",
+
+    baselineDecisionTargetContinueMaintained:
+      baseline.decisionTarget
+      === "continue",
+
+    compositeDecisionTargetContinueMaintained:
+      composite.decisionTarget
+      === "continue",
+
+    baselineTimingTypeUnknownMaintained:
+      baseline.timingType
+      === "unknown",
+
+    compositeTimingTypeBestTimingLeakage:
+      composite.timingType
+      === "bestTiming",
+
+    timingModifierChangesTimingTypeOnly:
+      composite.timingType
+      !== baseline.timingType
+      && baseline.timingType
+      === "unknown"
+      && composite.timingType
+      === "bestTiming",
+
+    asksWhatUnchanged:
+      composite.asksWhat
+      === baseline.asksWhat
+      && composite.asksWhat.includes(
+        "위험이 있는지",
+      )
+      && composite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${composite.asksWhat}`,
+      ),
+
+    focusUnchanged:
+      composite.focus
+      === baseline.focus
+      && composite.focus
+      === "continuation",
+
+    titlesUnchanged:
+      composite.explanationTitles.join(
+        "|",
+      )
+      === baseline.explanationTitles.join(
+        "|",
+      )
+      && baseline.explanationTitles.length
+      === 5,
+
+    conditionsExpandedByTimingModifier:
+      composite.conditionsTexts.join(
+        "|",
+      )
+      !== baseline.conditionsTexts.join(
+        "|",
+      )
+      && baseline.conditionsTexts.length
+      === 1
+      && composite.conditionsTexts.length
+      === 2
+      && composite.conditionsTexts.some(
+        (text) =>
+          text.includes(
+            "실행 시기를 확정할 수 없다",
+          ),
+      ),
+
+    directionsShiftToWaitHold:
+      composite.recommendedDirection
+      !== baseline.recommendedDirection
+      && composite.prohibitedDirection
+      !== baseline.prohibitedDirection
+      && composite.recommendedDirection.includes(
+        "유보",
+      )
+      && engineDecisionLockedInPrompt(
+        composite.prompt,
+        composite.finalDecision,
+      ),
+
+    compositeVerdictWait:
+      composite.verdict
+      === "wait",
+
+    baselineVerdictConditionallyRecommended:
+      baseline.verdict
+      === "conditionallyRecommended",
+
+    finalDecisionDiffersFromBaseline:
+      composite.finalDecision
+      !== baseline.finalDecision
+      && composite.finalDecision.includes(
+        "시기를 늦추",
+      )
+      && baseline.finalDecision.includes(
+        "진행할 수는 있지만",
+      ),
+
+    risksCountUnchanged:
+      composite.risksCount
+      === baseline.risksCount
+      && composite.risksCount
+      === 0
+      && composite.hasDedicatedRisksMaterial
+      === baseline.hasDedicatedRisksMaterial,
+
+    compositeSecondaryIntentAbsent:
+      !compositeText.includes(
+        "secondaryIntent",
+      ),
+
+    originalQuestionPreservedAsCompositeSource:
+      composite.originalQuestion
+      === "시기적으로 위험한 사업을 계속해도 될까요?"
+      && composite.prompt.userPrompt.includes(
+        composite.originalQuestion,
+      ),
+
+    noActualTimingSpeechActBoundary:
+      composite.intent
+      === "risk"
+      && composite.originalQuestion.includes(
+        "시기적으로",
+      )
+      && composite.originalQuestion.includes(
+        "위험한",
+      )
+      && !composite.originalQuestion.includes(
+        "시기가",
+      )
+      && !composite.originalQuestion.includes(
+        "언제",
+      )
+      && !composite.asksWhat.includes(
+        "언제",
+      )
+      && composite.timingType
+      === "bestTiming",
+
+    controlNowPrefixAlsoLeaksButAsExecutionTiming:
+      controlNowPrefix.intent
+      === "risk"
+      && controlNowPrefix.decisionTarget
+      === "continue"
+      && controlNowPrefix.timingType
+      === "executionTiming"
+      && controlNowPrefix.timingType
+      !== composite.timingType
+      && controlNowPrefix.asksWhat
+      === baseline.asksWhat
+      && controlNowPrefix.verdict
+      === "wait",
+
+    fixtureDoesNotInventFactsOrJudgements:
+      compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && composite.existingMaterialTexts.every(
+        (value) =>
+          composite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-60-risk-primary-timing-modifier-leakage-regression",
+    question:
+      composite.originalQuestion,
+    focus:
+      composite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
   ConsultingPromptBuilderVerificationCase {
   const timingRiskComposite =
@@ -8410,6 +8627,7 @@ export function verifyConsultingPromptBuilder():
     verifyRiskPrimaryMethodSecondaryStartAntiExpansionRegression(),
     verifyFalseMultiTimingModifierEvaluationExpansionRegression(),
     verifyActionNatureEvaluationReasonPrimaryHijackRegression(),
+    verifyRiskPrimaryTimingModifierLeakageRegression(),
   ];
 
   return {
