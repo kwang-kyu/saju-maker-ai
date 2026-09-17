@@ -7834,6 +7834,805 @@ function verifyRiskPrimarySecondaryStopTimingDecisionTargetHijackRegression():
   };
 }
 
+function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const startBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 방법이 있을까요?",
+    );
+  const startComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const changeJobBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "이직할 방법이 있을까요?",
+    );
+  const changeJobComposite =
+    inspectSecondaryMaterialsCoverage(
+      "이직할 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const buyBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "부동산을 살 방법이 있을까요?",
+    );
+  const buyComposite =
+    inspectSecondaryMaterialsCoverage(
+      "부동산을 살 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const investBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "투자할 방법이 있을까요?",
+    );
+  const investComposite =
+    inspectSecondaryMaterialsCoverage(
+      "투자할 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const marryBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "결혼할 방법이 있을까요?",
+    );
+  const marryComposite =
+    inspectSecondaryMaterialsCoverage(
+      "결혼할 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const continueBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법이 있을까요?",
+    );
+  const continueComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const stopBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 그만둘 방법이 있을까요?",
+    );
+  const stopComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 그만둘 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const leaveJobBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "직장을 그만둘 방법이 있을까요?",
+    );
+  const leaveJobComposite =
+    inspectSecondaryMaterialsCoverage(
+      "직장을 그만둘 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const startText =
+    combinedPromptText(
+      startComposite.prompt,
+    );
+  const changeJobText =
+    combinedPromptText(
+      changeJobComposite.prompt,
+    );
+  const buyText =
+    combinedPromptText(
+      buyComposite.prompt,
+    );
+  const investText =
+    combinedPromptText(
+      investComposite.prompt,
+    );
+  const marryText =
+    combinedPromptText(
+      marryComposite.prompt,
+    );
+  const continueText =
+    combinedPromptText(
+      continueComposite.prompt,
+    );
+  const stopText =
+    combinedPromptText(
+      stopComposite.prompt,
+    );
+  const leaveJobText =
+    combinedPromptText(
+      leaveJobComposite.prompt,
+    );
+
+  const methodSurfaceStable = (
+    baseline: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    composite: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+  ): boolean =>
+    composite.focus
+    === baseline.focus
+    && composite.explanationTitles.join(
+      "|",
+    )
+    === baseline.explanationTitles.join(
+      "|",
+    )
+    && composite.conditionsTexts.join(
+      "|",
+    )
+    === baseline.conditionsTexts.join(
+      "|",
+    )
+    && composite.hasConditionMaterial
+    === baseline.hasConditionMaterial
+    && composite.recommendedDirection
+    === baseline.recommendedDirection
+    && composite.prohibitedDirection
+    === baseline.prohibitedDirection
+    && composite.hasDirectionMaterial
+    === baseline.hasDirectionMaterial
+    && composite.risksCount
+    === baseline.risksCount
+    && composite.hasDedicatedRisksMaterial
+    === baseline.hasDedicatedRisksMaterial
+    && composite.verdict
+    === baseline.verdict;
+
+  const reasonHijackSurface = (
+    baseline: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    composite: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    text: string,
+  ): boolean =>
+    baseline.intent
+    === "method"
+    && composite.intent
+    === "reason"
+    && baseline.timingType
+    === "unknown"
+    && composite.timingType
+    === "unknown"
+    && String(baseline.decisionTarget)
+    === String(composite.decisionTarget)
+    && baseline.asksWhat.includes(
+      "대응",
+    )
+    && composite.asksWhat.includes(
+      "왜",
+    )
+    && composite.asksWhat
+    !== baseline.asksWhat
+    && composite.finalDecision
+    !== baseline.finalDecision
+    && !text.includes(
+      "secondaryIntent",
+    )
+    && methodSurfaceStable(
+      baseline,
+      composite,
+    )
+    && text.includes(
+      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+    )
+    && text.includes(
+      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+    )
+    && composite.prompt.userPrompt.includes(
+      `알고 싶은 점: ${composite.asksWhat}`,
+    )
+    && engineDecisionLockedInPrompt(
+      composite.prompt,
+      composite.finalDecision,
+    );
+
+  const methodPrimaryProtected = (
+    baseline: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    composite: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    text: string,
+  ): boolean =>
+    baseline.intent
+    === "method"
+    && composite.intent
+    === "method"
+    && baseline.timingType
+    === "unknown"
+    && composite.timingType
+    === "unknown"
+    && String(baseline.decisionTarget)
+    === String(composite.decisionTarget)
+    && composite.asksWhat
+    === baseline.asksWhat
+    && composite.asksWhat.includes(
+      "대응",
+    )
+    && !composite.asksWhat.includes(
+      "왜",
+    )
+    && composite.finalDecision
+    === baseline.finalDecision
+    && !text.includes(
+      "secondaryIntent",
+    )
+    && methodSurfaceStable(
+      baseline,
+      composite,
+    )
+    && text.includes(
+      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+    )
+    && text.includes(
+      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+    );
+
+  const checks = {
+    startBaselineMethodPrimary:
+      startBaseline.intent
+      === "method"
+      && startBaseline.decisionTarget
+      === "start"
+      && startBaseline.timingType
+      === "unknown",
+
+    startCompositeReasonPrimaryHijack:
+      startComposite.intent
+      === "reason"
+      && startComposite.decisionTarget
+      === "start"
+      && startComposite.timingType
+      === "unknown"
+      && !startText.includes(
+        "secondaryIntent",
+      ),
+
+    startAsksWhatAndFinalDecisionShiftToReasonSurface:
+      startBaseline.asksWhat.includes(
+        "대응",
+      )
+      && startComposite.asksWhat.includes(
+        "왜",
+      )
+      && startComposite.asksWhat
+      !== startBaseline.asksWhat
+      && startBaseline.finalDecision.includes(
+        "진행할 수는 있지만",
+      )
+      && startComposite.finalDecision.includes(
+        "해석된다",
+      )
+      && startComposite.finalDecision
+      !== startBaseline.finalDecision,
+
+    startFocusTitlesConditionsDirectionsRisksVerdictStable:
+      methodSurfaceStable(
+        startBaseline,
+        startComposite,
+      )
+      && startBaseline.focus
+      === "businessStart",
+
+    startReasonHijackNotSecondaryMultiSpeech:
+      reasonHijackSurface(
+        startBaseline,
+        startComposite,
+        startText,
+      ),
+
+    changeJobBaselineMethodPrimary:
+      changeJobBaseline.intent
+      === "method"
+      && changeJobBaseline.decisionTarget
+      === "changeJob"
+      && changeJobBaseline.timingType
+      === "unknown",
+
+    changeJobCompositeReasonPrimaryHijack:
+      changeJobComposite.intent
+      === "reason"
+      && changeJobComposite.decisionTarget
+      === "changeJob"
+      && changeJobComposite.timingType
+      === "unknown"
+      && reasonHijackSurface(
+        changeJobBaseline,
+        changeJobComposite,
+        changeJobText,
+      ),
+
+    buyBaselineMethodPrimary:
+      buyBaseline.intent
+      === "method"
+      && buyBaseline.decisionTarget
+      === "buy"
+      && buyBaseline.timingType
+      === "unknown",
+
+    buyCompositeReasonPrimaryHijack:
+      buyComposite.intent
+      === "reason"
+      && buyComposite.decisionTarget
+      === "buy"
+      && buyComposite.timingType
+      === "unknown"
+      && reasonHijackSurface(
+        buyBaseline,
+        buyComposite,
+        buyText,
+      ),
+
+    investBaselineMethodPrimary:
+      investBaseline.intent
+      === "method"
+      && investBaseline.decisionTarget
+      === "invest"
+      && investBaseline.timingType
+      === "unknown",
+
+    investCompositeReasonPrimaryHijack:
+      investComposite.intent
+      === "reason"
+      && investComposite.decisionTarget
+      === "invest"
+      && investComposite.timingType
+      === "unknown"
+      && reasonHijackSurface(
+        investBaseline,
+        investComposite,
+        investText,
+      ),
+
+    marryBaselineMethodPrimary:
+      marryBaseline.intent
+      === "method"
+      && marryBaseline.decisionTarget
+      === "marry"
+      && marryBaseline.timingType
+      === "unknown",
+
+    marryCompositeReasonPrimaryHijack:
+      marryComposite.intent
+      === "reason"
+      && marryComposite.decisionTarget
+      === "marry"
+      && marryComposite.timingType
+      === "unknown"
+      && reasonHijackSurface(
+        marryBaseline,
+        marryComposite,
+        marryText,
+      ),
+
+    continueControlMethodPrimaryParityWithI43:
+      continueBaseline.intent
+      === "method"
+      && continueComposite.intent
+      === "method"
+      && continueBaseline.decisionTarget
+      === "continue"
+      && continueComposite.decisionTarget
+      === "continue"
+      && methodPrimaryProtected(
+        continueBaseline,
+        continueComposite,
+        continueText,
+      ),
+
+    stopControlMethodPrimaryMaintained:
+      stopBaseline.intent
+      === "method"
+      && stopComposite.intent
+      === "method"
+      && stopBaseline.decisionTarget
+      === "stop"
+      && stopComposite.decisionTarget
+      === "stop"
+      && methodPrimaryProtected(
+        stopBaseline,
+        stopComposite,
+        stopText,
+      ),
+
+    leaveJobControlMethodPrimaryMaintained:
+      leaveJobBaseline.intent
+      === "method"
+      && leaveJobComposite.intent
+      === "method"
+      && leaveJobBaseline.decisionTarget
+      === "leaveJob"
+      && leaveJobComposite.decisionTarget
+      === "leaveJob"
+      && methodPrimaryProtected(
+        leaveJobBaseline,
+        leaveJobComposite,
+        leaveJobText,
+      ),
+
+    actionNatureAsymmetryHijackVsProtectedControls:
+      startComposite.intent
+      === "reason"
+      && changeJobComposite.intent
+      === "reason"
+      && buyComposite.intent
+      === "reason"
+      && investComposite.intent
+      === "reason"
+      && marryComposite.intent
+      === "reason"
+      && continueComposite.intent
+      === "method"
+      && stopComposite.intent
+      === "method"
+      && leaveJobComposite.intent
+      === "method"
+      && startComposite.asksWhat
+      !== startBaseline.asksWhat
+      && continueComposite.asksWhat
+      === continueBaseline.asksWhat
+      && stopComposite.asksWhat
+      === stopBaseline.asksWhat
+      && leaveJobComposite.asksWhat
+      === leaveJobBaseline.asksWhat,
+
+    secondaryIntentNeverCreatedAcrossActionNatures:
+      !startText.includes(
+        "secondaryIntent",
+      )
+      && !changeJobText.includes(
+        "secondaryIntent",
+      )
+      && !buyText.includes(
+        "secondaryIntent",
+      )
+      && !investText.includes(
+        "secondaryIntent",
+      )
+      && !marryText.includes(
+        "secondaryIntent",
+      )
+      && !continueText.includes(
+        "secondaryIntent",
+      )
+      && !stopText.includes(
+        "secondaryIntent",
+      )
+      && !leaveJobText.includes(
+        "secondaryIntent",
+      ),
+
+    multiSpeechPolicyMarkersPresentOnHijackAndControl:
+      startText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && startText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && continueText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && continueText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && stopText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && leaveJobText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      ),
+
+    originalQuestionsPreserveMethodAndReasonDemand:
+      startComposite.originalQuestion.includes(
+        "방법",
+      )
+      && startComposite.originalQuestion.includes(
+        "이유",
+      )
+      && startComposite.prompt.userPrompt.includes(
+        startComposite.originalQuestion,
+      )
+      && continueComposite.originalQuestion.includes(
+        "방법",
+      )
+      && continueComposite.originalQuestion.includes(
+        "이유",
+      )
+      && stopComposite.originalQuestion.includes(
+        "방법",
+      )
+      && stopComposite.originalQuestion.includes(
+        "이유",
+      )
+      && leaveJobComposite.originalQuestion.includes(
+        "방법",
+      )
+      && leaveJobComposite.originalQuestion.includes(
+        "이유",
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      startComposite.existingMaterialTexts.every(
+        (value) =>
+          startComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      )
+      && continueComposite.existingMaterialTexts.every(
+        (value) =>
+          continueComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-62-method-primary-reason-secondary-action-nature-hijack-regression",
+    question:
+      startComposite.originalQuestion,
+    focus:
+      startComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
+function verifyMethodPrimaryTimingSecondaryCollapseRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const baseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 방법이 있을까요?",
+    );
+
+  const composite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 방법이 있을지, 시작 시기도 궁금합니다.",
+    );
+
+  const timingOnly =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 시기가 궁금합니다.",
+    );
+
+  const baselineText =
+    combinedPromptText(
+      baseline.prompt,
+    );
+  const compositeText =
+    combinedPromptText(
+      composite.prompt,
+    );
+  const timingOnlyText =
+    combinedPromptText(
+      timingOnly.prompt,
+    );
+
+  const checks = {
+    baselineMethodPrimaryMaintained:
+      baseline.intent
+      === "method"
+      && baseline.decisionTarget
+      === "start"
+      && baseline.timingType
+      === "unknown"
+      && baseline.focus
+      === "businessStart"
+      && baseline.asksWhat.includes(
+        "대응",
+      )
+      && !baseline.asksWhat.includes(
+        "언제",
+      ),
+
+    baselineMethodVerdictAndFinalDecisionSurface:
+      baseline.verdict
+      === "conditionallyRecommended"
+      && baseline.finalDecision.includes(
+        "진행할 수는 있지만",
+      ),
+
+    actionNatureStartMaintainedOnComposite:
+      composite.decisionTarget
+      === "start"
+      && String(composite.decisionTarget)
+      === String(baseline.decisionTarget)
+      && String(composite.decisionTarget)
+      === String(timingOnly.decisionTarget),
+
+    compositeTimingPrimaryCollapse:
+      composite.intent
+      === "timing"
+      && composite.timingType
+      === "bestTiming"
+      && composite.focus
+      === "businessTiming"
+      && composite.asksWhat.includes(
+        "언제",
+      )
+      && !composite.asksWhat.includes(
+        "대응",
+      ),
+
+    methodPrimaryNotMaintainedAsPrimarySurface:
+      baseline.intent
+      === "method"
+      && composite.intent
+      !== "method"
+      && composite.intent
+      === "timing"
+      && String(baseline.intent)
+      !== String(composite.intent)
+      && composite.focus
+      !== baseline.focus
+      && composite.asksWhat
+      !== baseline.asksWhat
+      && composite.finalDecision
+      !== baseline.finalDecision,
+
+    timingInfoPresentDistinctFromSecondaryIntentChannel:
+      composite.timingType
+      === "bestTiming"
+      && composite.originalQuestion.includes(
+        "시기",
+      )
+      && composite.originalQuestion.includes(
+        "방법",
+      )
+      && !compositeText.includes(
+        "secondaryIntent",
+      )
+      && composite.intent
+      === "timing"
+      && composite.focus
+      === "businessTiming"
+      && composite.asksWhat.includes(
+        "언제",
+      ),
+
+    secondaryIntentFalseCurrentReproduction:
+      !baselineText.includes(
+        "secondaryIntent",
+      )
+      && !compositeText.includes(
+        "secondaryIntent",
+      )
+      && !timingOnlyText.includes(
+        "secondaryIntent",
+      ),
+
+    compositeVerdictAndFinalDecisionShiftToTimingWait:
+      composite.verdict
+      === "wait"
+      && String(composite.verdict)
+      !== String(baseline.verdict)
+      && composite.finalDecision.includes(
+        "지켜보는",
+      )
+      && composite.recommendedDirection.includes(
+        "유보",
+      )
+      && engineDecisionLockedInPrompt(
+        composite.prompt,
+        composite.finalDecision,
+      ),
+
+    compositeFocusConditionsDirectionsCollapseFromMethodBaseline:
+      composite.focus
+      === "businessTiming"
+      && baseline.focus
+      === "businessStart"
+      && composite.conditionsTexts.join(
+        "|",
+      )
+      !== baseline.conditionsTexts.join(
+        "|",
+      )
+      && composite.recommendedDirection
+      !== baseline.recommendedDirection
+      && composite.prohibitedDirection
+      !== baseline.prohibitedDirection
+      && composite.conditionsTexts.some(
+        (text) =>
+          text.includes(
+            "실행 시기를 확정할 수 없다",
+          ),
+      ),
+
+    compositeMatchesTimingOnlyPrimarySurfaceCollapse:
+      composite.intent
+      === timingOnly.intent
+      && String(composite.decisionTarget)
+      === String(timingOnly.decisionTarget)
+      && composite.timingType
+      === timingOnly.timingType
+      && composite.asksWhat
+      === timingOnly.asksWhat
+      && composite.focus
+      === timingOnly.focus
+      && composite.explanationTitles.join(
+        "|",
+      )
+      === timingOnly.explanationTitles.join(
+        "|",
+      )
+      && composite.conditionsTexts.join(
+        "|",
+      )
+      === timingOnly.conditionsTexts.join(
+        "|",
+      )
+      && composite.recommendedDirection
+      === timingOnly.recommendedDirection
+      && composite.prohibitedDirection
+      === timingOnly.prohibitedDirection
+      && composite.verdict
+      === timingOnly.verdict
+      && composite.finalDecision
+      === timingOnly.finalDecision
+      && timingOnly.intent
+      === "timing"
+      && timingOnly.timingType
+      === "bestTiming"
+      && timingOnly.focus
+      === "businessTiming",
+
+    originalQuestionPreservesMethodAndTimingDemand:
+      composite.originalQuestion
+      === "사업을 시작할 방법이 있을지, 시작 시기도 궁금합니다."
+      && composite.originalQuestion.includes(
+        "방법",
+      )
+      && composite.originalQuestion.includes(
+        "시작 시기",
+      )
+      && composite.prompt.userPrompt.includes(
+        composite.originalQuestion,
+      )
+      && composite.prompt.userPrompt.includes(
+        `알고 싶은 점: ${composite.asksWhat}`,
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      composite.existingMaterialTexts.every(
+        (value) =>
+          composite.prompt.userPrompt.includes(
+            value,
+          ),
+      )
+      && timingOnly.existingMaterialTexts.every(
+        (value) =>
+          timingOnly.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-63-method-primary-timing-secondary-collapse-regression",
+    question:
+      composite.originalQuestion,
+    focus:
+      composite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
   ConsultingPromptBuilderVerificationCase {
   const timingRiskComposite =
@@ -8923,6 +9722,8 @@ export function verifyConsultingPromptBuilder():
     verifyActionNatureEvaluationReasonPrimaryHijackRegression(),
     verifyRiskPrimaryTimingModifierLeakageRegression(),
     verifyRiskPrimarySecondaryStopTimingDecisionTargetHijackRegression(),
+    verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression(),
+    verifyMethodPrimaryTimingSecondaryCollapseRegression(),
   ];
 
   return {
