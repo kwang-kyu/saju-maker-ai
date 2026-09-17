@@ -8386,6 +8386,428 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
   };
 }
 
+function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const endBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 끝낼 방법이 있을까요?",
+    );
+  const endComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 끝낼 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const terminateBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 종료할 방법이 있을까요?",
+    );
+  const terminateComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 종료할 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const foldBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 접을 방법이 있을까요?",
+    );
+  const foldComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 접을 방법이 있을지, 그 이유도 궁금합니다.",
+    );
+
+  const endText =
+    combinedPromptText(
+      endComposite.prompt,
+    );
+  const terminateText =
+    combinedPromptText(
+      terminateComposite.prompt,
+    );
+  const foldText =
+    combinedPromptText(
+      foldComposite.prompt,
+    );
+
+  const methodSurfaceStable = (
+    baseline: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    composite: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+  ): boolean =>
+    composite.focus
+    === baseline.focus
+    && composite.explanationTitles.join(
+      "|",
+    )
+    === baseline.explanationTitles.join(
+      "|",
+    )
+    && composite.conditionsTexts.join(
+      "|",
+    )
+    === baseline.conditionsTexts.join(
+      "|",
+    )
+    && composite.hasConditionMaterial
+    === baseline.hasConditionMaterial
+    && composite.recommendedDirection
+    === baseline.recommendedDirection
+    && composite.prohibitedDirection
+    === baseline.prohibitedDirection
+    && composite.hasDirectionMaterial
+    === baseline.hasDirectionMaterial
+    && composite.risksCount
+    === baseline.risksCount
+    && composite.hasDedicatedRisksMaterial
+    === baseline.hasDedicatedRisksMaterial
+    && composite.verdict
+    === baseline.verdict;
+
+  const stopControlLexicalReasonHijackSurface = (
+    baseline: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    composite: ReturnType<
+      typeof inspectSecondaryMaterialsCoverage
+    >,
+    text: string,
+  ): boolean =>
+    baseline.intent
+    === "method"
+    && composite.intent
+    === "reason"
+    && baseline.decisionTarget
+    === "stop"
+    && composite.decisionTarget
+    === "stop"
+    && baseline.timingType
+    === "unknown"
+    && composite.timingType
+    === "unknown"
+    && baseline.focus
+    === "termination"
+    && composite.focus
+    === "termination"
+    && baseline.verdict
+    === "wait"
+    && composite.verdict
+    === "wait"
+    && baseline.asksWhat.includes(
+      "대응",
+    )
+    && composite.asksWhat.includes(
+      "왜",
+    )
+    && composite.asksWhat
+    !== baseline.asksWhat
+    && composite.finalDecision
+    !== baseline.finalDecision
+    && !text.includes(
+      "secondaryIntent",
+    )
+    && methodSurfaceStable(
+      baseline,
+      composite,
+    )
+    && text.includes(
+      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+    )
+    && text.includes(
+      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+    )
+    && composite.prompt.userPrompt.includes(
+      `알고 싶은 점: ${composite.asksWhat}`,
+    )
+    && engineDecisionLockedInPrompt(
+      composite.prompt,
+      composite.finalDecision,
+    );
+
+  const checks = {
+    endBaselineMethodPrimary:
+      endBaseline.intent
+      === "method"
+      && endBaseline.decisionTarget
+      === "stop"
+      && endBaseline.timingType
+      === "unknown"
+      && endBaseline.focus
+      === "termination"
+      && endBaseline.verdict
+      === "wait",
+
+    endCompositeReasonPrimaryHijack:
+      endComposite.intent
+      === "reason"
+      && endComposite.decisionTarget
+      === "stop"
+      && endComposite.timingType
+      === "unknown"
+      && !endText.includes(
+        "secondaryIntent",
+      ),
+
+    endAsksWhatAndFinalDecisionShiftToReasonSurface:
+      endBaseline.asksWhat.includes(
+        "대응",
+      )
+      && endComposite.asksWhat.includes(
+        "왜",
+      )
+      && endComposite.asksWhat
+      !== endBaseline.asksWhat
+      && endBaseline.finalDecision.includes(
+        "시기를 늦추는",
+      )
+      && endComposite.finalDecision.includes(
+        "해석된다",
+      )
+      && endComposite.finalDecision
+      !== endBaseline.finalDecision,
+
+    endFocusTitlesConditionsDirectionsRisksVerdictStable:
+      methodSurfaceStable(
+        endBaseline,
+        endComposite,
+      )
+      && endBaseline.focus
+      === "termination"
+      && endComposite.focus
+      === "termination",
+
+    endMethodToReasonFlipPinned:
+      endBaseline.intent
+      === "method"
+      && endComposite.intent
+      === "reason"
+      && String(endBaseline.intent)
+      !== String(endComposite.intent)
+      && stopControlLexicalReasonHijackSurface(
+        endBaseline,
+        endComposite,
+        endText,
+      ),
+
+    terminateBaselineMethodPrimary:
+      terminateBaseline.intent
+      === "method"
+      && terminateBaseline.decisionTarget
+      === "stop"
+      && terminateBaseline.timingType
+      === "unknown"
+      && terminateBaseline.focus
+      === "termination"
+      && terminateBaseline.verdict
+      === "wait",
+
+    terminateCompositeReasonPrimaryHijack:
+      terminateComposite.intent
+      === "reason"
+      && terminateComposite.decisionTarget
+      === "stop"
+      && terminateComposite.timingType
+      === "unknown"
+      && !terminateText.includes(
+        "secondaryIntent",
+      ),
+
+    terminateAsksWhatAndFinalDecisionShiftToReasonSurface:
+      terminateBaseline.asksWhat.includes(
+        "대응",
+      )
+      && terminateComposite.asksWhat.includes(
+        "왜",
+      )
+      && terminateComposite.asksWhat
+      !== terminateBaseline.asksWhat
+      && terminateBaseline.finalDecision.includes(
+        "시기를 늦추는",
+      )
+      && terminateComposite.finalDecision.includes(
+        "해석된다",
+      )
+      && terminateComposite.finalDecision
+      !== terminateBaseline.finalDecision,
+
+    terminateFocusTitlesConditionsDirectionsRisksVerdictStable:
+      methodSurfaceStable(
+        terminateBaseline,
+        terminateComposite,
+      )
+      && terminateBaseline.focus
+      === "termination"
+      && terminateComposite.focus
+      === "termination",
+
+    terminateMethodToReasonFlipPinned:
+      terminateBaseline.intent
+      === "method"
+      && terminateComposite.intent
+      === "reason"
+      && String(terminateBaseline.intent)
+      !== String(terminateComposite.intent)
+      && stopControlLexicalReasonHijackSurface(
+        terminateBaseline,
+        terminateComposite,
+        terminateText,
+      ),
+
+    foldBaselineMethodPrimary:
+      foldBaseline.intent
+      === "method"
+      && foldBaseline.decisionTarget
+      === "stop"
+      && foldBaseline.timingType
+      === "unknown"
+      && foldBaseline.focus
+      === "termination"
+      && foldBaseline.verdict
+      === "wait",
+
+    foldCompositeReasonPrimaryHijack:
+      foldComposite.intent
+      === "reason"
+      && foldComposite.decisionTarget
+      === "stop"
+      && foldComposite.timingType
+      === "unknown"
+      && !foldText.includes(
+        "secondaryIntent",
+      ),
+
+    foldAsksWhatAndFinalDecisionShiftToReasonSurface:
+      foldBaseline.asksWhat.includes(
+        "대응",
+      )
+      && foldComposite.asksWhat.includes(
+        "왜",
+      )
+      && foldComposite.asksWhat
+      !== foldBaseline.asksWhat
+      && foldBaseline.finalDecision.includes(
+        "시기를 늦추는",
+      )
+      && foldComposite.finalDecision.includes(
+        "해석된다",
+      )
+      && foldComposite.finalDecision
+      !== foldBaseline.finalDecision,
+
+    foldFocusTitlesConditionsDirectionsRisksVerdictStable:
+      methodSurfaceStable(
+        foldBaseline,
+        foldComposite,
+      )
+      && foldBaseline.focus
+      === "termination"
+      && foldComposite.focus
+      === "termination",
+
+    foldMethodToReasonFlipPinned:
+      foldBaseline.intent
+      === "method"
+      && foldComposite.intent
+      === "reason"
+      && String(foldBaseline.intent)
+      !== String(foldComposite.intent)
+      && stopControlLexicalReasonHijackSurface(
+        foldBaseline,
+        foldComposite,
+        foldText,
+      ),
+
+    stopControlLexicalCoverageGapSharedParity:
+      endComposite.intent
+      === "reason"
+      && terminateComposite.intent
+      === "reason"
+      && foldComposite.intent
+      === "reason"
+      && endComposite.decisionTarget
+      === "stop"
+      && terminateComposite.decisionTarget
+      === "stop"
+      && foldComposite.decisionTarget
+      === "stop"
+      && endComposite.focus
+      === "termination"
+      && terminateComposite.focus
+      === "termination"
+      && foldComposite.focus
+      === "termination"
+      && !endText.includes(
+        "secondaryIntent",
+      )
+      && !terminateText.includes(
+        "secondaryIntent",
+      )
+      && !foldText.includes(
+        "secondaryIntent",
+      ),
+
+    originalQuestionsPreserveMethodAndReasonDemand:
+      endComposite.originalQuestion.includes(
+        "방법",
+      )
+      && endComposite.originalQuestion.includes(
+        "이유",
+      )
+      && endComposite.prompt.userPrompt.includes(
+        endComposite.originalQuestion,
+      )
+      && terminateComposite.originalQuestion.includes(
+        "방법",
+      )
+      && terminateComposite.originalQuestion.includes(
+        "이유",
+      )
+      && foldComposite.originalQuestion.includes(
+        "방법",
+      )
+      && foldComposite.originalQuestion.includes(
+        "이유",
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      endComposite.existingMaterialTexts.every(
+        (value) =>
+          endComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      )
+      && terminateComposite.existingMaterialTexts.every(
+        (value) =>
+          terminateComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      )
+      && foldComposite.existingMaterialTexts.every(
+        (value) =>
+          foldComposite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-62-stop-control-lexical-coverage-gap-regression",
+    question:
+      endComposite.originalQuestion,
+    focus:
+      endComposite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyMethodPrimaryTimingSecondaryCollapseRegression():
   ConsultingPromptBuilderVerificationCase {
   const baseline =
@@ -9993,6 +10415,7 @@ export function verifyConsultingPromptBuilder():
     verifyRiskPrimaryTimingModifierLeakageRegression(),
     verifyRiskPrimarySecondaryStopTimingDecisionTargetHijackRegression(),
     verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression(),
+    verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegression(),
     verifyMethodPrimaryTimingSecondaryCollapseRegression(),
     verifyRiskPrimaryTimingSecondarySameDtCollapseRegression(),
   ];
