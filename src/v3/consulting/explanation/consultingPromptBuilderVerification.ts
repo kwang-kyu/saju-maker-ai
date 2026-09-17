@@ -7978,56 +7978,6 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
     && composite.verdict
     === baseline.verdict;
 
-  const reasonHijackSurface = (
-    baseline: ReturnType<
-      typeof inspectSecondaryMaterialsCoverage
-    >,
-    composite: ReturnType<
-      typeof inspectSecondaryMaterialsCoverage
-    >,
-    text: string,
-  ): boolean =>
-    baseline.intent
-    === "method"
-    && composite.intent
-    === "reason"
-    && baseline.timingType
-    === "unknown"
-    && composite.timingType
-    === "unknown"
-    && String(baseline.decisionTarget)
-    === String(composite.decisionTarget)
-    && baseline.asksWhat.includes(
-      "대응",
-    )
-    && composite.asksWhat.includes(
-      "왜",
-    )
-    && composite.asksWhat
-    !== baseline.asksWhat
-    && composite.finalDecision
-    !== baseline.finalDecision
-    && !text.includes(
-      "secondaryIntent",
-    )
-    && methodSurfaceStable(
-      baseline,
-      composite,
-    )
-    && text.includes(
-      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
-    )
-    && text.includes(
-      MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
-    )
-    && composite.prompt.userPrompt.includes(
-      `알고 싶은 점: ${composite.asksWhat}`,
-    )
-    && engineDecisionLockedInPrompt(
-      composite.prompt,
-      composite.finalDecision,
-    );
-
   const methodPrimaryProtected = (
     baseline: ReturnType<
       typeof inspectSecondaryMaterialsCoverage
@@ -8080,34 +8030,36 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
       && startBaseline.timingType
       === "unknown",
 
-    startCompositeReasonPrimaryHijack:
+    startCompositeMethodPrimaryPreservedViaF:
       startComposite.intent
-      === "reason"
+      === "method"
       && startComposite.decisionTarget
       === "start"
       && startComposite.timingType
       === "unknown"
-      && !startText.includes(
-        "secondaryIntent",
+      && methodPrimaryProtected(
+        startBaseline,
+        startComposite,
+        startText,
       ),
 
-    startAsksWhatAndFinalDecisionShiftToReasonSurface:
+    startAsksWhatAndFinalDecisionRemainMethodSurface:
       startBaseline.asksWhat.includes(
         "대응",
       )
       && startComposite.asksWhat.includes(
+        "대응",
+      )
+      && !startComposite.asksWhat.includes(
         "왜",
       )
       && startComposite.asksWhat
-      !== startBaseline.asksWhat
+      === startBaseline.asksWhat
       && startBaseline.finalDecision.includes(
         "진행할 수는 있지만",
       )
-      && startComposite.finalDecision.includes(
-        "해석된다",
-      )
       && startComposite.finalDecision
-      !== startBaseline.finalDecision,
+      === startBaseline.finalDecision,
 
     startFocusTitlesConditionsDirectionsRisksVerdictStable:
       methodSurfaceStable(
@@ -8117,11 +8069,14 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
       && startBaseline.focus
       === "businessStart",
 
-    startReasonHijackNotSecondaryMultiSpeech:
-      reasonHijackSurface(
+    startAdditiveReasonDoesNotCreateSecondaryMultiSpeech:
+      methodPrimaryProtected(
         startBaseline,
         startComposite,
         startText,
+      )
+      && !startText.includes(
+        "secondaryIntent",
       ),
 
     changeJobBaselineMethodPrimary:
@@ -8132,14 +8087,14 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
       && changeJobBaseline.timingType
       === "unknown",
 
-    changeJobCompositeReasonPrimaryHijack:
+    changeJobCompositeMethodPrimaryPreservedViaF:
       changeJobComposite.intent
-      === "reason"
+      === "method"
       && changeJobComposite.decisionTarget
       === "changeJob"
       && changeJobComposite.timingType
       === "unknown"
-      && reasonHijackSurface(
+      && methodPrimaryProtected(
         changeJobBaseline,
         changeJobComposite,
         changeJobText,
@@ -8153,14 +8108,14 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
       && buyBaseline.timingType
       === "unknown",
 
-    buyCompositeReasonPrimaryHijack:
+    buyCompositeMethodPrimaryPreservedViaF:
       buyComposite.intent
-      === "reason"
+      === "method"
       && buyComposite.decisionTarget
       === "buy"
       && buyComposite.timingType
       === "unknown"
-      && reasonHijackSurface(
+      && methodPrimaryProtected(
         buyBaseline,
         buyComposite,
         buyText,
@@ -8174,14 +8129,14 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
       && investBaseline.timingType
       === "unknown",
 
-    investCompositeReasonPrimaryHijack:
+    investCompositeMethodPrimaryPreservedViaF:
       investComposite.intent
-      === "reason"
+      === "method"
       && investComposite.decisionTarget
       === "invest"
       && investComposite.timingType
       === "unknown"
-      && reasonHijackSurface(
+      && methodPrimaryProtected(
         investBaseline,
         investComposite,
         investText,
@@ -8195,14 +8150,14 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
       && marryBaseline.timingType
       === "unknown",
 
-    marryCompositeReasonPrimaryHijack:
+    marryCompositeMethodPrimaryPreservedViaF:
       marryComposite.intent
-      === "reason"
+      === "method"
       && marryComposite.decisionTarget
       === "marry"
       && marryComposite.timingType
       === "unknown"
-      && reasonHijackSurface(
+      && methodPrimaryProtected(
         marryBaseline,
         marryComposite,
         marryText,
@@ -8253,17 +8208,17 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
         leaveJobText,
       ),
 
-    actionNatureAsymmetryHijackVsProtectedControls:
+    additiveReasonPreservationParityAcrossActionNatures:
       startComposite.intent
-      === "reason"
+      === "method"
       && changeJobComposite.intent
-      === "reason"
+      === "method"
       && buyComposite.intent
-      === "reason"
+      === "method"
       && investComposite.intent
-      === "reason"
+      === "method"
       && marryComposite.intent
-      === "reason"
+      === "method"
       && continueComposite.intent
       === "method"
       && stopComposite.intent
@@ -8271,7 +8226,7 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
       && leaveJobComposite.intent
       === "method"
       && startComposite.asksWhat
-      !== startBaseline.asksWhat
+      === startBaseline.asksWhat
       && continueComposite.asksWhat
       === continueBaseline.asksWhat
       && stopComposite.asksWhat
@@ -8305,7 +8260,7 @@ function verifyMethodPrimaryReasonSecondaryActionNatureHijackRegression():
         "secondaryIntent",
       ),
 
-    multiSpeechPolicyMarkersPresentOnHijackAndControl:
+    multiSpeechPolicyMarkersPresentOnPreservedComposites:
       startText.includes(
         MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
       )
@@ -8465,7 +8420,7 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
     && composite.verdict
     === baseline.verdict;
 
-  const stopControlLexicalReasonHijackSurface = (
+  const stopControlLexicalMethodPreservedSurface = (
     baseline: ReturnType<
       typeof inspectSecondaryMaterialsCoverage
     >,
@@ -8477,7 +8432,7 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
     baseline.intent
     === "method"
     && composite.intent
-    === "reason"
+    === "method"
     && baseline.decisionTarget
     === "stop"
     && composite.decisionTarget
@@ -8498,12 +8453,15 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
       "대응",
     )
     && composite.asksWhat.includes(
+      "대응",
+    )
+    && !composite.asksWhat.includes(
       "왜",
     )
     && composite.asksWhat
-    !== baseline.asksWhat
+    === baseline.asksWhat
     && composite.finalDecision
-    !== baseline.finalDecision
+    === baseline.finalDecision
     && !text.includes(
       "secondaryIntent",
     )
@@ -8538,9 +8496,9 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
       && endBaseline.verdict
       === "wait",
 
-    endCompositeReasonPrimaryHijack:
+    endCompositeMethodPrimaryPreservedViaF:
       endComposite.intent
-      === "reason"
+      === "method"
       && endComposite.decisionTarget
       === "stop"
       && endComposite.timingType
@@ -8549,23 +8507,23 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
         "secondaryIntent",
       ),
 
-    endAsksWhatAndFinalDecisionShiftToReasonSurface:
+    endAsksWhatAndFinalDecisionRemainMethodSurface:
       endBaseline.asksWhat.includes(
         "대응",
       )
       && endComposite.asksWhat.includes(
+        "대응",
+      )
+      && !endComposite.asksWhat.includes(
         "왜",
       )
       && endComposite.asksWhat
-      !== endBaseline.asksWhat
+      === endBaseline.asksWhat
       && endBaseline.finalDecision.includes(
         "시기를 늦추는",
       )
-      && endComposite.finalDecision.includes(
-        "해석된다",
-      )
       && endComposite.finalDecision
-      !== endBaseline.finalDecision,
+      === endBaseline.finalDecision,
 
     endFocusTitlesConditionsDirectionsRisksVerdictStable:
       methodSurfaceStable(
@@ -8577,14 +8535,14 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
       && endComposite.focus
       === "termination",
 
-    endMethodToReasonFlipPinned:
+    endAdditiveReasonMethodPreserved:
       endBaseline.intent
       === "method"
       && endComposite.intent
-      === "reason"
+      === "method"
       && String(endBaseline.intent)
-      !== String(endComposite.intent)
-      && stopControlLexicalReasonHijackSurface(
+      === String(endComposite.intent)
+      && stopControlLexicalMethodPreservedSurface(
         endBaseline,
         endComposite,
         endText,
@@ -8602,9 +8560,9 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
       && terminateBaseline.verdict
       === "wait",
 
-    terminateCompositeReasonPrimaryHijack:
+    terminateCompositeMethodPrimaryPreservedViaF:
       terminateComposite.intent
-      === "reason"
+      === "method"
       && terminateComposite.decisionTarget
       === "stop"
       && terminateComposite.timingType
@@ -8613,23 +8571,23 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
         "secondaryIntent",
       ),
 
-    terminateAsksWhatAndFinalDecisionShiftToReasonSurface:
+    terminateAsksWhatAndFinalDecisionRemainMethodSurface:
       terminateBaseline.asksWhat.includes(
         "대응",
       )
       && terminateComposite.asksWhat.includes(
+        "대응",
+      )
+      && !terminateComposite.asksWhat.includes(
         "왜",
       )
       && terminateComposite.asksWhat
-      !== terminateBaseline.asksWhat
+      === terminateBaseline.asksWhat
       && terminateBaseline.finalDecision.includes(
         "시기를 늦추는",
       )
-      && terminateComposite.finalDecision.includes(
-        "해석된다",
-      )
       && terminateComposite.finalDecision
-      !== terminateBaseline.finalDecision,
+      === terminateBaseline.finalDecision,
 
     terminateFocusTitlesConditionsDirectionsRisksVerdictStable:
       methodSurfaceStable(
@@ -8641,14 +8599,14 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
       && terminateComposite.focus
       === "termination",
 
-    terminateMethodToReasonFlipPinned:
+    terminateAdditiveReasonMethodPreserved:
       terminateBaseline.intent
       === "method"
       && terminateComposite.intent
-      === "reason"
+      === "method"
       && String(terminateBaseline.intent)
-      !== String(terminateComposite.intent)
-      && stopControlLexicalReasonHijackSurface(
+      === String(terminateComposite.intent)
+      && stopControlLexicalMethodPreservedSurface(
         terminateBaseline,
         terminateComposite,
         terminateText,
@@ -8666,9 +8624,9 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
       && foldBaseline.verdict
       === "wait",
 
-    foldCompositeReasonPrimaryHijack:
+    foldCompositeMethodPrimaryPreservedViaF:
       foldComposite.intent
-      === "reason"
+      === "method"
       && foldComposite.decisionTarget
       === "stop"
       && foldComposite.timingType
@@ -8677,23 +8635,23 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
         "secondaryIntent",
       ),
 
-    foldAsksWhatAndFinalDecisionShiftToReasonSurface:
+    foldAsksWhatAndFinalDecisionRemainMethodSurface:
       foldBaseline.asksWhat.includes(
         "대응",
       )
       && foldComposite.asksWhat.includes(
+        "대응",
+      )
+      && !foldComposite.asksWhat.includes(
         "왜",
       )
       && foldComposite.asksWhat
-      !== foldBaseline.asksWhat
+      === foldBaseline.asksWhat
       && foldBaseline.finalDecision.includes(
         "시기를 늦추는",
       )
-      && foldComposite.finalDecision.includes(
-        "해석된다",
-      )
       && foldComposite.finalDecision
-      !== foldBaseline.finalDecision,
+      === foldBaseline.finalDecision,
 
     foldFocusTitlesConditionsDirectionsRisksVerdictStable:
       methodSurfaceStable(
@@ -8705,26 +8663,26 @@ function verifyMethodPrimaryReasonSecondaryStopControlLexicalCoverageGapRegressi
       && foldComposite.focus
       === "termination",
 
-    foldMethodToReasonFlipPinned:
+    foldAdditiveReasonMethodPreserved:
       foldBaseline.intent
       === "method"
       && foldComposite.intent
-      === "reason"
+      === "method"
       && String(foldBaseline.intent)
-      !== String(foldComposite.intent)
-      && stopControlLexicalReasonHijackSurface(
+      === String(foldComposite.intent)
+      && stopControlLexicalMethodPreservedSurface(
         foldBaseline,
         foldComposite,
         foldText,
       ),
 
-    stopControlLexicalCoverageGapSharedParity:
+    stopControlLexicalCoverageClosedByAdditivePreservation:
       endComposite.intent
-      === "reason"
+      === "method"
       && terminateComposite.intent
-      === "reason"
+      === "method"
       && foldComposite.intent
-      === "reason"
+      === "method"
       && endComposite.decisionTarget
       === "stop"
       && terminateComposite.decisionTarget
@@ -8870,37 +8828,29 @@ function verifyMethodPrimaryTimingSecondaryCollapseRegression():
       && String(composite.decisionTarget)
       === String(timingOnly.decisionTarget),
 
-    compositeTimingPrimaryCollapse:
+    compositeMethodIntentPreservedViaAdditiveF:
       composite.intent
-      === "timing"
-      && composite.timingType
-      === "bestTiming"
-      && composite.focus
-      === "businessTiming"
+      === "method"
       && composite.asksWhat.includes(
-        "언제",
+        "대응",
       )
       && !composite.asksWhat.includes(
-        "대응",
-      ),
+        "언제",
+      )
+      && composite.asksWhat
+      === baseline.asksWhat,
 
-    methodPrimaryNotMaintainedAsPrimarySurface:
+    methodPrimaryIntentMaintainedAgainstTimingHijack:
       baseline.intent
       === "method"
       && composite.intent
-      !== "method"
-      && composite.intent
-      === "timing"
+      === "method"
       && String(baseline.intent)
-      !== String(composite.intent)
-      && composite.focus
-      !== baseline.focus
-      && composite.asksWhat
-      !== baseline.asksWhat
-      && composite.finalDecision
-      !== baseline.finalDecision,
+      === String(composite.intent)
+      && composite.decisionTarget
+      === "start",
 
-    timingInfoPresentDistinctFromSecondaryIntentChannel:
+    timingTypeResidualOutOfFScopeRemainsBestTiming:
       composite.timingType
       === "bestTiming"
       && composite.originalQuestion.includes(
@@ -8913,12 +8863,9 @@ function verifyMethodPrimaryTimingSecondaryCollapseRegression():
         "secondaryIntent",
       )
       && composite.intent
-      === "timing"
+      === "method"
       && composite.focus
-      === "businessTiming"
-      && composite.asksWhat.includes(
-        "언제",
-      ),
+      === "businessTiming",
 
     secondaryIntentFalseCurrentReproduction:
       !baselineText.includes(
@@ -8931,81 +8878,60 @@ function verifyMethodPrimaryTimingSecondaryCollapseRegression():
         "secondaryIntent",
       ),
 
-    compositeVerdictAndFinalDecisionShiftToTimingWait:
-      composite.verdict
-      === "wait"
-      && String(composite.verdict)
-      !== String(baseline.verdict)
-      && composite.finalDecision.includes(
-        "지켜보는",
+    compositeDistinctFromTimingOnlyPrimaryCollapse:
+      composite.intent
+      === "method"
+      && timingOnly.intent
+      === "timing"
+      && String(composite.intent)
+      !== String(timingOnly.intent)
+      && composite.asksWhat
+      !== timingOnly.asksWhat
+      && composite.asksWhat.includes(
+        "대응",
       )
-      && composite.recommendedDirection.includes(
-        "유보",
-      )
-      && engineDecisionLockedInPrompt(
-        composite.prompt,
-        composite.finalDecision,
+      && timingOnly.asksWhat.includes(
+        "언제",
       ),
 
-    compositeFocusConditionsDirectionsCollapseFromMethodBaseline:
+    timingTypeFocusResidualStillDiffersFromMethodBaseline:
       composite.focus
       === "businessTiming"
       && baseline.focus
       === "businessStart"
-      && composite.conditionsTexts.join(
-        "|",
-      )
-      !== baseline.conditionsTexts.join(
-        "|",
-      )
-      && composite.recommendedDirection
-      !== baseline.recommendedDirection
-      && composite.prohibitedDirection
-      !== baseline.prohibitedDirection
-      && composite.conditionsTexts.some(
-        (text) =>
-          text.includes(
-            "실행 시기를 확정할 수 없다",
-          ),
+      && composite.timingType
+      === "bestTiming"
+      && baseline.timingType
+      === "unknown"
+      && (
+        composite.conditionsTexts.join(
+          "|",
+        )
+        !== baseline.conditionsTexts.join(
+          "|",
+        )
+        || composite.recommendedDirection
+        !== baseline.recommendedDirection
+        || composite.prohibitedDirection
+        !== baseline.prohibitedDirection
+        || composite.verdict
+        !== baseline.verdict
       ),
 
-    compositeMatchesTimingOnlyPrimarySurfaceCollapse:
-      composite.intent
-      === timingOnly.intent
-      && String(composite.decisionTarget)
-      === String(timingOnly.decisionTarget)
-      && composite.timingType
-      === timingOnly.timingType
-      && composite.asksWhat
-      === timingOnly.asksWhat
-      && composite.focus
-      === timingOnly.focus
-      && composite.explanationTitles.join(
-        "|",
+    distinctFromCoordinatedTimingRiskI64Surface:
+      composite.originalQuestion.includes(
+        "시기도",
       )
-      === timingOnly.explanationTitles.join(
-        "|",
+      && !composite.originalQuestion.includes(
+        "와",
       )
-      && composite.conditionsTexts.join(
-        "|",
+      && !composite.originalQuestion.includes(
+        "과",
       )
-      === timingOnly.conditionsTexts.join(
-        "|",
-      )
-      && composite.recommendedDirection
-      === timingOnly.recommendedDirection
-      && composite.prohibitedDirection
-      === timingOnly.prohibitedDirection
-      && composite.verdict
-      === timingOnly.verdict
-      && composite.finalDecision
-      === timingOnly.finalDecision
+      && composite.intent
+      === "method"
       && timingOnly.intent
-      === "timing"
-      && timingOnly.timingType
-      === "bestTiming"
-      && timingOnly.focus
-      === "businessTiming",
+      === "timing",
 
     originalQuestionPreservesMethodAndTimingDemand:
       composite.originalQuestion

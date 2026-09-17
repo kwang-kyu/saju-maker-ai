@@ -5160,6 +5160,138 @@ function findStrongActionNatureSpeechActPreservation(
 }
 
 /**
+ * F: reason|timing additive secondary hijack 위에서
+ * strong method/risk speech-act Intent만 복원한다.
+ *
+ * 적용 순서:
+ * 1) 기존 intent priority 기본값 유지
+ * 2) I-27 / I-31 preservation 먼저
+ * 3) 그 이후 current intent가 reason|timing일 때만 검토
+ *
+ * 게이트:
+ * - strong method 또는 strong risk candidate 존재
+ * - hijacker 쪽에 명확한 additive secondary evidence
+ *   ("그 이유도" / "시작 시기도" 등)
+ *
+ * 비대상:
+ * - bare X와/과 Y (coordinated)
+ * - modifier / sentence order / 단순 candidate 공존
+ * - method + risk 상호 override
+ * - I-61 DecisionTarget hijack / I-60 timingType leakage
+ *
+ * DecisionTarget은 절대 변경하지 않는다.
+ * Intent만 reason|timing → method|risk 로 복원한다.
+ */
+const ADDITIVE_REASON_HIJACKER_PATTERN =
+  /그\s*이유\s*도|이유도|그\s*원인\s*도|원인도/;
+
+const ADDITIVE_TIMING_HIJACKER_PATTERN =
+  /시작\s*시기\s*도|시기도|그\s*시기\s*도|언제인지도/;
+
+function hasAdditiveReasonHijackerEvidence(
+  question: string,
+): boolean {
+  return ADDITIVE_REASON_HIJACKER_PATTERN.test(question);
+}
+
+function hasAdditiveTimingHijackerEvidence(
+  question: string,
+): boolean {
+  return ADDITIVE_TIMING_HIJACKER_PATTERN.test(question);
+}
+
+function findAdditiveReasonTimingSpeechActPreservation(
+  question: string,
+  intent: ReaderIntentLiteral,
+  intentEvidence: readonly string[],
+  candidates: MeaningCandidateSet,
+): {
+  intent: "method" | "risk";
+  intentEvidence: string[];
+} | null {
+  if (intent !== "reason" && intent !== "timing") {
+    return null;
+  }
+
+  const additiveOnHijacker =
+    intent === "reason"
+      ? hasAdditiveReasonHijackerEvidence(question)
+      : hasAdditiveTimingHijackerEvidence(question);
+
+  if (!additiveOnHijacker) {
+    return null;
+  }
+
+  const methodCandidate = findIntentCandidate(
+    candidates.intents,
+    "method",
+  );
+  const riskCandidate = findIntentCandidate(
+    candidates.intents,
+    "risk",
+  );
+
+  const methodStrong =
+    !!methodCandidate
+    && evidenceHasStrongSpeechActMarker(
+      methodCandidate.evidence,
+      STRONG_METHOD_SPEECH_ACT_MARKERS,
+    );
+  const riskStrong =
+    !!riskCandidate
+    && evidenceHasStrongSpeechActMarker(
+      riskCandidate.evidence,
+      STRONG_RISK_SPEECH_ACT_MARKERS,
+    );
+
+  if (!methodStrong && !riskStrong) {
+    return null;
+  }
+
+  // 둘 다 strong이면 intentRules 순서(risk < method)를 존중한다.
+  // method↔risk 상호 override는 하지 않고, 기존 priority만 따른다.
+  if (riskStrong && methodStrong && riskCandidate && methodCandidate) {
+    const selected =
+      riskCandidate.priority <= methodCandidate.priority
+        ? riskCandidate
+        : methodCandidate;
+
+    return {
+      intent: selected.value as "method" | "risk",
+      intentEvidence: mergeUniqueEvidence(
+        selected.evidence,
+        intentEvidence,
+        ["additiveReasonTimingSpeechActPreservation"],
+      ),
+    };
+  }
+
+  if (riskStrong && riskCandidate) {
+    return {
+      intent: "risk",
+      intentEvidence: mergeUniqueEvidence(
+        riskCandidate.evidence,
+        intentEvidence,
+        ["additiveReasonTimingSpeechActPreservation"],
+      ),
+    };
+  }
+
+  if (methodStrong && methodCandidate) {
+    return {
+      intent: "method",
+      intentEvidence: mergeUniqueEvidence(
+        methodCandidate.evidence,
+        intentEvidence,
+        ["additiveReasonTimingSpeechActPreservation"],
+      ),
+    };
+  }
+
+  return null;
+}
+
+/**
  * J-2 + J-4-1 + J-4-2 + J-4-3-1 + J-4-3-2 + J-4-4 + J-4-5-1 + J-4-7 + J-4-8 + J-4-9 + J-4-10 + J-4-11 + J-4-13:
  * 후보 집합에서 topic / intent / decisionTarget을 한 곳에서 고른다.
  *
@@ -5501,6 +5633,22 @@ function normalizeAxes(
   if (actionNatureSpeechActPreserved) {
     intent = actionNatureSpeechActPreserved.intent;
     intentEvidence = actionNatureSpeechActPreserved.intentEvidence;
+  }
+
+  // F: I-27/I-31 이후 — reason|timing additive hijack에서만
+  // strong method/risk Intent 복원. DT / timingType 불변.
+  const additiveReasonTimingSpeechActPreserved =
+    findAdditiveReasonTimingSpeechActPreservation(
+      question,
+      intent,
+      intentEvidence,
+      candidates,
+    );
+
+  if (additiveReasonTimingSpeechActPreserved) {
+    intent = additiveReasonTimingSpeechActPreserved.intent;
+    intentEvidence =
+      additiveReasonTimingSpeechActPreserved.intentEvidence;
   }
 
   const objectLabel = selectObjectLabelFromTopicEvidence(
