@@ -7540,6 +7540,300 @@ function verifyRiskPrimaryTimingModifierLeakageRegression():
   };
 }
 
+function verifyRiskPrimarySecondaryStopTimingDecisionTargetHijackRegression():
+  ConsultingPromptBuilderVerificationCase {
+  const baseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 때 위험한 점이 궁금합니다.",
+    );
+
+  const composite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 계속할 때 위험한 점과 그만둘 시기가 궁금합니다.",
+    );
+
+  const controlStartBaseline =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 때 위험한 점이 궁금합니다.",
+    );
+
+  const controlStartComposite =
+    inspectSecondaryMaterialsCoverage(
+      "사업을 시작할 때 위험한 점과 그만둘 시기",
+    );
+
+  const compositeText =
+    combinedPromptText(
+      composite.prompt,
+    );
+
+  const controlText =
+    combinedPromptText(
+      controlStartComposite.prompt,
+    );
+
+  const checks = {
+    baselineRiskPrimaryMaintained:
+      baseline.intent
+      === "risk",
+
+    baselineDecisionTargetContinueMaintained:
+      baseline.decisionTarget
+      === "continue",
+
+    baselineTimingTypeUnknownMaintained:
+      baseline.timingType
+      === "unknown",
+
+    baselineFocusContinuationMaintained:
+      baseline.focus
+      === "continuation",
+
+    baselineRiskSurfaceMaintained:
+      baseline.asksWhat.includes(
+        "위험",
+      )
+      && baseline.risksCount
+      === 0
+      && baseline.hasDedicatedRisksMaterial
+      === false
+      && baseline.explanationTitles.every(
+        (title) =>
+          !title.includes(
+            "위험",
+          ),
+      ),
+
+    baselineVerdictConditionallyRecommended:
+      baseline.verdict
+      === "conditionallyRecommended",
+
+    compositeTimingPrimaryHijack:
+      composite.intent
+      === "timing",
+
+    compositeDecisionTargetStopHijack:
+      composite.decisionTarget
+      === "stop",
+
+    compositeTimingTypeBestTiming:
+      composite.timingType
+      === "bestTiming",
+
+    compositeFocusTermination:
+      composite.focus
+      === "termination",
+
+    compositeRisksExpandedToThree:
+      composite.risksCount
+      === 3
+      && composite.hasDedicatedRisksMaterial
+      === true,
+
+    compositeVerdictWait:
+      composite.verdict
+      === "wait",
+
+    secondaryStopTimingFlipsDecisionTargetContinueToStop:
+      String(baseline.decisionTarget)
+      !== String(composite.decisionTarget)
+      && baseline.decisionTarget
+      === "continue"
+      && composite.decisionTarget
+      === "stop"
+      && composite.originalQuestion.includes(
+        "그만둘 시기",
+      )
+      && baseline.originalQuestion.includes(
+        "위험한 점",
+      )
+      && !baseline.originalQuestion.includes(
+        "그만둘 시기",
+      ),
+
+    decisionTargetDiffersFromBaseline:
+      String(composite.decisionTarget)
+      !== String(baseline.decisionTarget),
+
+    timingPrimaryFlipFromRisk:
+      String(baseline.intent)
+      !== String(composite.intent)
+      && baseline.intent
+      === "risk"
+      && composite.intent
+      === "timing",
+
+    timingTypeChangesUnknownToBestTiming:
+      String(baseline.timingType)
+      !== String(composite.timingType)
+      && baseline.timingType
+      === "unknown"
+      && composite.timingType
+      === "bestTiming",
+
+    focusChangesContinuationToTermination:
+      String(baseline.focus)
+      !== String(composite.focus)
+      && baseline.focus
+      === "continuation"
+      && composite.focus
+      === "termination",
+
+    titlesShiftFromContinuationToTerminationSurface:
+      composite.explanationTitles.join(
+        "|",
+      )
+      !== baseline.explanationTitles.join(
+        "|",
+      )
+      && baseline.explanationTitles[0]
+      === "계속 유지하는 것이 맞는지"
+      && composite.explanationTitles[0]
+      === "현재 상태에서 벗어나는 것이 맞는지"
+      && composite.explanationTitles.includes(
+        "위험",
+      )
+      && !baseline.explanationTitles.includes(
+        "위험",
+      ),
+
+    risksChangeFromBaselineSurface:
+      composite.risksCount
+      !== baseline.risksCount
+      && baseline.risksCount
+      === 0
+      && composite.risksCount
+      === 3
+      && composite.hasDedicatedRisksMaterial
+      !== baseline.hasDedicatedRisksMaterial,
+
+    verdictChangesConditionallyRecommendedToWait:
+      String(baseline.verdict)
+      !== String(composite.verdict)
+      && baseline.verdict
+      === "conditionallyRecommended"
+      && composite.verdict
+      === "wait",
+
+    finalDecisionChangesProgressToWaitHold:
+      composite.finalDecision
+      !== baseline.finalDecision
+      && baseline.finalDecision.includes(
+        "진행할 수는 있지만",
+      )
+      && composite.finalDecision.includes(
+        "지켜보는",
+      )
+      && composite.recommendedDirection.includes(
+        "유보",
+      )
+      && engineDecisionLockedInPrompt(
+        composite.prompt,
+        composite.finalDecision,
+      ),
+
+    baselineRiskPrimarySurfaceNotPreservedInComposite:
+      composite.intent
+      !== "risk"
+      && composite.focus
+      !== "continuation"
+      && composite.decisionTarget
+      !== "continue"
+      && composite.asksWhat.includes(
+        "언제",
+      )
+      && !composite.asksWhat.includes(
+        "위험",
+      )
+      && baseline.asksWhat.includes(
+        "위험",
+      ),
+
+    primaryIntentTimingHijackNotSecondaryMultiSpeech:
+      composite.intent
+      === "timing"
+      && !compositeText.includes(
+        "secondaryIntent",
+      )
+      && composite.originalQuestion.includes(
+        "위험한 점",
+      )
+      && composite.originalQuestion.includes(
+        "그만둘 시기",
+      ),
+
+    controlStartBaselineRiskPrimaryMaintained:
+      controlStartBaseline.intent
+      === "risk"
+      && controlStartBaseline.decisionTarget
+      === "start"
+      && controlStartBaseline.timingType
+      === "unknown"
+      && controlStartBaseline.focus
+      === "businessStart"
+      && controlStartBaseline.verdict
+      === "conditionallyRecommended",
+
+    controlStartToStopSameDecisionTargetHijack:
+      controlStartComposite.intent
+      === "timing"
+      && controlStartComposite.decisionTarget
+      === "stop"
+      && controlStartComposite.timingType
+      === "bestTiming"
+      && controlStartComposite.focus
+      === "termination"
+      && controlStartComposite.verdict
+      === "wait"
+      && controlStartComposite.risksCount
+      === 3
+      && controlStartBaseline.decisionTarget
+      === "start"
+      && String(controlStartComposite.decisionTarget)
+      !== String(controlStartBaseline.decisionTarget)
+      && !controlText.includes(
+        "secondaryIntent",
+      ),
+
+    originalQuestionPreservedAsCompositeSource:
+      composite.originalQuestion
+      === "사업을 계속할 때 위험한 점과 그만둘 시기가 궁금합니다."
+      && composite.prompt.userPrompt.includes(
+        composite.originalQuestion,
+      ),
+
+    fixtureDoesNotInventFactsOrJudgements:
+      compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[2],
+      )
+      && compositeText.includes(
+        MULTI_SPEECHACT_RESPONSE_POLICY_MARKERS[3],
+      )
+      && composite.existingMaterialTexts.every(
+        (value) =>
+          composite.prompt.userPrompt.includes(
+            value,
+          ),
+      ),
+  };
+
+  return {
+    name:
+      "I-61-risk-primary-secondary-stop-timing-decision-target-hijack-regression",
+    question:
+      composite.originalQuestion,
+    focus:
+      composite.focus,
+    checks,
+    passed:
+      Object.values(
+        checks,
+      ).every(
+        Boolean,
+      ),
+  };
+}
+
 function verifyTimingPrimaryRiskSecondaryContinueAntiExpansionRegression():
   ConsultingPromptBuilderVerificationCase {
   const timingRiskComposite =
@@ -8628,6 +8922,7 @@ export function verifyConsultingPromptBuilder():
     verifyFalseMultiTimingModifierEvaluationExpansionRegression(),
     verifyActionNatureEvaluationReasonPrimaryHijackRegression(),
     verifyRiskPrimaryTimingModifierLeakageRegression(),
+    verifyRiskPrimarySecondaryStopTimingDecisionTargetHijackRegression(),
   ];
 
   return {
