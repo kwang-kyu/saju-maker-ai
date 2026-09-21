@@ -4674,6 +4674,11 @@ function normalizeDecisionTargetSemanticMeaning(
   // P11-7-2I-10: business keep-alive continue / negated-continue stop는
   // "이어가지"/"스톨시키지" 형태소 ~지 가짜 exclusive_alt에 덮이지 않는다.
   // Intent(selection)는 바꾸지 않고 concrete DT만 보호한다.
+  //
+  // GAP 6 A: realEstate × continue hold compound가 이미 있으면
+  // generalBinaryAlternative choose 생성 대신 continue로 수렴한다.
+  // choose↔continue 전역 호환이 아니며,
+  // realEstate + continue compound + hold evidence 동시 존재 시에만 적용한다.
   if (
     decisionTarget !== "choose"
     && hasGeneralBinaryAlternativeStructure(candidates)
@@ -4683,6 +4688,29 @@ function normalizeDecisionTargetSemanticMeaning(
       decisionEvidence,
     )
   ) {
+    if (topic === "realEstate") {
+      const realEstateContinueHoldCompound =
+        candidates.topicDecisionCompounds.find(
+          (compound) =>
+            compound.topic === "realEstate"
+            && compound.decisionTarget === "continue"
+            && compound.decisionEvidence.some((token) =>
+              REAL_ESTATE_CONTINUE_COMPOUND_VERBS.includes(token)
+            ),
+        );
+
+      if (realEstateContinueHoldCompound) {
+        return {
+          decisionTarget: "continue",
+          decisionEvidence: mergeUniqueEvidence(
+            realEstateContinueHoldCompound.decisionEvidence,
+            realEstateContinueHoldCompound.topicEvidence,
+            decisionEvidence,
+          ),
+        };
+      }
+    }
+
     return {
       decisionTarget: "choose",
       decisionEvidence: mergeUniqueEvidence(
