@@ -6100,6 +6100,7 @@ const JOB_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "직업",
   "직무",
   "소속",
+  "콜센터",
 ];
 
 /**
