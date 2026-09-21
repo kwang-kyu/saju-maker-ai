@@ -6448,15 +6448,18 @@ const BUSINESS_ACQUIRE_ENTITY_NOUNS: readonly string[] =
   BUSINESS_ESTABLISH_ENTITY_NOUNS;
 
 /**
- * P10 G2-2 / P11-6-6 A3-1: 인수·매입·구입은 bare global buy keyword가 아니다.
+ * P10 G2-2 / P11-6-6 A3-1: 인수·매입·구입·사들이·사들여는 bare global buy keyword가 아니다.
  * decisionRules에 넣지 않고, entity noun과 결합될 때만 buy evidence가 된다.
  * "인수인계"는 반드시 제외한다.
- * 사다/사들이다/넘겨받다/권리금은 A3-1 범위 밖이다.
+ * 사들이다 stem(사들이/사들여)은 entity noun 결합 시에만 buy evidence가 된다.
+ * 사다(bare colloquial)/넘겨받다/권리금은 A3-1 범위 밖이다.
  */
 const BUSINESS_ACQUIRE_BUY_SIGNALS: readonly string[] = [
   "인수",
   "매입",
   "구입",
+  "사들이",
+  "사들여",
 ];
 
 /**
