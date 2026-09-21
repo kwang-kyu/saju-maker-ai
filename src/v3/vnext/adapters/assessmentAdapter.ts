@@ -30,6 +30,7 @@ export type AssessmentAdapterInput = Pick<
   | "recommendedDirection"
   | "prohibitedDirection"
   | "coreDecision"
+  | "finalDecisionSentence"
   | "decisionReason"
   | "timingAssessment"
   | "lifeFlowInterpretationAssessment"
@@ -282,7 +283,7 @@ export function adaptAssessment(
         sourceKey: item.source,
         weight: item.weight,
       })),
-      summary: input.coreDecision,
+      summary: input.finalDecisionSentence || input.coreDecision,
     },
     confidence: mapConfidence(input.confidence),
   };
