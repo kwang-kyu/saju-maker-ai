@@ -1388,10 +1388,13 @@ const PERMISSION_OR_FEASIBILITY_KEYWORDS:
     "해도될까",
     "도 될까",
     "도될까",
+    "도 될지",
+    "도될지",
     "해도 괜찮",
     "해도괜찮",
     "가능할까",
     "가능한가",
+    "가능한지",
     "할 수 있을까",
     "할수있을까",
   ];
@@ -3398,6 +3401,35 @@ function resolveStrongTopicDecisionCompound(
       return true;
     }
 
+    // D-001: realEstate buy compound가 이미 생성되어 있을 때만
+    // "새로"(start) → buy compound 호환을 허용한다.
+    // start↔buy를 전역 compatible로 열지 않으며, 다른 topic에는 적용하지 않는다.
+    // bare "사도"/buy-less "새로"는 compound 자체가 없거나 topic≠realEstate라 미적용.
+    if (
+      phase1DecisionTarget === "start"
+      && compound.topic === "realEstate"
+      && compound.decisionTarget === "buy"
+      && compound.decisionEvidence.length > 0
+    ) {
+      return true;
+    }
+
+    // A-002: business acquire buy compound(인수|매입|구입)가 이미 있을 때만
+    // continue|choose → buy compound 호환을 허용한다.
+    // continue↔buy / choose↔buy를 전역 compatible로 열지 않는다.
+    // keep-alive/continue·stop·start 정책, bare "사도", colloquial 사*는 미적용.
+    if (
+      (phase1DecisionTarget === "continue"
+        || phase1DecisionTarget === "choose")
+      && compound.topic === "business"
+      && compound.decisionTarget === "buy"
+      && compound.decisionEvidence.some((token) =>
+        isBusinessAcquireBuyEvidenceToken(token)
+      )
+    ) {
+      return true;
+    }
+
     // P11-7-2I-2 / B3: operating-right transfer-in buy는
     // 이전받*의 false move·지분 contrast의 partner를 덮을 수 있다.
     // 인수|매입|구입|사* 등 기존 buy compound는 기존 호환 규칙을 유지한다.
@@ -4401,6 +4433,17 @@ function hasBusinessFitRecommendationSoftSignal(
 }
 
 /**
+ * A-2: 평가형 명사구 "맞는 선택인지" soft signal.
+ * 전역 "선택" keyword 의미를 바꾸지 않는다.
+ * selection surface만 generalJudgement로 좁게 demote하기 위한 신호다.
+ */
+function hasCorrectChoiceJudgementSoftSignal(
+  question: string,
+): boolean {
+  return /맞는\s*선택/.test(question) || /선택이\s*맞/.test(question);
+}
+
+/**
  * J-4-10: 삶의 경로 양자택일(할지…할지 / 중 어느) 구조.
  * option-fit marker가 없어도 binary alternative면 choose 후보다.
  */
@@ -4842,6 +4885,7 @@ function normalizeTopicSemanticEvidenceCoverage(
  * 4. business fit/recommendation soft frame → possibility
  * 5. compatibility quality assessment soft frame → possibility
  * 6. lifeDirection confirmDirection + method/selection surface → generalJudgement
+ * 7. evaluation-noun "맞는 선택인지" selection → generalJudgement
  *
  * 보호:
  * - J-4-7 option-fit selection canonicalization
@@ -4849,6 +4893,7 @@ function normalizeTopicSemanticEvidenceCoverage(
  * - specific action DT를 generic intent로 되돌리지 않음
  * - permission 없는 질문을 possibility로 만들지 않음
  * - bare 궁합 / 열린 해석(어떤가요) / 궁합 없는 interpersonal fit은 유지
+ * - option-fit / binary / cash-holding exclusive selection은 유지
  */
 function normalizeIntentSemanticMeaning(
   question: string,
@@ -5041,6 +5086,27 @@ function normalizeIntentSemanticMeaning(
       intentEvidence: mergeUniqueEvidence(
         intentEvidence,
         ["intentSemanticLifeDirectionConfirm"],
+      ),
+    };
+  }
+
+  // 7) evaluation-noun "맞는 선택인지":
+  //    selection surface가 실제 옵션 고르기로 고정되지 않게
+  //    generalJudgement로 좁게 demote한다.
+  //    강한 option-fit / binary / cash-holding exclusive는 selection을 유지한다.
+  if (
+    intent === "selection"
+    && !optionFitStrong
+    && !binaryLifePath
+    && !generalBinary
+    && !cashHoldingExclusive
+    && hasCorrectChoiceJudgementSoftSignal(question)
+  ) {
+    return {
+      intent: "generalJudgement",
+      intentEvidence: mergeUniqueEvidence(
+        intentEvidence,
+        ["intentSemanticCorrectChoiceJudgement"],
       ),
     };
   }
@@ -6061,6 +6127,7 @@ const BUSINESS_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "클라이밍장",
   "공방",
   "분식집",
+  "작업실",
 ];
 
 /**
@@ -6722,14 +6789,28 @@ const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
 /**
  * P11-7-2I-4 / B4: employment/workplace nouns for changeJob compound.
  * topicRules/decisionRules에 전역 추가하지 않는다.
- * change-verb / alternate-destination / path-turn / offer-rearrange와
- * 결합될 때만 job × changeJob evidence가 된다.
- * bare "고용주"/"근무처" 단독으로는 topic/decision을 만들지 않는다.
+ * change-verb / alternate-destination / path-turn / offer-rearrange /
+ * employment×자리 옮 과 결합될 때만 job × changeJob evidence가 된다.
+ * bare "고용주"/"근무처"/"알바"/"정규직" 단독으로는 topic/decision을 만들지 않는다.
  * "회사"는 기존 JOB_TOPIC_COMPOUND_NOUNS 경로를 유지한다.
+ * "자리"는 여기·JOB_TOPIC_COMPOUND_NOUNS·leave context에 추가하지 않는다.
  */
 const JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS: readonly string[] = [
   "고용주",
   "근무처",
+  // changeJob employment context 전용 (전역 topic/decision keyword 아님).
+  "알바",
+  "정규직",
+];
+
+/**
+ * changeJob 전용: employment context × 자리 옮* surfaces.
+ * bare "자리"/"옮*" 단독·전역 decisionRules 추가 금지.
+ * JOB_EMPLOYMENT_LEAVE_CONTEXT_NOUNS / leaveJob("자리를 놓")과 분리한다.
+ */
+const JOB_CHANGE_EMPLOYMENT_SEAT_MOVE_SURFACES: readonly string[] = [
+  "자리를 옮",
+  "자리 옮",
 ];
 
 /**
@@ -7654,6 +7735,17 @@ function isBusinessAcquisitionTransferInEvidenceToken(
 }
 
 /**
+ * A-002: business × buy acquire evidence token.
+ * BUSINESS_ACQUIRE_BUY_SIGNALS(인수|매입|구입) 소속만 true.
+ * colloquial 사* / transfer-in / bare 사도 전역 승격에는 쓰지 않는다.
+ */
+function isBusinessAcquireBuyEvidenceToken(
+  token: string,
+): boolean {
+  return BUSINESS_ACQUIRE_BUY_SIGNALS.includes(token);
+}
+
+/**
  * P11-7-2I-5 / B2: end/close paraphrase evidence token.
  * BUSINESS_STOP_END_CLOSE_COMPOUND_VERBS 소속만 true.
  * bare 끝내/종료/마무리/닫아버리 전역 승격에는 쓰지 않는다.
@@ -8018,6 +8110,35 @@ function collectChangeJobAlternateDestinationMoveEvidence(
 }
 
 /**
+ * changeJob 전용: employment context noun × 자리 옮* evidence.
+ * bare 자리/옮·비고용 목적어만으로는 빈 배열을 반환한다.
+ * leaveJob "자리를 놓" 경로와 공유하지 않는다.
+ */
+function collectChangeJobEmploymentSeatMoveEvidence(
+  question: string,
+): string[] {
+  const employmentContextEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS,
+  );
+
+  if (employmentContextEvidence.length === 0) {
+    return [];
+  }
+
+  const seatMoveEvidence = collectMatchedDecisionKeywords(
+    question,
+    JOB_CHANGE_EMPLOYMENT_SEAT_MOVE_SURFACES,
+  );
+
+  if (seatMoveEvidence.length === 0) {
+    return [];
+  }
+
+  return [...employmentContextEvidence, ...seatMoveEvidence];
+}
+
+/**
  * P11-7-2I-4 / B4: employment/workplace context × 근무 경로 틀* evidence.
  * bare 경로/틀다·인생/삶 경로만으로는 빈 배열을 반환한다.
  */
@@ -8096,19 +8217,21 @@ function isJobChangeGeneralizationEvidenceToken(
     || JOB_CHANGE_ALTERNATE_MOVE_COMPOUND_VERBS.includes(token)
     || JOB_CHANGE_WORKPLACE_PATH_TURN_SURFACES.includes(token)
     || JOB_CHANGE_OFFER_CONTEXT_MARKERS.includes(token)
-    || JOB_CHANGE_WORKPLACE_REARRANGE_SURFACES.includes(token);
+    || JOB_CHANGE_WORKPLACE_REARRANGE_SURFACES.includes(token)
+    || JOB_CHANGE_EMPLOYMENT_SEAT_MOVE_SURFACES.includes(token);
 }
 
 /**
  * changeJob evidence:
  * 1) inherent signal (이직/전직/직장·회사+옮)
  * 2) JOB_TOPIC_COMPOUND_NOUNS ∪ employment/workplace noun × change-verb compound
- *    (직업/직장/회사/직무/소속/고용주/근무처 + 바꿔도/변경해도/전환해도/갈아타도 계열
+ *    (직업/직장/회사/직무/소속/고용주/근무처/알바/정규직 + 바꿔도/변경해도/전환해도/갈아타도 계열
  *     또는 바꾸면서/변경하고/전환하고/갈아타고 등 연결형)
  * 3) P11-7-2I-4 / B4:
  *    alternate employer/workplace destination × move
  *    또는 employment/workplace × 근무 경로 틀*
  *    또는 offer × 근무 축 재배치
+ *    또는 employment context × 자리 옮*
  */
 function collectChangeJobSignalEvidence(
   question: string,
@@ -8146,6 +8269,8 @@ function collectChangeJobSignalEvidence(
     collectChangeJobWorkplacePathTurnEvidence(question);
   const offerRearrangeEvidence =
     collectChangeJobOfferWorkplaceRearrangeEvidence(question);
+  const employmentSeatMoveEvidence =
+    collectChangeJobEmploymentSeatMoveEvidence(question);
 
   return [
     ...new Set([
@@ -8154,6 +8279,7 @@ function collectChangeJobSignalEvidence(
       ...alternateDestinationMoveEvidence,
       ...workplacePathTurnEvidence,
       ...offerRearrangeEvidence,
+      ...employmentSeatMoveEvidence,
     ]),
   ];
 }
