@@ -1292,6 +1292,16 @@ function matchesDecisionKeywordWithNegatedContinueGuard(
     return false;
   }
 
+  // love/relationship × 인연 이어* partner compound가 있으면
+  // bare "이어가" continue stem을 Phase1 continue로 올리지 않는다.
+  // decisionRules partner에 "인연"을 전역 추가하지 않는다.
+  if (
+    keyword === "이어가"
+    && hasLoveRelationshipPartnerCompoundSurface(question)
+  ) {
+    return false;
+  }
+
   return true;
 }
 
@@ -1309,6 +1319,13 @@ function matchesKoreanKeywordWithNegatedContinueGuard(
   if (
     CONTINUE_STEMS_SHADOWED_BY_NEGATED_CONTINUE.has(keyword)
     && hasNegatedContinueCompoundSurface(question)
+  ) {
+    return false;
+  }
+
+  if (
+    keyword === "이어가"
+    && hasLoveRelationshipPartnerCompoundSurface(question)
   ) {
     return false;
   }
@@ -2365,6 +2382,14 @@ function appendCompoundDecisionTargetCandidates(
     collectRealEstateContinueSignalEvidence(question),
     11,
   );
+  // love/relationship object × 인연 이어* → partner compound.
+  // bare "인연"/"이어가"를 전역 partner keyword로 넣지 않는다.
+  // 기존 business/co-op partner decisionRules는 수정하지 않는다.
+  pushCompound(
+    "partner",
+    collectLoveRelationshipPartnerSignalEvidence(question),
+    12,
+  );
 }
 
 /**
@@ -2511,6 +2536,7 @@ function collectRealEstateBuyCompoundVerbEvidence(
       "매수",
       "매입",
       "구입",
+      "장만",
       "사도",
       "사야",
       "살까",
@@ -2540,6 +2566,7 @@ function collectRealEstateSellCompoundVerbEvidence(
     [
       "매도",
       "처분",
+      "매각",
       "팔아도",
       "팔아야",
       "팔까요",
@@ -2980,6 +3007,32 @@ function collectTopicDecisionCompoundCandidates(
     financialAssetEvidence,
     financialBuyVerbEvidence,
     7,
+  );
+
+  // love/relationship object × 인연 이어* → relationship|love × partner
+  // bare 인연/이어가·비관계 목적어만으로는 만들지 않는다.
+  // 기존 business/co-op partner decisionRules는 수정하지 않는다.
+  const loveRelationshipPartnerContext =
+    collectMatchedDecisionKeywords(
+      question,
+      LOVE_RELATIONSHIP_PARTNER_CONTEXT_NOUNS,
+    );
+  const loveRelationshipPartnerVerbs =
+    collectLoveRelationshipPartnerCompoundVerbEvidence(question);
+
+  pushPair(
+    "relationship",
+    "partner",
+    loveRelationshipPartnerContext,
+    loveRelationshipPartnerVerbs,
+    12,
+  );
+  pushPair(
+    "love",
+    "partner",
+    loveRelationshipPartnerContext,
+    loveRelationshipPartnerVerbs,
+    12,
   );
 
   return compounds;
@@ -5765,6 +5818,13 @@ const REAL_ESTATE_BUY_PROPERTY_NOUNS: readonly string[] = [
   "땅",
   "주택",
   "집",
+  "원룸",
+  "오피스텔",
+  "빌라",
+  "다가구",
+  "임야",
+  "펜션",
+  "별장",
 ];
 
 /**
@@ -5910,6 +5970,10 @@ const MONEY_CASHFLOW_COMPOUND_NOUNS: readonly string[] = [
   "급여",
   "지출",
   "현금흐름",
+  "통장",
+  "생활비",
+  "카드값",
+  "고정비",
 ];
 
 /**
@@ -5943,12 +6007,15 @@ const MONEY_MANAGE_COMPOUND_VERBS: readonly string[] = [
   "운용",
   "돈 관리",
   "현금흐름",
+  "쪼개",
+  "저축",
 ];
 
 const REAL_ESTATE_BUY_VERBS: readonly string[] = [
   "매수",
   "매입",
   "구입",
+  "장만",
   "을 사",
   "를 사",
   "사도",
@@ -5989,6 +6056,11 @@ const BUSINESS_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "자영업",
   "프랜차이즈",
   "쇼핑몰",
+  "빨래방",
+  "모래놀이방",
+  "클라이밍장",
+  "공방",
+  "분식집",
 ];
 
 /**
@@ -6252,9 +6324,9 @@ const BUSINESS_STOP_A2_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
- * P10 G6: property noun × 보유/가지고 있 paraphrase compound용 활용형.
+ * P10 G6: property noun × 보유/가지고 있/들고 가/가져가/지켜보/보유한 채 paraphrase.
  * decisionRules / continue keyword에 전역 추가하지 않는다.
- * bare "보유"/"가지고 있다" 단독 substring 금지.
+ * bare "보유"/"가지고 있다"/"가져가"/"지켜보" 단독 substring 금지.
  * REAL_ESTATE_BUY_PROPERTY_NOUNS와 결합될 때만 continue evidence가 된다.
  * 현금/주식/ETF/코인/물건/상품은 property noun 밖이므로 money/general 경계를 보존한다.
  * buy/sell surface(사도/매수/매도 등)와 섞지 않는다.
@@ -6267,6 +6339,10 @@ const REAL_ESTATE_CONTINUE_COMPOUND_VERBS: readonly string[] = [
   "보유할까",
   "보유할지",
   "가지고 있",
+  "들고 가",
+  "가져가",
+  "지켜보",
+  "보유한 채",
 ];
 
 /**
@@ -6509,7 +6585,7 @@ const LEAVE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
 /**
  * job noun × leave-verb compound용 활용형.
  * LEAVE_JOB_SIGNAL_KEYWORDS / decisionRules에 단독 추가하지 않는다.
- * bare "떠나"/"떠나다"/"관두"/"관두다" 단독 substring 금지.
+ * bare "떠나"/"떠나다"/"관두"/"관두다"/"나오"/"나와" 단독 substring 금지.
  * 연결형(떠나면서/떠나고/관두면서/관두고/…)은 아래 CONNECTIVE 목록으로만 취급한다.
  */
 const JOB_LEAVE_COMPOUND_VERBS: readonly string[] = [
@@ -6521,6 +6597,15 @@ const JOB_LEAVE_COMPOUND_VERBS: readonly string[] = [
   "관둬야",
   "관두는",
   "관둘",
+  "나와도",
+  "나와야",
+  "나오는",
+  "나올",
+  "나오고",
+  "나올까",
+  "나올지",
+  "나온",
+  "나와",
 ];
 
 /**
@@ -6549,6 +6634,9 @@ const JOB_EMPLOYMENT_LEAVE_CONTEXT_NOUNS: readonly string[] = [
   "급여직",
   "월급 자리",
   "월급자리",
+  // employment leave compound(나오·자리를 놓) gate 전용.
+  // bare "자리" 단독으로는 topic/decision을 만들지 않는다(verb 결합 필수).
+  "자리",
 ];
 
 /**
@@ -6599,6 +6687,7 @@ const JOB_LEAVE_PUTDOWN_COMPOUND_VERBS: readonly string[] = [
   "내려놓은",
   "내려놓을까",
   "내려놓을지",
+  "자리를 놓",
 ];
 
 /**
@@ -6608,6 +6697,15 @@ const JOB_LEAVE_PUTDOWN_COMPOUND_VERBS: readonly string[] = [
 const JOB_LEAVE_EXIT_COMPOUND_VERBS: readonly string[] = [
   "엑시트",
   "exit",
+  "나와도",
+  "나와야",
+  "나오는",
+  "나올",
+  "나오고",
+  "나올까",
+  "나올지",
+  "나온",
+  "나와",
 ];
 
 const CHANGE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
@@ -7339,6 +7437,83 @@ function collectRealEstateContinueSignalEvidence(
 }
 
 /**
+ * love/relationship × partner compound용 context noun.
+ * topicRules love/relationship 명사를 재사용하되,
+ * "인연"/"파트너"는 전역 partner keyword로 승격하지 않는다.
+ * (인연은 아래 verb surface "인연 이어*"에만 둔다)
+ */
+const LOVE_RELATIONSHIP_PARTNER_CONTEXT_NOUNS: readonly string[] = [
+  "연애",
+  "연인",
+  "남자친구",
+  "여자친구",
+  "애인",
+  "썸",
+  "관계",
+  "궁합",
+  "친구",
+  "사람",
+  "갈등",
+  "화해",
+  "동료",
+];
+
+/**
+ * love/relationship object × 인연 이어* compound용 surface.
+ * decisionRules partner / continue keyword에 전역 추가하지 않는다.
+ * bare "인연"/"이어가" 단독 substring 금지.
+ */
+const LOVE_RELATIONSHIP_PARTNER_COMPOUND_VERBS: readonly string[] = [
+  "인연 이어",
+];
+
+/**
+ * love/relationship × 인연 이어* partner verb evidence.
+ * bare "인연"/"이어가" 단독 substring은 쓰지 않는다.
+ */
+function collectLoveRelationshipPartnerCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    LOVE_RELATIONSHIP_PARTNER_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * love/relationship object + 인연 이어* compound evidence.
+ * 인연 이어 단독·비관계 목적어만으로는 빈 배열을 반환한다.
+ * 기존 business/co-op partner decisionRules 경로는 건드리지 않는다.
+ */
+function collectLoveRelationshipPartnerSignalEvidence(
+  question: string,
+): string[] {
+  const contextEvidence = collectMatchedDecisionKeywords(
+    question,
+    LOVE_RELATIONSHIP_PARTNER_CONTEXT_NOUNS,
+  );
+
+  if (contextEvidence.length === 0) {
+    return [];
+  }
+
+  const partnerVerbEvidence =
+    collectLoveRelationshipPartnerCompoundVerbEvidence(question);
+
+  if (partnerVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...contextEvidence, ...partnerVerbEvidence];
+}
+
+function hasLoveRelationshipPartnerCompoundSurface(
+  question: string,
+): boolean {
+  return collectLoveRelationshipPartnerSignalEvidence(question).length > 0;
+}
+
+/**
  * P10 G2: entity noun × 설립 compound용 start signal evidence.
  * bare "설립" 단독으로는 topic/decision을 만들지 않는다.
  */
@@ -7671,16 +7846,24 @@ function collectLeaveJobEmploymentTerminationEvidence(
 }
 
 /**
- * P11-7-2I-3 / B5: job noun × 내려놓* evidence.
- * bare 내려놓 단독·비job 목적어만으로는 빈 배열을 반환한다.
+ * P11-7-2I-3 / B5: job/employment noun × 내려놓·자리를 놓 evidence.
+ * bare 내려놓/자리를 놓 단독·비job·비고용 목적어만으로는 빈 배열을 반환한다.
  */
 function collectLeaveJobPutdownEvidence(
   question: string,
 ): string[] {
-  const jobNounEvidence = collectMatchedDecisionKeywords(
-    question,
-    JOB_TOPIC_COMPOUND_NOUNS,
-  );
+  const jobNounEvidence = [
+    ...new Set([
+      ...collectMatchedDecisionKeywords(
+        question,
+        JOB_TOPIC_COMPOUND_NOUNS,
+      ),
+      ...collectMatchedDecisionKeywords(
+        question,
+        JOB_EMPLOYMENT_LEAVE_CONTEXT_NOUNS,
+      ),
+    ]),
+  ];
 
   if (jobNounEvidence.length === 0) {
     return [];
@@ -7716,8 +7899,10 @@ function isJobLeaveGeneralizationEvidenceToken(
  *     또는 관둬도/관둬야/관두는/관둘 계열
  *     또는 떠나면서/떠나고/관두면서/관두고 등 연결형)
  * 3) P11-7-2I-3 / B5 + P11-7-2I-7 / B6:
- *    employment noun × disconnect|exit|end (고용/급여직/월급 자리 × disconnect/exit/끝내*)
- *    또는 job noun × put-down (직장/회사 등 × put-down)
+ *    employment noun × disconnect|exit|end
+ *    (고용/급여직/월급 자리/자리 × disconnect/exit/끝내·나오 계열)
+ *    또는 job/employment noun × put-down
+ *    (직장/회사/자리 등 × 내려놓·자리를 놓 계열)
  */
 function collectLeaveJobSignalEvidence(
   question: string,
