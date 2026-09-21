@@ -6126,6 +6126,8 @@ const BUSINESS_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "빨래방",
   "모래놀이방",
   "클라이밍장",
+  "헬스장",
+  "세탁소",
   "공방",
   "분식집",
   "작업실",
