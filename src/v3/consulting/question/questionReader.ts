@@ -3327,11 +3327,13 @@ function resolveStrongTopicDecisionCompound(
     }
 
     // P11-7-2I-4 / B4: employment/workplace change compound는
-    // choose|confirmDirection surface를 덮을 수 있다 (B14 부분 보호).
+    // choose|confirmDirection|protectHealth surface를 덮을 수 있다 (B14 부분 보호).
     // bare 바꾸다/이동/경로/재배치/오퍼 단독은 compound 자체가 만들어지지 않는다.
+    // protectHealth는 job×changeJob×generalization evidence일 때만 허용한다.
     if (
       (phase1DecisionTarget === "choose"
-        || phase1DecisionTarget === "confirmDirection")
+        || phase1DecisionTarget === "confirmDirection"
+        || phase1DecisionTarget === "protectHealth")
       && compound.topic === "job"
       && compound.decisionTarget === "changeJob"
       && compound.decisionEvidence.some((token) =>
@@ -6807,6 +6809,8 @@ const JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS: readonly string[] = [
   // changeJob employment context 전용 (전역 topic/decision keyword 아님).
   "알바",
   "정규직",
+  "간호조무사",
+  "영업직",
 ];
 
 /**
