@@ -6811,6 +6811,8 @@ const JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS: readonly string[] = [
   "정규직",
   "간호조무사",
   "영업직",
+  "야간직",
+  "사무직",
 ];
 
 /**
