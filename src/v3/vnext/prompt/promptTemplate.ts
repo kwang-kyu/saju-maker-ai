@@ -33,18 +33,18 @@ export function promptTemplateOptionsFromContext(
  * GPT는 explanationOnly이며, Engine 판단을 재계산·대체하지 않는다.
  */
 const ENGINE_DECISION_LOCKED_GUIDANCE = [
-  "Engine Decision Lock: GPT 역할은 explanationOnly이다. Engine이 확정한 최종 판단을 전달하고 설명만 한다.",
-  "Engine의 최종 판단을 변경하지 않는다. 약화하거나 반대로 바꾸지 않는다.",
+  "Engine Decision Lock: GPT 역할은 explanationOnly이다. 확정된 최종 판단을 전달하고 설명만 한다.",
+  "확정된 최종 판단을 변경하지 않는다. 약화하거나 반대로 바꾸지 않는다.",
   "possibility/direction/confidence로 새로운 verdict를 만들지 않는다.",
   "recommendedDirection / prohibitedDirection을 변경하지 않는다.",
   "facts/evidence/conditions/risks는 설명 근거로만 사용한다. verdict 생성 입력으로 쓰지 않는다.",
-  "[엔진이 확정한 최종 판단] 원문을 답변에 정확히 한 번 포함한다. 원문을 새로운 결론으로 요약하거나 대체하지 않는다.",
+  "[확정된 최종 판단] 원문을 답변에 정확히 한 번 포함한다. 원문을 새로운 결론으로 요약하거나 대체하지 않는다.",
   "직접적인 판단을 새로 제시하지 않는다.",
 ].join("\n");
 
 /** lock ON일 때 CONSULTING_FLOW의 재판단 유도 문구 대체. */
 const CONSULTING_FLOW_LOCKED_OPENING =
-  "먼저 [엔진이 확정한 최종 판단] 원문을 전달한 뒤 그 판단을 설명한다.";
+  "먼저 [확정된 최종 판단] 원문을 전달한 뒤 그 판단을 설명한다.";
 
 const CONSULTING_FLOW_REJUDGE_OPENING =
   "먼저 질문에 대한 직접적인 판단을 제시한다.";
@@ -57,6 +57,11 @@ export const GLOBAL_FORBIDDEN_PATTERNS = [
   "투자/법률/의료 전문 판단으로 확대",
   "원본 JSON 데이터 나열",
   "불필요한 사주 전문용어 나열",
+  "엔진 판단",
+  "Engine 판단",
+  "엔진이 판단",
+  "엔진이 확정한 최종 판단",
+  "Engine이 확정한 최종 판단",
 ] as const;
 
 export const QUESTION_MODE_FORBIDDEN_STRUCTURES = [
@@ -67,7 +72,7 @@ export const QUESTION_MODE_FORBIDDEN_STRUCTURES = [
 ] as const;
 
 const SYSTEM_ROLE = [
-  "너의 역할은 상담 엔진이 이미 판단한 결과를 자연스러운 상담 언어로 설명하는 것이다.",
+  "너의 역할은 이미 확정된 상담 판단 결과를 자연스러운 상담 언어로 설명하는 것이다.",
   "GPT는 사주를 판단하지 않는다.",
   "GPT는 새로운 사주 계산을 하지 않는다.",
   "GPT는 제공된 ResponseContext에 없는 근거를 새로 만들지 않는다.",
@@ -121,14 +126,14 @@ function resolveConsultingFlowGuidance(
     }
 
     if (line === "마지막에는 전체 판단을 짧고 분명하게 정리한다.") {
-      return "마지막에는 앞에서 전달·설명한 Engine 판단을 짧고 분명하게 정리한다.";
+      return "마지막에는 앞에서 전달·설명한 확정 판단을 짧고 분명하게 정리한다.";
     }
 
     if (
       line
       === "마지막 정리에서는 새로운 근거, 새로운 조건, 새로운 실행 전략을 추가하지 않는다. 앞에서 설명한 내용을 바탕으로 최종 판단만 짧고 분명하게 정리한다."
     ) {
-      return "마지막 정리에서는 새로운 근거, 새로운 조건, 새로운 실행 전략을 추가하지 않는다. 앞에서 전달·설명한 Engine 판단을 짧고 분명하게 정리한다.";
+      return "마지막 정리에서는 새로운 근거, 새로운 조건, 새로운 실행 전략을 추가하지 않는다. 앞에서 전달·설명한 확정 판단을 짧고 분명하게 정리한다.";
     }
 
     return line;
@@ -140,8 +145,8 @@ function buildDecisionSupportGuidance(
 ): string {
   if (engineDecisionLocked) {
     return [
-      "첫 문장에서 [엔진이 확정한 최종 판단] 원문을 자연스럽게 전달한다.",
-      "Engine 판단을 전달한 뒤 이유 → 조건과 실행 방향 → 위험 → 최종 정리 순으로 자연스럽게 연결한다.",
+      "첫 문장에서 [확정된 최종 판단] 원문을 자연스럽게 전달한다.",
+      "제공된 확정 판단을 전달한 뒤 이유 → 조건과 실행 방향 → 위험 → 최종 정리 순으로 자연스럽게 연결한다.",
       "판단, 조건, 위험, 시기를 이해하기 쉽게 연결하되 보고서 제목은 쓰지 않는다.",
       "무조건 추천 또는 무조건 금지 표현을 사용하지 않는다.",
       "같은 근거를 반복하지 않고 각 문단에서 아직 다루지 않은 제공된 실행 정보를 제공한다.",
