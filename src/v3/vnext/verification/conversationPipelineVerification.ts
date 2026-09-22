@@ -854,6 +854,119 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
         ],
       };
     }),
+
+    runCase("case-12-switch-clarification-birth-data-contract", async () => {
+      const setupQuestion =
+        "이 여자랑 결혼해도 돼? 상대방이 음력 1967년 4월 2일생 양띠 여성이야";
+      const switchQuestion = "다른 사람 어때?";
+      const birthDateAnswer = "1988년 5월 10일";
+      const calendarTypeAnswer = "양력";
+      const genderAnswer = "여성";
+
+      const setup = await runVNextConversationPipeline({
+        question: setupQuestion,
+        input: {
+          request: buildVerificationRequest(setupQuestion),
+          gateway,
+        },
+      });
+
+      const first = await runVNextConversationPipeline({
+        session: setup.session,
+        question: switchQuestion,
+        input: {
+          request: buildVerificationRequest(switchQuestion),
+          gateway,
+        },
+      });
+
+      const firstPending =
+        first.session.contextMetadata.pendingMissingContextKeys;
+
+      const second = await runVNextConversationPipeline({
+        session: first.session,
+        question: birthDateAnswer,
+        input: {
+          request: buildVerificationRequest(birthDateAnswer),
+          gateway,
+        },
+      });
+
+      const secondPending =
+        second.session.contextMetadata.pendingMissingContextKeys;
+
+      const third = await runVNextConversationPipeline({
+        session: second.session,
+        question: calendarTypeAnswer,
+        input: {
+          request: buildVerificationRequest(calendarTypeAnswer),
+          gateway,
+        },
+      });
+
+      const thirdPending =
+        third.session.contextMetadata.pendingMissingContextKeys;
+
+      const fourth = await runVNextConversationPipeline({
+        session: third.session,
+        question: genderAnswer,
+        input: {
+          request: buildVerificationRequest(genderAnswer),
+          gateway,
+        },
+      });
+
+      const fourthPending =
+        fourth.session.contextMetadata.pendingMissingContextKeys;
+
+      return {
+        passed:
+          // Q1 switch: require full birth-data contract (time optional)
+          first.response.source === "clarification"
+          && first.session.contextMetadata.awaitingClarification
+          && firstPending.includes("counterpartBirthDate")
+          && firstPending.includes("counterpartCalendarType")
+          && firstPending.includes("counterpartGender")
+          && !firstPending.includes("counterpartBirthTime")
+          // Q2 birthDate only: clarification must not close
+          && second.followUpType === "clarificationAnswer"
+          && second.response.source === "clarification"
+          && second.session.contextMetadata.awaitingClarification
+          && !secondPending.includes("counterpartBirthDate")
+          && secondPending.includes("counterpartCalendarType")
+          && secondPending.includes("counterpartGender")
+          && !secondPending.includes("counterpartBirthTime")
+          // Q3 calendarType: gender still required
+          && third.followUpType === "clarificationAnswer"
+          && third.response.source === "clarification"
+          && third.session.contextMetadata.awaitingClarification
+          && !thirdPending.includes("counterpartBirthDate")
+          && !thirdPending.includes("counterpartCalendarType")
+          && thirdPending.includes("counterpartGender")
+          // Q4 gender: switch clarification completes
+          && fourth.followUpType === "clarificationAnswer"
+          && !fourth.session.contextMetadata.awaitingClarification
+          && fourthPending.length === 0
+          && fourth.response.source !== "clarification",
+        details: [
+          `q1Source=${first.response.source}`,
+          `q1Awaiting=${first.session.contextMetadata.awaitingClarification}`,
+          `q1Pending=${firstPending.join(",") || "none"}`,
+          `q2FollowUpType=${second.followUpType}`,
+          `q2Source=${second.response.source}`,
+          `q2Awaiting=${second.session.contextMetadata.awaitingClarification}`,
+          `q2Pending=${secondPending.join(",") || "none"}`,
+          `q3FollowUpType=${third.followUpType}`,
+          `q3Source=${third.response.source}`,
+          `q3Awaiting=${third.session.contextMetadata.awaitingClarification}`,
+          `q3Pending=${thirdPending.join(",") || "none"}`,
+          `q4FollowUpType=${fourth.followUpType}`,
+          `q4Source=${fourth.response.source}`,
+          `q4Awaiting=${fourth.session.contextMetadata.awaitingClarification}`,
+          `q4Pending=${fourthPending.join(",") || "none"}`,
+        ],
+      };
+    }),
   ]);
 
   return {

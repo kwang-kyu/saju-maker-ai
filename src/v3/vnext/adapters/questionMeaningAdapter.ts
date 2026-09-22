@@ -320,17 +320,47 @@ function buildMissingContext(
     return items;
   }
 
-  // switch → missing birthDate: enter existing clarification path.
-  // Do not force when the new counterpart already has birthDate.
-  if (
+  // switch → missing birth-data: enter existing clarification path.
+  // Align with compatibility birth-data contract
+  // (birthDate + calendarType + gender required; birthTime optional).
+  // clarificationAnswer turns may drop continuity==="switch" after the
+  // initial switch turn; keep the same contract while birthDate is present
+  // but calendarType/gender are still incomplete.
+  const counterpart = input.counterpartFacts;
+  const requiresSwitchBirthDataContract =
     input.counterpartContinuity === "switch"
-    && !input.counterpartFacts?.birthDate
-  ) {
-    items.push({
-      key: "counterpartBirthDate",
-      description: "상대방 생년월일",
-      required: true,
-    });
+    || (
+      Boolean(counterpart?.birthDate)
+      && (
+        !counterpart?.calendarType
+        || !counterpart?.gender
+      )
+    );
+
+  if (requiresSwitchBirthDataContract) {
+    if (!counterpart?.birthDate) {
+      items.push({
+        key: "counterpartBirthDate",
+        description: "상대방 생년월일",
+        required: true,
+      });
+    }
+
+    if (!counterpart?.calendarType) {
+      items.push({
+        key: "counterpartCalendarType",
+        description: "상대방 양력/음력",
+        required: true,
+      });
+    }
+
+    if (!counterpart?.gender) {
+      items.push({
+        key: "counterpartGender",
+        description: "상대방 성별",
+        required: true,
+      });
+    }
   }
 
   return items;
