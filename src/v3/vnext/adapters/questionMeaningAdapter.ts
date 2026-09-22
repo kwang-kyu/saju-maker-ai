@@ -267,7 +267,11 @@ function buildMissingContext(
   const items: MissingContextItem[] = [];
 
   // Existing compatibility missingContext gate — keep intact.
-  if (input.analysisMode === "compatibility") {
+  // Also collect counterpart birth-data when Decision requires it for marry.
+  if (
+    input.analysisMode === "compatibility"
+    || input.decisionTarget === "marry"
+  ) {
     const counterpart = input.counterpartFacts;
 
     if (!counterpart.birthDate) {
