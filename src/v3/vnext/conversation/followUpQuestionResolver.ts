@@ -139,6 +139,19 @@ function isScenarioRefinementQuestion(
   return /하면|경우|만약|규모|작게|크게/.test(normalizedQuestion);
 }
 
+/**
+ * BIRTH_TIME_PATTERN 부분일치·short-answer fallback이
+ * 명백한 질문형 입력까지 clarificationAnswer로 확정하지 않도록 하는 post-guard.
+ * factual short answer("유시입니다." 등)는 통과시킨다.
+ */
+function isObviousQuestionForm(normalizedQuestion: string): boolean {
+  if (/[?？]/.test(normalizedQuestion)) {
+    return true;
+  }
+
+  return /(?:나요|까요|가요|습니까)\s*\.?$/.test(normalizedQuestion);
+}
+
 function isClarificationAnswer(
   normalizedQuestion: string,
   contextMetadata: ConversationContextMetadata,
@@ -148,18 +161,18 @@ function isClarificationAnswer(
   }
 
   if (CLARIFICATION_ANSWER_PATTERN.test(normalizedQuestion)) {
-    return true;
+    return !isObviousQuestionForm(normalizedQuestion);
   }
 
   if (BIRTH_TIME_PATTERN.test(normalizedQuestion)) {
-    return true;
+    return !isObviousQuestionForm(normalizedQuestion);
   }
 
   if (
     contextMetadata.pendingMissingContextKeys.length > 0
     && normalizedQuestion.length <= 30
   ) {
-    return true;
+    return !isObviousQuestionForm(normalizedQuestion);
   }
 
   return false;
