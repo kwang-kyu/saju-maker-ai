@@ -1,3 +1,13 @@
+/**
+ * Question Meaning Adapter — taxonomy projection boundary.
+ *
+ * Model B QuestionIntent (speech-act)
+ *   → QuestionMeaningIntent (vNext scenario-routing taxonomy)
+ *
+ * Reader axes를 QuestionMeaning으로 투영한다. 두 Intent taxonomy를 병합하지 않으며
+ * 새 판단을 만들지 않는다.
+ */
+
 import type {
   ConclusionNature,
   QuestionAnalysisMode,
@@ -157,6 +167,7 @@ function mapConclusionNatureToIntent(
   }
 }
 
+/** QuestionIntent (speech-act) → QuestionMeaningIntent (scenario-routing) projection. */
 const INTENT_TO_MEANING: Record<
   QuestionIntent,
   QuestionMeaningIntent
@@ -267,6 +278,14 @@ function buildMissingContext(
       });
     }
 
+    if (!counterpart.calendarType) {
+      items.push({
+        key: "counterpartCalendarType",
+        description: "상대방 양력/음력",
+        required: true,
+      });
+    }
+
     if (
       input.analysisScope === "fullSaju"
       && !counterpart.birthTime
@@ -282,7 +301,7 @@ function buildMissingContext(
       items.push({
         key: "counterpartGender",
         description: "상대방 성별",
-        required: false,
+        required: true,
       });
     }
 

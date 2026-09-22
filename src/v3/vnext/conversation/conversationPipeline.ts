@@ -1015,6 +1015,7 @@ function mergeClarificationIntoRequest(
   const counterpartKeys = new Set([
     "counterpartBirthDate",
     "counterpartBirthTime",
+    "counterpartCalendarType",
     "counterpartGender",
     "counterpartZodiac",
   ]);

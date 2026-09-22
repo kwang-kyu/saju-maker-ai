@@ -221,6 +221,8 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
       const q1 = "상대방과 궁합은 어떤가요?";
       const q2 = "유시입니다";
       const q3 = "1988년 5월 10일";
+      const q4 = "양력";
+      const q5 = "여성";
 
       const first = await runVNextConversationPipeline({
         question: q1,
@@ -258,29 +260,80 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
       const thirdPending =
         third.session.contextMetadata.pendingMissingContextKeys;
 
+      const fourth = await runVNextConversationPipeline({
+        session: third.session,
+        question: q4,
+        input: {
+          request: buildVerificationRequest(q4),
+          gateway,
+        },
+      });
+
+      const fourthPending =
+        fourth.session.contextMetadata.pendingMissingContextKeys;
+
+      const fifth = await runVNextConversationPipeline({
+        session: fourth.session,
+        question: q5,
+        input: {
+          request: buildVerificationRequest(q5),
+          gateway,
+        },
+      });
+
+      const fifthPending =
+        fifth.session.contextMetadata.pendingMissingContextKeys;
+      const fifthFacts = fifth.session.contextMetadata.counterpartFacts;
+
       return {
         passed:
-          // Q1: start clarification for counterpart birth date
+          // Q1: start clarification for complete birth-data contract
           first.response.source === "clarification"
           && first.response.apiCallCount === 0
           && first.session.contextMetadata.awaitingClarification
           && firstPending.includes("counterpartBirthDate")
+          && firstPending.includes("counterpartCalendarType")
+          && firstPending.includes("counterpartGender")
+          && !firstPending.includes("counterpartBirthTime")
           && originalQuestion === q1
-          // Q2: partial clarificationAnswer keeps awaiting state
+          // Q2: unrecognized birthTime stays optional; required keys remain
           && second.followUpType === "clarificationAnswer"
           && second.response.source === "clarification"
           && second.response.apiCallCount === 0
           && second.session.contextMetadata.awaitingClarification
           && secondPending.includes("counterpartBirthDate")
+          && secondPending.includes("counterpartCalendarType")
+          && secondPending.includes("counterpartGender")
+          && !secondPending.includes("counterpartBirthTime")
           && second.session.contextMetadata.originalQuestion === originalQuestion
-          // Q3: complete clarification, keep original compatibility path
+          // Q3: birthDate filled; calendarType/gender still required
           && third.followUpType === "clarificationAnswer"
+          && third.response.source === "clarification"
+          && third.session.contextMetadata.awaitingClarification
+          && !thirdPending.includes("counterpartBirthDate")
+          && thirdPending.includes("counterpartCalendarType")
+          && thirdPending.includes("counterpartGender")
+          && !thirdPending.includes("counterpartBirthTime")
           && third.session.contextMetadata.originalQuestion === originalQuestion
-          && !third.session.contextMetadata.awaitingClarification
-          && thirdPending.length === 0
-          && third.response.source !== "clarification"
-          && third.turn.questionMeaning?.domain === "compatibility"
-          && third.session.turns.length === 3,
+          // Q4: calendarType filled; gender still required
+          && fourth.followUpType === "clarificationAnswer"
+          && fourth.response.source === "clarification"
+          && fourth.session.contextMetadata.awaitingClarification
+          && !fourthPending.includes("counterpartBirthDate")
+          && !fourthPending.includes("counterpartCalendarType")
+          && fourthPending.includes("counterpartGender")
+          && fourth.session.contextMetadata.originalQuestion === originalQuestion
+          // Q5: complete required birth-data; compatibility path opens
+          && fifth.followUpType === "clarificationAnswer"
+          && fifth.session.contextMetadata.originalQuestion === originalQuestion
+          && !fifth.session.contextMetadata.awaitingClarification
+          && fifthPending.length === 0
+          && fifth.response.source !== "clarification"
+          && fifth.turn.questionMeaning?.domain === "compatibility"
+          && fifthFacts?.birthDate === "1988-05-10"
+          && fifthFacts?.calendarType === "solar"
+          && fifthFacts?.gender === "female"
+          && fifth.session.turns.length === 5,
         details: [
           `q1Source=${first.response.source}`,
           `q1Awaiting=${first.session.contextMetadata.awaitingClarification}`,
@@ -294,9 +347,20 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
           `q3Source=${third.response.source}`,
           `q3Awaiting=${third.session.contextMetadata.awaitingClarification}`,
           `q3Pending=${thirdPending.join(",") || "none"}`,
-          `q3Domain=${third.turn.questionMeaning?.domain ?? "none"}`,
-          `originalQuestion=${third.session.contextMetadata.originalQuestion}`,
-          `turns=${third.session.turns.length}`,
+          `q4FollowUpType=${fourth.followUpType}`,
+          `q4Source=${fourth.response.source}`,
+          `q4Awaiting=${fourth.session.contextMetadata.awaitingClarification}`,
+          `q4Pending=${fourthPending.join(",") || "none"}`,
+          `q5FollowUpType=${fifth.followUpType}`,
+          `q5Source=${fifth.response.source}`,
+          `q5Awaiting=${fifth.session.contextMetadata.awaitingClarification}`,
+          `q5Pending=${fifthPending.join(",") || "none"}`,
+          `q5Domain=${fifth.turn.questionMeaning?.domain ?? "none"}`,
+          `q5BirthDate=${fifthFacts?.birthDate ?? "none"}`,
+          `q5CalendarType=${fifthFacts?.calendarType ?? "none"}`,
+          `q5Gender=${fifthFacts?.gender ?? "none"}`,
+          `originalQuestion=${fifth.session.contextMetadata.originalQuestion}`,
+          `turns=${fifth.session.turns.length}`,
         ],
       };
     }),
