@@ -1380,10 +1380,15 @@ function updateSessionContextMetadata(
   let originalQuestion = metadata.originalQuestion;
 
   if (followUpType === "clarificationAnswer") {
-    awaitingClarification = false;
-    pendingMissingContextKeys = action?.type === "clarification"
-      ? collectPendingMissingContextKeys(action)
-      : [];
+    // Partial answers must keep awaitingClarification while required
+    // context keys remain on a clarification action.
+    if (action?.type === "clarification") {
+      pendingMissingContextKeys = collectPendingMissingContextKeys(action);
+      awaitingClarification = pendingMissingContextKeys.length > 0;
+    } else {
+      awaitingClarification = false;
+      pendingMissingContextKeys = [];
+    }
   } else if (action?.type === "clarification") {
     awaitingClarification = true;
     pendingMissingContextKeys = collectPendingMissingContextKeys(action);

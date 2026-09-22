@@ -218,42 +218,85 @@ export async function verifyConversationPipeline(): Promise<ConversationPipeline
     }),
 
     runCase("case-4-clarification-answer", async () => {
-      const clarification = await runVNextConversationPipeline({
-        question: "상대방과 궁합은 어떤가요?",
+      const q1 = "상대방과 궁합은 어떤가요?";
+      const q2 = "유시입니다";
+      const q3 = "1988년 5월 10일";
+
+      const first = await runVNextConversationPipeline({
+        question: q1,
         input: {
-          request: buildVerificationRequest("상대방과 궁합은 어떤가요?"),
+          request: buildVerificationRequest(q1),
           gateway,
         },
       });
 
-      const originalQuestion =
-        clarification.session.contextMetadata.originalQuestion;
+      const originalQuestion = first.session.contextMetadata.originalQuestion;
+      const firstPending =
+        first.session.contextMetadata.pendingMissingContextKeys;
 
-      const result = await runVNextConversationPipeline({
-        session: clarification.session,
-        question: "유시입니다",
+      const second = await runVNextConversationPipeline({
+        session: first.session,
+        question: q2,
         input: {
-          request: buildVerificationRequest("유시입니다"),
+          request: buildVerificationRequest(q2),
           gateway,
         },
       });
+
+      const secondPending =
+        second.session.contextMetadata.pendingMissingContextKeys;
+
+      const third = await runVNextConversationPipeline({
+        session: second.session,
+        question: q3,
+        input: {
+          request: buildVerificationRequest(q3),
+          gateway,
+        },
+      });
+
+      const thirdPending =
+        third.session.contextMetadata.pendingMissingContextKeys;
 
       return {
         passed:
-          clarification.response.source === "clarification"
-          && clarification.response.apiCallCount === 0
-          && clarification.session.contextMetadata.awaitingClarification
-          && result.followUpType === "clarificationAnswer"
-          && originalQuestion !== null
-          && result.session.contextMetadata.originalQuestion === originalQuestion
-          && !result.session.contextMetadata.awaitingClarification
-          && result.session.turns.length === 2,
+          // Q1: start clarification for counterpart birth date
+          first.response.source === "clarification"
+          && first.response.apiCallCount === 0
+          && first.session.contextMetadata.awaitingClarification
+          && firstPending.includes("counterpartBirthDate")
+          && originalQuestion === q1
+          // Q2: partial clarificationAnswer keeps awaiting state
+          && second.followUpType === "clarificationAnswer"
+          && second.response.source === "clarification"
+          && second.response.apiCallCount === 0
+          && second.session.contextMetadata.awaitingClarification
+          && secondPending.includes("counterpartBirthDate")
+          && second.session.contextMetadata.originalQuestion === originalQuestion
+          // Q3: complete clarification, keep original compatibility path
+          && third.followUpType === "clarificationAnswer"
+          && third.session.contextMetadata.originalQuestion === originalQuestion
+          && !third.session.contextMetadata.awaitingClarification
+          && thirdPending.length === 0
+          && third.response.source !== "clarification"
+          && third.turn.questionMeaning?.domain === "compatibility"
+          && third.session.turns.length === 3,
         details: [
-          `clarificationSource=${clarification.response.source}`,
-          `followUpType=${result.followUpType}`,
-          `originalQuestion=${result.session.contextMetadata.originalQuestion}`,
-          `awaitingClarification=${result.session.contextMetadata.awaitingClarification}`,
-          `executedStages=${result.executionMetadata.executedStages.join(",")}`,
+          `q1Source=${first.response.source}`,
+          `q1Awaiting=${first.session.contextMetadata.awaitingClarification}`,
+          `q1Pending=${firstPending.join(",") || "none"}`,
+          `q2FollowUpType=${second.followUpType}`,
+          `q2Source=${second.response.source}`,
+          `q2ApiCallCount=${second.response.apiCallCount}`,
+          `q2Awaiting=${second.session.contextMetadata.awaitingClarification}`,
+          `q2Pending=${secondPending.join(",") || "none"}`,
+          `q3FollowUpType=${third.followUpType}`,
+          `q3Source=${third.response.source}`,
+          `q3Awaiting=${third.session.contextMetadata.awaitingClarification}`,
+          `q3Pending=${thirdPending.join(",") || "none"}`,
+          `q3Domain=${third.turn.questionMeaning?.domain ?? "none"}`,
+          `originalQuestion=${third.session.contextMetadata.originalQuestion}`,
+          `turns=${third.session.turns.length}`,
         ],
       };
     }),
