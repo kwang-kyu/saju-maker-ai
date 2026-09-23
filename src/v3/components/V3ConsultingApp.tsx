@@ -1,6 +1,9 @@
 ﻿import {
+  lazy,
+  Suspense,
   useState,
   type FormEvent,
+  type ReactNode,
 } from "react";
 
 import {
@@ -35,28 +38,66 @@ import {
 import {
   useVNextEntry,
 } from "../vnext/entry/vNextEntryUIAdapter";
-import {
-  buildVNextConsultingRequestFromBirthProfile,
-} from "../vnext/entry/vNextBirthInputAdapter";
-import {
-  VNextReportShell,
-} from "../vnext/report/VNextReportShell";
-import {
-  useVNextReport,
-} from "../vnext/report/vNextReportUIAdapter";
 import "../vnext/entry/vNextEntry.css";
 import {
   isVNextModeEnabled,
-  useVNextConsulting,
-} from "../vnext/ui/vNextConsultingUIAdapter";
-import {
-  VNextConsultingPanel,
-} from "../vnext/ui/VNextConsultingPanel";
-import {
-  VNextConsultingShell,
-} from "../vnext/ui/VNextConsultingShell";
+} from "../vnext/ui/vNextMode";
 
 import "./v3ConsultingApp.css";
+
+const VNextConsultingPhaseRoot =
+  lazy(
+    async () => {
+      const module =
+        await import(
+          "../vnext/ui/VNextConsultingPhaseRoot"
+        );
+
+      return {
+        default:
+          module.VNextConsultingPhaseRoot,
+      };
+    },
+  );
+
+const VNextReportPhaseRoot =
+  lazy(
+    async () => {
+      const module =
+        await import(
+          "../vnext/report/VNextReportPhaseRoot"
+        );
+
+      return {
+        default:
+          module.VNextReportPhaseRoot,
+      };
+    },
+  );
+
+function VNextPhaseLoadingFallback():
+  ReactNode {
+  return (
+    <div
+      style={{
+        alignItems: "center",
+        background: "#f7f4ef",
+        color: "#1f2937",
+        display: "flex",
+        fontFamily: "Georgia, \"Times New Roman\", serif",
+        fontSize: "1.5rem",
+        fontWeight: 600,
+        height: "100vh",
+        justifyContent: "center",
+        letterSpacing: "0.12em",
+        margin: 0,
+        width: "100%",
+      }}
+    >
+      천운문
+    </div>
+  );
+}
 
   type Gender =
     V3ConsultingRequest[
@@ -182,31 +223,6 @@ function buildV3AuthRedirectUrl():
       signInWithKakao,
       signOut,
     } = useV3ConsultingAuth();
-    const {
-      state: vNextState,
-      loadingLabel: vNextLoadingLabel,
-      isBusy: vNextIsBusy,
-      isStreaming: vNextIsStreaming,
-      submitQuestion: submitVNextQuestion,
-      submitFollowUpQuestion: submitVNextFollowUpQuestion,
-      reset: resetVNextConsulting,
-    } = useVNextConsulting();
-    const {
-      state: vNextReportState,
-      loadingLabel: vNextReportLoadingLabel,
-      isBusy: vNextReportIsBusy,
-      isStreaming: vNextReportIsStreaming,
-      startReport: startVNextReport,
-      setActiveSection: setVNextReportActiveSection,
-    } = useVNextReport();
-    const [
-      vNextFollowUpQuestion,
-      setVNextFollowUpQuestion,
-    ] = useState("");
-    const [
-      vNextFollowUpError,
-      setVNextFollowUpError,
-    ] = useState("");
     const [
       name,
       setName,
@@ -302,8 +318,6 @@ function buildV3AuthRedirectUrl():
       if (
         isSubmitting
         || authLoading
-        || vNextIsBusy
-        || vNextIsStreaming
       ) {
         return;
       }
@@ -379,23 +393,9 @@ function buildV3AuthRedirectUrl():
         };
 
       if (vNextMode) {
-        try {
-          await submitVNextQuestion(
-            request,
-          );
-        } catch (
-          error
-        ) {
-          setErrorMessage(
-            readErrorMessage(
-              error,
-            ),
-          );
-        } finally {
-          setIsSubmitting(
-            false,
-          );
-        }
+        setIsSubmitting(
+          false,
+        );
 
         return;
       }
@@ -433,91 +433,6 @@ function buildV3AuthRedirectUrl():
       }
     }
 
-    function buildVNextConsultingRequest(
-      questionText: string,
-    ): V3ConsultingRequest {
-      if (vNextEntryState.birthProfile) {
-        return buildVNextConsultingRequestFromBirthProfile(
-          vNextEntryState.birthProfile,
-          questionText,
-          getTodayIsoDate(),
-          {
-            maritalStatus,
-            hasChildren: resolveNullableBooleanFromSelection(hasChildren),
-            occupationStatus,
-            hasActiveBusiness: normalizeHasActiveBusinessForRequest(
-              occupationStatus,
-              hasActiveBusiness,
-            ),
-            financialResponsibility,
-          },
-        );
-      }
-
-      return {
-        sajuInput: {
-          name: name.trim(),
-          birthDate,
-          birthTime,
-          gender,
-          calendarType,
-          referenceDate: getTodayIsoDate(),
-          luckStartMethod: "minuteBased",
-        },
-        humanLifeContextInput: {
-          maritalStatus,
-          hasChildren: resolveNullableBooleanFromSelection(hasChildren),
-          occupationStatus,
-          hasActiveBusiness: normalizeHasActiveBusinessForRequest(
-            occupationStatus,
-            hasActiveBusiness,
-          ),
-          financialResponsibility,
-        },
-        question: questionText,
-      };
-    }
-
-    async function handleVNextFollowUpSubmit() {
-      const normalizedFollowUp =
-        vNextFollowUpQuestion.trim();
-
-      if (
-        normalizedFollowUp.length
-        === 0
-        || vNextIsBusy
-        || vNextIsStreaming
-        || !authenticated
-      ) {
-        return;
-      }
-
-      setVNextFollowUpError(
-        "",
-      );
-
-      try {
-        await submitVNextFollowUpQuestion(
-          normalizedFollowUp,
-          buildVNextConsultingRequest(
-            normalizedFollowUp,
-          ),
-        );
-
-        setVNextFollowUpQuestion(
-          "",
-        );
-      } catch (
-        error
-      ) {
-        setVNextFollowUpError(
-          readErrorMessage(
-            error,
-          ),
-        );
-      }
-    }
-
     if (showVNextEntryFlow) {
       return (
         <VNextEntryFlow
@@ -533,88 +448,79 @@ function buildV3AuthRedirectUrl():
 
     if (showVNextReportFlow && vNextEntryState.birthProfile) {
       return (
-        <VNextReportShell
-          birthProfile={vNextEntryState.birthProfile}
-          authenticated={authenticated}
-          authLoading={authLoading}
-          authError={authError}
-          onSignIn={() => {
-            void signInWithKakao(
-              buildV3AuthRedirectUrl(),
-            )
-              .catch(
-                (error) => {
-                  setErrorMessage(
-                    readErrorMessage(
-                      error,
-                    ),
-                  );
-                },
-              );
-          }}
-          onSignOut={() => {
-            void signOut()
-              .catch(
-                (error) => {
-                  setErrorMessage(
-                    readErrorMessage(
-                      error,
-                    ),
-                  );
-                },
-              );
-          }}
-          state={vNextReportState}
-          loadingLabel={vNextReportLoadingLabel}
-          isBusy={vNextReportIsBusy}
-          isStreaming={vNextReportIsStreaming}
-          startReport={startVNextReport}
-          setActiveSection={setVNextReportActiveSection}
-        />
+        <Suspense fallback={<VNextPhaseLoadingFallback />}>
+          <VNextReportPhaseRoot
+            birthProfile={vNextEntryState.birthProfile}
+            authenticated={authenticated}
+            authLoading={authLoading}
+            authError={authError}
+            onSignIn={() => {
+              void signInWithKakao(
+                buildV3AuthRedirectUrl(),
+              )
+                .catch(
+                  (error) => {
+                    setErrorMessage(
+                      readErrorMessage(
+                        error,
+                      ),
+                    );
+                  },
+                );
+            }}
+            onSignOut={() => {
+              void signOut()
+                .catch(
+                  (error) => {
+                    setErrorMessage(
+                      readErrorMessage(
+                        error,
+                      ),
+                    );
+                  },
+                );
+            }}
+          />
+        </Suspense>
       );
     }
 
     if (showVNextConsultingFlow && vNextEntryState.birthProfile) {
       return (
-        <VNextConsultingShell
-          birthProfile={vNextEntryState.birthProfile}
-          authenticated={authenticated}
-          authLoading={authLoading}
-          authError={authError}
-          onSignIn={() => {
-            void signInWithKakao(
-              buildV3AuthRedirectUrl(),
-            )
-              .catch(
-                (error) => {
-                  setErrorMessage(
-                    readErrorMessage(
-                      error,
-                    ),
-                  );
-                },
-              );
-          }}
-          onSignOut={() => {
-            void signOut()
-              .catch(
-                (error) => {
-                  setErrorMessage(
-                    readErrorMessage(
-                      error,
-                    ),
-                  );
-                },
-              );
-          }}
-          state={vNextState}
-          loadingLabel={vNextLoadingLabel}
-          isBusy={vNextIsBusy}
-          isStreaming={vNextIsStreaming}
-          submitQuestion={submitVNextQuestion}
-          submitFollowUpQuestion={submitVNextFollowUpQuestion}
-          onNewConsultation={resetVNextConsulting}
-        />
+        <Suspense fallback={<VNextPhaseLoadingFallback />}>
+          <VNextConsultingPhaseRoot
+            birthProfile={vNextEntryState.birthProfile}
+            authenticated={authenticated}
+            authLoading={authLoading}
+            authError={authError}
+            onSignIn={() => {
+              void signInWithKakao(
+                buildV3AuthRedirectUrl(),
+              )
+                .catch(
+                  (error) => {
+                    setErrorMessage(
+                      readErrorMessage(
+                        error,
+                      ),
+                    );
+                  },
+                );
+            }}
+            onSignOut={() => {
+              void signOut()
+                .catch(
+                  (error) => {
+                    setErrorMessage(
+                      readErrorMessage(
+                        error,
+                      ),
+                    );
+                  },
+                );
+            }}
+          />
+        </Suspense>
       );
     }
 
@@ -1145,17 +1051,12 @@ function buildV3AuthRedirectUrl():
                   type="submit"
                   disabled={
                     isSubmitting
-                    || vNextIsBusy
-                    || vNextIsStreaming
                     || authLoading
                     || !authenticated
                   }
                 >
                   {isSubmitting
-                  || vNextIsBusy
-                  || vNextIsStreaming
-                    ? vNextLoadingLabel
-                      ?? "사람의 구조와 질문을 읽는 중입니다"
+                    ? "사람의 구조와 질문을 읽는 중입니다"
                     : authLoading
                       ? "로그인 상태 확인 중"
                       : authenticated
@@ -1179,21 +1080,6 @@ function buildV3AuthRedirectUrl():
               </div>
 
               <div className="v3-consulting-result-body">
-                {vNextMode ? (
-                  <VNextConsultingPanel
-                    state={vNextState}
-                    loadingLabel={vNextLoadingLabel}
-                    isBusy={vNextIsBusy}
-                    isStreaming={vNextIsStreaming}
-                    followUpQuestion={vNextFollowUpQuestion}
-                    onFollowUpQuestionChange={setVNextFollowUpQuestion}
-                    onFollowUpSubmit={() => {
-                      void handleVNextFollowUpSubmit();
-                    }}
-                    followUpErrorMessage={vNextFollowUpError}
-                  />
-                ) : null}
-
                 {!vNextMode
                 && isSubmitting ? (
                   <div className="v3-consulting-loading">

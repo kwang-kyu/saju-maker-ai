@@ -4,10 +4,6 @@
  * UI 상태 머신 — analyzing / clarifying / generating / streaming / completed를 분리한다.
  */
 
-import {
-  createConversationSession,
-  runVNextConversationPipeline,
-} from "../conversation/conversationPipeline.js";
 import type {
   ConversationSession,
 } from "../conversation/conversationSession.js";
@@ -32,9 +28,18 @@ import {
   type VNextConsultingPhase,
   type VNextConsultingSessionState,
 } from "./vNextConsultingState.js";
-import {
-  runVNextConsultingPipeline,
-} from "./vNextConsultingPipeline.js";
+
+type VNextConversationPipelineResult = Awaited<
+  ReturnType<
+    typeof import("../conversation/conversationPipeline.js").runVNextConversationPipeline
+  >
+>;
+
+type VNextConsultingPipelineResult = Awaited<
+  ReturnType<
+    typeof import("./vNextConsultingPipeline.js").runVNextConsultingPipeline
+  >
+>;
 
 export type VNextConsultingControllerOptions = {
   gateway?: ResponseGateway;
@@ -177,6 +182,10 @@ export class VNextConsultingController {
     const previousTurns = this.state.turns;
 
     try {
+      const {
+        runVNextConversationPipeline,
+      } = await import("../conversation/conversationPipeline.js");
+
       const pipelineResult = await runVNextConversationPipeline({
         session: this.conversationSession ?? undefined,
         question,
@@ -315,7 +324,7 @@ export async function simulateVNextConsultingFlow(
   onPhaseChange?: (phase: VNextConsultingPhase) => void,
 ): Promise<{
   phases: VNextConsultingPhase[];
-  result: Awaited<ReturnType<typeof runVNextConsultingPipeline>>;
+  result: VNextConsultingPipelineResult;
 }> {
   const phases: VNextConsultingPhase[] = ["idle"];
   const resolvedGateway = gateway ?? createMockResponseGateway();
@@ -323,6 +332,10 @@ export async function simulateVNextConsultingFlow(
 
   onPhaseChange?.("analyzing");
   phases.push("analyzing");
+
+  const {
+    runVNextConsultingPipeline,
+  } = await import("./vNextConsultingPipeline.js");
 
   const pipelineResult = await runVNextConsultingPipeline({
     request,
@@ -365,11 +378,15 @@ export async function simulateVNextConversationFlow(
   onPhaseChange?: (phase: VNextConsultingPhase) => void,
 ): Promise<{
   phases: VNextConsultingPhase[];
-  initialResult: Awaited<ReturnType<typeof runVNextConversationPipeline>>;
-  followUpResult: Awaited<ReturnType<typeof runVNextConversationPipeline>>;
+  initialResult: VNextConversationPipelineResult;
+  followUpResult: VNextConversationPipelineResult;
 }> {
   const phases: VNextConsultingPhase[] = ["idle"];
   const resolvedGateway = gateway ?? createMockResponseGateway();
+  const {
+    createConversationSession,
+    runVNextConversationPipeline,
+  } = await import("../conversation/conversationPipeline.js");
   let session = createConversationSession();
   let hasStreamed = false;
 

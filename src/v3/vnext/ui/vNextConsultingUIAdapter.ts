@@ -126,16 +126,6 @@ export function useVNextConsulting(
   };
 }
 
-export function isVNextModeEnabled(
-  location: Pick<Location, "hash" | "search"> = globalThis.location,
-): boolean {
-  const hashQuery = location.hash.includes("?")
-    ? location.hash.split("?")[1]
-    : "";
-
-  const params = new URLSearchParams(
-    hashQuery || location.search.replace(/^\?/, ""),
-  );
-
-  return params.get("vnext") === "1";
-}
+export {
+  isVNextModeEnabled,
+} from "./vNextMode.js";
