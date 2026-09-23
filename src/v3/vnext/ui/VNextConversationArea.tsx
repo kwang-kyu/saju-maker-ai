@@ -10,6 +10,7 @@ export type VNextConversationAreaProps = {
   state: VNextConsultingSessionState;
   isBusy: boolean;
   isStreaming: boolean;
+  onRetry?: () => void;
 };
 
 function renderAssistantMessages(
@@ -129,13 +130,15 @@ export function VNextConversationArea({
   state,
   isBusy,
   isStreaming,
+  onRetry,
 }: VNextConversationAreaProps) {
   const hasTurns = state.turns.length > 0;
   const showActiveTurn = Boolean(state.activeQuestion)
-    && (isBusy || isStreaming);
+    && (isBusy || isStreaming || Boolean(state.errorMessage));
   const showEmptyState = !hasTurns
     && !showActiveTurn
     && !state.errorMessage;
+  const retryDisabled = isBusy || isStreaming;
 
   return (
     <section
@@ -169,12 +172,23 @@ export function VNextConversationArea({
       ) : null}
 
       {state.errorMessage ? (
-        <p
-          className="vnext-consulting-error"
-          role="alert"
-        >
-          {state.errorMessage}
-        </p>
+        <>
+          <p
+            className="vnext-consulting-error"
+            role="alert"
+          >
+            {state.errorMessage}
+          </p>
+
+          <button
+            type="button"
+            className="vnext-consulting-auth-button"
+            onClick={onRetry}
+            disabled={retryDisabled || !onRetry}
+          >
+            다시 시도
+          </button>
+        </>
       ) : null}
     </section>
   );

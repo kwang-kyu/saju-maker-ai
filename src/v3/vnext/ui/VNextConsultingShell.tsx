@@ -175,6 +175,44 @@ export function VNextConsultingShell({
     }
   }
 
+  async function handleRetry() {
+    const retryQuestion = state.activeQuestion?.trim() ?? "";
+    const canSubmit = canSubmitVNextQuestion({
+      question: retryQuestion,
+      state,
+      isSubmitting,
+      isBusy,
+      isStreaming,
+      authenticated,
+    });
+
+    if (!canSubmit) {
+      return;
+    }
+
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      const request = buildRequest(retryQuestion);
+
+      if (shouldUseInitialQuestionSubmit(state)) {
+        await submitQuestion(request);
+      } else {
+        await submitFollowUpQuestion(
+          retryQuestion,
+          request,
+        );
+      }
+    } catch (error) {
+      setSubmitError(
+        readErrorMessage(error),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="vnext-consulting-shell">
       <VNextConsultingHeader
@@ -215,6 +253,9 @@ export function VNextConsultingShell({
             state={state}
             isBusy={isBusy}
             isStreaming={isStreaming}
+            onRetry={() => {
+              void handleRetry();
+            }}
           />
         </section>
 
