@@ -19,6 +19,7 @@ import {
   VNextConsultingController,
 } from "./vNextConsultingController.js";
 import {
+  createRemoteResponseGateway,
   resolveBrowserGatewayMockMode,
   resolveBrowserResponseGateway,
 } from "./vNextRemoteResponseGateway.js";
@@ -32,6 +33,16 @@ import {
 
 export type UseVNextConsultingOptions = {
   mockGateway?: boolean;
+  /**
+   * Optional Supabase access token (snapshot).
+   * Prefer getAccessToken when auth can change after mount.
+   */
+  accessToken?: string | null;
+  /**
+   * Optional Supabase access token getter.
+   * Invoked at Remote Gateway request time (not captured at gateway create).
+   */
+  getAccessToken?: () => string | null;
 };
 
 export type UseVNextConsultingResult = {
@@ -47,15 +58,44 @@ export type UseVNextConsultingResult = {
   reset: () => void;
 };
 
+function resolveAdapterAccessToken(
+  options: UseVNextConsultingOptions,
+): string | null {
+  if (typeof options.getAccessToken === "function") {
+    return options.getAccessToken();
+  }
+
+  return options.accessToken ?? null;
+}
+
+function createAdapterResponseGateway(
+  options: UseVNextConsultingOptions,
+  getLatestOptions: () => UseVNextConsultingOptions,
+) {
+  const mockMode = resolveBrowserGatewayMockMode(options.mockGateway);
+
+  if (mockMode) {
+    return resolveBrowserResponseGateway(true);
+  }
+
+  return createRemoteResponseGateway({
+    getAccessToken: () => resolveAdapterAccessToken(getLatestOptions()),
+  });
+}
+
 export function useVNextConsulting(
   options: UseVNextConsultingOptions = {},
 ): UseVNextConsultingResult {
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const controllerRef = useRef<VNextConsultingController | null>(null);
 
   if (!controllerRef.current) {
     controllerRef.current = new VNextConsultingController({
-      gateway: resolveBrowserResponseGateway(
-        resolveBrowserGatewayMockMode(options.mockGateway),
+      gateway: createAdapterResponseGateway(
+        options,
+        () => optionsRef.current,
       ),
     });
   }

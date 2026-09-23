@@ -54,6 +54,12 @@ export type VNextRemoteGatewayOptions = {
 
   fetchImpl?: typeof fetch;
 
+  /**
+   * Optional Supabase access token getter for Remote API Authorization.
+   * Callers supply the token; this gateway does not read storage itself.
+   */
+  getAccessToken?: () => string | null;
+
 };
 
 
@@ -100,6 +106,22 @@ export function resolveBrowserGatewayMockMode(
   return mockGateway ?? isVNextMockGatewayEnabled(location);
 }
 
+function buildRemoteRequestHeaders(
+  getAccessToken?: () => string | null,
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  const accessToken = getAccessToken?.();
+
+  if (typeof accessToken === "string" && accessToken.length > 0) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  return headers;
+}
+
 
 
 export function createRemoteResponseGateway(
@@ -113,6 +135,8 @@ export function createRemoteResponseGateway(
   const streamEndpoint = options.streamEndpoint ?? DEFAULT_STREAM_ENDPOINT;
 
   const fetchImpl = options.fetchImpl ?? fetch;
+
+  const getAccessToken = options.getAccessToken;
 
 
 
@@ -136,11 +160,7 @@ export function createRemoteResponseGateway(
 
           method: "POST",
 
-          headers: {
-
-            "Content-Type": "application/json",
-
-          },
+          headers: buildRemoteRequestHeaders(getAccessToken),
 
           body: JSON.stringify({
 
@@ -260,11 +280,7 @@ export function createRemoteResponseGateway(
 
           method: "POST",
 
-          headers: {
-
-            "Content-Type": "application/json",
-
-          },
+          headers: buildRemoteRequestHeaders(getAccessToken),
 
           body: JSON.stringify({
 

@@ -15,6 +15,7 @@ export type VNextReportPhaseRootProps = {
   authError: unknown;
   onSignIn: () => void;
   onSignOut: () => void;
+  accessToken?: string | null;
 };
 
 export function VNextReportPhaseRoot({
@@ -24,6 +25,7 @@ export function VNextReportPhaseRoot({
   authError,
   onSignIn,
   onSignOut,
+  accessToken,
 }: VNextReportPhaseRootProps) {
   const {
     state,
@@ -32,7 +34,9 @@ export function VNextReportPhaseRoot({
     isStreaming,
     startReport,
     setActiveSection,
-  } = useVNextReport();
+  } = useVNextReport({
+    accessToken,
+  });
 
   return (
     <VNextReportShell

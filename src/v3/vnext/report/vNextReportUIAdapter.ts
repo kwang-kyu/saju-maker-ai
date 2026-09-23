@@ -16,6 +16,7 @@ import type {
   VNextBirthProfile,
 } from "../entry/vNextBirthProfile.js";
 import {
+  createRemoteResponseGateway,
   resolveBrowserGatewayMockMode,
   resolveBrowserResponseGateway,
 } from "../ui/vNextRemoteResponseGateway.js";
@@ -29,6 +30,11 @@ import {
 
 export type UseVNextReportOptions = {
   mockGateway?: boolean;
+  /**
+   * Optional Supabase access token (snapshot).
+   * Passed through to Remote Gateway at request time via optionsRef.
+   */
+  accessToken?: string | null;
 };
 
 export type UseVNextReportResult = {
@@ -43,15 +49,40 @@ export type UseVNextReportResult = {
   reset: () => void;
 };
 
+function resolveReportAdapterAccessToken(
+  options: UseVNextReportOptions,
+): string | null {
+  return options.accessToken ?? null;
+}
+
+function createReportAdapterResponseGateway(
+  options: UseVNextReportOptions,
+  getLatestOptions: () => UseVNextReportOptions,
+) {
+  const mockMode = resolveBrowserGatewayMockMode(options.mockGateway);
+
+  if (mockMode) {
+    return resolveBrowserResponseGateway(true);
+  }
+
+  return createRemoteResponseGateway({
+    getAccessToken: () => resolveReportAdapterAccessToken(getLatestOptions()),
+  });
+}
+
 export function useVNextReport(
   options: UseVNextReportOptions = {},
 ): UseVNextReportResult {
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const controllerRef = useRef<VNextReportController | null>(null);
 
   if (!controllerRef.current) {
     controllerRef.current = new VNextReportController({
-      gateway: resolveBrowserResponseGateway(
-        resolveBrowserGatewayMockMode(options.mockGateway),
+      gateway: createReportAdapterResponseGateway(
+        options,
+        () => optionsRef.current,
       ),
     });
   }

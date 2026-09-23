@@ -4,6 +4,9 @@ import type {
 } from "@vercel/node";
 
 import {
+  assertVNextConsultingAuthenticated,
+} from "../../../src/v3/vnext/gpt/assertVNextConsultingAuthenticated.js";
+import {
   createOpenAIResponseGateway,
   isOpenAIResponseGatewayAvailable,
 } from "../../../src/v3/vnext/gpt/responseGatewayAdapter.js";
@@ -30,6 +33,18 @@ export async function handleVNextConsultingGenerateRequest(
     response.setHeader("Allow", "POST");
     response.status(405).json({
       error: "Method not allowed",
+    });
+    return;
+  }
+
+  const authResult = await assertVNextConsultingAuthenticated({
+    authorizationHeader: request.headers.authorization,
+    environment: process.env,
+  });
+
+  if (!authResult.ok) {
+    response.status(authResult.status).json({
+      error: authResult.error,
     });
     return;
   }

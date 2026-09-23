@@ -451,6 +451,7 @@ function buildV3AuthRedirectUrl():
         <Suspense fallback={<VNextPhaseLoadingFallback />}>
           <VNextReportPhaseRoot
             birthProfile={vNextEntryState.birthProfile}
+            accessToken={accessToken}
             authenticated={authenticated}
             authLoading={authLoading}
             authError={authError}
@@ -490,6 +491,7 @@ function buildV3AuthRedirectUrl():
         <Suspense fallback={<VNextPhaseLoadingFallback />}>
           <VNextConsultingPhaseRoot
             birthProfile={vNextEntryState.birthProfile}
+            accessToken={accessToken}
             authenticated={authenticated}
             authLoading={authLoading}
             authError={authError}

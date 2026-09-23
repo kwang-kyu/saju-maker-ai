@@ -15,6 +15,7 @@ export type VNextConsultingPhaseRootProps = {
   authError: unknown;
   onSignIn: () => void;
   onSignOut: () => void;
+  accessToken?: string | null;
 };
 
 export function VNextConsultingPhaseRoot({
@@ -24,6 +25,7 @@ export function VNextConsultingPhaseRoot({
   authError,
   onSignIn,
   onSignOut,
+  accessToken,
 }: VNextConsultingPhaseRootProps) {
   const {
     state,
@@ -33,7 +35,9 @@ export function VNextConsultingPhaseRoot({
     submitQuestion,
     submitFollowUpQuestion,
     reset,
-  } = useVNextConsulting();
+  } = useVNextConsulting({
+    accessToken,
+  });
 
   return (
     <VNextConsultingShell
