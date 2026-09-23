@@ -41,6 +41,41 @@
   transition: width 0.35s ease;
 }
 
+.vnext-analysis-progress--streaming .vnext-analysis-progress-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.vnext-analysis-progress--streaming .vnext-analysis-progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: vnext-analysis-progress-streaming-sheen 1.6s ease-in-out infinite;
+}
+
+@keyframes vnext-analysis-progress-streaming-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vnext-analysis-progress--streaming .vnext-analysis-progress-fill::after {
+    animation: none;
+  }
+}
+
 .vnext-analysis-progress--status {
   margin-bottom: 8px;
 }

@@ -18,9 +18,14 @@ export function VNextAnalysisProgressBar({
     return null;
   }
 
+  const rootClassName =
+    progressStep === "streaming"
+      ? `${className} vnext-analysis-progress--streaming`
+      : className;
+
   return (
     <div
-      className={className}
+      className={rootClassName}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
