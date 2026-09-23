@@ -189,6 +189,7 @@ function buildV3AuthRedirectUrl():
       isStreaming: vNextIsStreaming,
       submitQuestion: submitVNextQuestion,
       submitFollowUpQuestion: submitVNextFollowUpQuestion,
+      reset: resetVNextConsulting,
     } = useVNextConsulting();
     const {
       state: vNextReportState,
@@ -612,6 +613,7 @@ function buildV3AuthRedirectUrl():
           isStreaming={vNextIsStreaming}
           submitQuestion={submitVNextQuestion}
           submitFollowUpQuestion={submitVNextFollowUpQuestion}
+          onNewConsultation={resetVNextConsulting}
         />
       );
     }
