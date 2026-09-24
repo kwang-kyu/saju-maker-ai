@@ -724,6 +724,12 @@ const intentRules: readonly KeywordRule<ReaderIntentLiteral>[] = [
     keywords: [
       "운이 있나",
       "수가 있나",
+      "운이 있는가",
+      "수가 있는가",
+      "운이 있을까",
+      "수가 있을까",
+      "운이 있습니까",
+      "수가 있습니까",
     ],
   },
 ];
@@ -1348,7 +1354,7 @@ const PREDICTION_INTENT_EXCLUSION_PATTERNS:
   readonly RegExp[] = [
     /언제/,
     /(?:몇\s*월|몇월|시기|때가)/,
-    /(?:운|수)(?:이|가)?\s*있나/,
+    /(?:운|수)(?:이|가)?\s*있(?:나|는가|을까|습니까)/,
     /(?:해야|해야\s*하|해야\s*되|해야\s*할)/,
     /(?:해도\s*될|해도될|시작해도)/,
     /계속/,
@@ -1413,6 +1419,28 @@ function isPermissionOrFeasibilityQuestion(
 }
 
 /**
+ * existence speech-act frame 마커.
+ * intentRules existence keywords와 동일 집합을 재사용한다.
+ */
+function getExistenceIntentKeywords(): readonly string[] {
+  return intentRules.find((rule) => rule.result === "existence")?.keywords
+    ?? [];
+}
+
+/**
+ * 운/수 존재 여부 질문 frame.
+ * timing surface(올해/내년)와 공존해도 existence speech-act를
+ * 보존하기 위한 선게이트이며, 새 semantic axis를 만들지 않는다.
+ */
+function isExistenceQuestion(
+  question: string,
+): boolean {
+  return getExistenceIntentKeywords().some((keyword) =>
+    matchesKoreanKeyword(question, keyword)
+  );
+}
+
+/**
  * 기존 intent 해석 경로.
  * J-2부터 최종 선택은 normalizeAxes가 담당한다.
  * Phase 1 동등성 검증·호환용으로 유지한다.
@@ -1456,6 +1484,26 @@ function resolveQuestionIntent(
         [
           "permissionOrFeasibility",
         ],
+    };
+  }
+
+  if (
+    isExistenceQuestion(
+      question,
+    )
+  ) {
+    const matchedKeywords = getExistenceIntentKeywords().filter(
+      (keyword) => matchesKoreanKeyword(question, keyword),
+    );
+
+    return {
+      result:
+        "existence",
+
+      evidence:
+        matchedKeywords.length > 0
+          ? matchedKeywords
+          : ["existenceSpeechAct"],
     };
   }
 
@@ -1815,6 +1863,26 @@ function collectMeaningCandidates(
       strength: matchedKeywords.length,
       specificity: matchedKeywords.length === 0
         ? 0
+        : Math.max(...matchedKeywords.map((keyword) => keyword.length)),
+    });
+  }
+
+  if (isExistenceQuestion(normalizedQuestion)) {
+    const matchedKeywords = getExistenceIntentKeywords().filter(
+      (keyword) => matchesKoreanKeyword(normalizedQuestion, keyword),
+    );
+
+    frames.push({
+      axis: "frame",
+      value: "existenceSpeechAct",
+      evidence: matchedKeywords.length > 0
+        ? matchedKeywords
+        : ["existenceSpeechAct"],
+      source: "frameMarker",
+      priority: 1,
+      strength: matchedKeywords.length > 0 ? matchedKeywords.length : 1,
+      specificity: matchedKeywords.length === 0
+        ? "existenceSpeechAct".length
         : Math.max(...matchedKeywords.map((keyword) => keyword.length)),
     });
   }
@@ -3758,6 +3826,36 @@ function resolveStrongPermissionIntent(
 }
 
 /**
+ * 강한 existence speech-act frame이면 intent만 existence로 override한다.
+ *
+ * timing surface(올해/내년) first-match를 덮되,
+ * timingType / topic / decisionTarget은 건드리지 않는다.
+ * permission / prediction과 같은 override 계층이다.
+ */
+function resolveStrongExistenceIntent(
+  candidates: MeaningCandidateSet,
+): {
+  intent: ReaderIntentLiteral;
+  evidence: string[];
+} | null {
+  const frame = hasFrame(
+    candidates.frames,
+    "existenceSpeechAct",
+  );
+
+  if (!frame || frame.strength < 1) {
+    return null;
+  }
+
+  return {
+    intent: "existence",
+    evidence: frame.evidence.length > 0
+      ? [...frame.evidence]
+      : ["existenceSpeechAct"],
+  };
+}
+
+/**
  * J-4-2: comparison/selection frame이 강하면
  * 해당 frame에 맞는 intent candidate를 고른다.
  *
@@ -5447,7 +5545,8 @@ function findAdditiveReasonTimingSpeechActPreservation(
  * topic은 Phase 1 first-match를 기본으로 두고,
  * 강한 topic×decisionTarget compound가 있을 때만 pair로 정규화한다.
  * intent는 Phase 1을 기본으로 두고,
- * prediction → permission(intent only) → comparison/selection 순으로 override한다.
+ * prediction → permission(intent only) → existence(intent only) →
+ * comparison/selection 순으로 override한다.
  * decisionTarget은 Phase 1 → J-4-4 compound pair → J-4-1 specific 승격 →
  * comparison/selection + generic only 이면 choose →
  * termination/continuation + generic 충돌 정리 →
@@ -5565,7 +5664,8 @@ function normalizeAxes(
   let intentEvidence: string[] = intentCandidate?.evidence ?? [];
 
   // 기존 resolveQuestionIntent 우선순위 보존:
-  // prediction frame → permission frame(intent only) → (J-4-2) comparison/selection
+  // prediction frame → permission frame(intent only) →
+  // existence frame(intent only) → (J-4-2) comparison/selection
   const predictionFrame = hasFrame(
     candidates.frames,
     "futureOutcomePrediction",
@@ -5582,14 +5682,24 @@ function normalizeAxes(
     if (permissionIntent) {
       intent = permissionIntent.intent;
       intentEvidence = permissionIntent.evidence;
-    } else if (intent !== "comparison" && intent !== "selection") {
-      // J-4-2: Phase 1이 이미 comparison/selection이면 유지하고,
-      // frame과 충돌할 때만 comparison/selection으로 override한다.
-      const frameIntent = resolveStrongComparisonOrSelectionIntent(candidates);
+    } else {
+      // timing surface(올해/내년) first-match여도
+      // 강한 existence speech-act면 intent만 existence로 보존한다.
+      // timingType은 detectTimingType이 별도로 유지한다.
+      const existenceIntent = resolveStrongExistenceIntent(candidates);
 
-      if (frameIntent) {
-        intent = frameIntent.intent;
-        intentEvidence = frameIntent.evidence;
+      if (existenceIntent) {
+        intent = existenceIntent.intent;
+        intentEvidence = existenceIntent.evidence;
+      } else if (intent !== "comparison" && intent !== "selection") {
+        // J-4-2: Phase 1이 이미 comparison/selection이면 유지하고,
+        // frame과 충돌할 때만 comparison/selection으로 override한다.
+        const frameIntent = resolveStrongComparisonOrSelectionIntent(candidates);
+
+        if (frameIntent) {
+          intent = frameIntent.intent;
+          intentEvidence = frameIntent.evidence;
+        }
       }
     }
   }

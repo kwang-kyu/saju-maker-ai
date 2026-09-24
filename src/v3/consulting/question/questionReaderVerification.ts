@@ -1264,7 +1264,7 @@ const EXISTENCE_NEGATIVE_CASES:
         "올해 재물운이 있나요?",
 
       expectedIntent:
-        "timing",
+        "existence",
     },
     {
       question:
