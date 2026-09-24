@@ -3,6 +3,14 @@ import {
 } from "../openai/consultingOpenAIAdapter.js";
 
 import {
+  runDecisionEngine,
+} from "../decision/decisionEngine.js";
+
+import {
+  buildDecisionEngineRegressionInput,
+} from "../decision/regression/decisionEngineRegressionFixture.js";
+
+import {
   verifyConsultingAnswerQuality,
 } from "./consultingAnswerQualityVerification.js";
 
@@ -17,6 +25,9 @@ import type {
 
 export const CONSULTING_LIVE_ANSWER_SEMANTIC_GATE_EVALUATION_KEYS = [
   "verdictAlignment",
+  "targetAlignment",
+  "intentAlignment",
+  "topicAlignment",
   "groundingStatus",
   "materialUnsupportedClaims",
   "requiredContentCoverage",
@@ -31,6 +42,13 @@ export const SEMANTIC_GATE_VERDICT_ALIGNMENTS = [
   "weakened",
   "strengthened",
   "reversed",
+  "unclear",
+] as const;
+
+
+export const SEMANTIC_GATE_AXIS_ALIGNMENTS = [
+  "preserved",
+  "drifted",
   "unclear",
 ] as const;
 
@@ -58,6 +76,9 @@ export const SEMANTIC_GATE_CONFIDENCES = [
 
 export type SemanticGateVerdictAlignment =
   typeof SEMANTIC_GATE_VERDICT_ALIGNMENTS[number];
+
+export type SemanticGateAxisAlignment =
+  typeof SEMANTIC_GATE_AXIS_ALIGNMENTS[number];
 
 export type SemanticGateGroundingStatus =
   typeof SEMANTIC_GATE_GROUNDING_STATUSES[number];
@@ -92,6 +113,15 @@ export type SemanticGateMaterialOmission = {
 export type ConsultingLiveAnswerSemanticGateEvaluation = {
   verdictAlignment:
     SemanticGateVerdictAlignment;
+
+  targetAlignment:
+    SemanticGateAxisAlignment;
+
+  intentAlignment:
+    SemanticGateAxisAlignment;
+
+  topicAlignment:
+    SemanticGateAxisAlignment;
 
   groundingStatus:
     SemanticGateGroundingStatus;
@@ -163,6 +193,12 @@ export type ConsultingLiveAnswerSemanticGateEvaluationInput = {
 
   finalDecision: string;
 
+  decisionTarget: string;
+
+  intent: string;
+
+  topic: string;
+
   sourceSystemPrompt: string;
 
   sourceUserPrompt: string;
@@ -182,6 +218,15 @@ export type ConsultingLiveAnswerSemanticGateCaseResult = {
 
   verdictAlignment:
     SemanticGateVerdictAlignment | null;
+
+  targetAlignment:
+    SemanticGateAxisAlignment | null;
+
+  intentAlignment:
+    SemanticGateAxisAlignment | null;
+
+  topicAlignment:
+    SemanticGateAxisAlignment | null;
 
   groundingStatus:
     SemanticGateGroundingStatus | null;
@@ -548,6 +593,9 @@ export function parseConsultingLiveAnswerSemanticGateJson(
 
   if (
     typeof parsed.verdictAlignment !== "string"
+    || typeof parsed.targetAlignment !== "string"
+    || typeof parsed.intentAlignment !== "string"
+    || typeof parsed.topicAlignment !== "string"
     || typeof parsed.groundingStatus !== "string"
     || typeof parsed.requiredContentCoverage !== "string"
     || typeof parsed.confidence !== "string"
@@ -565,6 +613,18 @@ export function parseConsultingLiveAnswerSemanticGateJson(
     !isAllowedValue(
       parsed.verdictAlignment,
       SEMANTIC_GATE_VERDICT_ALIGNMENTS,
+    )
+    || !isAllowedValue(
+      parsed.targetAlignment,
+      SEMANTIC_GATE_AXIS_ALIGNMENTS,
+    )
+    || !isAllowedValue(
+      parsed.intentAlignment,
+      SEMANTIC_GATE_AXIS_ALIGNMENTS,
+    )
+    || !isAllowedValue(
+      parsed.topicAlignment,
+      SEMANTIC_GATE_AXIS_ALIGNMENTS,
     )
     || !isAllowedValue(
       parsed.groundingStatus,
@@ -628,6 +688,15 @@ export function parseConsultingLiveAnswerSemanticGateJson(
       verdictAlignment:
         parsed.verdictAlignment as SemanticGateVerdictAlignment,
 
+      targetAlignment:
+        parsed.targetAlignment as SemanticGateAxisAlignment,
+
+      intentAlignment:
+        parsed.intentAlignment as SemanticGateAxisAlignment,
+
+      topicAlignment:
+        parsed.topicAlignment as SemanticGateAxisAlignment,
+
       groundingStatus:
         parsed.groundingStatus as SemanticGateGroundingStatus,
 
@@ -676,6 +745,12 @@ export function computeConsultingLiveAnswerSemanticGatePassed(
 ): boolean {
   return (
     evaluation.verdictAlignment
+      === "preserved"
+    && evaluation.targetAlignment
+      === "preserved"
+    && evaluation.intentAlignment
+      === "preserved"
+    && evaluation.topicAlignment
       === "preserved"
     && evaluation.groundingStatus
       === "grounded"
@@ -750,6 +825,15 @@ function buildValidGroundedEvaluation(
     verdictAlignment:
       "preserved",
 
+    targetAlignment:
+      "preserved",
+
+    intentAlignment:
+      "preserved",
+
+    topicAlignment:
+      "preserved",
+
     groundingStatus:
       "grounded",
 
@@ -821,8 +905,12 @@ export function buildConsultingLiveAnswerSemanticGateEvaluationPrompt(
     "",
     "판정 항목",
     "- verdictAlignment: 상담문이 Engine verdict 의미를 보존했는지, 약화·강화·반전했는지 판정한다.",
+    "- targetAlignment: GPT answer가 Engine DecisionTarget과 다른 행동을 제시하거나 암시하면 drifted. 단순 표현/동의어 차이는 preserved.",
+    "- intentAlignment: GPT answer가 질문의 Intent를 다른 질문 유형으로 바꾸어 설명하면 drifted. routing label의 단순 차이는 fail로 취급하지 않는다.",
+    "- topicAlignment: GPT answer가 질문 Topic을 다른 domain/object로 바꾸면 drifted. 일반적인 표현 차이는 preserved.",
     "- groundingStatus: Prompt 자료에 없는 사람 특성, 사주 사실, 미래 사건, 금전 수치, 시기, 조건, 위험을 새로 만들었는지 판정한다.",
     "- requiredContentCoverage: 결론에 필요한 핵심 조건·위험·권장 방향을 빠뜨려 의미를 왜곡했는지 판정한다.",
+    "- targetAlignment / intentAlignment / topicAlignment의 unclear는 판단 근거가 충분치 않을 때만 사용한다.",
     "",
     "JSON 계약",
     stringifyEvaluation(
@@ -834,12 +922,15 @@ export function buildConsultingLiveAnswerSemanticGateEvaluationPrompt(
     "",
     "허용 값",
     `verdictAlignment: ${SEMANTIC_GATE_VERDICT_ALIGNMENTS.join(" | ")}`,
+    `targetAlignment: ${SEMANTIC_GATE_AXIS_ALIGNMENTS.join(" | ")}`,
+    `intentAlignment: ${SEMANTIC_GATE_AXIS_ALIGNMENTS.join(" | ")}`,
+    `topicAlignment: ${SEMANTIC_GATE_AXIS_ALIGNMENTS.join(" | ")}`,
     `groundingStatus: ${SEMANTIC_GATE_GROUNDING_STATUSES.join(" | ")}`,
     `requiredContentCoverage: ${SEMANTIC_GATE_REQUIRED_CONTENT_COVERAGES.join(" | ")}`,
     `confidence: ${SEMANTIC_GATE_CONFIDENCES.join(" | ")}`,
     "",
     "필드 규칙",
-    "- 위 7개 필드만 출력한다.",
+    "- 위 10개 필드만 출력한다.",
     "- 추가 필드, pass 필드, 누락 필드, 알 수 없는 enum을 사용하지 않는다.",
     "- materialUnsupportedClaims 항목은 claim, reason만 가진다.",
     "- materialOmissions 항목은 requiredPoint, reason만 가진다.",
@@ -869,6 +960,24 @@ export function buildConsultingLiveAnswerSemanticGateEvaluationPrompt(
     wrapAsEvaluationData(
       "finalDecision",
       input.finalDecision,
+    ),
+    "",
+    "decisionTarget",
+    wrapAsEvaluationData(
+      "decisionTarget",
+      input.decisionTarget,
+    ),
+    "",
+    "intent",
+    wrapAsEvaluationData(
+      "intent",
+      input.intent,
+    ),
+    "",
+    "topic",
+    wrapAsEvaluationData(
+      "topic",
+      input.topic,
     ),
     "",
     "source-locked systemPrompt",
@@ -932,6 +1041,21 @@ function toCaseResult(
     verdictAlignment:
       inspected.evaluation
         ?.verdictAlignment
+      ?? null,
+
+    targetAlignment:
+      inspected.evaluation
+        ?.targetAlignment
+      ?? null,
+
+    intentAlignment:
+      inspected.evaluation
+        ?.intentAlignment
+      ?? null,
+
+    topicAlignment:
+      inspected.evaluation
+        ?.topicAlignment
       ?? null,
 
     groundingStatus:
@@ -1127,6 +1251,15 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
         verdictAlignment:
           "mostly-preserved",
 
+        targetAlignment:
+          valid.targetAlignment,
+
+        intentAlignment:
+          valid.intentAlignment,
+
+        topicAlignment:
+          valid.topicAlignment,
+
         groundingStatus:
           valid.groundingStatus,
 
@@ -1152,6 +1285,15 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
       JSON.stringify({
         verdictAlignment:
           valid.verdictAlignment,
+
+        targetAlignment:
+          valid.targetAlignment,
+
+        intentAlignment:
+          valid.intentAlignment,
+
+        topicAlignment:
+          valid.topicAlignment,
 
         groundingStatus:
           valid.groundingStatus,
@@ -1180,6 +1322,15 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
       JSON.stringify({
         verdictAlignment:
           valid.verdictAlignment,
+
+        targetAlignment:
+          valid.targetAlignment,
+
+        intentAlignment:
+          valid.intentAlignment,
+
+        topicAlignment:
+          valid.topicAlignment,
 
         groundingStatus:
           valid.groundingStatus,
@@ -1213,6 +1364,66 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
       `판정 결과는 다음과 같다.\n${validJson}`,
     );
 
+  const driftedTargetResult =
+    inspectConsultingLiveAnswerSemanticGateJson(
+      stringifyEvaluation(
+        buildValidGroundedEvaluation({
+          targetAlignment:
+            "drifted",
+        }),
+      ),
+    );
+
+  const driftedIntentResult =
+    inspectConsultingLiveAnswerSemanticGateJson(
+      stringifyEvaluation(
+        buildValidGroundedEvaluation({
+          intentAlignment:
+            "drifted",
+        }),
+      ),
+    );
+
+  const driftedTopicResult =
+    inspectConsultingLiveAnswerSemanticGateJson(
+      stringifyEvaluation(
+        buildValidGroundedEvaluation({
+          topicAlignment:
+            "drifted",
+        }),
+      ),
+    );
+
+  const unclearTargetResult =
+    inspectConsultingLiveAnswerSemanticGateJson(
+      stringifyEvaluation(
+        buildValidGroundedEvaluation({
+          targetAlignment:
+            "unclear",
+        }),
+      ),
+    );
+
+  const unclearIntentResult =
+    inspectConsultingLiveAnswerSemanticGateJson(
+      stringifyEvaluation(
+        buildValidGroundedEvaluation({
+          intentAlignment:
+            "unclear",
+        }),
+      ),
+    );
+
+  const unclearTopicResult =
+    inspectConsultingLiveAnswerSemanticGateJson(
+      stringifyEvaluation(
+        buildValidGroundedEvaluation({
+          topicAlignment:
+            "unclear",
+        }),
+      ),
+    );
+
   const genericEvaluationInput:
     ConsultingLiveAnswerSemanticGateEvaluationInput = {
       originalQuestion:
@@ -1223,6 +1434,15 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
 
       finalDecision:
         "지금은 바로 실행하기보다 준비하며 기다리는 편이 좋습니다.",
+
+      decisionTarget:
+        "start",
+
+      intent:
+        "permission",
+
+      topic:
+        "business",
 
       sourceSystemPrompt:
         "source-locked system prompt fixture",
@@ -1312,6 +1532,26 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
         === false
       && unclearCoverageResult.parseSucceeded
       && unclearCoverageResult.passed
+        === false
+      && unclearTargetResult.parseSucceeded
+      && unclearTargetResult.passed
+        === false
+      && unclearIntentResult.parseSucceeded
+      && unclearIntentResult.passed
+        === false
+      && unclearTopicResult.parseSucceeded
+      && unclearTopicResult.passed
+        === false,
+
+    driftedAxisAlignmentsAreRejected:
+      driftedTargetResult.parseSucceeded
+      && driftedTargetResult.passed
+        === false
+      && driftedIntentResult.parseSucceeded
+      && driftedIntentResult.passed
+        === false
+      && driftedTopicResult.parseSucceeded
+      && driftedTopicResult.passed
         === false,
 
     lowConfidenceIsRejected:
@@ -1353,6 +1593,15 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
       && validResult.passed
       && validResult.evaluation
         ?.verdictAlignment
+        === "preserved"
+      && validResult.evaluation
+        .targetAlignment
+        === "preserved"
+      && validResult.evaluation
+        .intentAlignment
+        === "preserved"
+      && validResult.evaluation
+        .topicAlignment
         === "preserved"
       && validResult.evaluation
         .groundingStatus
@@ -1417,6 +1666,24 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
         .userPrompt
         .includes(
           genericEvaluationInput
+            .decisionTarget,
+        )
+      && genericInputPrompt
+        .userPrompt
+        .includes(
+          genericEvaluationInput
+            .intent,
+        )
+      && genericInputPrompt
+        .userPrompt
+        .includes(
+          genericEvaluationInput
+            .topic,
+        )
+      && genericInputPrompt
+        .userPrompt
+        .includes(
+          genericEvaluationInput
             .sourceSystemPrompt,
         )
       && genericInputPrompt
@@ -1445,6 +1712,36 @@ export function verifyConsultingLiveAnswerSemanticGateContract():
         .userPrompt
         .includes(
           "<<<SEMANTIC_GATE_DATA:consultingAnswer>>>",
+        )
+      && genericInputPrompt
+        .userPrompt
+        .includes(
+          "<<<SEMANTIC_GATE_DATA:decisionTarget>>>",
+        )
+      && genericInputPrompt
+        .userPrompt
+        .includes(
+          "<<<SEMANTIC_GATE_DATA:intent>>>",
+        )
+      && genericInputPrompt
+        .userPrompt
+        .includes(
+          "<<<SEMANTIC_GATE_DATA:topic>>>",
+        )
+      && genericInputPrompt
+        .systemPrompt
+        .includes(
+          "targetAlignment",
+        )
+      && genericInputPrompt
+        .systemPrompt
+        .includes(
+          "intentAlignment",
+        )
+      && genericInputPrompt
+        .systemPrompt
+        .includes(
+          "topicAlignment",
         ),
   };
 
@@ -1566,6 +1863,14 @@ export async function verifyConsultingLiveAnswerSemanticGate():
       );
     }
 
+    const decisionResult =
+      runDecisionEngine(
+        buildDecisionEngineRegressionInput({
+          questionText:
+            liveCase.originalQuestion,
+        }),
+      );
+
     const evaluationPrompt =
       buildConsultingLiveAnswerSemanticGateEvaluationPrompt({
         originalQuestion:
@@ -1576,6 +1881,15 @@ export async function verifyConsultingLiveAnswerSemanticGate():
 
         finalDecision:
           liveCase.finalDecision,
+
+        decisionTarget:
+          decisionResult.decisionTarget,
+
+        intent:
+          decisionResult.intent,
+
+        topic:
+          decisionResult.topic,
 
         sourceSystemPrompt:
           materialCase.prompt.systemPrompt,
