@@ -1513,7 +1513,9 @@ function resolveQuestionIntent(
     "generalJudgement",
   );
 
-  // year-scope(올해/내년)만 timing이면 Intent만 generalJudgement로 demote.
+  // year-scope(올해/내년)만 timing이면 Intent만 demote.
+  // residual selection/reason/method가 있으면 해당 speech-act를 보존하고,
+  // 없으면 기존처럼 generalJudgement로 내린다.
   // timingType은 detectTimingType이 별도로 유지한다.
   if (
     isYearScopeOnlyTimingIntent(
@@ -1522,6 +1524,19 @@ function resolveQuestionIntent(
       matched.evidence,
     )
   ) {
+    const residual = pickYearScopeResidualSpeechActIntentFromQuestion(
+      question,
+    );
+
+    if (residual) {
+      return {
+        result: residual.value,
+        evidence: residual.evidence.length > 0
+          ? [...residual.evidence]
+          : [...matched.evidence],
+      };
+    }
+
     return {
       result: "generalJudgement",
       evidence: matched.evidence.length > 0
@@ -3969,6 +3984,63 @@ function isYearScopeOnlyTimingIntent(
 }
 
 /**
+ * year-scope-only timing demote 시 보존할 residual speech-act.
+ * 새 semantic axis가 아니라 기존 intentRules 후보만 재사용한다.
+ */
+const YEAR_SCOPE_RESIDUAL_SPEECH_ACT_INTENTS = [
+  "selection",
+  "reason",
+  "method",
+] as const;
+
+type YearScopeResidualSpeechActIntent =
+  (typeof YEAR_SCOPE_RESIDUAL_SPEECH_ACT_INTENTS)[number];
+
+function isYearScopeResidualSpeechActIntent(
+  intent: ReaderIntentLiteral,
+): intent is YearScopeResidualSpeechActIntent {
+  return (
+    YEAR_SCOPE_RESIDUAL_SPEECH_ACT_INTENTS as readonly string[]
+  ).includes(intent);
+}
+
+/**
+ * year-scope-only timing demote 직전 residual speech-act picker.
+ *
+ * - 대상: selection | reason | method
+ * - 기존 intent candidate / evidence / priority를 재사용한다.
+ * - 여러 후보가 있으면 selectLowestPriorityCandidate
+ *   (= intentRules 배열 index / first-match 순서)를 따른다.
+ */
+function pickYearScopeResidualSpeechActIntent(
+  intents: readonly MeaningCandidate<ReaderIntentLiteral>[],
+): MeaningCandidate<ReaderIntentLiteral> | null {
+  const residual = intents.filter((candidate) =>
+    isYearScopeResidualSpeechActIntent(candidate.value)
+  );
+
+  return selectLowestPriorityCandidate(residual);
+}
+
+/**
+ * resolveQuestionIntent용 residual picker.
+ * collectRuleCandidates로 intentRules 후보를 만든 뒤
+ * 동일 helper로 고른다. 임의 우선순위를 만들지 않는다.
+ */
+function pickYearScopeResidualSpeechActIntentFromQuestion(
+  question: string,
+): MeaningCandidate<ReaderIntentLiteral> | null {
+  return pickYearScopeResidualSpeechActIntent(
+    collectRuleCandidates(
+      question,
+      intentRules,
+      "intent",
+      "intentRules",
+    ),
+  );
+}
+
+/**
  * J-4-2: comparison/selection frame이 강하면
  * 해당 frame에 맞는 intent candidate를 고른다.
  *
@@ -5779,7 +5851,8 @@ function normalizeAxes(
   // 기존 resolveQuestionIntent 우선순위 보존:
   // prediction frame → permission frame(intent only) →
   // existence frame(intent only) → (J-4-2) comparison/selection →
-  // year-scope-only timing demote → residual generalJudgement/evaluation
+  // year-scope-only timing demote → residual selection/reason/method
+  // → 없으면 generalJudgement/evaluation
   const predictionFrame = hasFrame(
     candidates.frames,
     "futureOutcomePrediction",
@@ -5818,7 +5891,9 @@ function normalizeAxes(
     }
   }
 
-  // year-scope(올해/내년)만 timing Intent면 residual evaluation으로 demote.
+  // year-scope(올해/내년)만 timing Intent면 residual speech-act로 demote.
+  // residual selection/reason/method가 있으면 해당 Intent를 보존하고,
+  // 없으면 기존처럼 generalJudgement(→ evaluation)로 내린다.
   // true timing marker / prediction / permission / existence는 위에서 보호됨.
   // timingType / topic / decisionTarget은 변경하지 않는다.
   if (
@@ -5828,11 +5903,23 @@ function normalizeAxes(
       intentEvidence,
     )
   ) {
-    intent = "generalJudgement";
-    intentEvidence = mergeUniqueEvidence(
-      intentEvidence,
-      ["yearScopeOnlyTimingDemote"],
+    const residual = pickYearScopeResidualSpeechActIntent(
+      candidates.intents,
     );
+
+    if (residual) {
+      intent = residual.value;
+      intentEvidence = mergeUniqueEvidence(
+        residual.evidence,
+        ["yearScopeOnlyTimingResidualSpeechAct"],
+      );
+    } else {
+      intent = "generalJudgement";
+      intentEvidence = mergeUniqueEvidence(
+        intentEvidence,
+        ["yearScopeOnlyTimingDemote"],
+      );
+    }
   }
 
   // Phase 1: decisionRules first-match
