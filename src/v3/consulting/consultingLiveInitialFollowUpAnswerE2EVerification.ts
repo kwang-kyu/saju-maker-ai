@@ -156,6 +156,21 @@ function toSemanticGateCaseResult(
         ?.verdictAlignment
       ?? null,
 
+    targetAlignment:
+      inspected.evaluation
+        ?.targetAlignment
+      ?? null,
+
+    intentAlignment:
+      inspected.evaluation
+        ?.intentAlignment
+      ?? null,
+
+    topicAlignment:
+      inspected.evaluation
+        ?.topicAlignment
+      ?? null,
+
     groundingStatus:
       inspected.evaluation
         ?.groundingStatus
@@ -325,6 +340,24 @@ export async function verifyConsultingLiveInitialFollowUpAnswerE2E():
           .explanationPayload
           .finalDecision,
 
+      decisionTarget:
+        execution
+          .turnResult
+          .decisionResult
+          .decisionTarget,
+
+      intent:
+        execution
+          .turnResult
+          .decisionResult
+          .intent,
+
+      topic:
+        execution
+          .turnResult
+          .decisionResult
+          .topic,
+
       sourceSystemPrompt:
         execution
           .turnResult
@@ -463,6 +496,24 @@ export async function verifyConsultingLiveInitialFollowUpAnswerE2E():
           .turnResult
           .explanationPayload
           .finalDecision,
+
+      decisionTarget:
+        followUpPreparation
+          .turnResult
+          .decisionResult
+          .decisionTarget,
+
+      intent:
+        followUpPreparation
+          .turnResult
+          .decisionResult
+          .intent,
+
+      topic:
+        followUpPreparation
+          .turnResult
+          .decisionResult
+          .topic,
 
       sourceSystemPrompt:
         followUpPreparation

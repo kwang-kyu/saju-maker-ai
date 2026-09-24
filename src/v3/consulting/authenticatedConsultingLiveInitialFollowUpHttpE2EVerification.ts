@@ -513,6 +513,21 @@ function toSemanticGateCaseResult(
         ?.verdictAlignment
       ?? null,
 
+    targetAlignment:
+      inspected.evaluation
+        ?.targetAlignment
+      ?? null,
+
+    intentAlignment:
+      inspected.evaluation
+        ?.intentAlignment
+      ?? null,
+
+    topicAlignment:
+      inspected.evaluation
+        ?.topicAlignment
+      ?? null,
+
     groundingStatus:
       inspected.evaluation
         ?.groundingStatus
@@ -556,6 +571,15 @@ function buildValidSemanticGateEvaluation(
 ): ConsultingLiveAnswerSemanticGateEvaluation {
   return {
     verdictAlignment:
+      "preserved",
+
+    targetAlignment:
+      "preserved",
+
+    intentAlignment:
+      "preserved",
+
+    topicAlignment:
       "preserved",
 
     groundingStatus:
@@ -1710,6 +1734,24 @@ export async function verifyAuthenticatedConsultingLiveInitialFollowUpHttpE2E():
               .explanationPayload
               .finalDecision,
 
+          decisionTarget:
+            capturedInitialExecution
+              .turnResult
+              .decisionResult
+              .decisionTarget,
+
+          intent:
+            capturedInitialExecution
+              .turnResult
+              .decisionResult
+              .intent,
+
+          topic:
+            capturedInitialExecution
+              .turnResult
+              .decisionResult
+              .topic,
+
           sourceSystemPrompt:
             capturedInitialOpenAIRequest.systemPrompt,
 
@@ -2065,6 +2107,24 @@ export async function verifyAuthenticatedConsultingLiveInitialFollowUpHttpE2E():
               .turnResult
               .explanationPayload
               .finalDecision,
+
+          decisionTarget:
+            followUpPreparation
+              .turnResult
+              .decisionResult
+              .decisionTarget,
+
+          intent:
+            followUpPreparation
+              .turnResult
+              .decisionResult
+              .intent,
+
+          topic:
+            followUpPreparation
+              .turnResult
+              .decisionResult
+              .topic,
 
           sourceSystemPrompt:
             capturedFollowUpOpenAIRequest.systemPrompt,
