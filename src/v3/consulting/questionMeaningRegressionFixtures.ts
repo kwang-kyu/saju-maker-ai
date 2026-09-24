@@ -714,7 +714,7 @@ export const QUESTION_MEANING_CELLS:
 
           expectedOverride: {
             intent:
-              "timing",
+              "permission",
 
             timingType:
               "bestTiming",

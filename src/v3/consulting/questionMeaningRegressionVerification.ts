@@ -382,7 +382,7 @@ const QUESTION_MEANING_REGRESSION_CASES:
           "business",
 
         intent:
-          "timing",
+          "permission",
 
         decisionTarget:
           "start",

@@ -1507,11 +1507,30 @@ function resolveQuestionIntent(
     };
   }
 
-  return findRule(
+  const matched = findRule(
     question,
     intentRules,
     "generalJudgement",
   );
+
+  // year-scope(올해/내년)만 timing이면 Intent만 generalJudgement로 demote.
+  // timingType은 detectTimingType이 별도로 유지한다.
+  if (
+    isYearScopeOnlyTimingIntent(
+      question,
+      matched.result,
+      matched.evidence,
+    )
+  ) {
+    return {
+      result: "generalJudgement",
+      evidence: matched.evidence.length > 0
+        ? [...matched.evidence]
+        : ["yearScopeOnlyTimingDemote"],
+    };
+  }
+
+  return matched;
 }
 
 function findRule<T extends string>(
@@ -3856,6 +3875,100 @@ function resolveStrongExistenceIntent(
 }
 
 /**
+ * intentRules.timing에 남은 year-scope surface.
+ * keyword 자체는 유지하고, Intent 승격만 demote한다.
+ */
+const YEAR_SCOPE_TIMING_MARKERS = [
+  "올해",
+  "내년",
+] as const;
+
+/**
+ * intentRules.timing의 true timing marker.
+ * year-scope(올해/내년)는 제외한다.
+ */
+function getTrueTimingIntentKeywords(): readonly string[] {
+  const timingKeywords =
+    intentRules.find((rule) => rule.result === "timing")?.keywords
+    ?? [];
+
+  return timingKeywords.filter(
+    (keyword) =>
+      !(YEAR_SCOPE_TIMING_MARKERS as readonly string[]).includes(keyword),
+  );
+}
+
+/**
+ * intentRules에 없는 true timing surface 보강.
+ * "때인가요" / "어느 달"처럼 year-only demote를 막아야 하는 형태다.
+ */
+const TRUE_TIMING_SURFACE_EXTRA = [
+  "때인",
+  "때에",
+  "때예",
+  "좋은 때",
+  "어느 달",
+  "어느달",
+] as const;
+
+function hasYearScopeTimingMarker(
+  question: string,
+): boolean {
+  return YEAR_SCOPE_TIMING_MARKERS.some((marker) =>
+    question.includes(marker)
+  );
+}
+
+function hasTrueTimingMarker(
+  question: string,
+): boolean {
+  const markers = [
+    ...getTrueTimingIntentKeywords(),
+    ...TRUE_TIMING_SURFACE_EXTRA,
+  ];
+
+  return markers.some((marker) =>
+    matchesKoreanKeyword(question, marker)
+    || question.includes(marker)
+  );
+}
+
+/**
+ * year-scope(올해/내년)만으로 timing Intent가 잡힌 경우인지 판정한다.
+ *
+ * - true timing marker가 있으면 demote 대상이 아니다.
+ * - timingType / topic / decisionTarget은 이 함수가 다루지 않는다.
+ */
+function isYearScopeOnlyTimingIntent(
+  question: string,
+  intent: ReaderIntentLiteral,
+  intentEvidence: readonly string[],
+): boolean {
+  if (intent !== "timing") {
+    return false;
+  }
+
+  if (!hasYearScopeTimingMarker(question)) {
+    return false;
+  }
+
+  if (hasTrueTimingMarker(question)) {
+    return false;
+  }
+
+  const trueTimingKeywords = getTrueTimingIntentKeywords();
+  if (
+    intentEvidence.some((evidence) =>
+      trueTimingKeywords.includes(evidence)
+    )
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * J-4-2: comparison/selection frame이 강하면
  * 해당 frame에 맞는 intent candidate를 고른다.
  *
@@ -5665,7 +5778,8 @@ function normalizeAxes(
 
   // 기존 resolveQuestionIntent 우선순위 보존:
   // prediction frame → permission frame(intent only) →
-  // existence frame(intent only) → (J-4-2) comparison/selection
+  // existence frame(intent only) → (J-4-2) comparison/selection →
+  // year-scope-only timing demote → residual generalJudgement/evaluation
   const predictionFrame = hasFrame(
     candidates.frames,
     "futureOutcomePrediction",
@@ -5702,6 +5816,23 @@ function normalizeAxes(
         }
       }
     }
+  }
+
+  // year-scope(올해/내년)만 timing Intent면 residual evaluation으로 demote.
+  // true timing marker / prediction / permission / existence는 위에서 보호됨.
+  // timingType / topic / decisionTarget은 변경하지 않는다.
+  if (
+    isYearScopeOnlyTimingIntent(
+      question,
+      intent,
+      intentEvidence,
+    )
+  ) {
+    intent = "generalJudgement";
+    intentEvidence = mergeUniqueEvidence(
+      intentEvidence,
+      ["yearScopeOnlyTimingDemote"],
+    );
   }
 
   // Phase 1: decisionRules first-match

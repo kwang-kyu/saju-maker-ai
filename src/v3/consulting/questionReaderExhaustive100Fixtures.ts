@@ -437,12 +437,14 @@ export const QUESTION_READER_EXHAUSTIVE_100_FIXTURES:
     question: "올해 직장을 그만두는 게 좋을까요?",
     expected: {
       topic: "job",
-      intent: "timing",
+      intent: "evaluation",
       decisionTarget: "leaveJob",
       timingType: "bestTiming",
       analysisMode: "decision",
     },
     variationKind: "timing",
+    knownBoundary: true,
+    boundaryNote: "year-scope-only timing demotes to evaluation; leaveJob + bestTiming preserved",
   },
   {
     id: "money-invest-possibility--canonical",

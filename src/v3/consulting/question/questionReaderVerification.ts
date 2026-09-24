@@ -1122,7 +1122,7 @@ const DECISION_PATH_PRESERVATION_CASES:
           "business",
 
         intent:
-          "timing",
+          "permission",
 
         decisionTarget:
           "start",
@@ -1143,7 +1143,7 @@ const DECISION_PATH_PRESERVATION_CASES:
           "realEstate",
 
         intent:
-          "timing",
+          "permission",
 
         decisionTarget:
           "invest",
