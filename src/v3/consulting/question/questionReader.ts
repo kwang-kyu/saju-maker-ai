@@ -687,6 +687,7 @@ const intentRules: readonly KeywordRule<ReaderIntentLiteral>[] = [
     keywords: [
       "어떻게",
       "방법",
+      "방식",
       "전략",
       "해야 하나",
       "해야하나",
@@ -4817,6 +4818,34 @@ function hasCorrectChoiceJudgementSoftSignal(
 }
 
 /**
+ * STEP 20-14-4: option-interrogative selection soft signal.
+ * "어떤/어느 + 명사"가 실제 선택 대상을 물을 때
+ * permission surface("맞을까")가 selection을 가리지 않게 한다.
+ *
+ * 구조: 어떤|어느 + 명사 + 격조사(으로/로/을/를/…)
+ * 명사 목록을 하드코딩하지 않고, method manner만 제외한다.
+ *
+ * 보호:
+ * - "어떤 방법/방식/전략…" → method
+ * - "이직하는 게 맞을까요?"처럼 WH-option 없는 permission
+ * - "좋은 선택" evaluation-noun (호출부 가드)
+ */
+function hasOptionInterrogativeSelectionStructure(
+  question: string,
+): boolean {
+  if (
+    /(?:어떤|어느|무슨)\s*(?:방법|방식|전략|수단|식으로)/.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  return /(?:어떤|어느)\s*[가-힣]{1,12}(?:으로|로|을|를|이|가|와|과|은|는|의)/
+    .test(question);
+}
+
+/**
  * J-4-10: 삶의 경로 양자택일(할지…할지 / 중 어느) 구조.
  * option-fit marker가 없어도 binary alternative면 choose 후보다.
  */
@@ -5287,6 +5316,7 @@ function normalizeTopicSemanticEvidenceCoverage(
  * 5. compatibility quality assessment soft frame → possibility
  * 6. lifeDirection confirmDirection + method/selection surface → generalJudgement
  * 7. evaluation-noun "맞는/좋은 선택" selection → generalJudgement
+ * 8. option-interrogative(어떤/어느+N) possibility/generalJudgement → selection
  *
  * 보호:
  * - J-4-7 option-fit selection canonicalization
@@ -5295,6 +5325,7 @@ function normalizeTopicSemanticEvidenceCoverage(
  * - permission 없는 질문을 possibility로 만들지 않음
  * - bare 궁합 / 열린 해석(어떤가요) / 궁합 없는 interpersonal fit은 유지
  * - option-fit / binary / cash-holding exclusive selection은 유지
+ * - method manner(어떤 방법/방식) / evaluation-noun "좋은 선택"
  */
 function normalizeIntentSemanticMeaning(
   question: string,
@@ -5508,6 +5539,30 @@ function normalizeIntentSemanticMeaning(
       intentEvidence: mergeUniqueEvidence(
         intentEvidence,
         ["intentSemanticCorrectChoiceJudgement"],
+      ),
+    };
+  }
+
+  // 8) STEP 20-14-4: option-interrogative (어떤/어느 + N)
+  //    permission surface("맞을까")가 선택 대상 질문을 가리지 않게
+  //    selection으로 수렴한다. topic / decisionTarget은 변경하지 않는다.
+  //    method manner·evaluation-noun은 위에서 보호한다.
+  if (
+    (intent === "possibility" || intent === "generalJudgement")
+    && hasOptionInterrogativeSelectionStructure(question)
+    && !hasCorrectChoiceJudgementSoftSignal(question)
+  ) {
+    const selectionCandidate = findIntentCandidate(
+      candidates.intents,
+      "selection",
+    );
+
+    return {
+      intent: "selection",
+      intentEvidence: mergeUniqueEvidence(
+        selectionCandidate?.evidence ?? [],
+        intentEvidence,
+        ["optionInterrogativeSelection"],
       ),
     };
   }
@@ -6896,6 +6951,9 @@ const JOB_TOPIC_COMPOUND_NOUNS: readonly string[] = [
   "회사",
   "직업",
   "직무",
+  "직종",
+  "업종",
+  "포지션",
   "소속",
   "콜센터",
 ];
@@ -7700,6 +7758,13 @@ const CHANGE_JOB_COMPOUND_VERBS: readonly string[] = [
   "갈아타야",
   "갈아타는",
   "갈아탈",
+  // STEP 20-14-4: job option noun(직종/업종/포지션…) × 옮* compound.
+  // bare "옮기는" 단독은 jobNounEvidence gate 밖에서 changeJob이 되지 않는다.
+  "옮겨도",
+  "옮겨야",
+  "옮기는",
+  "옮길",
+  "옮겨",
   // P11-7-2I-7 / B6: 근무처/고용주 × 재선택*
   // bare "재선택"/"선택" 단독·인생/진로 재선택은 job noun gate 밖.
   "재선택해도",
