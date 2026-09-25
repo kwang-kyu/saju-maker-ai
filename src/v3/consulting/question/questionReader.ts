@@ -4797,14 +4797,23 @@ function hasBusinessFitRecommendationSoftSignal(
 }
 
 /**
- * A-2: 평가형 명사구 "맞는 선택인지" soft signal.
+ * A-2 / STEP 20-12-4: 평가형 명사구 "맞는/좋은 선택" soft signal.
  * 전역 "선택" keyword 의미를 바꾸지 않는다.
- * selection surface만 generalJudgement로 좁게 demote하기 위한 신호다.
+ * noun "선택"이 selection speech-act로 잡힌 경우만
+ * generalJudgement(→ evaluation)로 좁게 demote하기 위한 신호다.
+ *
+ * 보호:
+ * - "어떤/어느 … 선택" 실제 selection speech-act
+ * - option-fit / binary / cash-holding exclusive (호출부 가드)
  */
 function hasCorrectChoiceJudgementSoftSignal(
   question: string,
 ): boolean {
-  return /맞는\s*선택/.test(question) || /선택이\s*맞/.test(question);
+  return (
+    /맞는\s*선택/.test(question)
+    || /선택이\s*맞/.test(question)
+    || /좋은\s*선택/.test(question)
+  );
 }
 
 /**
@@ -5277,7 +5286,7 @@ function normalizeTopicSemanticEvidenceCoverage(
  * 4. business fit/recommendation soft frame → possibility
  * 5. compatibility quality assessment soft frame → possibility
  * 6. lifeDirection confirmDirection + method/selection surface → generalJudgement
- * 7. evaluation-noun "맞는 선택인지" selection → generalJudgement
+ * 7. evaluation-noun "맞는/좋은 선택" selection → generalJudgement
  *
  * 보호:
  * - J-4-7 option-fit selection canonicalization
@@ -5482,8 +5491,8 @@ function normalizeIntentSemanticMeaning(
     };
   }
 
-  // 7) evaluation-noun "맞는 선택인지":
-  //    selection surface가 실제 옵션 고르기로 고정되지 않게
+  // 7) evaluation-noun "맞는/좋은 선택":
+  //    noun "선택"이 selection speech-act로 고정되지 않게
   //    generalJudgement로 좁게 demote한다.
   //    강한 option-fit / binary / cash-holding exclusive는 selection을 유지한다.
   if (
