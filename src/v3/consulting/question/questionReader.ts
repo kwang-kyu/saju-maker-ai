@@ -5680,6 +5680,142 @@ function findStrongActionNatureSpeechActPreservation(
 }
 
 /**
+ * STEP 20-14-2 / RK14: termination first-match가
+ * weak risk speech-act(문제/실패…)를 삼키면 Intent만 risk로 복원한다.
+ *
+ * I-27 / I-31은 strong risk("위험"|"주의…")만 보존한다.
+ * "퇴사 후 공백이 문제가 될까요?"처럼 termination 행동의 결과/후과를
+ * 묻는 weak risk는 아래 구조적 조건이 모두 맞을 때만 Intent를 risk로 되돌린다.
+ *
+ * DecisionTarget / topic / timingType은 변경하지 않는다.
+ * intentRules 순서와 termination→evaluation Model B 매핑은 유지한다.
+ * bare "문제"/"실패" 또는 pure termination은 건드리지 않는다.
+ *
+ * 보호:
+ * - DT !== leaveJob|stop (이직 changeJob 변형 포함)
+ * - option-fit
+ * - aftermath 맥락 없음 / weak risk speech-act surface 없음
+ * - risk candidate 없음
+ * - termination family가 아님 (prediction이 Phase-1 termination을
+ *   덮은 경우는 termination candidate/frame이 있을 때만 허용)
+ */
+const TERMINATION_AFTERMATH_CONTEXT_SURFACES = [
+  "퇴사 후",
+  "퇴사 뒤",
+  "그만둔 후",
+  "그만둔 뒤",
+  "직장을 그만둔 후",
+  "직장을 그만둔 뒤",
+  "이직 후",
+  "이직 뒤",
+] as const;
+
+const WEAK_RISK_AFTERMATH_SPEECH_ACT_SURFACES = [
+  "문제가 될",
+  "문제가 있",
+  "문제가 생",
+  "실패할",
+  "실패할까요",
+  "실패할 가능성",
+] as const;
+
+function questionHasAnySurface(
+  question: string,
+  surfaces: readonly string[],
+): boolean {
+  return surfaces.some((surface) => question.includes(surface));
+}
+
+function findWeakRiskAfterTerminationAftermathPreservation(
+  question: string,
+  intent: ReaderIntentLiteral,
+  intentEvidence: readonly string[],
+  decisionTarget: DecisionTarget,
+  candidates: MeaningCandidateSet,
+): {
+  intent: "risk";
+  intentEvidence: string[];
+} | null {
+  // I-27 / I-31 등으로 이미 risk면 유지.
+  if (intent === "risk") {
+    return null;
+  }
+
+  if (
+    decisionTarget !== "leaveJob"
+    && decisionTarget !== "stop"
+  ) {
+    return null;
+  }
+
+  const terminationCandidate = findIntentCandidate(
+    candidates.intents,
+    "termination",
+  );
+  const terminationFrame = hasFrame(
+    candidates.frames,
+    "termination",
+  );
+  const terminationFamily =
+    intent === "termination"
+    || (
+      intent === "prediction"
+      && (!!terminationCandidate || !!terminationFrame)
+    );
+
+  if (!terminationFamily) {
+    return null;
+  }
+
+  const optionFitFrame = hasFrame(
+    candidates.frames,
+    "comparisonOrOptionFit",
+  );
+  const optionFitStrong =
+    !!optionFitFrame && optionFitFrame.strength >= 1;
+
+  if (optionFitStrong) {
+    return null;
+  }
+
+  if (
+    !questionHasAnySurface(
+      question,
+      TERMINATION_AFTERMATH_CONTEXT_SURFACES,
+    )
+  ) {
+    return null;
+  }
+
+  if (
+    !questionHasAnySurface(
+      question,
+      WEAK_RISK_AFTERMATH_SPEECH_ACT_SURFACES,
+    )
+  ) {
+    return null;
+  }
+
+  const riskCandidate = findIntentCandidate(
+    candidates.intents,
+    "risk",
+  );
+
+  if (!riskCandidate) {
+    return null;
+  }
+
+  return {
+    intent: "risk",
+    intentEvidence: mergeUniqueEvidence(
+      riskCandidate.evidence,
+      intentEvidence,
+      ["weakRiskAfterTerminationAftermathPreservation"],
+    ),
+  };
+}
+
+/**
  * STEP 20-11 / priority-1: continuation first-match가
  * reason speech-act(왜/까닭 등)를 삼키면 Intent만 reason으로 복원한다.
  *
@@ -6366,6 +6502,23 @@ function normalizeAxes(
   if (actionNatureSpeechActPreserved) {
     intent = actionNatureSpeechActPreserved.intent;
     intentEvidence = actionNatureSpeechActPreserved.intentEvidence;
+  }
+
+  // STEP 20-14-2 / RK14: termination + aftermath + weak risk면
+  // Intent만 risk로 복원. DT 불변. pure termination / changeJob 유지.
+  const weakRiskAfterTerminationPreserved =
+    findWeakRiskAfterTerminationAftermathPreservation(
+      question,
+      intent,
+      intentEvidence,
+      decisionTarget,
+      candidates,
+    );
+
+  if (weakRiskAfterTerminationPreserved) {
+    intent = weakRiskAfterTerminationPreserved.intent;
+    intentEvidence =
+      weakRiskAfterTerminationPreserved.intentEvidence;
   }
 
   // STEP 20-11 / priority-1: continuation first-match가 reason을 삼키면
