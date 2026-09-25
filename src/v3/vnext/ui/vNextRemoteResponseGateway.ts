@@ -70,6 +70,12 @@ export const VNEXT_CONSULTING_GENERATE_ENDPOINT =
 export const VNEXT_CONSULTING_STREAM_ENDPOINT =
   "/api/v3/vnext/consulting-stream";
 
+export const VNEXT_REPORT_GENERATE_ENDPOINT =
+  "/api/v3/vnext/report-generate";
+
+export const VNEXT_REPORT_STREAM_ENDPOINT =
+  "/api/v3/vnext/report-stream";
+
 const DEFAULT_ENDPOINT = VNEXT_CONSULTING_GENERATE_ENDPOINT;
 
 const DEFAULT_STREAM_ENDPOINT = VNEXT_CONSULTING_STREAM_ENDPOINT;

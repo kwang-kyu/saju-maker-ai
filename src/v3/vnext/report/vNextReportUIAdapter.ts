@@ -19,6 +19,8 @@ import {
   createRemoteResponseGateway,
   resolveBrowserGatewayMockMode,
   resolveBrowserResponseGateway,
+  VNEXT_REPORT_GENERATE_ENDPOINT,
+  VNEXT_REPORT_STREAM_ENDPOINT,
 } from "../ui/vNextRemoteResponseGateway.js";
 import {
   VNextReportController,
@@ -68,6 +70,8 @@ function createReportAdapterResponseGateway(
   }
 
   return createRemoteResponseGateway({
+    endpoint: VNEXT_REPORT_GENERATE_ENDPOINT,
+    streamEndpoint: VNEXT_REPORT_STREAM_ENDPOINT,
     getAccessToken: () => resolveReportAdapterAccessToken(getLatestOptions()),
   });
 }
