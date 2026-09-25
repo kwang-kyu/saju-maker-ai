@@ -1682,6 +1682,30 @@ const GENERIC_ACTION_DECISION_TARGETS:
   );
 
 /**
+ * STEP 20-12-3: object-like DecisionTarget.
+ * decisionRules 순서상 partner/marry가 continue/stop/start보다 앞서
+ * 명시적 action nature를 덮을 수 있다. object-only 질문은 유지한다.
+ */
+const OBJECT_LIKE_DECISION_TARGETS:
+  ReadonlySet<
+    DecisionTarget
+  > = new Set(
+    [
+      "partner",
+      "marry",
+    ],
+  );
+
+function isObjectLikeDecisionTarget(
+  decisionTarget:
+    DecisionTarget,
+): boolean {
+  return OBJECT_LIKE_DECISION_TARGETS.has(
+    decisionTarget,
+  );
+}
+
+/**
  * J-4-2: comparison frame 마커.
  * intentRules comparison keywords와 동일 집합을 재사용한다.
  */
@@ -4171,7 +4195,9 @@ function resolveComparisonSelectionGenericDecisionTarget(
  * J-4-3-2: continuation frame이 강하면
  * generic action보다 continue 후보를 가중한다.
  *
- * specific action / choose는 보호한다.
+ * STEP 20-12-3: object-like(partner/marry)가 명시적 continue를
+ * rule 순서로 가린 경우에도 continue를 보존한다.
+ * 그 외 specific action / choose는 보호한다.
  * intent는 변경하지 않는다.
  */
 function resolveContinuationGenericDecisionTarget(
@@ -4188,7 +4214,10 @@ function resolveContinuationGenericDecisionTarget(
     return null;
   }
 
-  if (!GENERIC_ACTION_DECISION_TARGETS.has(selected)) {
+  if (
+    !GENERIC_ACTION_DECISION_TARGETS.has(selected)
+    && !isObjectLikeDecisionTarget(selected)
+  ) {
     return null;
   }
 
@@ -4210,6 +4239,9 @@ function resolveContinuationGenericDecisionTarget(
     evidence: mergeUniqueEvidence(
       frame.evidence,
       continueCandidate.evidence,
+      isObjectLikeDecisionTarget(selected)
+        ? ["explicitActionNatureOverObject"]
+        : [],
       decisionEvidence,
     ),
   };
@@ -4221,6 +4253,8 @@ function resolveContinuationGenericDecisionTarget(
  *
  * - specific termination action이 있으면 보호/승격
  * - 그 외 generic이 stop이 아니면 stop 후보를 가중
+ * - STEP 20-12-3: object-like(partner/marry)가 명시적 stop을
+ *   rule 순서로 가린 경우에도 stop/termination specific을 보존한다.
  * - intent는 변경하지 않는다.
  */
 function resolveTerminationGenericDecisionTarget(
@@ -4238,8 +4272,11 @@ function resolveTerminationGenericDecisionTarget(
     return null;
   }
 
-  if (!GENERIC_ACTION_DECISION_TARGETS.has(selected)) {
-    // 이미 specific이면 유지한다.
+  if (
+    !GENERIC_ACTION_DECISION_TARGETS.has(selected)
+    && !isObjectLikeDecisionTarget(selected)
+  ) {
+    // 이미 specific(action)이면 유지한다. object-like는 예외.
     return null;
   }
 
@@ -4303,6 +4340,48 @@ function resolveTerminationGenericDecisionTarget(
     evidence: mergeUniqueEvidence(
       frame.evidence,
       stopCandidate.evidence,
+      isObjectLikeDecisionTarget(selected)
+        ? ["explicitActionNatureOverObject"]
+        : [],
+      decisionEvidence,
+    ),
+  };
+}
+
+/**
+ * STEP 20-12-3: object-like(partner/marry)가 rule 순서상
+ * 명시적 start action을 덮지 않도록 한다.
+ *
+ * continuation/termination frame이 없는 start-only 질문에 적용한다.
+ * object-only(시작 동사 없음)와 다른 specific action은 유지한다.
+ * intent는 변경하지 않는다.
+ */
+function resolveExplicitStartOverObjectDecisionTarget(
+  selected: DecisionTarget,
+  candidates: MeaningCandidateSet,
+  decisionEvidence: readonly string[],
+): {
+  decisionTarget: DecisionTarget;
+  evidence: string[];
+} | null {
+  if (!isObjectLikeDecisionTarget(selected)) {
+    return null;
+  }
+
+  const startCandidate = findDecisionTargetCandidate(
+    candidates.decisionTargets,
+    "start",
+  );
+
+  if (!startCandidate) {
+    return null;
+  }
+
+  return {
+    decisionTarget: "start",
+    evidence: mergeUniqueEvidence(
+      startCandidate.evidence,
+      ["explicitActionNatureOverObject"],
       decisionEvidence,
     ),
   };
@@ -5985,6 +6064,19 @@ function normalizeAxes(
       if (termOrCont) {
         decisionTarget = termOrCont.decisionTarget;
         decisionEvidence = termOrCont.evidence;
+      } else {
+        // STEP 20-12-3: frame 없는 start × object(partner/marry) 덮임 복구.
+        // option-fit(J-4-7)보다 앞에 두어 start→choose 정규화가 가능하도록 한다.
+        const startOverObject = resolveExplicitStartOverObjectDecisionTarget(
+          decisionTarget,
+          candidates,
+          decisionEvidence,
+        );
+
+        if (startOverObject) {
+          decisionTarget = startOverObject.decisionTarget;
+          decisionEvidence = startOverObject.evidence;
+        }
       }
     }
   }

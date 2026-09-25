@@ -22,6 +22,7 @@ const RELATIONSHIP_DOMAIN_TOPICS:
 const FORWARD_RELATIONSHIP_SEPARATION_PATTERNS:
   readonly RegExp[] = [
     /관계(?:를)?\s*정리(?:하는|할|해야)?/,
+    /연애(?:를)?\s*정리(?:하는|할|해야)?/,
     /관계(?:를)?\s*끊(?:는|을|어야)?/,
     /더\s*이상\s*만나지\s*않/,
     /그만\s*만나(?:야|는|ㄹ)?/,
@@ -34,6 +35,7 @@ const FORWARD_RELATIONSHIP_SEPARATION_PATTERNS:
 const IMPLICIT_RELATIONSHIP_SEPARATION_PATTERNS:
   readonly RegExp[] = [
     /관계(?:를)?\s*(?:정리|끊)/,
+    /연애(?:를)?\s*정리/,
     /더\s*이상\s*만나지\s*않/,
     /그만\s*만나/,
     /(?:이별|결별)/,
