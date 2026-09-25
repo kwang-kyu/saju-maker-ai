@@ -40,6 +40,31 @@ const IMPLICIT_RELATIONSHIP_SEPARATION_PATTERNS:
     /결혼\s*생활(?:을)?\s*정리/,
   ];
 
+/**
+ * STEP 20-12-2: 명시적 comparison / option-fit frame 마커.
+ * questionReader COMPARISON_OR_OPTION_FIT_DECISION_MARKERS와 동일 집합.
+ * frame이 있으면 bare "이별" separation이 comparison speech-act를
+ * evaluation+separate로 덮어쓰지 않도록 한다.
+ */
+const COMPARISON_OR_OPTION_FIT_FRAME_MARKERS:
+  readonly string[] = [
+    "어느 쪽",
+    "어느쪽",
+    "무엇이 더",
+    "누가 더",
+    "비교",
+    "둘 중",
+    "둘중",
+    "중 어디",
+    "중에 어디",
+    "중 무엇",
+    "중 어떤",
+    "어느 것을",
+    "어떤 것이",
+    "적합",
+    "추천",
+  ];
+
 function matchesAnyPattern(
   normalizedQuestion:
     string,
@@ -50,6 +75,18 @@ function matchesAnyPattern(
     (pattern) =>
       pattern.test(
         normalizedQuestion,
+      ),
+  );
+}
+
+function hasExplicitComparisonOrOptionFitFrame(
+  normalizedQuestion:
+    string,
+): boolean {
+  return COMPARISON_OR_OPTION_FIT_FRAME_MARKERS.some(
+    (marker) =>
+      normalizedQuestion.includes(
+        marker,
       ),
   );
 }
@@ -92,6 +129,17 @@ export function shouldNormalizeToRelationshipSeparation(
   if (
     shouldNormalizeToRelationshipReconcile(
       topic,
+      normalizedQuestion,
+    )
+  ) {
+    return false;
+  }
+
+  // STEP 20-12-2: comparison/option-fit frame이 명시적이면
+  // bare separation signal로 speech-act를 덮어쓰지 않는다.
+  // pure separation(프레임 없음)은 기존과 동일하게 정규화한다.
+  if (
+    hasExplicitComparisonOrOptionFitFrame(
       normalizedQuestion,
     )
   ) {
