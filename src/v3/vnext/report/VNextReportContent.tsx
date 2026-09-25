@@ -1,6 +1,13 @@
+import {
+  useState,
+} from "react";
+
 import type {
   NaturalConsultingResponse,
 } from "../gpt/responseGatewayTypes.js";
+import type {
+  VNextBirthProfile,
+} from "../entry/vNextBirthProfile.js";
 import {
   normalizeConsultingDisplayText,
 } from "../ui/consultingDisplayText.js";
@@ -8,11 +15,17 @@ import {
   VNEXT_REPORT_COPY,
   VNEXT_REPORT_SECTION_LABELS,
 } from "./vNextReportCopy.js";
+import {
+  canDownloadVNextReportDocx,
+  downloadVNextReportDocx,
+  VNEXT_REPORT_DOCX_ERROR_MESSAGE,
+} from "./vNextReportDocx.js";
 import type {
   VNextReportSessionState,
 } from "./vNextReportState.js";
 
 export type VNextReportContentProps = {
+  birthProfile: VNextBirthProfile;
   state: VNextReportSessionState;
   isBusy: boolean;
   isStreaming: boolean;
@@ -53,16 +66,55 @@ function renderCompletedResponse(
 }
 
 export function VNextReportContent({
+  birthProfile,
   state,
   isBusy,
   isStreaming,
 }: VNextReportContentProps) {
+  const [docxPreparing, setDocxPreparing] = useState(false);
+  const [docxErrorMessage, setDocxErrorMessage] = useState<string | null>(
+    null,
+  );
+
   const displayText = resolveDisplayText(state, isStreaming);
   const showEmpty = !displayText
     && !isBusy
     && !isStreaming
     && !state.errorMessage
     && state.phase === "idle";
+
+  const responseText = state.response?.text ?? "";
+  const canDownload = canDownloadVNextReportDocx(
+    state.phase,
+    responseText,
+  )
+    && !state.errorMessage;
+
+  async function handleDocxDownload(): Promise<void> {
+    if (!canDownload || docxPreparing || !state.response) {
+      return;
+    }
+
+    setDocxPreparing(true);
+    setDocxErrorMessage(null);
+
+    try {
+      const sectionLabels = state.sections.map(
+        (section) => VNEXT_REPORT_SECTION_LABELS[section],
+      );
+
+      await downloadVNextReportDocx({
+        displayName: birthProfile.displayName,
+        birthProfile,
+        responseText: state.response.text,
+        sectionLabels,
+      });
+    } catch {
+      setDocxErrorMessage(VNEXT_REPORT_DOCX_ERROR_MESSAGE);
+    } finally {
+      setDocxPreparing(false);
+    }
+  }
 
   if (state.errorMessage) {
     return (
@@ -110,6 +162,32 @@ export function VNextReportContent({
           state.response,
           state.activeSection,
         )}
+
+        {canDownload ? (
+          <div className="vnext-report-docx-actions">
+            <button
+              type="button"
+              className="vnext-report-docx-button"
+              onClick={() => {
+                void handleDocxDownload();
+              }}
+              disabled={docxPreparing}
+            >
+              {docxPreparing
+                ? "문서 준비 중..."
+                : "DOCX 다운로드"}
+            </button>
+
+            {docxErrorMessage ? (
+              <p
+                className="vnext-report-docx-error"
+                role="alert"
+              >
+                {docxErrorMessage}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     );
   }

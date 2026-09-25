@@ -129,6 +129,7 @@ export function VNextReportShell({
           ) : null}
 
           <VNextReportContent
+            birthProfile={birthProfile}
             state={state}
             isBusy={isBusy}
             isStreaming={isStreaming}
