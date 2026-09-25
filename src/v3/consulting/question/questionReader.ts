@@ -680,7 +680,7 @@ const intentRules: readonly KeywordRule<ReaderIntentLiteral>[] = [
   },
   {
     result: "reason",
-    keywords: ["왜", "이유", "원인", "어째서", "때문"],
+    keywords: ["왜", "이유", "원인", "어째서", "때문", "까닭"],
   },
   {
     result: "method",
@@ -5680,6 +5680,161 @@ function findStrongActionNatureSpeechActPreservation(
 }
 
 /**
+ * STEP 20-11 / priority-1: continuation first-match가
+ * reason speech-act(왜/까닭 등)를 삼키면 Intent만 reason으로 복원한다.
+ *
+ * Phase 1 intentRules 순서상 continuation(계속/유지…)이 reason보다 앞서
+ * "왜 … 계속 …", "… 계속 … 까닭" 같은 이유 질문의 speech-act가
+ * evaluation(+continue)로 바뀌는 갭을 좁게 닫는다.
+ *
+ * DecisionTarget은 변경하지 않는다.
+ * continuation을 전역적으로 뒤로 보내지 않으며,
+ * reason 마커가 없는 pure continuation은 유지한다.
+ *
+ * 보호:
+ * - prediction / option-fit
+ * - I-27 / I-31이 이미 method|risk로 보존한 경우 (intent !== continuation)
+ */
+const STRONG_REASON_SPEECH_ACT_MARKERS = [
+  "왜",
+  "이유",
+  "원인",
+  "어째서",
+  "때문",
+  "까닭",
+] as const;
+
+function findStrongReasonOverContinuationPreservation(
+  intent: ReaderIntentLiteral,
+  intentEvidence: readonly string[],
+  candidates: MeaningCandidateSet,
+): {
+  intent: "reason";
+  intentEvidence: string[];
+} | null {
+  if (intent !== "continuation") {
+    return null;
+  }
+
+  const predictionFrame = hasFrame(
+    candidates.frames,
+    "futureOutcomePrediction",
+  );
+
+  if (predictionFrame) {
+    return null;
+  }
+
+  const optionFitFrame = hasFrame(
+    candidates.frames,
+    "comparisonOrOptionFit",
+  );
+  const optionFitStrong =
+    !!optionFitFrame && optionFitFrame.strength >= 1;
+
+  if (optionFitStrong) {
+    return null;
+  }
+
+  const reasonCandidate = findIntentCandidate(
+    candidates.intents,
+    "reason",
+  );
+
+  if (
+    !reasonCandidate
+    || !evidenceHasStrongSpeechActMarker(
+      reasonCandidate.evidence,
+      STRONG_REASON_SPEECH_ACT_MARKERS,
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    intent: "reason",
+    intentEvidence: mergeUniqueEvidence(
+      reasonCandidate.evidence,
+      intentEvidence,
+      ["reasonOverContinuationSpeechActPreservation"],
+    ),
+  };
+}
+
+/**
+ * STEP 20-11 / priority-5: risk first-match가
+ * reason speech-act(왜/이유/원인/까닭 등)를 삼키면 Intent만 reason으로 복원한다.
+ *
+ * Phase 1 intentRules 순서상 risk(손해/위험/문제…)가 reason보다 앞서
+ * "손해가 나는 원인", "위험한 상황이 생기는 이유"처럼
+ * risk lexical evidence가 있어도 실제 speech-act는 reason인 갭을 좁게 닫는다.
+ *
+ * DecisionTarget은 변경하지 않는다.
+ * risk를 전역적으로 뒤로 보내지 않으며,
+ * reason 마커가 없는 pure risk는 유지한다.
+ *
+ * 보호:
+ * - prediction / option-fit
+ * - additive reason|timing hijack 복원(후속 F) — 이 단계는 risk→reason만 담당
+ */
+function findStrongReasonOverRiskPreservation(
+  intent: ReaderIntentLiteral,
+  intentEvidence: readonly string[],
+  candidates: MeaningCandidateSet,
+): {
+  intent: "reason";
+  intentEvidence: string[];
+} | null {
+  if (intent !== "risk") {
+    return null;
+  }
+
+  const predictionFrame = hasFrame(
+    candidates.frames,
+    "futureOutcomePrediction",
+  );
+
+  if (predictionFrame) {
+    return null;
+  }
+
+  const optionFitFrame = hasFrame(
+    candidates.frames,
+    "comparisonOrOptionFit",
+  );
+  const optionFitStrong =
+    !!optionFitFrame && optionFitFrame.strength >= 1;
+
+  if (optionFitStrong) {
+    return null;
+  }
+
+  const reasonCandidate = findIntentCandidate(
+    candidates.intents,
+    "reason",
+  );
+
+  if (
+    !reasonCandidate
+    || !evidenceHasStrongSpeechActMarker(
+      reasonCandidate.evidence,
+      STRONG_REASON_SPEECH_ACT_MARKERS,
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    intent: "reason",
+    intentEvidence: mergeUniqueEvidence(
+      reasonCandidate.evidence,
+      intentEvidence,
+      ["reasonOverRiskSpeechActPreservation"],
+    ),
+  };
+}
+
+/**
  * F: reason|timing additive secondary hijack 위에서
  * strong method/risk speech-act Intent만 복원한다.
  *
@@ -6211,6 +6366,36 @@ function normalizeAxes(
   if (actionNatureSpeechActPreserved) {
     intent = actionNatureSpeechActPreserved.intent;
     intentEvidence = actionNatureSpeechActPreserved.intentEvidence;
+  }
+
+  // STEP 20-11 / priority-1: continuation first-match가 reason을 삼키면
+  // Intent만 reason으로 복원. DT 불변. pure continuation 유지.
+  const reasonOverContinuationSpeechActPreserved =
+    findStrongReasonOverContinuationPreservation(
+      intent,
+      intentEvidence,
+      candidates,
+    );
+
+  if (reasonOverContinuationSpeechActPreserved) {
+    intent = reasonOverContinuationSpeechActPreserved.intent;
+    intentEvidence =
+      reasonOverContinuationSpeechActPreserved.intentEvidence;
+  }
+
+  // STEP 20-11 / priority-5: risk first-match가 reason을 삼키면
+  // Intent만 reason으로 복원. DT 불변. pure risk 유지.
+  const reasonOverRiskSpeechActPreserved =
+    findStrongReasonOverRiskPreservation(
+      intent,
+      intentEvidence,
+      candidates,
+    );
+
+  if (reasonOverRiskSpeechActPreserved) {
+    intent = reasonOverRiskSpeechActPreserved.intent;
+    intentEvidence =
+      reasonOverRiskSpeechActPreserved.intentEvidence;
   }
 
   // F: I-27/I-31 이후 — reason|timing additive hijack에서만
