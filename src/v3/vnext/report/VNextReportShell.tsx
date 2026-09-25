@@ -20,8 +20,9 @@ import {
 import {
   VNextReportSectionNavigation,
 } from "./VNextReportSectionNavigation.js";
-import type {
-  VNextReportSessionState,
+import {
+  resolveVNextReportUxActions,
+  type VNextReportSessionState,
 } from "./vNextReportState.js";
 
 import "./vNextReport.css";
@@ -51,9 +52,13 @@ export type VNextReportShellProps = {
   isBusy: boolean;
   isStreaming: boolean;
   startReport: (birthProfile: VNextBirthProfile) => Promise<void>;
+  retryReport: (birthProfile: VNextBirthProfile) => Promise<void>;
+  restartReport: (birthProfile: VNextBirthProfile) => Promise<void>;
   setActiveSection: (
     section: VNextReportSessionState["sections"][number],
   ) => void;
+  onContinueToConsulting?: () => void;
+  onGoBack?: () => void;
 };
 
 export function VNextReportShell({
@@ -68,10 +73,15 @@ export function VNextReportShell({
   isBusy,
   isStreaming,
   startReport,
+  retryReport,
+  restartReport,
   setActiveSection,
+  onContinueToConsulting,
+  onGoBack,
 }: VNextReportShellProps) {
   const displayName = birthProfile.displayName?.trim()
     || "상담자";
+  const uxActions = resolveVNextReportUxActions(state.phase);
 
   useEffect(() => {
     if (authenticated && !authLoading) {
@@ -104,6 +114,20 @@ export function VNextReportShell({
         onSignIn={onSignIn}
         onSignOut={onSignOut}
         displayName={displayName}
+        canNewReport={uxActions.canNewReport}
+        canGoBack={uxActions.canGoBack}
+        onNewReport={
+          uxActions.canNewReport
+            ? () => {
+                void restartReport(birthProfile);
+              }
+            : undefined
+        }
+        onGoBack={
+          uxActions.canGoBack
+            ? onGoBack
+            : undefined
+        }
       />
 
       <main className="vnext-report-main">
@@ -133,6 +157,18 @@ export function VNextReportShell({
             state={state}
             isBusy={isBusy}
             isStreaming={isStreaming}
+            onRetry={
+              uxActions.canRetry
+                ? () => {
+                    void retryReport(birthProfile);
+                  }
+                : undefined
+            }
+            onContinueToConsulting={
+              uxActions.canContinueToConsulting
+                ? onContinueToConsulting
+                : undefined
+            }
           />
         </div>
       </main>

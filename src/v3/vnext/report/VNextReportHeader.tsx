@@ -9,6 +9,10 @@ export type VNextReportHeaderProps = {
   onSignIn: () => void;
   onSignOut: () => void;
   displayName: string;
+  canNewReport?: boolean;
+  canGoBack?: boolean;
+  onNewReport?: () => void;
+  onGoBack?: () => void;
 };
 
 export function VNextReportHeader({
@@ -18,6 +22,10 @@ export function VNextReportHeader({
   onSignIn,
   onSignOut,
   displayName,
+  canNewReport = false,
+  canGoBack = false,
+  onNewReport,
+  onGoBack,
 }: VNextReportHeaderProps) {
   return (
     <header className="vnext-report-header">
@@ -28,6 +36,26 @@ export function VNextReportHeader({
           </p>
 
           <div className="vnext-report-header-actions">
+            {canNewReport && onNewReport ? (
+              <button
+                className="vnext-report-new-session-button"
+                type="button"
+                onClick={onNewReport}
+              >
+                {VNEXT_REPORT_COPY.newReportButton}
+              </button>
+            ) : null}
+
+            {canGoBack && onGoBack ? (
+              <button
+                className="vnext-report-auth-button"
+                type="button"
+                onClick={onGoBack}
+              >
+                {VNEXT_REPORT_COPY.goBackButton}
+              </button>
+            ) : null}
+
             <div className="vnext-report-auth">
               {authLoading ? (
                 <p className="vnext-report-auth-status">

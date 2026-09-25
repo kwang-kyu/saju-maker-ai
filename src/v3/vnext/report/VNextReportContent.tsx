@@ -20,8 +20,9 @@ import {
   downloadVNextReportDocx,
   VNEXT_REPORT_DOCX_ERROR_MESSAGE,
 } from "./vNextReportDocx.js";
-import type {
-  VNextReportSessionState,
+import {
+  resolveVNextReportUxActions,
+  type VNextReportSessionState,
 } from "./vNextReportState.js";
 
 export type VNextReportContentProps = {
@@ -29,6 +30,8 @@ export type VNextReportContentProps = {
   state: VNextReportSessionState;
   isBusy: boolean;
   isStreaming: boolean;
+  onRetry?: () => void;
+  onContinueToConsulting?: () => void;
 };
 
 function resolveDisplayText(
@@ -70,12 +73,15 @@ export function VNextReportContent({
   state,
   isBusy,
   isStreaming,
+  onRetry,
+  onContinueToConsulting,
 }: VNextReportContentProps) {
   const [docxPreparing, setDocxPreparing] = useState(false);
   const [docxErrorMessage, setDocxErrorMessage] = useState<string | null>(
     null,
   );
 
+  const uxActions = resolveVNextReportUxActions(state.phase);
   const displayText = resolveDisplayText(state, isStreaming);
   const showEmpty = !displayText
     && !isBusy
@@ -84,10 +90,11 @@ export function VNextReportContent({
     && state.phase === "idle";
 
   const responseText = state.response?.text ?? "";
-  const canDownload = canDownloadVNextReportDocx(
-    state.phase,
-    responseText,
-  )
+  const canDownload = uxActions.canDownloadDocx
+    && canDownloadVNextReportDocx(
+      state.phase,
+      responseText,
+    )
     && !state.errorMessage;
 
   async function handleDocxDownload(): Promise<void> {
@@ -116,7 +123,7 @@ export function VNextReportContent({
     }
   }
 
-  if (state.errorMessage) {
+  if (state.errorMessage || state.phase === "error") {
     return (
       <section
         className="vnext-report-content"
@@ -126,8 +133,21 @@ export function VNextReportContent({
           className="vnext-report-error"
           role="alert"
         >
-          {state.errorMessage}
+          {state.errorMessage ?? VNEXT_REPORT_COPY.errorFallback}
         </p>
+
+        {uxActions.canRetry && onRetry ? (
+          <div className="vnext-report-flow-actions">
+            <button
+              type="button"
+              className="vnext-report-auth-button"
+              onClick={onRetry}
+              disabled={isBusy || isStreaming}
+            >
+              {VNEXT_REPORT_COPY.retryButton}
+            </button>
+          </div>
+        ) : null}
       </section>
     );
   }
@@ -163,8 +183,8 @@ export function VNextReportContent({
           state.activeSection,
         )}
 
-        {canDownload ? (
-          <div className="vnext-report-docx-actions">
+        <div className="vnext-report-flow-actions">
+          {canDownload ? (
             <button
               type="button"
               className="vnext-report-docx-button"
@@ -177,17 +197,27 @@ export function VNextReportContent({
                 ? "문서 준비 중..."
                 : "DOCX 다운로드"}
             </button>
+          ) : null}
 
-            {docxErrorMessage ? (
-              <p
-                className="vnext-report-docx-error"
-                role="alert"
-              >
-                {docxErrorMessage}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
+          {uxActions.canContinueToConsulting && onContinueToConsulting ? (
+            <button
+              type="button"
+              className="vnext-report-flow-button"
+              onClick={onContinueToConsulting}
+            >
+              {VNEXT_REPORT_COPY.continueToConsultingButton}
+            </button>
+          ) : null}
+
+          {docxErrorMessage ? (
+            <p
+              className="vnext-report-docx-error"
+              role="alert"
+            >
+              {docxErrorMessage}
+            </p>
+          ) : null}
+        </div>
       </section>
     );
   }

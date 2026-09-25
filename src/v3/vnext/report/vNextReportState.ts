@@ -55,6 +55,31 @@ export const INITIAL_VNEXT_REPORT_SESSION_STATE: VNextReportSessionState = {
   progressStep: null,
 };
 
+export type VNextReportUxActions = {
+  canRetry: boolean;
+  canDownloadDocx: boolean;
+  canContinueToConsulting: boolean;
+  canNewReport: boolean;
+  canGoBack: boolean;
+};
+
+/**
+ * Report UX 버튼 활성 규칙 (UI orchestration only).
+ */
+export function resolveVNextReportUxActions(
+  phase: VNextReportPhase,
+): VNextReportUxActions {
+  return {
+    canRetry: phase === "error",
+    canDownloadDocx: phase === "completed",
+    canContinueToConsulting: phase === "completed",
+    canNewReport: phase === "completed",
+    canGoBack: phase === "idle"
+      || phase === "completed"
+      || phase === "error",
+  };
+}
+
 export function resolveReportLoadingLabel(
   phase: VNextReportPhase,
   progressStep: VNextAnalysisProgressStep | null = null,

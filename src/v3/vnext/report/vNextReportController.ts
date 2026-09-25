@@ -116,6 +116,35 @@ export class VNextReportController {
     this.emit();
   }
 
+  /**
+   * Error 상태에서만 동일 birthProfile로 report generation을 재실행한다.
+   */
+  async retryReport(
+    birthProfile: VNextBirthProfile,
+  ): Promise<void> {
+    if (this.state.phase !== "error") {
+      return;
+    }
+
+    this.reset();
+    await this.startReport(birthProfile);
+  }
+
+  /**
+   * Completed 상태에서만 session을 초기화하고 새 report를 시작한다.
+   * Entry birthProfile은 호출측에서 유지한다.
+   */
+  async restartReport(
+    birthProfile: VNextBirthProfile,
+  ): Promise<void> {
+    if (this.state.phase !== "completed") {
+      return;
+    }
+
+    this.reset();
+    await this.startReport(birthProfile);
+  }
+
   private updateProgressStep(
     progressStep: VNextAnalysisProgressStep,
   ): void {

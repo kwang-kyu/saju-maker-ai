@@ -43,6 +43,8 @@ export type UseVNextReportResult = {
   isBusy: boolean;
   isStreaming: boolean;
   startReport: (birthProfile: VNextBirthProfile) => Promise<void>;
+  retryReport: (birthProfile: VNextBirthProfile) => Promise<void>;
+  restartReport: (birthProfile: VNextBirthProfile) => Promise<void>;
   setActiveSection: (
     section: VNextReportSessionState["sections"][number],
   ) => void;
@@ -107,6 +109,20 @@ export function useVNextReport(
     [],
   );
 
+  const retryReport = useCallback(
+    async (birthProfile: VNextBirthProfile) => {
+      await controllerRef.current!.retryReport(birthProfile);
+    },
+    [],
+  );
+
+  const restartReport = useCallback(
+    async (birthProfile: VNextBirthProfile) => {
+      await controllerRef.current!.restartReport(birthProfile);
+    },
+    [],
+  );
+
   const setActiveSection = useCallback(
     (section: VNextReportSessionState["sections"][number]) => {
       controllerRef.current!.setActiveSection(section);
@@ -137,6 +153,8 @@ export function useVNextReport(
     isBusy,
     isStreaming,
     startReport,
+    retryReport,
+    restartReport,
     setActiveSection,
     reset,
   };

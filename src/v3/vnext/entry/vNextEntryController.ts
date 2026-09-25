@@ -102,7 +102,37 @@ export class VNextEntryController {
         birthProfile: null,
       };
       this.emit();
+      return;
     }
+
+    if (this.state.phase === "report") {
+      this.state = {
+        phase: "modeSelection",
+        selectedMode: this.state.selectedMode,
+        birthProfile: this.state.birthProfile,
+      };
+      this.emit();
+    }
+  }
+
+  /**
+   * Report 완료 후 동일 birthProfile로 Consulting mode로 전환한다.
+   * Report response.text는 전달하지 않는다.
+   */
+  continueToConsulting(): void {
+    if (
+      this.state.phase !== "report"
+      || this.state.birthProfile === null
+    ) {
+      return;
+    }
+
+    this.state = {
+      phase: "consulting",
+      selectedMode: "question",
+      birthProfile: this.state.birthProfile,
+    };
+    this.emit();
   }
 
   private emit(): void {

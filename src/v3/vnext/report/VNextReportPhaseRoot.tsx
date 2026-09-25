@@ -16,6 +16,8 @@ export type VNextReportPhaseRootProps = {
   onSignIn: () => void;
   onSignOut: () => void;
   accessToken?: string | null;
+  onContinueToConsulting?: () => void;
+  onGoBack?: () => void;
 };
 
 export function VNextReportPhaseRoot({
@@ -26,6 +28,8 @@ export function VNextReportPhaseRoot({
   onSignIn,
   onSignOut,
   accessToken,
+  onContinueToConsulting,
+  onGoBack,
 }: VNextReportPhaseRootProps) {
   const {
     state,
@@ -33,6 +37,8 @@ export function VNextReportPhaseRoot({
     isBusy,
     isStreaming,
     startReport,
+    retryReport,
+    restartReport,
     setActiveSection,
   } = useVNextReport({
     accessToken,
@@ -51,7 +57,11 @@ export function VNextReportPhaseRoot({
       isBusy={isBusy}
       isStreaming={isStreaming}
       startReport={startReport}
+      retryReport={retryReport}
+      restartReport={restartReport}
       setActiveSection={setActiveSection}
+      onContinueToConsulting={onContinueToConsulting}
+      onGoBack={onGoBack}
     />
   );
 }

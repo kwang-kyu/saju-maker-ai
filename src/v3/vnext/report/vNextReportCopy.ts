@@ -17,6 +17,10 @@ export const VNEXT_REPORT_COPY = {
   progressStreaming: "리포트를 표시하고 있습니다.",
   emptyContent: "리포트 내용이 여기에 표시됩니다.",
   errorFallback: "리포트를 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  retryButton: "다시 시도",
+  newReportButton: "새 리포트",
+  continueToConsultingButton: "이어서 질문하기",
+  goBackButton: "이전으로",
 } as const;
 
 export const VNEXT_REPORT_SECTION_LABELS: Record<
