@@ -4249,6 +4249,32 @@ function resolveContinuationGenericDecisionTarget(
 }
 
 /**
+ * STEP 20-14-6: generic termination fallback용 활동/업무 목적어.
+ * "정리"의 정리(organize) 의미(서류/생각/돈…)와
+ * 종료(termination) 의미(일/업무/직장/회사)를 구분한다.
+ * 새 DecisionTarget / axis를 만들지 않는다.
+ */
+const GENERIC_TERMINATION_ACTIVITY_OBJECTS: readonly string[] = [
+  "일을",
+  "일이",
+  "업무",
+  "직장",
+  "회사",
+];
+
+/**
+ * STEP 20-14-6: termination frame만 있고 DT 후보가 none일 때
+ * generic stop fallback을 허용할 activity object 여부.
+ */
+function hasGenericTerminationActivityObject(
+  question: string,
+): boolean {
+  return GENERIC_TERMINATION_ACTIVITY_OBJECTS.some((token) =>
+    question.includes(token)
+  );
+}
+
+/**
  * J-4-3-2: termination frame이 강하면
  * generic stop 계열 충돌을 정리한다.
  *
@@ -4256,6 +4282,10 @@ function resolveContinuationGenericDecisionTarget(
  * - 그 외 generic이 stop이 아니면 stop 후보를 가중
  * - STEP 20-12-3: object-like(partner/marry)가 명시적 stop을
  *   rule 순서로 가린 경우에도 stop/termination specific을 보존한다.
+ * - STEP 20-14-6: selected=none 이고 stop 후보가 없어도
+ *   비관계 generic termination(활동 목적어)이면 stop으로 보존한다.
+ *   관계 separate / leaveJob specific / 명시적 DT / method(방법·어떻게)
+ *   / organize-sense 정리(서류·생각 등)는 건드리지 않는다.
  * - intent는 변경하지 않는다.
  */
 function resolveTerminationGenericDecisionTarget(
@@ -4263,6 +4293,7 @@ function resolveTerminationGenericDecisionTarget(
   candidates: MeaningCandidateSet,
   topic: QuestionTopic,
   decisionEvidence: readonly string[],
+  question: string,
 ): {
   decisionTarget: DecisionTarget;
   evidence: string[];
@@ -4274,10 +4305,12 @@ function resolveTerminationGenericDecisionTarget(
   }
 
   if (
-    !GENERIC_ACTION_DECISION_TARGETS.has(selected)
+    selected !== "none"
+    && !GENERIC_ACTION_DECISION_TARGETS.has(selected)
     && !isObjectLikeDecisionTarget(selected)
   ) {
     // 이미 specific(action)이면 유지한다. object-like는 예외.
+    // STEP 20-14-6: none은 generic termination fallback 대상.
     return null;
   }
 
@@ -4332,21 +4365,51 @@ function resolveTerminationGenericDecisionTarget(
     "stop",
   );
 
-  if (!stopCandidate) {
-    return null;
+  if (stopCandidate) {
+    return {
+      decisionTarget: "stop",
+      evidence: mergeUniqueEvidence(
+        frame.evidence,
+        stopCandidate.evidence,
+        isObjectLikeDecisionTarget(selected)
+          ? ["explicitActionNatureOverObject"]
+          : [],
+        decisionEvidence,
+      ),
+    };
   }
 
-  return {
-    decisionTarget: "stop",
-    evidence: mergeUniqueEvidence(
-      frame.evidence,
-      stopCandidate.evidence,
-      isObjectLikeDecisionTarget(selected)
-        ? ["explicitActionNatureOverObject"]
-        : [],
-      decisionEvidence,
-    ),
-  };
+  // STEP 20-14-6: termination frame은 있으나 stop DT 후보가 없는 경우
+  // (예: "일을 정리…"). selected=none + 활동 목적어일 때만 stop 보존.
+  // "정리하는 방법/어떻게" 및 서류·생각 등 organize-sense는 제외.
+  if (selected === "none") {
+    const methodCandidate = findIntentCandidate(
+      candidates.intents,
+      "method",
+    );
+    const methodStrong =
+      !!methodCandidate
+      && evidenceHasStrongSpeechActMarker(
+        methodCandidate.evidence,
+        STRONG_METHOD_SPEECH_ACT_MARKERS,
+      );
+
+    if (
+      !methodStrong
+      && hasGenericTerminationActivityObject(question)
+    ) {
+      return {
+        decisionTarget: "stop",
+        evidence: mergeUniqueEvidence(
+          frame.evidence,
+          ["genericTerminationStopFallback"],
+          decisionEvidence,
+        ),
+      };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -4401,6 +4464,7 @@ function resolveTerminationOrContinuationDecisionTarget(
   candidates: MeaningCandidateSet,
   topic: QuestionTopic,
   decisionEvidence: readonly string[],
+  question: string,
 ): {
   decisionTarget: DecisionTarget;
   evidence: string[];
@@ -4431,6 +4495,7 @@ function resolveTerminationOrContinuationDecisionTarget(
       candidates,
       topic,
       decisionEvidence,
+      question,
     );
   }
 
@@ -4448,6 +4513,7 @@ function resolveTerminationOrContinuationDecisionTarget(
       candidates,
       topic,
       decisionEvidence,
+      question,
     );
   }
 
@@ -6414,6 +6480,7 @@ function normalizeAxes(
         candidates,
         topic,
         decisionEvidence,
+        question,
       );
 
       if (termOrCont) {
