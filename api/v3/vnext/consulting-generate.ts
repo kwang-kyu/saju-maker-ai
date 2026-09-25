@@ -7,6 +7,9 @@ import {
   assertVNextConsultingAuthenticated,
 } from "../../../src/v3/vnext/gpt/assertVNextConsultingAuthenticated.js";
 import {
+  assertVNextConsultingEntitled,
+} from "../../../src/v3/vnext/gpt/assertVNextConsultingEntitled.js";
+import {
   createOpenAIResponseGateway,
   isOpenAIResponseGatewayAvailable,
 } from "../../../src/v3/vnext/gpt/responseGatewayAdapter.js";
@@ -45,6 +48,18 @@ export async function handleVNextConsultingGenerateRequest(
   if (!authResult.ok) {
     response.status(authResult.status).json({
       error: authResult.error,
+    });
+    return;
+  }
+
+  const entitlementResult = await assertVNextConsultingEntitled({
+    ownerId: authResult.ownerId,
+    environment: process.env,
+  });
+
+  if (!entitlementResult.ok) {
+    response.status(entitlementResult.status).json({
+      error: entitlementResult.error,
     });
     return;
   }
