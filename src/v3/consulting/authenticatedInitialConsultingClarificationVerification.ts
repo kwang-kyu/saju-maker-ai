@@ -810,11 +810,11 @@ import {
           )
         === true,
 
-      providedBirthDateIsAcknowledged:
+      clarificationAnswerUsesProductionContract:
         initialTurn
           ?.assistantAnswer
           .includes(
-            "말씀하신 생년월일은 확인했습니다.",
+            "지금 확인된 정보만으로 결론을 확정하지 않겠습니다.",
           )
         === true,
 
@@ -830,11 +830,13 @@ import {
           .includes(
             "성별",
           )
+        === true
         && initialTurn
           .assistantAnswer
           .includes(
             "출생시간",
-          ),
+          )
+        === false,
 
       genericAnswerIsNotStored:
         initialTurn !== undefined

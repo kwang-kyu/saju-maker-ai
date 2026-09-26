@@ -1640,6 +1640,7 @@ function buildCaseMaterial(
     buildDecisionExplanationPlan(
       explanationInput,
       input.question.originalQuestion,
+      input.questionContext,
     );
 
   const payload =
