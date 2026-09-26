@@ -31,6 +31,7 @@ export type UseVNextEntryResult = {
   selectMode: (mode: VNextConsultingMode) => void;
   completeBirthInput: (profile: VNextBirthProfile) => void;
   goBack: () => void;
+  editBirthInfo: () => void;
   continueToConsulting: () => void;
   reset: () => void;
 };
@@ -77,6 +78,10 @@ export function useVNextEntry(): UseVNextEntryResult {
     controllerRef.current!.goBack();
   }, []);
 
+  const editBirthInfo = useCallback(() => {
+    controllerRef.current!.editBirthInfo();
+  }, []);
+
   const continueToConsulting = useCallback(() => {
     controllerRef.current!.continueToConsulting();
   }, []);
@@ -91,6 +96,7 @@ export function useVNextEntry(): UseVNextEntryResult {
     selectMode,
     completeBirthInput,
     goBack,
+    editBirthInfo,
     continueToConsulting,
     reset,
   };

@@ -16,6 +16,7 @@ export type VNextConsultingHeaderProps = {
   isStreaming?: boolean;
   loadingLabel?: string | null;
   onNewConsultation?: () => void;
+  onGoBack?: () => void;
 };
 
 export function VNextConsultingHeader({
@@ -29,6 +30,7 @@ export function VNextConsultingHeader({
   isStreaming = false,
   loadingLabel = null,
   onNewConsultation,
+  onGoBack,
 }: VNextConsultingHeaderProps) {
   const status = state
     ? resolveVNextConsultingStatusView(
@@ -47,6 +49,12 @@ export function VNextConsultingHeader({
     && !isStreaming,
   );
 
+  const canGoBack = Boolean(
+    onGoBack
+    && !isBusy
+    && !isStreaming
+  );
+
   return (
     <header className="vnext-consulting-header">
       <div className="vnext-consulting-header-inner">
@@ -63,6 +71,16 @@ export function VNextConsultingHeader({
                 onClick={onNewConsultation}
               >
                 새 상담
+              </button>
+            ) : null}
+
+            {canGoBack ? (
+              <button
+                className="vnext-consulting-auth-button"
+                type="button"
+                onClick={onGoBack}
+              >
+                이전으로
               </button>
             ) : null}
 

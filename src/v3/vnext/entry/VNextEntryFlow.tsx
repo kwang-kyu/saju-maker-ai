@@ -21,6 +21,7 @@ import {
 export type VNextEntryFlowProps = {
   phase: VNextEntryPhase;
   selectedMode: VNextConsultingMode | null;
+  birthProfile?: VNextBirthProfile | null;
   onStartConsulting: () => void;
   onSelectMode: (mode: VNextConsultingMode) => void;
   onCompleteBirthInput: (profile: VNextBirthProfile) => void;
@@ -30,6 +31,7 @@ export type VNextEntryFlowProps = {
 export function VNextEntryFlow({
   phase,
   selectedMode,
+  birthProfile = null,
   onStartConsulting,
   onSelectMode,
   onCompleteBirthInput,
@@ -53,6 +55,7 @@ export function VNextEntryFlow({
 
       {phase === "birthInput" ? (
         <VNextBirthInputScreen
+          initialProfile={birthProfile}
           onSubmit={onCompleteBirthInput}
           onGoBack={onGoBack}
         />

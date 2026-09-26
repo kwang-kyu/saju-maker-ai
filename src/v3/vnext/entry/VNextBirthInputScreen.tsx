@@ -20,6 +20,8 @@ import {
 export type VNextBirthInputScreenProps = {
   onSubmit: (profile: VNextBirthProfile) => void;
   onGoBack: () => void;
+  /** Edit Birth 재진입 시 기존 입력값 유지용 (없으면 빈 폼). */
+  initialProfile?: VNextBirthProfile | null;
 };
 
 const YEAR_OPTIONS = Array.from(
@@ -69,35 +71,48 @@ function isValidBirthDateParts(
 export function VNextBirthInputScreen({
   onSubmit,
   onGoBack,
+  initialProfile = null,
 }: VNextBirthInputScreenProps) {
   const [
     displayName,
     setDisplayName,
-  ] = useState("");
+  ] = useState(initialProfile?.displayName ?? "");
   const [
     gender,
     setGender,
-  ] = useState<VNextBirthGender>("male");
+  ] = useState<VNextBirthGender>(
+    initialProfile?.gender ?? "male",
+  );
   const [
     calendarType,
     setCalendarType,
-  ] = useState<VNextBirthCalendarType>("solar");
+  ] = useState<VNextBirthCalendarType>(
+    initialProfile?.calendarType ?? "solar",
+  );
   const [
     year,
     setYear,
-  ] = useState<number | null>(null);
+  ] = useState<number | null>(
+    initialProfile?.year ?? null,
+  );
   const [
     month,
     setMonth,
-  ] = useState<number | null>(null);
+  ] = useState<number | null>(
+    initialProfile?.month ?? null,
+  );
   const [
     day,
     setDay,
-  ] = useState<number | null>(null);
+  ] = useState<number | null>(
+    initialProfile?.day ?? null,
+  );
   const [
     birthTimeBranch,
     setBirthTimeBranch,
-  ] = useState<BirthTimeBranch>("unknown");
+  ] = useState<BirthTimeBranch>(
+    initialProfile?.birthTimeBranch ?? "unknown",
+  );
 
   const canSubmit = useMemo(
     () => isValidBirthDateParts(year, month, day),

@@ -105,7 +105,10 @@ export class VNextEntryController {
       return;
     }
 
-    if (this.state.phase === "report") {
+    if (
+      this.state.phase === "report"
+      || this.state.phase === "consulting"
+    ) {
       this.state = {
         phase: "modeSelection",
         selectedMode: this.state.selectedMode,
@@ -113,6 +116,28 @@ export class VNextEntryController {
       };
       this.emit();
     }
+  }
+
+  /**
+   * Consulting에서 Birth Input으로 돌아가 출생정보를 수정한다.
+   * birthProfile은 유지해 입력 화면이 기존 값을 재사용할 수 있게 한다.
+   * Consulting session은 phase unmount로 격리된다.
+   */
+  editBirthInfo(): void {
+    if (
+      this.state.phase !== "consulting"
+      || this.state.birthProfile === null
+      || this.state.selectedMode === null
+    ) {
+      return;
+    }
+
+    this.state = {
+      phase: "birthInput",
+      selectedMode: this.state.selectedMode,
+      birthProfile: this.state.birthProfile,
+    };
+    this.emit();
   }
 
   /**

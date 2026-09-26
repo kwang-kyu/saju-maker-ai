@@ -16,6 +16,8 @@ export type VNextConsultingPhaseRootProps = {
   onSignIn: () => void;
   onSignOut: () => void;
   accessToken?: string | null;
+  onGoBack?: () => void;
+  onEditBirthInfo?: () => void;
 };
 
 export function VNextConsultingPhaseRoot({
@@ -26,6 +28,8 @@ export function VNextConsultingPhaseRoot({
   onSignIn,
   onSignOut,
   accessToken,
+  onGoBack,
+  onEditBirthInfo,
 }: VNextConsultingPhaseRootProps) {
   const {
     state,
@@ -54,6 +58,8 @@ export function VNextConsultingPhaseRoot({
       submitQuestion={submitQuestion}
       submitFollowUpQuestion={submitFollowUpQuestion}
       onNewConsultation={reset}
+      onGoBack={onGoBack}
+      onEditBirthInfo={onEditBirthInfo}
     />
   );
 }

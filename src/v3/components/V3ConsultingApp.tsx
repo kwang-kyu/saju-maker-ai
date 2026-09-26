@@ -204,6 +204,7 @@ function buildV3AuthRedirectUrl():
       selectMode: selectVNextMode,
       completeBirthInput: completeVNextBirthInput,
       goBack: goBackVNextEntry,
+      editBirthInfo: editVNextBirthInfo,
       continueToConsulting: continueVNextToConsulting,
     } = useVNextEntry();
     const showVNextEntryFlow = vNextMode
@@ -439,6 +440,7 @@ function buildV3AuthRedirectUrl():
         <VNextEntryFlow
           phase={vNextEntryState.phase}
           selectedMode={vNextEntryState.selectedMode}
+          birthProfile={vNextEntryState.birthProfile}
           onStartConsulting={startVNextConsulting}
           onSelectMode={selectVNextMode}
           onCompleteBirthInput={completeVNextBirthInput}
@@ -498,6 +500,8 @@ function buildV3AuthRedirectUrl():
             authenticated={authenticated}
             authLoading={authLoading}
             authError={authError}
+            onGoBack={goBackVNextEntry}
+            onEditBirthInfo={editVNextBirthInfo}
             onSignIn={() => {
               void signInWithKakao(
                 buildV3AuthRedirectUrl(),

@@ -249,6 +249,121 @@ export function verifyVNextStep6A1Entry(): VNextStep6A1EntryVerificationResult {
         ],
       };
     }),
+
+    runSyncCase("case-11-consulting-back-to-mode-selection", () => {
+      const controller = new VNextEntryController();
+      const profile = {
+        displayName: "테스트",
+        gender: "male" as const,
+        year: 1984,
+        month: 3,
+        day: 15,
+        birthTimeBranch: "sin" as const,
+        calendarType: "solar" as const,
+      };
+
+      controller.startConsulting();
+      controller.selectMode("question");
+      controller.completeBirthInput(profile);
+      const before = controller.getState();
+
+      controller.goBack();
+      const after = controller.getState();
+
+      return {
+        passed: before.phase === "consulting"
+          && after.phase === "modeSelection"
+          && after.selectedMode === "question"
+          && after.birthProfile === before.birthProfile
+          && after.birthProfile?.displayName === "테스트",
+        details: [
+          `beforePhase=${before.phase}`,
+          `afterPhase=${after.phase}`,
+          `selectedMode=${String(after.selectedMode)}`,
+          `birthPreserved=${after.birthProfile === before.birthProfile}`,
+        ],
+      };
+    }),
+
+    runSyncCase("case-12-consulting-edit-birth-info", () => {
+      const controller = new VNextEntryController();
+      const profile = {
+        displayName: "테스트",
+        gender: "female" as const,
+        year: 1990,
+        month: 5,
+        day: 10,
+        birthTimeBranch: "yu" as const,
+        calendarType: "lunar" as const,
+      };
+
+      controller.startConsulting();
+      controller.selectMode("question");
+      controller.completeBirthInput(profile);
+      const before = controller.getState();
+
+      controller.editBirthInfo();
+      const afterEdit = controller.getState();
+
+      controller.completeBirthInput({
+        ...profile,
+        year: 1991,
+      });
+      const afterResubmit = controller.getState();
+
+      return {
+        passed: before.phase === "consulting"
+          && afterEdit.phase === "birthInput"
+          && afterEdit.selectedMode === "question"
+          && afterEdit.birthProfile === before.birthProfile
+          && afterResubmit.phase === "consulting"
+          && afterResubmit.birthProfile?.year === 1991
+          && afterResubmit.birthProfile?.displayName === "테스트",
+        details: [
+          `afterEditPhase=${afterEdit.phase}`,
+          `birthPreserved=${afterEdit.birthProfile === before.birthProfile}`,
+          `afterResubmitPhase=${afterResubmit.phase}`,
+          `year=${String(afterResubmit.birthProfile?.year)}`,
+        ],
+      };
+    }),
+
+    runSyncCase("case-13-report-to-consulting-then-back", () => {
+      const controller = new VNextEntryController();
+      const profile = {
+        displayName: "리포트",
+        gender: "male" as const,
+        year: 1980,
+        month: 1,
+        day: 1,
+        birthTimeBranch: "ja" as const,
+        calendarType: "solar" as const,
+      };
+
+      controller.startConsulting();
+      controller.selectMode("report");
+      controller.completeBirthInput(profile);
+      controller.continueToConsulting();
+      const consulting = controller.getState();
+
+      controller.goBack();
+      const afterBack = controller.getState();
+
+      return {
+        passed: consulting.phase === "consulting"
+          && consulting.selectedMode === "question"
+          && consulting.birthProfile?.displayName === "리포트"
+          && afterBack.phase === "modeSelection"
+          && afterBack.selectedMode === "question"
+          && afterBack.birthProfile?.displayName === "리포트",
+        details: [
+          `consultingPhase=${consulting.phase}`,
+          `consultingMode=${String(consulting.selectedMode)}`,
+          `afterBackPhase=${afterBack.phase}`,
+          `birthName=${String(afterBack.birthProfile?.displayName)}`,
+        ],
+      };
+    }),
   ];
 
   return {
