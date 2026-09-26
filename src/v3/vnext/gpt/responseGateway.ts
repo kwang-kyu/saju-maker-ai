@@ -330,6 +330,48 @@ export type GenerateNaturalResponseStreamingInput =
 
 const MIN_PARTIAL_TEXT_LENGTH = 20;
 
+/**
+ * Consulting access/auth errors must not be absorbed into fallback.
+ * Ordinary remote/network/timeout/empty errors keep fallback policy.
+ */
+const CONSULTING_ACCESS_AUTH_ERROR_CODES = new Set([
+  "authenticationRequired",
+  "subscriptionRequired",
+  "paymentRequired",
+  "inactive",
+  "subscriptionUnavailable",
+]);
+
+export function isConsultingAccessAuthErrorCode(
+  code: string | undefined | null,
+): boolean {
+  return typeof code === "string"
+    && CONSULTING_ACCESS_AUTH_ERROR_CODES.has(code);
+}
+
+export class ConsultingAccessAuthError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message?: string) {
+    super(message ?? code);
+    this.name = "ConsultingAccessAuthError";
+    this.code = code;
+  }
+}
+
+function throwIfConsultingAccessAuthError(
+  error: ResponseGenerationResult["error"] | undefined,
+): void {
+  if (!isConsultingAccessAuthErrorCode(error?.code)) {
+    return;
+  }
+
+  throw new ConsultingAccessAuthError(
+    error!.code,
+    error!.message,
+  );
+}
+
 function emitStreamEvent(
   listener: ResponseStreamListener | undefined,
   event: ResponseStreamEvent,
@@ -421,6 +463,8 @@ export async function generateNaturalConsultingResponse(
     || generation.status === "timeout"
     || !generation.text.trim()
   ) {
+    throwIfConsultingAccessAuthError(generation.error);
+
     return {
       text: buildConsultingFallback(input.action.context),
       source: "fallback",
@@ -527,6 +571,8 @@ export async function generateNaturalConsultingResponseStreaming(
       || generation.status === "timeout"
       || !accumulatedText.trim()
     ) {
+      throwIfConsultingAccessAuthError(generation.error);
+
       return buildFallbackNaturalResponse(
         input,
         [
@@ -608,6 +654,10 @@ export async function generateNaturalConsultingResponseStreaming(
       generation.status === "error"
       || generation.status === "timeout"
     ) {
+      throwIfConsultingAccessAuthError(
+        generation.error ?? streamError,
+      );
+
       if (accumulatedText.trim().length >= MIN_PARTIAL_TEXT_LENGTH) {
         const partialValidation = validateConsultingResponse({
           text: accumulatedText,
@@ -698,6 +748,8 @@ export async function generateNaturalConsultingResponseStreaming(
   }
 
   if (streamError) {
+    throwIfConsultingAccessAuthError(streamError);
+
     return buildFallbackNaturalResponse(
       input,
       [streamError.code],

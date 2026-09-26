@@ -50,6 +50,49 @@ export type VNextConsultingControllerListener = (
   state: VNextConsultingSessionState,
 ) => void;
 
+const DEFAULT_CONSULTING_ERROR_MESSAGE =
+  "상담을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+
+const CONSULTING_ACCESS_AUTH_ERROR_MESSAGES: Record<string, string> = {
+  authenticationRequired:
+    "로그인이 필요합니다. 로그인 후 다시 이용해 주세요.",
+  subscriptionRequired:
+    "이 상담은 프리미엄 구독이 필요합니다.",
+  paymentRequired:
+    "구독 결제에 문제가 있어 상담을 진행할 수 없습니다.",
+  inactive:
+    "현재 구독이 활성화되어 있지 않아 상담을 이용할 수 없습니다.",
+  subscriptionUnavailable:
+    "잠시 후 다시 시도해 주세요.",
+};
+
+/**
+ * Access/auth errors are not GPT-retry targets except subscriptionUnavailable.
+ * Ordinary remote/network errors keep the existing retry affordance.
+ */
+export function isConsultingAccessAuthRetryAllowed(
+  code: string | undefined | null,
+): boolean {
+  return code === "subscriptionUnavailable";
+}
+
+export function resolveConsultingControllerErrorMessage(
+  error: unknown,
+): string {
+  const code = typeof error === "object"
+    && error !== null
+    && "code" in error
+    && typeof (error as { code: unknown }).code === "string"
+    ? (error as { code: string }).code
+    : undefined;
+
+  if (code && CONSULTING_ACCESS_AUTH_ERROR_MESSAGES[code]) {
+    return CONSULTING_ACCESS_AUTH_ERROR_MESSAGES[code]!;
+  }
+
+  return DEFAULT_CONSULTING_ERROR_MESSAGE;
+}
+
 export class VNextConsultingController {
   private state: VNextConsultingSessionState = {
     ...INITIAL_VNEXT_CONSULTING_SESSION_STATE,
@@ -271,11 +314,11 @@ export class VNextConsultingController {
         progressStep: "completed",
       };
       this.emit();
-    } catch {
+    } catch (error) {
       this.state = {
         ...this.state,
         phase: "error",
-        errorMessage: "상담을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        errorMessage: resolveConsultingControllerErrorMessage(error),
         streamingText: null,
         streamMetadata: null,
         progressStep: null,

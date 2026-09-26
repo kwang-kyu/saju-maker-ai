@@ -130,6 +130,81 @@ function buildRemoteRequestHeaders(
 
 
 
+function buildRemoteGatewayHttpError(
+
+  response: Response,
+
+  body: unknown,
+
+  kind: "generate" | "stream",
+
+): { code: string; message: string } {
+
+  const statusMessage = kind === "stream"
+
+    ? `Remote stream gateway returned ${response.status}`
+
+    : `Remote gateway returned ${response.status}`;
+
+
+
+  if (
+
+    body
+
+    && typeof body === "object"
+
+    && "error" in body
+
+    && typeof (body as { error: unknown }).error === "string"
+
+    && (body as { error: string }).error.trim().length > 0
+
+  ) {
+
+    return {
+
+      code: (body as { error: string }).error.trim(),
+
+      message: statusMessage,
+
+    };
+
+  }
+
+
+
+  return {
+
+    code: "remote_gateway_error",
+
+    message: statusMessage,
+
+  };
+
+}
+
+
+
+async function readRemoteErrorBody(
+
+  response: Response,
+
+): Promise<unknown> {
+
+  try {
+
+    return await response.json();
+
+  } catch {
+
+    return null;
+
+  }
+
+}
+
+
 export function createRemoteResponseGateway(
 
   options: VNextRemoteGatewayOptions = {},
@@ -180,7 +255,21 @@ export function createRemoteResponseGateway(
 
 
 
-        if (!response.ok) {
+                if (!response.ok) {
+
+          const errorBody = await readRemoteErrorBody(response);
+
+          const remoteError = buildRemoteGatewayHttpError(
+
+            response,
+
+            errorBody,
+
+            "generate",
+
+          );
+
+
 
           return {
 
@@ -190,17 +279,12 @@ export function createRemoteResponseGateway(
 
             latencyMs: Date.now() - startedAt,
 
-            error: {
-
-              code: "remote_gateway_error",
-
-              message: `Remote gateway returned ${response.status}`,
-
-            },
+            error: remoteError,
 
           };
 
         }
+
 
 
 
@@ -300,19 +384,27 @@ export function createRemoteResponseGateway(
 
 
 
-        if (!response.ok) {
+                if (!response.ok) {
+
+          const errorBody = await readRemoteErrorBody(response);
+
+          const remoteError = buildRemoteGatewayHttpError(
+
+            response,
+
+            errorBody,
+
+            "stream",
+
+          );
+
+
 
           listener.onEvent({
 
             type: "error",
 
-            error: {
-
-              code: "remote_gateway_error",
-
-              message: `Remote stream gateway returned ${response.status}`,
-
-            },
+            error: remoteError,
 
           });
 
@@ -326,17 +418,12 @@ export function createRemoteResponseGateway(
 
             latencyMs: Date.now() - startedAt,
 
-            error: {
-
-              code: "remote_gateway_error",
-
-              message: `Remote stream gateway returned ${response.status}`,
-
-            },
+            error: remoteError,
 
           };
 
         }
+
 
 
 
