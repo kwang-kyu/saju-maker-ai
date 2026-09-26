@@ -17,6 +17,7 @@ type ModeCardConfig = {
   mode: VNextConsultingMode;
   icon: string;
   title: string;
+  badge: string;
   description: string[];
 };
 
@@ -25,6 +26,7 @@ const MODE_CARDS: ModeCardConfig[] = [
     mode: "question",
     icon: VNEXT_ENTRY_MODE_CARDS[0].icon,
     title: VNEXT_ENTRY_COPY.questionModeTitle,
+    badge: VNEXT_ENTRY_COPY.questionModeBadge,
     description: [
       "지금 궁금한 내용을",
       "자유롭게 질문해보세요.",
@@ -37,6 +39,7 @@ const MODE_CARDS: ModeCardConfig[] = [
     mode: "report",
     icon: VNEXT_ENTRY_MODE_CARDS[1].icon,
     title: VNEXT_ENTRY_COPY.reportModeTitle,
+    badge: VNEXT_ENTRY_COPY.reportModeBadge,
     description: [
       "나의 현재 흐름을",
       "체계적으로 확인합니다.",
@@ -88,8 +91,13 @@ export function VNextModeSelectionScreen({
                   {card.icon}
                 </span>
 
-                <span className="vnext-entry-mode-card-title">
-                  {card.title}
+                <span className="vnext-entry-mode-card-title-row">
+                  <span className="vnext-entry-mode-card-title">
+                    {card.title}
+                  </span>
+                  <span className="vnext-entry-mode-card-badge">
+                    {card.badge}
+                  </span>
                 </span>
 
                 <span className="vnext-entry-mode-card-description">

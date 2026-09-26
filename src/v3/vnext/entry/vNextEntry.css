@@ -218,13 +218,32 @@
   line-height: 1;
 }
 
+.vnext-entry-mode-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
 .vnext-entry-mode-card-title {
   display: block;
-  margin-bottom: 10px;
   color: #211d18;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+.vnext-entry-mode-card-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(139, 103, 50, 0.1);
+  color: #6b5328;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .vnext-entry-mode-card-description {
