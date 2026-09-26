@@ -5,6 +5,12 @@ import type {
 import {
   normalizeConsultingDisplayText,
 } from "./consultingDisplayText.js";
+import {
+  isConsultingAccessAuthErrorCode,
+} from "../gpt/responseGateway.js";
+import {
+  isConsultingAccessAuthRetryAllowed,
+} from "./vNextConsultingController.js";
 
 export type VNextConversationAreaProps = {
   state: VNextConsultingSessionState;
@@ -139,6 +145,10 @@ export function VNextConversationArea({
     && !showActiveTurn
     && !state.errorMessage;
   const retryDisabled = isBusy || isStreaming;
+  // Access/auth: retry only when policy allows (subscriptionUnavailable).
+  // Ordinary remote errors (no access/auth code): keep existing retry CTA.
+  const showRetryCta = !isConsultingAccessAuthErrorCode(state.errorCode)
+    || isConsultingAccessAuthRetryAllowed(state.errorCode);
 
   return (
     <section
@@ -180,14 +190,16 @@ export function VNextConversationArea({
             {state.errorMessage}
           </p>
 
-          <button
-            type="button"
-            className="vnext-consulting-auth-button"
-            onClick={onRetry}
-            disabled={retryDisabled || !onRetry}
-          >
-            다시 시도
-          </button>
+          {showRetryCta ? (
+            <button
+              type="button"
+              className="vnext-consulting-auth-button"
+              onClick={onRetry}
+              disabled={retryDisabled || !onRetry}
+            >
+              다시 시도
+            </button>
+          ) : null}
         </>
       ) : null}
     </section>

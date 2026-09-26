@@ -62,6 +62,11 @@ export type VNextConsultingSessionState = {
   turns: VNextConsultingTurn[];
   activeTurnId: string | null;
   errorMessage: string | null;
+  /**
+   * Access/auth (or other) error code from the thrown error, when present.
+   * Used to gate retry CTA via isConsultingAccessAuthRetryAllowed — not for UX copy.
+   */
+  errorCode: string | null;
   awaitingClarification: boolean;
   activeQuestion: string | null;
   streamingText: string | null;
@@ -74,6 +79,7 @@ export const INITIAL_VNEXT_CONSULTING_SESSION_STATE: VNextConsultingSessionState
   turns: [],
   activeTurnId: null,
   errorMessage: null,
+  errorCode: null,
   awaitingClarification: false,
   activeQuestion: null,
   streamingText: null,

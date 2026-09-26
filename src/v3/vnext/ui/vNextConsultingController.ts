@@ -76,15 +76,25 @@ export function isConsultingAccessAuthRetryAllowed(
   return code === "subscriptionUnavailable";
 }
 
-export function resolveConsultingControllerErrorMessage(
+export function resolveConsultingControllerErrorCode(
   error: unknown,
-): string {
-  const code = typeof error === "object"
+): string | null {
+  if (
+    typeof error === "object"
     && error !== null
     && "code" in error
     && typeof (error as { code: unknown }).code === "string"
-    ? (error as { code: string }).code
-    : undefined;
+  ) {
+    return (error as { code: string }).code;
+  }
+
+  return null;
+}
+
+export function resolveConsultingControllerErrorMessage(
+  error: unknown,
+): string {
+  const code = resolveConsultingControllerErrorCode(error) ?? undefined;
 
   if (code && CONSULTING_ACCESS_AUTH_ERROR_MESSAGES[code]) {
     return CONSULTING_ACCESS_AUTH_ERROR_MESSAGES[code]!;
@@ -168,6 +178,7 @@ export class VNextConsultingController {
       ...INITIAL_VNEXT_CONSULTING_SESSION_STATE,
       phase: "analyzing",
       errorMessage: null,
+      errorCode: null,
       activeTurnId: null,
       activeQuestion: question,
       streamingText: null,
@@ -197,6 +208,7 @@ export class VNextConsultingController {
       ...this.state,
       phase: "analyzing",
       errorMessage: null,
+      errorCode: null,
       activeTurnId: null,
       activeQuestion: trimmedQuestion,
       streamingText: null,
@@ -299,6 +311,7 @@ export class VNextConsultingController {
         ],
         activeTurnId: turn.id,
         errorMessage: null,
+        errorCode: null,
         awaitingClarification:
           pipelineResult.session.contextMetadata.awaitingClarification,
         activeQuestion: null,
@@ -319,6 +332,7 @@ export class VNextConsultingController {
         ...this.state,
         phase: "error",
         errorMessage: resolveConsultingControllerErrorMessage(error),
+        errorCode: resolveConsultingControllerErrorCode(error),
         streamingText: null,
         streamMetadata: null,
         progressStep: null,

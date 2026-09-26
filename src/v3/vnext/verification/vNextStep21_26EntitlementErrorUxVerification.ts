@@ -275,21 +275,63 @@ export async function verifyVNextStep21_26EntitlementErrorUx(): Promise<
       const expected = EXPECTED_MESSAGES[code];
       const retryAllowed = isConsultingAccessAuthRetryAllowed(code);
       const retryExpected = code === "subscriptionUnavailable";
+      // Same gate as VNextConversationArea retry CTA.
+      const showRetryCta = !isConsultingAccessAuthErrorCode(state.errorCode)
+        || isConsultingAccessAuthRetryAllowed(state.errorCode);
 
       return {
         passed: state.phase === "error"
           && state.errorMessage === expected
+          && state.errorCode === code
           && state.turns.length === 0
-          && retryAllowed === retryExpected,
+          && retryAllowed === retryExpected
+          && showRetryCta === retryExpected,
         details: [
           `phase=${state.phase}`,
           `message=${state.errorMessage ?? "none"}`,
+          `errorCode=${state.errorCode ?? "none"}`,
           `turns=${state.turns.length}`,
           `retryAllowed=${retryAllowed}`,
+          `showRetryCta=${showRetryCta}`,
         ],
       };
     }));
   }
+
+  cases.push(await runCase("ordinary-controller-error-keeps-retry-cta", async () => {
+    const controller = new VNextConsultingController({
+      gateway: {
+        async generate() {
+          throw new Error("ordinary boom");
+        },
+        async generateStream() {
+          throw new Error("ordinary boom");
+        },
+      },
+    });
+
+    await controller.submitQuestion(
+      buildRequest("10월 금전운이 있을까요?"),
+    );
+
+    const state = controller.getState();
+    const showRetryCta = !isConsultingAccessAuthErrorCode(state.errorCode)
+      || isConsultingAccessAuthRetryAllowed(state.errorCode);
+
+    return {
+      passed: state.phase === "error"
+        && state.errorMessage
+          === "상담을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+        && state.errorCode === null
+        && showRetryCta === true,
+      details: [
+        `phase=${state.phase}`,
+        `message=${state.errorMessage ?? "none"}`,
+        `errorCode=${state.errorCode ?? "none"}`,
+        `showRetryCta=${showRetryCta}`,
+      ],
+    };
+  }));
 
   cases.push(await runCase("ordinary-remote-keeps-fallback", async () => {
     const response = await generateNaturalConsultingResponse({
