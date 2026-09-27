@@ -136,6 +136,28 @@ function scenarioRequiresTimeState(
 }
 
 /**
+ * Report-only: lifeFlow + empty granularity → ["year"].
+ * Question path and non-empty granularity are left untouched.
+ */
+function applyReportLifeFlowYearOverlay(
+  scenario: ReturnType<typeof routeScenario>,
+  answerMode: AnalysisRequest["answerMode"],
+): ReturnType<typeof routeScenario> {
+  if (
+    answerMode !== "report"
+    || scenario.questionMeaning.askedObject !== "lifeFlow"
+    || scenario.requiredTimeGranularity.length !== 0
+  ) {
+    return scenario;
+  }
+
+  return {
+    ...scenario,
+    requiredTimeGranularity: ["year"],
+  };
+}
+
+/**
  * Scenario에 따라 필요한 Adapter만 호출하여 AnalysisResult를 조립한다.
  * 기존 v3 엔진을 직접 실행하지 않는다.
  */
@@ -194,7 +216,11 @@ export function runVNextOrchestrator(
     return result;
   }
 
-  const scenario = routeScenario(questionMeaning);
+  const routedScenario = routeScenario(questionMeaning);
+  const scenario = applyReportLifeFlowYearOverlay(
+    routedScenario,
+    input.analysisRequest.answerMode,
+  );
   result.consultingScenario = readyStage(scenario);
 
   if (
