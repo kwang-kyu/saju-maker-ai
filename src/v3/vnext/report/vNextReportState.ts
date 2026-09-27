@@ -17,6 +17,12 @@ import type {
   ResponseActionType,
 } from "../response/responseContext.js";
 import type {
+  HumanDestinyContext,
+} from "../../types/humanDestinyContext.js";
+import type {
+  TimeState,
+} from "../types/timeState.js";
+import type {
   VNextAnalysisProgressStep,
 } from "../ui/vNextAnalysisProgress.js";
 import {
@@ -41,6 +47,8 @@ export type VNextReportSessionState = {
   errorMessage: string | null;
   streamMetadata: ResponseStreamMetadata | null;
   progressStep: VNextAnalysisProgressStep | null;
+  humanContext: HumanDestinyContext | null;
+  timeState: TimeState | null;
 };
 
 export const INITIAL_VNEXT_REPORT_SESSION_STATE: VNextReportSessionState = {
@@ -53,6 +61,8 @@ export const INITIAL_VNEXT_REPORT_SESSION_STATE: VNextReportSessionState = {
   errorMessage: null,
   streamMetadata: null,
   progressStep: null,
+  humanContext: null,
+  timeState: null,
 };
 
 export type VNextReportUxActions = {

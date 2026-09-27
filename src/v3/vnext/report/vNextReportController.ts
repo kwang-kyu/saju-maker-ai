@@ -197,6 +197,11 @@ export class VNextReportController {
       const sections = extractReportSections(
         analysis.analysisResult,
       );
+      const humanContext = analysis.humanContext ?? null;
+      const timeState =
+        analysis.analysisResult.timeState?.status === "ready"
+          ? analysis.analysisResult.timeState.value
+          : null;
       const analysisLatencyMs = Date.now() - pipelineStartedAt;
 
       if (analysis.action.type === "consulting") {
@@ -206,6 +211,8 @@ export class VNextReportController {
           sections,
           activeSection: sections[0] ?? null,
           progressStep: "generating",
+          humanContext,
+          timeState,
         };
         this.emit();
       } else {
@@ -213,6 +220,8 @@ export class VNextReportController {
           ...this.state,
           sections,
           activeSection: sections[0] ?? null,
+          humanContext,
+          timeState,
         };
         this.emit();
       }
@@ -265,6 +274,8 @@ export class VNextReportController {
           apiCallCount: response.apiCallCount,
         },
         progressStep: "completed",
+        humanContext,
+        timeState,
       };
       this.emit();
     } catch {
