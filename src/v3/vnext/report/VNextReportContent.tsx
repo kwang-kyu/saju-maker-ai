@@ -426,17 +426,38 @@ function resolveDisplayText(
 function renderYearContent(
   periodLuckFlowFacts: VNextReportSessionState["periodLuckFlowFacts"],
 ): ReactNode {
+  const targetSeun = periodLuckFlowFacts?.year?.targetSeun ?? null;
   const yearSegments = periodLuckFlowFacts?.year?.yearSegments ?? [];
 
-  if (yearSegments.length === 0) {
-    return (
-      <p className="vnext-report-content-empty">
-        올해의 운세 정보를 준비하지 못했습니다.
-      </p>
-    );
-  }
+  const seunYear =
+    targetSeun
+    && typeof targetSeun.year === "number"
+    && Number.isFinite(targetSeun.year)
+      ? targetSeun.year
+      : null;
+  const seunAge =
+    targetSeun
+    && typeof targetSeun.age === "number"
+    && Number.isFinite(targetSeun.age)
+      ? targetSeun.age
+      : null;
 
-  const blocks = yearSegments.map((segment, index) => {
+  const seunLines = targetSeun
+    ? nonEmptyStrings([
+      seunAge !== null ? `나이: ${seunAge}` : "",
+      hasText(targetSeun.ganZhi) ? `간지: ${targetSeun.ganZhi.trim()}` : "",
+      hasText(targetSeun.tenGod) ? `십신: ${targetSeun.tenGod.trim()}` : "",
+      hasText(targetSeun.element) ? `오행: ${targetSeun.element.trim()}` : "",
+    ])
+    : [];
+
+  const seunBlock = renderChongunBlock(
+    seunYear !== null ? `${seunYear}년 세운` : "올해 세운",
+    renderTextList(seunLines),
+    "targetSeun",
+  );
+
+  const segmentBlocks = yearSegments.map((segment, index) => {
     const lines = nonEmptyStrings([
       hasText(segment.startDate) && hasText(segment.endDate)
         ? `기간: ${segment.startDate.trim()} ~ ${segment.endDate.trim()}`
@@ -456,6 +477,8 @@ function renderYearContent(
         : undefined,
     );
   }).filter(Boolean);
+
+  const blocks = [seunBlock, ...segmentBlocks].filter(Boolean);
 
   if (blocks.length === 0) {
     return (
