@@ -1,38 +1,42 @@
 import type {
-  ReportAnswerSection,
-} from "../types/answerBlueprint.js";
+  ReactElement,
+} from "react";
+
 import {
-  VNEXT_REPORT_SECTION_LABELS,
-} from "./vNextReportCopy.js";
+  PRODUCT_REPORT_MENUS,
+  type ProductReportMenu,
+} from "./vNextReportMenu.js";
+
+const PRODUCT_REPORT_MENU_LABELS: Record<ProductReportMenu, string> = {
+  chongun: "총운",
+  year: "올해의 운세",
+  today: "오늘의 운세",
+  todayLove: "오늘의 연애운",
+  todayMoney: "오늘의 재물운",
+};
 
 export type VNextReportSectionNavigationProps = {
-  sections: ReportAnswerSection[];
-  activeSection: ReportAnswerSection | null;
-  onSelectSection: (section: ReportAnswerSection) => void;
+  activeSection: ProductReportMenu | null;
+  onSelectSection: (menu: ProductReportMenu) => void;
   disabled?: boolean;
 };
 
-export function VNextReportSectionNavigation({
-  sections,
+function VNextReportSectionNavigationView({
   activeSection,
   onSelectSection,
   disabled = false,
-}: VNextReportSectionNavigationProps) {
-  if (sections.length === 0) {
-    return null;
-  }
-
+}: VNextReportSectionNavigationProps): ReactElement {
   return (
     <nav
       className="vnext-report-section-nav"
       aria-label="리포트 섹션"
     >
       <ul className="vnext-report-section-nav-list">
-        {sections.map((section) => {
-          const isActive = section === activeSection;
+        {PRODUCT_REPORT_MENUS.map((menu) => {
+          const isActive = menu === activeSection;
 
           return (
-            <li key={section}>
+            <li key={menu}>
               <button
                 className={[
                   "vnext-report-section-nav-item",
@@ -44,10 +48,10 @@ export function VNextReportSectionNavigation({
                 disabled={disabled}
                 aria-current={isActive ? "true" : undefined}
                 onClick={() => {
-                  onSelectSection(section);
+                  onSelectSection(menu);
                 }}
               >
-                {VNEXT_REPORT_SECTION_LABELS[section]}
+                {PRODUCT_REPORT_MENU_LABELS[menu]}
               </button>
             </li>
           );
@@ -56,3 +60,6 @@ export function VNextReportSectionNavigation({
     </nav>
   );
 }
+
+export const VNextReportSectionNavigation =
+  VNextReportSectionNavigationView;

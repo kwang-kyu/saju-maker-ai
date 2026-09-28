@@ -25,6 +25,9 @@ import {
 import {
   VNextReportController,
 } from "./vNextReportController.js";
+import type {
+  ProductReportMenu,
+} from "./vNextReportMenu.js";
 import {
   resolveReportLoadingLabel,
   type VNextReportSessionState,
@@ -48,7 +51,7 @@ export type UseVNextReportResult = {
   retryReport: (birthProfile: VNextBirthProfile) => Promise<void>;
   restartReport: (birthProfile: VNextBirthProfile) => Promise<void>;
   setActiveSection: (
-    section: VNextReportSessionState["sections"][number],
+    section: ProductReportMenu,
   ) => void;
   reset: () => void;
 };
@@ -128,7 +131,7 @@ export function useVNextReport(
   );
 
   const setActiveSection = useCallback(
-    (section: VNextReportSessionState["sections"][number]) => {
+    (section: ProductReportMenu) => {
       controllerRef.current!.setActiveSection(section);
     },
     [],

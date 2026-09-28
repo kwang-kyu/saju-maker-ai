@@ -28,6 +28,12 @@ import type {
 import {
   resolveReportProgressLabel,
 } from "../ui/vNextAnalysisProgress.js";
+import type {
+  ProductReportMenu,
+} from "./vNextReportMenu.js";
+import type {
+  VNextReportPeriodLuckFlowFacts,
+} from "./vNextReportPeriodLuckFlowBuilder.js";
 
 export type VNextReportPhase =
   | "idle"
@@ -40,7 +46,7 @@ export type VNextReportPhase =
 export type VNextReportSessionState = {
   phase: VNextReportPhase;
   sections: ReportAnswerSection[];
-  activeSection: ReportAnswerSection | null;
+  activeSection: ProductReportMenu;
   response: NaturalConsultingResponse | null;
   actionType: ResponseActionType | null;
   streamingText: string | null;
@@ -49,12 +55,17 @@ export type VNextReportSessionState = {
   progressStep: VNextAnalysisProgressStep | null;
   humanContext: HumanDestinyContext | null;
   timeState: TimeState | null;
+  /**
+   * Report-only additive year/day period luck-flow facts.
+   * UI year/today 렌더링은 후속 STEP에서 연결한다.
+   */
+  periodLuckFlowFacts: VNextReportPeriodLuckFlowFacts | null;
 };
 
 export const INITIAL_VNEXT_REPORT_SESSION_STATE: VNextReportSessionState = {
   phase: "idle",
   sections: [],
-  activeSection: null,
+  activeSection: "chongun",
   response: null,
   actionType: null,
   streamingText: null,
@@ -63,6 +74,7 @@ export const INITIAL_VNEXT_REPORT_SESSION_STATE: VNextReportSessionState = {
   progressStep: null,
   humanContext: null,
   timeState: null,
+  periodLuckFlowFacts: null,
 };
 
 export type VNextReportUxActions = {

@@ -32,6 +32,10 @@ import {
   VNEXT_REPORT_DEFAULT_QUESTION,
 } from "./vNextReportCopy.js";
 import {
+  PRODUCT_REPORT_MENUS,
+  type ProductReportMenu,
+} from "./vNextReportMenu.js";
+import {
   INITIAL_VNEXT_REPORT_SESSION_STATE,
   type VNextReportSessionState,
 } from "./vNextReportState.js";
@@ -202,6 +206,8 @@ export class VNextReportController {
         analysis.analysisResult.timeState?.status === "ready"
           ? analysis.analysisResult.timeState.value
           : null;
+      // Pipeline이 만든 Report-only facts를 전달한다. Controller에서 재계산하지 않는다.
+      const periodLuckFlowFacts = analysis.periodLuckFlowFacts ?? null;
       const analysisLatencyMs = Date.now() - pipelineStartedAt;
 
       if (analysis.action.type === "consulting") {
@@ -209,19 +215,19 @@ export class VNextReportController {
           ...this.state,
           phase: "generating",
           sections,
-          activeSection: sections[0] ?? null,
           progressStep: "generating",
           humanContext,
           timeState,
+          periodLuckFlowFacts,
         };
         this.emit();
       } else {
         this.state = {
           ...this.state,
           sections,
-          activeSection: sections[0] ?? null,
           humanContext,
           timeState,
+          periodLuckFlowFacts,
         };
         this.emit();
       }
@@ -256,7 +262,7 @@ export class VNextReportController {
       this.state = {
         phase: "completed",
         sections,
-        activeSection: sections[0] ?? null,
+        activeSection: this.state.activeSection,
         response: {
           ...response,
           latencyMs: response.latencyMs
@@ -276,6 +282,7 @@ export class VNextReportController {
         progressStep: "completed",
         humanContext,
         timeState,
+        periodLuckFlowFacts,
       };
       this.emit();
     } catch {
@@ -292,9 +299,13 @@ export class VNextReportController {
   }
 
   setActiveSection(
-    section: ReportAnswerSection,
+    section: ProductReportMenu,
   ): void {
-    if (!this.state.sections.includes(section)) {
+    if (!PRODUCT_REPORT_MENUS.includes(section)) {
+      return;
+    }
+
+    if (this.state.activeSection === section) {
       return;
     }
 

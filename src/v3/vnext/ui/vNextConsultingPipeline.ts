@@ -25,8 +25,15 @@ import {
   readHumanLifeContext,
 } from "../../readers/humanLifeContextReader.js";
 import type {
+  HumanDestinyContext,
+} from "../../types/humanDestinyContext.js";
+import type {
   VNextAnalysisProgressCallback,
 } from "./vNextAnalysisProgress.js";
+import {
+  buildVNextReportPeriodLuckFlowFacts,
+  type VNextReportPeriodLuckFlowFacts,
+} from "../report/vNextReportPeriodLuckFlowBuilder.js";
 import {
   buildTargetPeriodLuckFlowForQuestion,
 } from "../../consulting/decision/targetPeriodLuckFlowBuilder.js";
@@ -91,6 +98,17 @@ export type VNextConsultingAnalysisResult = {
   analysisResult: AnalysisResult;
   action: ResponseAction;
   prompt: ResponsePrompt | null;
+  /**
+   * 분석 과정에서 이미 생성된 HumanDestinyContext.
+   * analyzeVNextConsultingRequest는 항상 채운다.
+   * 재계산하지 않고 호출측(Report 등)이 read-only로 보관할 수 있다.
+   */
+  humanContext?: HumanDestinyContext;
+  /**
+   * Report-only additive year/day period luck-flow facts.
+   * conversation 경로에서는 설정하지 않는다.
+   */
+  periodLuckFlowFacts?: VNextReportPeriodLuckFlowFacts;
 };
 
 function mapLifeFlowScopeToGranularity(
@@ -395,6 +413,10 @@ export function analyzeVNextConsultingRequest(
     analysisRequest,
     humanDestinyContext: humanDestinyPipeline.humanContext,
     targetPeriodLuckFlow: targetPeriodBuildResult?.fact ?? undefined,
+    // Report 경로만: 기존 luckFlowFact를 재사용. 질문상담 계약/응답은 변경하지 않는다.
+    currentLuckFlow: answerMode === "report"
+      ? humanDestinyPipeline.sajuFactsPipeline.luckFlowFact
+      : undefined,
     questionReaderResult: questionReaderResultForMeaning,
     questionContext: turnResult.questionContext,
     decisionResult: turnResult.decisionResult,
@@ -412,10 +434,31 @@ export function analyzeVNextConsultingRequest(
   const prompt = buildResponsePromptFromAction(pipeline.action);
   options.onProgress?.("responsePrepared");
 
+  // Report 경로만: year/day period luck-flow facts를 additive로 생성한다.
+  // currentLuckFlow / targetPeriodLuckFlow는 변경·대체하지 않는다.
+  const periodLuckFlowFacts = answerMode === "report"
+    ? buildVNextReportPeriodLuckFlowFacts({
+        solarBirthDate:
+          humanDestinyPipeline.sajuFactsPipeline.calculatedSaju.solarDateIso,
+        birthTime:
+          humanDestinyPipeline.sajuFactsPipeline.calculatedSaju.birthTime,
+        gender:
+          humanDestinyPipeline.sajuFactsPipeline.calculatedSaju.gender,
+        luckStartMethod:
+          humanDestinyPipeline.sajuFactsPipeline.luckFlowFact.luckStartMethod,
+        dayMaster:
+          humanDestinyPipeline.sajuFactsPipeline.calculatedSaju.dayMaster,
+        referenceDate:
+          humanDestinyPipeline.sajuFactsPipeline.luckFlowFact.referenceDate,
+      })
+    : undefined;
+
   return {
     analysisResult,
     action: pipeline.action,
     prompt,
+    humanContext: humanDestinyPipeline.humanContext,
+    periodLuckFlowFacts,
   };
 }
 

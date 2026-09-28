@@ -20,6 +20,9 @@ import {
 import {
   VNextReportSectionNavigation,
 } from "./VNextReportSectionNavigation.js";
+import type {
+  ProductReportMenu,
+} from "./vNextReportMenu.js";
 import {
   resolveVNextReportUxActions,
   type VNextReportSessionState,
@@ -55,7 +58,7 @@ export type VNextReportShellProps = {
   retryReport: (birthProfile: VNextBirthProfile) => Promise<void>;
   restartReport: (birthProfile: VNextBirthProfile) => Promise<void>;
   setActiveSection: (
-    section: VNextReportSessionState["sections"][number],
+    section: ProductReportMenu,
   ) => void;
   onContinueToConsulting?: () => void;
   onGoBack?: () => void;
@@ -145,7 +148,6 @@ export function VNextReportShell({
         <div className="vnext-report-layout">
           {showSectionNav ? (
             <VNextReportSectionNavigation
-              sections={state.sections}
               activeSection={state.activeSection}
               onSelectSection={setActiveSection}
               disabled={isBusy}

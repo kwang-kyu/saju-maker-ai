@@ -1,13 +1,18 @@
 import {
   useState,
+  type ReactNode,
 } from "react";
 
 import type {
-  NaturalConsultingResponse,
-} from "../gpt/responseGatewayTypes.js";
+  HumanDestinyContext,
+} from "../../types/humanDestinyContext.js";
 import type {
   VNextBirthProfile,
 } from "../entry/vNextBirthProfile.js";
+import type {
+  LuckFlowSnapshot,
+  TimeState,
+} from "../types/timeState.js";
 import {
   normalizeConsultingDisplayText,
 } from "../ui/consultingDisplayText.js";
@@ -20,10 +25,24 @@ import {
   downloadVNextReportDocx,
   VNEXT_REPORT_DOCX_ERROR_MESSAGE,
 } from "./vNextReportDocx.js";
+import type {
+  ProductReportMenu,
+} from "./vNextReportMenu.js";
 import {
   resolveVNextReportUxActions,
   type VNextReportSessionState,
 } from "./vNextReportState.js";
+
+const VNEXT_PRODUCT_REPORT_MENU_LABELS: Record<
+  ProductReportMenu,
+  string
+> = {
+  chongun: "총운",
+  year: "올해의 운세",
+  today: "오늘의 운세",
+  todayLove: "오늘의 연애운",
+  todayMoney: "오늘의 재물운",
+};
 
 export type VNextReportContentProps = {
   birthProfile: VNextBirthProfile;
@@ -33,6 +52,361 @@ export type VNextReportContentProps = {
   onRetry?: () => void;
   onContinueToConsulting?: () => void;
 };
+
+function hasText(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function nonEmptyStrings(
+  values: readonly string[] | null | undefined,
+): string[] {
+  if (!values || values.length === 0) {
+    return [];
+  }
+
+  return values.filter((value) => hasText(value));
+}
+
+function collectExactTexts(
+  ...values: Array<string | readonly string[] | null | undefined>
+): Set<string> {
+  const texts = new Set<string>();
+
+  for (const value of values) {
+    if (typeof value === "string") {
+      if (hasText(value)) {
+        texts.add(value.trim());
+      }
+      continue;
+    }
+
+    for (const item of nonEmptyStrings(value)) {
+      texts.add(item.trim());
+    }
+  }
+
+  return texts;
+}
+
+function renderTextList(items: readonly string[]): ReactNode {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="vnext-report-chongun-list">
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function renderChongunBlock(
+  title: string,
+  body: ReactNode,
+  reactKey?: string,
+): ReactNode {
+  if (!body) {
+    return null;
+  }
+
+  return (
+    <section
+      key={reactKey ?? title}
+      className="vnext-report-chongun-block"
+    >
+      <h3 className="vnext-report-chongun-heading">{title}</h3>
+      <div className="vnext-report-chongun-body">
+        {body}
+      </div>
+    </section>
+  );
+}
+
+function renderStructureItem(
+  key: string,
+  item: {
+    title?: string | null;
+    summary?: string | null;
+  } | null | undefined,
+): ReactNode {
+  if (!item) {
+    return null;
+  }
+
+  const title = hasText(item.title) ? item.title.trim() : null;
+  const summary = hasText(item.summary) ? item.summary.trim() : null;
+
+  if (!title && !summary) {
+    return null;
+  }
+
+  return (
+    <div
+      key={key}
+      className="vnext-report-chongun-structure-item"
+    >
+      {title ? (
+        <p className="vnext-report-chongun-structure-title">{title}</p>
+      ) : null}
+      {summary ? (
+        <p className="vnext-report-chongun-structure-summary">{summary}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function renderDaeunFacts(
+  facts: LuckFlowSnapshot["facts"] | null | undefined,
+): ReactNode {
+  if (!facts) {
+    return null;
+  }
+
+  const entries = Object.entries(facts).filter(([, value]) => {
+    if (value === null || value === undefined) {
+      return false;
+    }
+
+    if (typeof value === "string") {
+      return hasText(value);
+    }
+
+    return true;
+  });
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="vnext-report-chongun-list">
+      {entries.map(([key, value]) => (
+        <li key={key}>
+          {key}: {String(value)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function renderChongunContent(
+  humanContext: HumanDestinyContext | null,
+  timeState: TimeState | null,
+): ReactNode {
+  const identity = humanContext?.identity ?? null;
+  const humanSummary = identity?.humanSummary ?? null;
+  const explanation = identity?.explanation ?? null;
+
+  const lifeDriver = explanation?.lifeDriver ?? null;
+  const survivalPrimary = explanation?.survivalStyle?.primary ?? null;
+  const repeatedPrimary = explanation?.repeatedPattern?.primary ?? null;
+  const currentPhase = humanContext?.currentPhase ?? null;
+  const daeun = timeState?.daeun ?? null;
+
+  const structureTexts = collectExactTexts(
+    lifeDriver?.title,
+    lifeDriver?.summary,
+    lifeDriver?.strengths,
+    lifeDriver?.cautions,
+    survivalPrimary?.title,
+    survivalPrimary?.summary,
+    survivalPrimary?.crisisBehaviors,
+    survivalPrimary?.recoveryMethods,
+    survivalPrimary?.prohibitedActions,
+  );
+
+  const coreText = hasText(humanSummary?.coreIdentity)
+    ? humanSummary.coreIdentity.trim()
+    : hasText(humanSummary?.summary)
+      ? humanSummary.summary.trim()
+      : null;
+
+  const strengths = nonEmptyStrings(humanSummary?.strengths);
+  const cautions = nonEmptyStrings(humanSummary?.cautions);
+  const cautionSet = new Set(cautions.map((item) => item.trim()));
+
+  const repeatedBehaviors = nonEmptyStrings(
+    repeatedPrimary?.repeatedBehaviors,
+  );
+  const patternRisks = nonEmptyStrings(repeatedPrimary?.risks)
+    .filter((risk) => {
+      const normalized = risk.trim();
+      return !structureTexts.has(normalized) && !cautionSet.has(normalized);
+    })
+    .slice(0, 3);
+
+  const structureItems = [
+    renderStructureItem("lifeDriver", lifeDriver),
+    renderStructureItem("survivalStyle.primary", survivalPrimary),
+    renderStructureItem("repeatedPattern.primary", repeatedPrimary),
+  ].filter(Boolean);
+
+  const phaseFocusAreas = nonEmptyStrings(currentPhase?.focusAreas);
+  const phaseAvoidAreas = nonEmptyStrings(currentPhase?.avoidAreas);
+  const hasCurrentPhase = Boolean(
+    currentPhase
+    && (
+      hasText(currentPhase.phase)
+      || hasText(currentPhase.title)
+      || hasText(currentPhase.description)
+      || phaseFocusAreas.length > 0
+      || phaseAvoidAreas.length > 0
+    ),
+  );
+
+  const hasDaeun = Boolean(
+    daeun
+    && (
+      hasText(daeun.label)
+      || hasText(daeun.summary)
+      || Object.keys(daeun.facts ?? {}).length > 0
+    ),
+  );
+
+  const careerSummary = hasText(explanation?.career?.summary)
+    ? explanation.career.summary.trim()
+    : null;
+  const moneySummary = hasText(explanation?.money?.summary)
+    ? explanation.money.summary.trim()
+    : null;
+  const relationshipSummary = hasText(explanation?.relationship?.summary)
+    ? explanation.relationship.summary.trim()
+    : null;
+
+  const domainItems = [
+    careerSummary
+      ? {
+        key: "career",
+        title: hasText(explanation?.career?.title)
+          ? explanation.career.title.trim()
+          : null,
+        summary: careerSummary,
+      }
+      : null,
+    moneySummary
+      ? {
+        key: "money",
+        title: hasText(explanation?.money?.title)
+          ? explanation.money.title.trim()
+          : null,
+        summary: moneySummary,
+      }
+      : null,
+    relationshipSummary
+      ? {
+        key: "relationship",
+        title: hasText(explanation?.relationship?.title)
+          ? explanation.relationship.title.trim()
+          : null,
+        summary: relationshipSummary,
+      }
+      : null,
+  ].filter((item): item is {
+    key: string;
+    title: string | null;
+    summary: string;
+  } => item !== null);
+
+  const blocks = [
+    renderChongunBlock(
+      "총운 핵심",
+      coreText ? <p>{coreText}</p> : null,
+    ),
+    renderChongunBlock(
+      "나의 기본 구조",
+      structureItems.length > 0 ? structureItems : null,
+    ),
+    renderChongunBlock(
+      "강점과 활용",
+      renderTextList(strengths),
+    ),
+    renderChongunBlock(
+      "반복되는 패턴",
+      repeatedBehaviors.length > 0 || patternRisks.length > 0
+        ? (
+          <>
+            {renderTextList(repeatedBehaviors)}
+            {patternRisks.length > 0 ? renderTextList(patternRisks) : null}
+          </>
+        )
+        : null,
+    ),
+    renderChongunBlock(
+      "주의할 점",
+      renderTextList(cautions),
+    ),
+    renderChongunBlock(
+      "현재 인생 국면",
+      hasCurrentPhase && currentPhase
+        ? (
+          <>
+            {hasText(currentPhase.phase) ? (
+              <p>{currentPhase.phase}</p>
+            ) : null}
+            {hasText(currentPhase.title) ? (
+              <p className="vnext-report-chongun-structure-title">
+                {currentPhase.title.trim()}
+              </p>
+            ) : null}
+            {hasText(currentPhase.description) ? (
+              <p>{currentPhase.description.trim()}</p>
+            ) : null}
+            {phaseFocusAreas.length > 0 ? renderTextList(phaseFocusAreas) : null}
+            {phaseAvoidAreas.length > 0 ? renderTextList(phaseAvoidAreas) : null}
+          </>
+        )
+        : null,
+    ),
+    renderChongunBlock(
+      "현재 대운",
+      hasDaeun && daeun
+        ? (
+          <>
+            {hasText(daeun.label) ? (
+              <p className="vnext-report-chongun-structure-title">
+                {daeun.label.trim()}
+              </p>
+            ) : null}
+            {hasText(daeun.summary) ? (
+              <p>{daeun.summary.trim()}</p>
+            ) : null}
+            {renderDaeunFacts(daeun.facts)}
+          </>
+        )
+        : null,
+    ),
+    renderChongunBlock(
+      "직업·재물·관계 핵심",
+      domainItems.length > 0
+        ? domainItems.map((item) => (
+          <div
+            key={item.key}
+            className="vnext-report-chongun-structure-item"
+          >
+            {item.title ? (
+              <p className="vnext-report-chongun-structure-title">
+                {item.title}
+              </p>
+            ) : null}
+            <p>{item.summary}</p>
+          </div>
+        ))
+        : null,
+    ),
+  ].filter(Boolean);
+
+  if (blocks.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="vnext-report-chongun">
+      {blocks}
+    </div>
+  );
+}
 
 function resolveDisplayText(
   state: VNextReportSessionState,
@@ -49,20 +423,134 @@ function resolveDisplayText(
   return null;
 }
 
-function renderCompletedResponse(
-  response: NaturalConsultingResponse,
+function renderYearContent(
+  periodLuckFlowFacts: VNextReportSessionState["periodLuckFlowFacts"],
+): ReactNode {
+  const yearSegments = periodLuckFlowFacts?.year?.yearSegments ?? [];
+
+  if (yearSegments.length === 0) {
+    return (
+      <p className="vnext-report-content-empty">
+        올해의 운세 정보를 준비하지 못했습니다.
+      </p>
+    );
+  }
+
+  const blocks = yearSegments.map((segment, index) => {
+    const lines = nonEmptyStrings([
+      hasText(segment.startDate) && hasText(segment.endDate)
+        ? `기간: ${segment.startDate.trim()} ~ ${segment.endDate.trim()}`
+        : "",
+      hasText(segment.ganZhi) ? `간지: ${segment.ganZhi.trim()}` : "",
+      hasText(segment.tenGod) ? `십신: ${segment.tenGod.trim()}` : "",
+      hasText(segment.element) ? `오행: ${segment.element.trim()}` : "",
+    ]);
+
+    return renderChongunBlock(
+      hasText(segment.ganZhi)
+        ? segment.ganZhi.trim()
+        : `구간 ${index + 1}`,
+      renderTextList(lines),
+      hasText(segment.startDate)
+        ? segment.startDate.trim()
+        : undefined,
+    );
+  }).filter(Boolean);
+
+  if (blocks.length === 0) {
+    return (
+      <p className="vnext-report-content-empty">
+        올해의 운세 정보를 준비하지 못했습니다.
+      </p>
+    );
+  }
+
+  return (
+    <div className="vnext-report-chongun">
+      {blocks}
+    </div>
+  );
+}
+
+function renderTodayContent(
+  periodLuckFlowFacts: VNextReportSessionState["periodLuckFlowFacts"],
+): ReactNode {
+  const targetIlun = periodLuckFlowFacts?.day?.targetIlun ?? null;
+
+  if (!targetIlun) {
+    return (
+      <p className="vnext-report-content-empty">
+        오늘의 운세 정보를 준비하지 못했습니다.
+      </p>
+    );
+  }
+
+  const lines = nonEmptyStrings([
+    hasText(targetIlun.targetDate)
+      ? `날짜: ${targetIlun.targetDate.trim()}`
+      : "",
+    hasText(targetIlun.ganZhi) ? `간지: ${targetIlun.ganZhi.trim()}` : "",
+    hasText(targetIlun.tenGod) ? `십신: ${targetIlun.tenGod.trim()}` : "",
+    hasText(targetIlun.element) ? `오행: ${targetIlun.element.trim()}` : "",
+  ]);
+
+  const body = renderChongunBlock(
+    "오늘의 운세",
+    renderTextList(lines),
+  );
+
+  if (!body) {
+    return (
+      <p className="vnext-report-content-empty">
+        오늘의 운세 정보를 준비하지 못했습니다.
+      </p>
+    );
+  }
+
+  return (
+    <div className="vnext-report-chongun">
+      {body}
+    </div>
+  );
+}
+
+function resolveCompletedSectionBody(
   activeSection: VNextReportSessionState["activeSection"],
+  humanContext: HumanDestinyContext | null,
+  timeState: TimeState | null,
+  periodLuckFlowFacts: VNextReportSessionState["periodLuckFlowFacts"],
+): ReactNode {
+  if (activeSection === "year") {
+    return renderYearContent(periodLuckFlowFacts);
+  }
+
+  if (activeSection === "today") {
+    return renderTodayContent(periodLuckFlowFacts);
+  }
+
+  // chongun / todayLove / todayMoney: preserve existing rendering
+  return renderChongunContent(humanContext, timeState);
+}
+
+function renderCompletedResponse(
+  activeSection: VNextReportSessionState["activeSection"],
+  humanContext: HumanDestinyContext | null,
+  timeState: TimeState | null,
+  periodLuckFlowFacts: VNextReportSessionState["periodLuckFlowFacts"],
 ) {
   return (
     <article className="vnext-report-content-body">
-      {activeSection ? (
-        <p className="vnext-report-content-section-kicker">
-          {VNEXT_REPORT_SECTION_LABELS[activeSection]}
-        </p>
-      ) : null}
+      <p className="vnext-report-content-section-kicker">
+        {VNEXT_PRODUCT_REPORT_MENU_LABELS[activeSection]}
+      </p>
 
       <div className="vnext-report-content-text">
-        <p>{normalizeConsultingDisplayText(response.text)}</p>
+        {resolveCompletedSectionBody(
+          activeSection,
+          humanContext,
+          timeState,
+          periodLuckFlowFacts,
+        )}
       </div>
     </article>
   );
@@ -179,8 +667,10 @@ export function VNextReportContent({
         aria-label="리포트 내용"
       >
         {renderCompletedResponse(
-          state.response,
           state.activeSection,
+          state.humanContext,
+          state.timeState,
+          state.periodLuckFlowFacts,
         )}
 
         <div className="vnext-report-flow-actions">
