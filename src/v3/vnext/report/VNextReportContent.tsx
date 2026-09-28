@@ -789,6 +789,9 @@ export function VNextReportContent({
         birthProfile,
         responseText: state.response.text,
         sectionLabels,
+        humanContext: state.humanContext,
+        timeState: state.timeState,
+        periodLuckFlowFacts: state.periodLuckFlowFacts,
       });
     } catch {
       setDocxErrorMessage(VNEXT_REPORT_DOCX_ERROR_MESSAGE);

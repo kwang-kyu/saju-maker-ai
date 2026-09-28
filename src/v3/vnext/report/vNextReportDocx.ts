@@ -1,7 +1,8 @@
 /**
- * vNext Report DOCX writer — formatting/output only.
+ * vNext Report DOCX writer — Summary DOCX formatting/output only.
  *
  * Does not calculate, judge, call GPT, or reuse V2 consulting mappers.
+ * Chapter facts come from composeVNextReportSummary.
  */
 
 import {
@@ -14,11 +15,24 @@ import {
 } from "docx";
 import fileSaver from "file-saver";
 
-import {
-  findBirthTimeBranchOption,
-  formatVNextBirthDate,
-  type VNextBirthProfile,
+import type {
+  VNextBirthProfile,
 } from "../entry/vNextBirthProfile.js";
+import type {
+  HumanDestinyContext,
+} from "../../types/humanDestinyContext.js";
+import type {
+  TimeState,
+} from "../types/timeState.js";
+import type {
+  VNextReportPeriodLuckFlowFacts,
+} from "./vNextReportPeriodLuckFlowBuilder.js";
+import {
+  composeVNextReportSummary,
+  type VNextReportSummaryBodyBlock,
+  type VNextReportSummaryChapter,
+  type VNextReportSummaryComposition,
+} from "./vNextReportSummaryComposer.js";
 
 type SaveAsFn = (blob: Blob, fileName: string) => void;
 
@@ -45,6 +59,7 @@ const BODY_FONT = "Malgun Gothic";
 const TITLE_COLOR = "1E3A8A";
 const BODY_COLOR = "1F2937";
 const MUTED_COLOR = "4B5563";
+const GOLD_COLOR = "B45309";
 
 export const VNEXT_REPORT_DOCX_ERROR_MESSAGE =
   "문서를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.";
@@ -63,6 +78,9 @@ export type VNextReportDocxInput = {
   >;
   responseText: string;
   sectionLabels?: readonly string[];
+  humanContext?: HumanDestinyContext | null;
+  timeState?: TimeState | null;
+  periodLuckFlowFacts?: VNextReportPeriodLuckFlowFacts | null;
 };
 
 export function canDownloadVNextReportDocx(
@@ -95,38 +113,6 @@ export function buildVNextReportDocxFileName(
   return `${namePart}_사주리포트.docx`;
 }
 
-function resolveGenderLabel(
-  gender: VNextBirthProfile["gender"],
-): string {
-  return gender === "male"
-    ? "남성"
-    : "여성";
-}
-
-function resolveCalendarLabel(
-  calendarType: VNextBirthProfile["calendarType"],
-): string {
-  return calendarType === "solar"
-    ? "양력"
-    : "음력";
-}
-
-function resolveDisplayName(
-  input: VNextReportDocxInput,
-): string {
-  const fromInput = input.displayName?.trim();
-  if (fromInput) {
-    return fromInput;
-  }
-
-  const fromProfile = input.birthProfile.displayName?.trim();
-  if (fromProfile) {
-    return fromProfile;
-  }
-
-  return "상담자";
-}
-
 function textRun(
   text: string,
   options?: {
@@ -144,127 +130,277 @@ function textRun(
   });
 }
 
-function titleParagraph(
-  text: string,
-): Paragraph {
-  return new Paragraph({
-    heading: HeadingLevel.HEADING_1,
-    alignment: AlignmentType.CENTER,
-    spacing: { after: 320 },
-    children: [
-      textRun(text, {
-        bold: true,
-        size: 36,
-        color: TITLE_COLOR,
-      }),
-    ],
-  });
+function coverParagraphs(
+  composition: VNextReportSummaryComposition,
+): Paragraph[] {
+  return [
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 1200, after: 200 },
+      children: [
+        textRun("사주 요약 리포트", {
+          bold: true,
+          size: 20,
+          color: GOLD_COLOR,
+        }),
+      ],
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 280 },
+      children: [
+        textRun("SUMMARY REPORT", {
+          bold: true,
+          size: 48,
+          color: TITLE_COLOR,
+        }),
+      ],
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 360 },
+      children: [
+        textRun(composition.coverSubtitle, {
+          bold: true,
+          size: 28,
+          color: BODY_COLOR,
+        }),
+      ],
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 },
+      children: [
+        textRun(
+          "확정된 분석 사실을 장별로 정리한 요약 문서입니다.",
+          { size: 22, color: MUTED_COLOR },
+        ),
+      ],
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 320, after: 80 },
+      children: [
+        textRun(`상담자: ${composition.displayName}`, {
+          size: 22,
+          color: MUTED_COLOR,
+        }),
+      ],
+    }),
+  ];
 }
 
-function headingParagraph(
-  text: string,
-): Paragraph {
-  return new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    spacing: { before: 280, after: 160 },
-    children: [
-      textRun(text, {
-        bold: true,
-        size: 26,
-        color: TITLE_COLOR,
+function tocParagraphs(
+  composition: VNextReportSummaryComposition,
+  sectionLabels: readonly string[] | undefined,
+): Paragraph[] {
+  const paragraphs: Paragraph[] = [
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      pageBreakBefore: true,
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 200, after: 280 },
+      children: [
+        textRun("목차 / 구성", {
+          bold: true,
+          size: 32,
+          color: TITLE_COLOR,
+        }),
+      ],
+    }),
+    new Paragraph({
+      spacing: { after: 160 },
+      children: [
+        textRun("Summary 장 구성", {
+          bold: true,
+          size: 24,
+          color: TITLE_COLOR,
+        }),
+      ],
+    }),
+    ...composition.tocTitles.map((title) => new Paragraph({
+      spacing: { after: 100 },
+      children: [
+        textRun(`· ${title}`, {
+          size: 22,
+          color: BODY_COLOR,
+        }),
+      ],
+    })),
+  ];
+
+  if (sectionLabels && sectionLabels.length > 0) {
+    paragraphs.push(
+      new Paragraph({
+        spacing: { before: 240, after: 120 },
+        children: [
+          textRun("리포트 화면 메뉴", {
+            bold: true,
+            size: 24,
+            color: TITLE_COLOR,
+          }),
+        ],
       }),
-    ],
-  });
+      ...sectionLabels.map((label) => new Paragraph({
+        spacing: { after: 100 },
+        children: [
+          textRun(`· ${label}`, {
+            size: 20,
+            color: MUTED_COLOR,
+          }),
+        ],
+      })),
+    );
+  }
+
+  return paragraphs;
 }
 
-function infoParagraph(
-  text: string,
+function blockToParagraph(
+  block: VNextReportSummaryBodyBlock,
 ): Paragraph {
-  return new Paragraph({
-    spacing: { after: 120 },
-    children: [
-      textRun(text, {
-        size: 20,
-        color: MUTED_COLOR,
-      }),
-    ],
-  });
-}
-
-function bodyParagraph(
-  text: string,
-): Paragraph {
-  if (!text) {
+  if (block.kind === "heading") {
     return new Paragraph({
-      spacing: { after: 120 },
-      children: [],
+      heading: HeadingLevel.HEADING_3,
+      spacing: { before: 220, after: 120 },
+      children: [
+        textRun(block.text, {
+          bold: true,
+          size: 24,
+          color: TITLE_COLOR,
+        }),
+      ],
+    });
+  }
+
+  if (block.kind === "bullet") {
+    return new Paragraph({
+      spacing: { after: 120, line: 360 },
+      indent: { left: 240 },
+      children: [
+        textRun(`• ${block.text}`, { size: 22 }),
+      ],
+    });
+  }
+
+  if (block.kind === "kv") {
+    return new Paragraph({
+      spacing: { after: 120, line: 360 },
+      children: [
+        textRun(`${block.label}: `, {
+          bold: true,
+          size: 22,
+        }),
+        textRun(block.value, { size: 22 }),
+      ],
     });
   }
 
   return new Paragraph({
     spacing: { after: 160, line: 360 },
-    children: [textRun(text, { size: 22 })],
+    children: [textRun(block.text, { size: 22 })],
   });
 }
 
-function buildBirthInfoParagraphs(
-  birthProfile: VNextReportDocxInput["birthProfile"],
-  displayName: string,
+function chapterParagraphs(
+  chapter: VNextReportSummaryChapter,
 ): Paragraph[] {
-  const birthDate = formatVNextBirthDate(birthProfile);
-  const birthTimeLabel = findBirthTimeBranchOption(
-    birthProfile.birthTimeBranch,
-  ).label;
-  const genderLabel = resolveGenderLabel(birthProfile.gender);
-  const calendarLabel = resolveCalendarLabel(
-    birthProfile.calendarType,
-  );
+  const title = `Chapter ${chapter.index}. ${chapter.title}`;
 
-  return [
-    headingParagraph("기본 정보"),
-    infoParagraph(`이름: ${displayName}`),
-    infoParagraph(`생년월일: ${birthDate}`),
-    infoParagraph(`출생 시진: ${birthTimeLabel}`),
-    infoParagraph(`성별: ${genderLabel}`),
-    infoParagraph(`역법: ${calendarLabel}`),
+  const paragraphs: Paragraph[] = [
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      pageBreakBefore: true,
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 200, after: 280 },
+      children: [
+        textRun(title, {
+          bold: true,
+          size: 32,
+          color: TITLE_COLOR,
+        }),
+      ],
+    }),
   ];
-}
 
-function buildSectionLabelParagraphs(
-  sectionLabels: readonly string[] | undefined,
-): Paragraph[] {
-  if (!sectionLabels || sectionLabels.length === 0) {
-    return [];
+  if (chapter.blocks.length === 0) {
+    paragraphs.push(
+      new Paragraph({
+        spacing: { after: 160 },
+        children: [
+          textRun("이 장에 연결할 분석 사실이 아직 준비되지 않았습니다.", {
+            size: 22,
+            color: MUTED_COLOR,
+          }),
+        ],
+      }),
+    );
+    return paragraphs;
   }
 
+  paragraphs.push(...chapter.blocks.map(blockToParagraph));
+  return paragraphs;
+}
+
+function closingParagraphs(
+  composition: VNextReportSummaryComposition,
+): Paragraph[] {
   return [
-    headingParagraph("구성"),
-    ...sectionLabels.map((label) => infoParagraph(`· ${label}`)),
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      pageBreakBefore: true,
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 200, after: 280 },
+      children: [
+        textRun("최종 정리", {
+          bold: true,
+          size: 32,
+          color: TITLE_COLOR,
+        }),
+      ],
+    }),
+    ...composition.closingLines.map((line) => new Paragraph({
+      spacing: { after: 160, line: 360 },
+      children: [textRun(line, { size: 22 })],
+    })),
   ];
 }
 
-function buildBodyParagraphs(
-  responseText: string,
-): Paragraph[] {
-  const lines = responseText.replace(/\r\n/g, "\n").split("\n");
-
-  return [
-    headingParagraph("리포트 본문"),
-    ...lines.map((line) => bodyParagraph(line)),
-  ];
+export function composeVNextReportDocxSummary(
+  input: VNextReportDocxInput,
+): VNextReportSummaryComposition {
+  return composeVNextReportSummary({
+    displayName: input.displayName,
+    birthProfile: input.birthProfile,
+    humanContext: input.humanContext,
+    timeState: input.timeState,
+    periodLuckFlowFacts: input.periodLuckFlowFacts,
+    gptNarration: input.responseText,
+  });
 }
 
 export function buildVNextReportDocxChildren(
   input: VNextReportDocxInput,
 ): Paragraph[] {
-  const displayName = resolveDisplayName(input);
+  const composition = composeVNextReportDocxSummary(input);
 
   return [
-    titleParagraph("사주 리포트"),
-    ...buildBirthInfoParagraphs(input.birthProfile, displayName),
-    ...buildSectionLabelParagraphs(input.sectionLabels),
-    ...buildBodyParagraphs(input.responseText),
+    ...coverParagraphs(composition),
+    ...tocParagraphs(composition, input.sectionLabels),
+    ...composition.chapters.flatMap(chapterParagraphs),
+    ...closingParagraphs(composition),
   ];
+}
+
+/**
+ * Structural page starts for Summary DOCX:
+ * Cover + 목차 + 10 chapters + 최종정리 = 13.
+ * Chapter 1 carries 기본 정보 (no separate duplicate birth page).
+ */
+export function estimateVNextReportDocxPageStarts(
+  _input: VNextReportDocxInput,
+): number {
+  return 1 + 1 + 10 + 1;
 }
 
 export function createVNextReportDocxDocument(
@@ -287,6 +423,13 @@ export async function buildVNextReportDocxBlob(
   return Packer.toBlob(document);
 }
 
+export async function buildVNextReportDocxBuffer(
+  input: VNextReportDocxInput,
+): Promise<Uint8Array> {
+  const document = createVNextReportDocxDocument(input);
+  return Packer.toBuffer(document);
+}
+
 export async function downloadVNextReportDocx(
   input: VNextReportDocxInput,
 ): Promise<void> {
@@ -295,8 +438,7 @@ export async function downloadVNextReportDocx(
   }
 
   const blob = await buildVNextReportDocxBlob(input);
-  const fileName = buildVNextReportDocxFileName(
-    resolveDisplayName(input),
-  );
+  const composition = composeVNextReportDocxSummary(input);
+  const fileName = buildVNextReportDocxFileName(composition.displayName);
   resolveSaveAs()(blob, fileName);
 }
