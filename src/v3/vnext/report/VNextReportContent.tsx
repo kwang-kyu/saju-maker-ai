@@ -595,6 +595,80 @@ function renderTodayLoveContent(
   );
 }
 
+function renderTodayMoneyContent(
+  periodLuckFlowFacts: VNextReportSessionState["periodLuckFlowFacts"],
+  humanContext: HumanDestinyContext | null,
+): ReactNode {
+  const targetIlun = periodLuckFlowFacts?.day?.targetIlun ?? null;
+  const money = humanContext?.identity?.explanation?.money ?? null;
+
+  const todayLines = targetIlun
+    ? nonEmptyStrings([
+      hasText(targetIlun.targetDate)
+        ? `날짜: ${targetIlun.targetDate.trim()}`
+        : "",
+      hasText(targetIlun.ganZhi) ? `간지: ${targetIlun.ganZhi.trim()}` : "",
+      hasText(targetIlun.tenGod) ? `십신: ${targetIlun.tenGod.trim()}` : "",
+      hasText(targetIlun.element) ? `오행: ${targetIlun.element.trim()}` : "",
+    ])
+    : [];
+
+  const todayFlowBlock = renderChongunBlock(
+    "오늘의 재물 흐름",
+    renderTextList(todayLines),
+  );
+
+  const moneyTitle = hasText(money?.title) ? money.title.trim() : null;
+  const moneySummary = hasText(money?.summary) ? money.summary.trim() : null;
+  const moneyStrengths = nonEmptyStrings(money?.strengths);
+  const moneyCautions = nonEmptyStrings(money?.cautionConditions);
+
+  const hasMoneyBody = Boolean(
+    moneyTitle
+    || moneySummary
+    || moneyStrengths.length > 0
+    || moneyCautions.length > 0,
+  );
+
+  const moneyBlock = renderChongunBlock(
+    "재물 성향 참고",
+    hasMoneyBody
+      ? (
+        <>
+          {moneyTitle ? (
+            <p className="vnext-report-chongun-structure-title">
+              {moneyTitle}
+            </p>
+          ) : null}
+          {moneySummary ? <p>{moneySummary}</p> : null}
+          {moneyStrengths.length > 0
+            ? renderTextList(moneyStrengths)
+            : null}
+          {moneyCautions.length > 0
+            ? renderTextList(moneyCautions)
+            : null}
+        </>
+      )
+      : null,
+  );
+
+  const blocks = [todayFlowBlock, moneyBlock].filter(Boolean);
+
+  if (blocks.length === 0) {
+    return (
+      <p className="vnext-report-content-empty">
+        오늘의 재물운 정보를 준비하지 못했습니다.
+      </p>
+    );
+  }
+
+  return (
+    <div className="vnext-report-chongun">
+      {blocks}
+    </div>
+  );
+}
+
 function resolveCompletedSectionBody(
   activeSection: VNextReportSessionState["activeSection"],
   humanContext: HumanDestinyContext | null,
@@ -613,7 +687,11 @@ function resolveCompletedSectionBody(
     return renderTodayLoveContent(periodLuckFlowFacts, humanContext);
   }
 
-  // chongun / todayMoney: preserve existing rendering
+  if (activeSection === "todayMoney") {
+    return renderTodayMoneyContent(periodLuckFlowFacts, humanContext);
+  }
+
+  // chongun: preserve existing rendering
   return renderChongunContent(humanContext, timeState);
 }
 
