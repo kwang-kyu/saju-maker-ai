@@ -514,6 +514,87 @@ function renderTodayContent(
   );
 }
 
+function renderTodayLoveContent(
+  periodLuckFlowFacts: VNextReportSessionState["periodLuckFlowFacts"],
+  humanContext: HumanDestinyContext | null,
+): ReactNode {
+  const targetIlun = periodLuckFlowFacts?.day?.targetIlun ?? null;
+  const relationship =
+    humanContext?.identity?.explanation?.relationship ?? null;
+
+  const todayLines = targetIlun
+    ? nonEmptyStrings([
+      hasText(targetIlun.targetDate)
+        ? `날짜: ${targetIlun.targetDate.trim()}`
+        : "",
+      hasText(targetIlun.ganZhi) ? `간지: ${targetIlun.ganZhi.trim()}` : "",
+      hasText(targetIlun.tenGod) ? `십신: ${targetIlun.tenGod.trim()}` : "",
+      hasText(targetIlun.element) ? `오행: ${targetIlun.element.trim()}` : "",
+    ])
+    : [];
+
+  const todayFlowBlock = renderChongunBlock(
+    "오늘의 연애 흐름",
+    renderTextList(todayLines),
+  );
+
+  const relationshipTitle = hasText(relationship?.title)
+    ? relationship.title.trim()
+    : null;
+  const relationshipSummary = hasText(relationship?.summary)
+    ? relationship.summary.trim()
+    : null;
+  const relationshipStrengths = nonEmptyStrings(relationship?.strengths);
+  const relationshipCautions = nonEmptyStrings(
+    relationship?.cautionConditions,
+  );
+
+  const hasRelationshipBody = Boolean(
+    relationshipTitle
+    || relationshipSummary
+    || relationshipStrengths.length > 0
+    || relationshipCautions.length > 0,
+  );
+
+  const relationshipBlock = renderChongunBlock(
+    "관계 성향 참고",
+    hasRelationshipBody
+      ? (
+        <>
+          {relationshipTitle ? (
+            <p className="vnext-report-chongun-structure-title">
+              {relationshipTitle}
+            </p>
+          ) : null}
+          {relationshipSummary ? <p>{relationshipSummary}</p> : null}
+          {relationshipStrengths.length > 0
+            ? renderTextList(relationshipStrengths)
+            : null}
+          {relationshipCautions.length > 0
+            ? renderTextList(relationshipCautions)
+            : null}
+        </>
+      )
+      : null,
+  );
+
+  const blocks = [todayFlowBlock, relationshipBlock].filter(Boolean);
+
+  if (blocks.length === 0) {
+    return (
+      <p className="vnext-report-content-empty">
+        오늘의 연애운 정보를 준비하지 못했습니다.
+      </p>
+    );
+  }
+
+  return (
+    <div className="vnext-report-chongun">
+      {blocks}
+    </div>
+  );
+}
+
 function resolveCompletedSectionBody(
   activeSection: VNextReportSessionState["activeSection"],
   humanContext: HumanDestinyContext | null,
@@ -528,7 +609,11 @@ function resolveCompletedSectionBody(
     return renderTodayContent(periodLuckFlowFacts);
   }
 
-  // chongun / todayLove / todayMoney: preserve existing rendering
+  if (activeSection === "todayLove") {
+    return renderTodayLoveContent(periodLuckFlowFacts, humanContext);
+  }
+
+  // chongun / todayMoney: preserve existing rendering
   return renderChongunContent(humanContext, timeState);
 }
 
