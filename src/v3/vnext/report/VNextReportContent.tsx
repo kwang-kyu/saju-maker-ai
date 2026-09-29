@@ -21,6 +21,13 @@ import {
   VNEXT_REPORT_SECTION_LABELS,
 } from "./vNextReportCopy.js";
 import {
+  composeVNextReportDetail,
+} from "./vNextReportDetailComposer.js";
+import {
+  downloadVNextReportDetailDocx,
+  VNEXT_REPORT_DETAIL_DOCX_ERROR_MESSAGE,
+} from "./vNextReportDetailDocx.js";
+import {
   canDownloadVNextReportDocx,
   downloadVNextReportDocx,
   VNEXT_REPORT_DOCX_ERROR_MESSAGE,
@@ -754,6 +761,10 @@ export function VNextReportContent({
   const [docxErrorMessage, setDocxErrorMessage] = useState<string | null>(
     null,
   );
+  const [detailDocxPreparing, setDetailDocxPreparing] = useState(false);
+  const [detailDocxErrorMessage, setDetailDocxErrorMessage] = useState<
+    string | null
+  >(null);
 
   const uxActions = resolveVNextReportUxActions(state.phase);
   const displayText = resolveDisplayText(state, isStreaming);
@@ -797,6 +808,38 @@ export function VNextReportContent({
       setDocxErrorMessage(VNEXT_REPORT_DOCX_ERROR_MESSAGE);
     } finally {
       setDocxPreparing(false);
+    }
+  }
+
+  async function handleDetailDocxDownload(): Promise<void> {
+    if (!canDownload || detailDocxPreparing || !state.response) {
+      return;
+    }
+
+    setDetailDocxPreparing(true);
+    setDetailDocxErrorMessage(null);
+
+    try {
+      const sectionLabels = state.sections.map(
+        (section) => VNEXT_REPORT_SECTION_LABELS[section],
+      );
+
+      const composition = composeVNextReportDetail({
+        birthProfile,
+        humanContext: state.humanContext,
+        timeState: state.timeState,
+        periodLuckFlowFacts: state.periodLuckFlowFacts,
+        responseText: state.response.text,
+      });
+
+      await downloadVNextReportDetailDocx({
+        composition,
+        sectionLabels,
+      });
+    } catch {
+      setDetailDocxErrorMessage(VNEXT_REPORT_DETAIL_DOCX_ERROR_MESSAGE);
+    } finally {
+      setDetailDocxPreparing(false);
     }
   }
 
@@ -874,7 +917,22 @@ export function VNextReportContent({
             >
               {docxPreparing
                 ? "문서 준비 중..."
-                : "DOCX 다운로드"}
+                : "요약 DOCX 다운로드"}
+            </button>
+          ) : null}
+
+          {canDownload ? (
+            <button
+              type="button"
+              className="vnext-report-docx-button"
+              onClick={() => {
+                void handleDetailDocxDownload();
+              }}
+              disabled={detailDocxPreparing}
+            >
+              {detailDocxPreparing
+                ? "문서 준비 중..."
+                : "상세 DOCX 다운로드"}
             </button>
           ) : null}
 
@@ -894,6 +952,15 @@ export function VNextReportContent({
               role="alert"
             >
               {docxErrorMessage}
+            </p>
+          ) : null}
+
+          {detailDocxErrorMessage ? (
+            <p
+              className="vnext-report-docx-error"
+              role="alert"
+            >
+              {detailDocxErrorMessage}
             </p>
           ) : null}
         </div>
