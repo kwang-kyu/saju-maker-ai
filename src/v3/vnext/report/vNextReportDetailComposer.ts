@@ -70,7 +70,7 @@ export const VNEXT_REPORT_DETAIL_CHAPTER_DEFS = [
   { id: "ch09", title: "활력/건강 리듬" },
   { id: "ch10", title: "인생 국면 + 대운" },
   { id: "ch11", title: "올해 세운 + yearSegments" },
-  { id: "ch12", title: "오늘 일운 + 관계/재물 병치" },
+  { id: "ch12", title: "오늘 일운" },
   { id: "ch13", title: "종합 실행 정리" },
 ] as const;
 
@@ -1711,7 +1711,7 @@ function composeChapter12(
   return {
     id: "ch12",
     index: 12,
-    title: "오늘 일운 + 관계/재물 병치",
+    title: "오늘 일운",
     sections,
   };
 }
