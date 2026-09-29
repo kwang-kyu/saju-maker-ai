@@ -566,18 +566,6 @@ function composeChapter01(
     ctx,
   );
 
-  // Always keep birth identity as factObject so CH01 is never emptied by
-  // Summary KV fingerprint overlap on the same labels.
-  pushFactObject(blocks, "birthProfile", [
-    { key: "displayName", value: displayName },
-    { key: "year", value: input.birthProfile.year },
-    { key: "month", value: input.birthProfile.month },
-    { key: "day", value: input.birthProfile.day },
-    { key: "birthTimeBranch", value: input.birthProfile.birthTimeBranch },
-    { key: "gender", value: input.birthProfile.gender },
-    { key: "calendarType", value: input.birthProfile.calendarType },
-  ]);
-
   const sections: VNextReportDetailSection[] = [];
   pushSection(
     sections,
@@ -1513,29 +1501,16 @@ function composeChapter10(
   humanContext: HumanDestinyContext | null | undefined,
   timeState: TimeState | null | undefined,
   periodLuckFlowFacts: VNextReportPeriodLuckFlowFacts | null | undefined,
-  ctx: DedupeContext,
 ): VNextReportDetailChapter {
   const sections: VNextReportDetailSection[] = [];
   const currentPhase = humanContext?.currentPhase ?? null;
 
   if (currentPhase) {
     const blocks: VNextReportDetailBodyBlock[] = [];
-    // Do not copy Summary title/description.
+    // Do not copy Summary title/description/focusAreas/avoidAreas.
     pushFactObject(blocks, "currentPhase", [
       { key: "phase", value: currentPhase.phase },
     ]);
-    pushFactList(
-      blocks,
-      "currentPhase.focusAreas",
-      currentPhase.focusAreas,
-      ctx,
-    );
-    pushFactList(
-      blocks,
-      "currentPhase.avoidAreas",
-      currentPhase.avoidAreas,
-      ctx,
-    );
 
     pushSection(
       sections,
@@ -1715,13 +1690,11 @@ function composeTargetIlunFields(
 
 function composeChapter12(
   periodLuckFlowFacts: VNextReportPeriodLuckFlowFacts | null | undefined,
-  relationship: RelationshipResultExplanation | null | undefined,
-  money: MoneyResultExplanation | null | undefined,
 ): VNextReportDetailChapter {
   const sections: VNextReportDetailSection[] = [];
   const targetIlun = periodLuckFlowFacts?.day?.targetIlun ?? null;
 
-  // No cross type. Juxtapose independent source sections only.
+  // No cross type. Keep targetIlun only; CH07/CH08 already own method detail.
   if (targetIlun) {
     const blocks: VNextReportDetailBodyBlock[] = [];
     pushFactObject(
@@ -1732,58 +1705,6 @@ function composeChapter12(
     pushSection(
       sections,
       sectionFromBlocks("targetIlun", "오늘 일운", blocks),
-    );
-  }
-
-  if (relationship) {
-    const blocks: VNextReportDetailBodyBlock[] = [];
-    pushFactObject(blocks, "relationship.method.juxtapose", [
-      { key: "connectionMethod", value: relationship.connectionMethod },
-      { key: "intimacyMethod", value: relationship.intimacyMethod },
-      {
-        key: "emotionalExchangeMethod",
-        value: relationship.emotionalExchangeMethod,
-      },
-      { key: "boundaryMethod", value: relationship.boundaryMethod },
-      { key: "conflictMethod", value: relationship.conflictMethod },
-      {
-        key: "trustRecoveryMethod",
-        value: relationship.trustRecoveryMethod,
-      },
-      { key: "partnershipMethod", value: relationship.partnershipMethod },
-      {
-        key: "spouseBondingMethod",
-        value: relationship.spouseBondingMethod,
-      },
-      { key: "corePattern", value: relationship.corePattern },
-    ]);
-    pushSection(
-      sections,
-      sectionFromBlocks(
-        "relationshipMethods",
-        "관계 방법 병치",
-        blocks,
-      ),
-    );
-  }
-
-  if (money) {
-    const blocks: VNextReportDetailBodyBlock[] = [];
-    pushFactObject(blocks, "money.method.juxtapose", [
-      { key: "generationMethod", value: money.generationMethod },
-      { key: "repetitionCondition", value: money.repetitionCondition },
-      { key: "accumulationMethod", value: money.accumulationMethod },
-      {
-        key: "assetConversionMethod",
-        value: money.assetConversionMethod,
-      },
-      { key: "leakagePattern", value: money.leakagePattern },
-      { key: "riskControlMethod", value: money.riskControlMethod },
-      { key: "corePattern", value: money.corePattern },
-    ]);
-    pushSection(
-      sections,
-      sectionFromBlocks("moneyMethods", "재물 방법 병치", blocks),
     );
   }
 
@@ -2000,14 +1921,9 @@ export function composeVNextReportDetail(
       input.humanContext,
       input.timeState,
       input.periodLuckFlowFacts,
-      ctx,
     ),
     composeChapter11(input.periodLuckFlowFacts),
-    composeChapter12(
-      input.periodLuckFlowFacts,
-      explanation?.relationship,
-      explanation?.money,
-    ),
+    composeChapter12(input.periodLuckFlowFacts),
     composeChapter13(input.humanContext, input.responseText, ctx),
   ];
 
