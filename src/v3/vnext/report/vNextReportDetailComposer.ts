@@ -1717,36 +1717,10 @@ function composeChapter12(
 }
 
 function composeChapter13(
-  humanContext: HumanDestinyContext | null | undefined,
   responseText: string | null | undefined,
   ctx: DedupeContext,
 ): VNextReportDetailChapter {
   const sections: VNextReportDetailSection[] = [];
-  const explanation = humanContext?.identity?.explanation ?? null;
-
-  const strengthBlocks: VNextReportDetailBodyBlock[] = [];
-  pushFactList(
-    strengthBlocks,
-    "integratedStrengths",
-    explanation?.integratedStrengths,
-    ctx,
-  );
-  pushSection(
-    sections,
-    sectionFromBlocks("integratedStrengths", "통합 강점", strengthBlocks),
-  );
-
-  const riskBlocks: VNextReportDetailBodyBlock[] = [];
-  pushFactList(
-    riskBlocks,
-    "integratedRisks",
-    explanation?.integratedRisks,
-    ctx,
-  );
-  pushSection(
-    sections,
-    sectionFromBlocks("integratedRisks", "통합 주의", riskBlocks),
-  );
 
   if (hasText(responseText)) {
     const narrationBlocks: VNextReportDetailBodyBlock[] = [];
@@ -1875,15 +1849,6 @@ function collectSourceStatus(
     missingSources.push("periodLuckFlowFacts.day.targetIlun");
   }
 
-  if (
-    nonEmptyStrings(explanation?.integratedStrengths).length > 0
-    || nonEmptyStrings(explanation?.integratedRisks).length > 0
-  ) {
-    usedSources.push("integratedStrengths/Risks");
-  } else {
-    missingSources.push("integratedStrengths/Risks");
-  }
-
   if (hasText(input.responseText)) {
     usedSources.push("responseText");
   } else {
@@ -1924,7 +1889,7 @@ export function composeVNextReportDetail(
     ),
     composeChapter11(input.periodLuckFlowFacts),
     composeChapter12(input.periodLuckFlowFacts),
-    composeChapter13(input.humanContext, input.responseText, ctx),
+    composeChapter13(input.responseText, ctx),
   ];
 
   const { usedSources, missingSources } = collectSourceStatus(input);

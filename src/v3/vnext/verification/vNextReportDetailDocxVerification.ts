@@ -339,6 +339,37 @@ export async function verifyVNextReportDetailDocx(): Promise<
     };
   }));
 
+  cases.push(runCase("ch13-narration-only", () => {
+    const ch13 = composition.chapters.find((item) => item.id === "ch13");
+    const sectionIds = (ch13?.sections ?? []).map((section) => section.id);
+    const hasStrengths = sectionIds.includes("integratedStrengths");
+    const hasRisks = sectionIds.includes("integratedRisks");
+    const responseSection = ch13?.sections.find(
+      (section) => section.id === "responseText",
+    );
+    const narrationParagraphs = (responseSection?.blocks ?? []).filter(
+      (block) => block.kind === "paragraph",
+    ).length;
+
+    return {
+      passed: ch13?.title === "종합 실행 정리"
+        && !hasStrengths
+        && !hasRisks
+        && responseSection?.title === "종합 설명 (기존 narration)"
+        && narrationParagraphs > 0
+        && sectionIds.length === 1
+        && sectionIds[0] === "responseText",
+      details: [
+        `title=${ch13?.title ?? "missing"}`,
+        `sectionIds=${sectionIds.join(",") || "none"}`,
+        `hasIntegratedStrengths=${hasStrengths}`,
+        `hasIntegratedRisks=${hasRisks}`,
+        `responseTitle=${responseSection?.title ?? "missing"}`,
+        `narrationParagraphs=${narrationParagraphs}`,
+      ],
+    };
+  }));
+
   cases.push(runCase("no-wolunSegments", () => {
     const hasWolun = compositionContainsSourceToken(
       composition,
@@ -406,7 +437,7 @@ export async function verifyVNextReportDetailDocx(): Promise<
 
   cases.push(await runAsyncCase("docx-buffer-openxml", async () => {
     const buffer = await buildVNextReportDetailDocxBuffer(docxInput);
-    outputPath = resolve("tmp-step49-3-detail.docx");
+    outputPath = resolve("tmp-step57-detail.docx");
     writeFileSync(outputPath, buffer);
 
     const children = buildVNextReportDetailDocxChildren(docxInput);
@@ -435,6 +466,18 @@ export async function verifyVNextReportDetailDocx(): Promise<
       "diseasePrediction",
     ].filter((token) => plainText.includes(token));
 
+    const hasCh13Title = plainText.includes("Chapter 13. 종합 실행 정리");
+    const hasNarrationHeading = plainText.includes(
+      "종합 설명 (기존 narration)",
+    );
+    const integratedSectionHits = [
+      /13-\d{2} 통합 강점/.test(plainText),
+      /13-\d{2} 통합 주의/.test(plainText),
+    ].filter(Boolean).length;
+    const hasSampleNarration = plainText.includes(
+      "이 상세 리포트의 종합 설명은 이미 확정된",
+    );
+
     return {
       passed: buffer.byteLength > 2000
         && children.length >= 40
@@ -444,7 +487,11 @@ export async function verifyVNextReportDetailDocx(): Promise<
         && crossHits.length === 0
         && !hasWolun
         && healthInventionHits.length === 0
-        && pageStarts >= 13,
+        && pageStarts >= 13
+        && hasCh13Title
+        && hasNarrationHeading
+        && integratedSectionHits === 0
+        && hasSampleNarration,
       details: [
         `bytes=${buffer.byteLength}`,
         `children=${children.length}`,
@@ -455,6 +502,10 @@ export async function verifyVNextReportDetailDocx(): Promise<
         `crossHits=${crossHits.join(",") || "none"}`,
         `hasWolun=${hasWolun}`,
         `healthInventionHits=${healthInventionHits.join(",") || "none"}`,
+        `hasCh13Title=${hasCh13Title}`,
+        `hasNarrationHeading=${hasNarrationHeading}`,
+        `integratedSectionHits=${integratedSectionHits}`,
+        `hasSampleNarration=${hasSampleNarration}`,
         `outputPath=${outputPath}`,
       ],
     };

@@ -297,6 +297,39 @@ export async function verifyVNextReportDetailComposer(): Promise<
     };
   }));
 
+  cases.push(runCase("ch13-narration-only", () => {
+    const ch13 = composition.chapters.find((item) => item.id === "ch13");
+    const sectionIds = (ch13?.sections ?? []).map((section) => section.id);
+    const hasStrengths = sectionIds.includes("integratedStrengths");
+    const hasRisks = sectionIds.includes("integratedRisks");
+    const responseSection = ch13?.sections.find(
+      (section) => section.id === "responseText",
+    );
+    const narrationParagraphs = (responseSection?.blocks ?? []).filter(
+      (block) => block.kind === "paragraph",
+    ).length;
+
+    return {
+      passed: ch13?.title === "종합 실행 정리"
+        && !hasStrengths
+        && !hasRisks
+        && responseSection?.title === "종합 설명 (기존 narration)"
+        && narrationParagraphs > 0
+        && sectionIds.length === 1
+        && sectionIds[0] === "responseText",
+      details: [
+        `title=${ch13?.title ?? "missing"}`,
+        `sectionIds=${sectionIds.join(",") || "none"}`,
+        `hasIntegratedStrengths=${hasStrengths}`,
+        `hasIntegratedRisks=${hasRisks}`,
+        `responseTitle=${responseSection?.title ?? "missing"}`,
+        `narrationParagraphs=${narrationParagraphs}`,
+        `usedResponseText=${composition.usedSources.includes("responseText")}`,
+        `usedIntegrated=${composition.usedSources.includes("integratedStrengths/Risks")}`,
+      ],
+    };
+  }));
+
   cases.push(runCase("no-wolunSegments", () => {
     const hasWolun = compositionContainsSourceToken(
       composition,
