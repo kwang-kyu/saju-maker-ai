@@ -135,7 +135,7 @@ function isActionBearingQuestion(
     || questionMeaning.analysisMode === "decision";
 }
 
-function hasTimeIdentity(
+export function hasTimeIdentity(
   questionMeaning: QuestionMeaning,
 ): boolean {
   const { time } = questionMeaning;
@@ -219,7 +219,7 @@ function mentionsYear(
   return Boolean(description && /\d{4}\s*년/.test(description));
 }
 
-function resolveTimeGranularity(
+export function resolveTimeGranularity(
   questionMeaning: QuestionMeaning,
 ): TimeGranularity[] {
   const fromPeriod = mapPeriodGranularity(questionMeaning);

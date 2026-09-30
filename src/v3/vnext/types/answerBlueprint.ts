@@ -103,12 +103,23 @@ export type ScenarioAnswerBlock =
 /**
  * Scenario별 Question Mode Blueprint.
  * 고정 문장이 아니라 설명 순서와 범위만 결정한다.
+ *
+ * generalFlow flowTimeStructure는 블록 재조합·promptStrategy
+ * answerGoal 정렬용 메타이며 새로운 QuestionReader semantic axis가 아니다.
  */
+export type GeneralFlowTimeStructure =
+  | "day"
+  | "month"
+  | "year"
+  | "overview";
+
 export type ScenarioAnswerBlueprint = {
   mode: "question";
   scenarioType: ConsultingScenarioType;
   blocks: ScenarioAnswerBlock[];
   emphasis?: string[];
+  /** generalFlow only — 선택된 시간 구조 */
+  flowTimeStructure?: GeneralFlowTimeStructure;
 };
 
 /** Report Answer에서 선택 가능한 섹션 */

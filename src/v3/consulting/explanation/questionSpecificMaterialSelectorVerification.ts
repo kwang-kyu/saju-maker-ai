@@ -245,6 +245,12 @@ function isFoundationalSupportingSource(
 ): boolean {
   return (
     source
+    === "humanIdentity"
+    || source
+    === "lifePhase"
+    || source
+    === "lifeDriver"
+    || source
     === "survivalStyle"
     || source
     === "repeatedPattern"

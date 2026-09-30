@@ -103,8 +103,22 @@ const READER_SOURCES:
     "destiny",
   ];
 
+/**
+ * Foundational / common boilerplate evidence sources.
+ *
+ * These remain available for explanation (supporting tier) but must not
+ * outrank question-selected person-diff reader evidence under standard
+ * prompt budget (directAnswer evidence slice).
+ *
+ * B4: demote humanIdentity / lifePhase / lifeDriver so person-specific
+ * capacity·money·career·relationship evidence can win serialization priority.
+ * DecisionResult itself is unchanged — only explanation-material tiering.
+ */
 const FOUNDATIONAL_SUPPORTING_SOURCES:
   readonly DecisionExplanationEvidence["source"][] = [
+    "humanIdentity",
+    "lifePhase",
+    "lifeDriver",
     "survivalStyle",
     "repeatedPattern",
     "questionIntent",

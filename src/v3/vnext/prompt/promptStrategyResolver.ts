@@ -5,8 +5,15 @@
  */
 
 import {
+  resolveGeneralFlowAnswerGoal,
+} from "../blueprint/generalFlowTimeStructure.js";
+import {
   resolveBlueprintBlockIds,
 } from "../response/responseEvidenceSelector.js";
+import type {
+  AnswerBlueprint,
+  GeneralFlowTimeStructure,
+} from "../types/answerBlueprint.js";
 import type {
   ConsultingScenarioType,
 } from "../types/consultingScenario.js";
@@ -38,6 +45,7 @@ const SCENARIO_STRATEGY_PROFILES: Record<
   },
   generalFlow: {
     conversationStyle: "conversational",
+    // month 기본값. resolveAnswerGoal이 flowTimeStructure로 덮어쓴다.
     answerGoal: "시간 흐름을 초순/중순/말로 구분해 설명한다.",
     forbiddenPatterns: [
       "재무 일반론 자동 삽입",
@@ -101,6 +109,53 @@ function resolveConversationStyle(
   return SCENARIO_STRATEGY_PROFILES[context.scenario].conversationStyle;
 }
 
+function readFlowTimeStructure(
+  blueprint: AnswerBlueprint,
+): GeneralFlowTimeStructure | undefined {
+  if (
+    blueprint.mode === "question"
+    && "flowTimeStructure" in blueprint
+    && blueprint.flowTimeStructure
+  ) {
+    return blueprint.flowTimeStructure;
+  }
+
+  return undefined;
+}
+
+function inferGeneralFlowStructureFromBlocks(
+  requiredBlocks: readonly string[],
+): GeneralFlowTimeStructure {
+  if (
+    requiredBlocks.includes("earlyPeriod")
+    || requiredBlocks.includes("middlePeriod")
+    || requiredBlocks.includes("latePeriod")
+  ) {
+    return "month";
+  }
+
+  return "overview";
+}
+
+function resolveAnswerGoal(
+  context: ResponseContext,
+  profile: ScenarioStrategyProfile,
+  requiredBlocks: readonly string[],
+): string {
+  if (context.answerMode === "report") {
+    return "Blueprint sections를 유지하며 분석 보고서형으로 설명한다.";
+  }
+
+  if (context.scenario === "generalFlow") {
+    const structure = readFlowTimeStructure(context.blueprint)
+      ?? inferGeneralFlowStructureFromBlocks(requiredBlocks);
+
+    return resolveGeneralFlowAnswerGoal(structure);
+  }
+
+  return profile.answerGoal;
+}
+
 /**
  * ResponseContext로 PromptStrategy를 결정한다.
  */
@@ -114,9 +169,7 @@ export function resolvePromptStrategy(
     answerMode: context.answerMode,
     scenario: context.scenario,
     conversationStyle: resolveConversationStyle(context),
-    answerGoal: context.answerMode === "report"
-      ? "Blueprint sections를 유지하며 분석 보고서형으로 설명한다."
-      : profile.answerGoal,
+    answerGoal: resolveAnswerGoal(context, profile, requiredBlocks),
     requiredBlocks,
     forbiddenPatterns: context.answerMode === "report"
       ? ["원본 JSON 데이터 나열"]

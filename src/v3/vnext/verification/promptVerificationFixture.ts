@@ -9,6 +9,9 @@ import {
   runDecisionEngine,
 } from "../../consulting/decision/decisionEngine.js";
 import {
+  resolveLifeFlowTarget,
+} from "../../consulting/question/lifeFlowTargetResolver.js";
+import {
   runVNextOrchestrator,
 } from "../orchestration/vNextOrchestrator.js";
 import {
@@ -27,6 +30,28 @@ import type {
   SajuTargetPeriodLuckFlowFact,
   SajuWolunSegmentFact,
 } from "../../types/luckFlowFact.js";
+
+const PROMPT_VERIFICATION_REFERENCE_DATE = "2026-09-30";
+
+function attachLifeFlowTargetForVerification<T extends {
+  normalizedQuestion: string;
+}>(
+  question: T,
+): T & { lifeFlowTarget?: ReturnType<typeof resolveLifeFlowTarget> } {
+  try {
+    const lifeFlowTarget = resolveLifeFlowTarget(
+      question.normalizedQuestion,
+      PROMPT_VERIFICATION_REFERENCE_DATE,
+    );
+
+    return {
+      ...question,
+      lifeFlowTarget,
+    };
+  } catch {
+    return question;
+  }
+}
 
 export function buildMockTargetPeriodLuckFlow(): SajuTargetPeriodLuckFlowFact {
   const targetSeun: SajuCurrentSeunFact = {
@@ -147,7 +172,10 @@ export function runAnalysisCase(
       ?? (options?.includeLuckFlow
         ? buildMockTargetPeriodLuckFlow()
         : undefined),
-    questionReaderResult: regressionInput.question,
+    // Production consulting pipeline과 동일하게 period identity를 연결한다.
+    questionReaderResult: attachLifeFlowTargetForVerification(
+      regressionInput.question,
+    ),
     decisionResult,
     targetPeriod: targetPeriod?.start
       && targetPeriod.end

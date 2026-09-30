@@ -128,25 +128,19 @@ function sliceRelevantEvidence(
   return relevantEvidence.slice(0, limit);
 }
 
+/**
+ * B4 person-diff priority within a block:
+ * evidence (already question-tier ordered) → signals → facts → emphasis.
+ *
+ * Cross-block condition/risk key dedup was reviewed but deferred:
+ * existing per-block prompt-priority contracts expect each block's
+ * condition/risk keys to remain complete in that section.
+ */
 function formatBlockContent(
   block: ResponseBlockContext,
   evidenceLimit: number,
 ): string {
   const lines: string[] = [];
-
-  for (const fact of block.relevantFacts) {
-    const formatted = formatFactRecord(fact);
-
-    if (formatted) {
-      lines.push(formatted);
-    }
-  }
-
-  if (block.relevantSignals.length > 0) {
-    lines.push(
-      block.relevantSignals.map(formatSignal).join("\n"),
-    );
-  }
 
   const evidenceToSerialize = sliceRelevantEvidence(
     block.relevantEvidence,
@@ -157,6 +151,20 @@ function formatBlockContent(
     lines.push(
       evidenceToSerialize.map(formatEvidenceItem).join("\n"),
     );
+  }
+
+  if (block.relevantSignals.length > 0) {
+    lines.push(
+      block.relevantSignals.map(formatSignal).join("\n"),
+    );
+  }
+
+  for (const fact of block.relevantFacts) {
+    const formatted = formatFactRecord(fact);
+
+    if (formatted) {
+      lines.push(formatted);
+    }
   }
 
   if (block.emphasis.length > 0) {

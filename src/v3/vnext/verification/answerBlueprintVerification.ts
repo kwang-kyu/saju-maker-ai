@@ -5,10 +5,14 @@ import {
   runDecisionEngine,
 } from "../../consulting/decision/decisionEngine.js";
 import {
+  resolveLifeFlowTarget,
+} from "../../consulting/question/lifeFlowTargetResolver.js";
+import {
   adaptAssessment,
 } from "../adapters/assessmentAdapter.js";
 import {
   adaptQuestionMeaning,
+  type QuestionMeaningAdapterInput,
 } from "../adapters/questionMeaningAdapter.js";
 import {
   buildAnswerBlueprint,
@@ -21,6 +25,35 @@ import type {
   ReportAnswerBlueprint,
   ScenarioAnswerBlueprint,
 } from "../types/answerBlueprint.js";
+import type {
+  QuestionMeaning,
+} from "../types/questionMeaning.js";
+
+const VERIFICATION_REFERENCE_DATE = "2026-09-30";
+
+/**
+ * Production pipeline과 동일하게 lifeFlowTarget을 실어
+ * QuestionMeaning.time.period를 연결한다.
+ */
+function adaptQuestionMeaningForBlueprintVerification(
+  question: QuestionMeaningAdapterInput,
+): QuestionMeaning {
+  let lifeFlowTarget = null;
+
+  try {
+    lifeFlowTarget = resolveLifeFlowTarget(
+      question.normalizedQuestion,
+      VERIFICATION_REFERENCE_DATE,
+    );
+  } catch {
+    lifeFlowTarget = null;
+  }
+
+  return adaptQuestionMeaning({
+    ...question,
+    ...(lifeFlowTarget ? { lifeFlowTarget } : {}),
+  });
+}
 
 export type AnswerBlueprintVerificationCase = {
   id: string;
@@ -59,7 +92,7 @@ function verifyAptitudeBlueprint(): AnswerBlueprintVerificationCase {
     questionText: "나에게 맞는 직업은 무엇인가요?",
   });
 
-  const questionMeaning = adaptQuestionMeaning(
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
     regressionInput.question,
   );
   const scenario = routeScenario(questionMeaning);
@@ -111,7 +144,7 @@ function verifyGeneralFlowBlueprint(): AnswerBlueprintVerificationCase {
     questionText: "10월 금전운이 있을까요?",
   });
 
-  const questionMeaning = adaptQuestionMeaning(
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
     regressionInput.question,
   );
   const scenario = routeScenario(questionMeaning);
@@ -137,6 +170,9 @@ function verifyGeneralFlowBlueprint(): AnswerBlueprintVerificationCase {
 
   const expectedBlocks = [
     "periodOverview",
+    "earlyPeriod",
+    "middlePeriod",
+    "latePeriod",
     "opportunity",
     "pressure",
     "moneyOrDomainEffect",
@@ -145,7 +181,11 @@ function verifyGeneralFlowBlueprint(): AnswerBlueprintVerificationCase {
 
   const checks = [
     blueprint.scenarioType === "generalFlow",
+    blueprint.flowTimeStructure === "month",
     includesAll(blueprint.blocks, expectedBlocks),
+    blueprint.blocks.includes("earlyPeriod"),
+    blueprint.blocks.includes("middlePeriod"),
+    blueprint.blocks.includes("latePeriod"),
   ];
 
   return {
@@ -153,6 +193,237 @@ function verifyGeneralFlowBlueprint(): AnswerBlueprintVerificationCase {
     passed: checks.every(Boolean),
     details: [
       `scenarioType=${blueprint.scenarioType}`,
+      `flowTimeStructure=${blueprint.flowTimeStructure ?? "none"}`,
+      `blocks=${blueprint.blocks.join(",")}`,
+    ],
+  };
+}
+
+function verifyGeneralFlowDayBlueprint(): AnswerBlueprintVerificationCase {
+  const regressionInput = buildDecisionEngineRegressionInput({
+    questionText: "오늘의 운세는 어떨까요?",
+  });
+
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
+    regressionInput.question,
+  );
+  const scenario = routeScenario(questionMeaning);
+  const blueprint = buildAnswerBlueprint({
+    answerMode: "question",
+    scenario,
+    questionMeaning,
+  });
+
+  if (!isScenarioAnswerBlueprint(blueprint)) {
+    return {
+      id: "general-flow-day-blueprint",
+      passed: false,
+      details: ["blueprint is not a scenario answer blueprint"],
+    };
+  }
+
+  const checks = [
+    blueprint.scenarioType === "generalFlow",
+    blueprint.flowTimeStructure === "day",
+    blueprint.blocks.includes("periodOverview"),
+    !blueprint.blocks.includes("earlyPeriod"),
+    !blueprint.blocks.includes("middlePeriod"),
+    !blueprint.blocks.includes("latePeriod"),
+  ];
+
+  return {
+    id: "general-flow-day-blueprint",
+    passed: checks.every(Boolean),
+    details: [
+      `scenarioType=${blueprint.scenarioType}`,
+      `flowTimeStructure=${blueprint.flowTimeStructure ?? "none"}`,
+      `period=${questionMeaning.time.period?.granularity ?? "none"}`,
+      `blocks=${blueprint.blocks.join(",")}`,
+    ],
+  };
+}
+
+function verifyGeneralFlowYearBlueprint(): AnswerBlueprintVerificationCase {
+  const regressionInput = buildDecisionEngineRegressionInput({
+    questionText: "올해 총운을 봐주세요",
+  });
+
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
+    regressionInput.question,
+  );
+  const scenario = routeScenario(questionMeaning);
+  const blueprint = buildAnswerBlueprint({
+    answerMode: "question",
+    scenario,
+    questionMeaning,
+  });
+
+  if (!isScenarioAnswerBlueprint(blueprint)) {
+    return {
+      id: "general-flow-year-blueprint",
+      passed: false,
+      details: ["blueprint is not a scenario answer blueprint"],
+    };
+  }
+
+  const checks = [
+    blueprint.scenarioType === "generalFlow",
+    blueprint.flowTimeStructure === "year",
+    blueprint.blocks.includes("periodOverview"),
+    !blueprint.blocks.includes("earlyPeriod"),
+    !blueprint.blocks.includes("middlePeriod"),
+    !blueprint.blocks.includes("latePeriod"),
+  ];
+
+  return {
+    id: "general-flow-year-blueprint",
+    passed: checks.every(Boolean),
+    details: [
+      `scenarioType=${blueprint.scenarioType}`,
+      `flowTimeStructure=${blueprint.flowTimeStructure ?? "none"}`,
+      `period=${questionMeaning.time.period?.granularity ?? "none"}`,
+      `blocks=${blueprint.blocks.join(",")}`,
+    ],
+  };
+}
+
+function verifyGeneralFlowOverviewBlueprint(): AnswerBlueprintVerificationCase {
+  const regressionInput = buildDecisionEngineRegressionInput({
+    questionText: "사업운이 어떨까요?",
+  });
+
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
+    regressionInput.question,
+  );
+  const scenario = routeScenario(questionMeaning);
+  const blueprint = buildAnswerBlueprint({
+    answerMode: "question",
+    scenario,
+    questionMeaning,
+  });
+
+  if (!isScenarioAnswerBlueprint(blueprint)) {
+    return {
+      id: "general-flow-overview-blueprint",
+      passed: false,
+      details: ["blueprint is not a scenario answer blueprint"],
+    };
+  }
+
+  const checks = [
+    blueprint.scenarioType === "generalFlow",
+    questionMeaning.intent === "prediction",
+    questionMeaning.actionNature === "none",
+    blueprint.flowTimeStructure === "overview",
+    blueprint.blocks.includes("periodOverview"),
+    !blueprint.blocks.includes("earlyPeriod"),
+    !blueprint.blocks.includes("middlePeriod"),
+    !blueprint.blocks.includes("latePeriod"),
+  ];
+
+  return {
+    id: "general-flow-overview-blueprint",
+    passed: checks.every(Boolean),
+    details: [
+      `scenarioType=${blueprint.scenarioType}`,
+      `intent=${questionMeaning.intent}`,
+      `actionNature=${questionMeaning.actionNature}`,
+      `flowTimeStructure=${blueprint.flowTimeStructure ?? "none"}`,
+      `blocks=${blueprint.blocks.join(",")}`,
+    ],
+  };
+}
+
+function verifyActionDecisionBlueprint(): AnswerBlueprintVerificationCase {
+  const regressionInput = buildDecisionEngineRegressionInput({
+    questionText: "사업을 시작하려고 하는데 어떨까요?",
+  });
+
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
+    regressionInput.question,
+  );
+  const scenario = routeScenario(questionMeaning);
+  const blueprint = buildAnswerBlueprint({
+    answerMode: "question",
+    scenario,
+    questionMeaning,
+  });
+
+  if (!isScenarioAnswerBlueprint(blueprint)) {
+    return {
+      id: "action-decision-blueprint",
+      passed: false,
+      details: ["blueprint is not a scenario answer blueprint"],
+    };
+  }
+
+  const expectedBlocks = [
+    "directAnswer",
+    "currentDirection",
+    "conditions",
+    "risk",
+    "scale",
+    "timing",
+    "nextAction",
+  ];
+
+  const checks = [
+    blueprint.scenarioType === "actionDecision",
+    blueprint.flowTimeStructure === undefined,
+    includesAll(blueprint.blocks, expectedBlocks),
+  ];
+
+  return {
+    id: "action-decision-blueprint",
+    passed: checks.every(Boolean),
+    details: [
+      `scenarioType=${blueprint.scenarioType}`,
+      `actionNature=${questionMeaning.actionNature}`,
+      `blocks=${blueprint.blocks.join(",")}`,
+    ],
+  };
+}
+
+function verifyBusinessGeneralFlowMonthBlueprint(): AnswerBlueprintVerificationCase {
+  const regressionInput = buildDecisionEngineRegressionInput({
+    questionText: "10월에 가게를 오픈하려고 하는데 어떨까요?",
+  });
+
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
+    regressionInput.question,
+  );
+  const scenario = routeScenario(questionMeaning);
+  const blueprint = buildAnswerBlueprint({
+    answerMode: "question",
+    scenario,
+    questionMeaning,
+  });
+
+  if (!isScenarioAnswerBlueprint(blueprint)) {
+    return {
+      id: "business-general-flow-month-blueprint",
+      passed: false,
+      details: ["blueprint is not a scenario answer blueprint"],
+    };
+  }
+
+  const checks = [
+    blueprint.scenarioType === "generalFlow",
+    blueprint.flowTimeStructure === "month",
+    includesAll(blueprint.blocks, [
+      "periodOverview",
+      "earlyPeriod",
+      "middlePeriod",
+      "latePeriod",
+    ]),
+  ];
+
+  return {
+    id: "business-general-flow-month-blueprint",
+    passed: checks.every(Boolean),
+    details: [
+      `scenarioType=${blueprint.scenarioType}`,
+      `flowTimeStructure=${blueprint.flowTimeStructure ?? "none"}`,
       `blocks=${blueprint.blocks.join(",")}`,
     ],
   };
@@ -163,7 +434,7 @@ function verifyReportModeBlueprint(): AnswerBlueprintVerificationCase {
     questionText: "10월 금전운이 있을까요?",
   });
 
-  const questionMeaning = adaptQuestionMeaning(
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
     regressionInput.question,
   );
   const scenario = routeScenario(questionMeaning);
@@ -206,7 +477,7 @@ function verifyRelationshipMissingContext(): AnswerBlueprintVerificationCase {
     questionText: "1967년 4월 2일 음력 여성과 궁합은 어떨까요?",
   });
 
-  const questionMeaning = adaptQuestionMeaning(
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
     regressionInput.question,
   );
   const scenario = routeScenario(questionMeaning);
@@ -247,6 +518,11 @@ export function verifyAnswerBlueprints(): AnswerBlueprintVerificationResult {
   const cases = [
     verifyAptitudeBlueprint(),
     verifyGeneralFlowBlueprint(),
+    verifyGeneralFlowDayBlueprint(),
+    verifyGeneralFlowYearBlueprint(),
+    verifyGeneralFlowOverviewBlueprint(),
+    verifyActionDecisionBlueprint(),
+    verifyBusinessGeneralFlowMonthBlueprint(),
     verifyReportModeBlueprint(),
     verifyRelationshipMissingContext(),
   ];
@@ -262,7 +538,7 @@ export function verifyAnswerBlueprintDoesNotJudge(): boolean {
     questionText: "10월에 가게를 오픈하려고 하는데 어떨까요?",
   });
 
-  const questionMeaning = adaptQuestionMeaning(
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
     regressionInput.question,
   );
   const scenario = routeScenario(questionMeaning);
