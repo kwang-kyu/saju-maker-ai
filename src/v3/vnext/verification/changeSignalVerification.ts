@@ -237,7 +237,7 @@ function verifyCase3OctoberStoreOpening(): ChangeSignalVerificationCase {
   );
 
   const checks = [
-    scenario.type === "generalFlow",
+    scenario.type === "actionDecision",
     includesAll(scenario.requiredSignals, expectedSignals),
     includesAll(extractedTypes, expectedSignals),
     scenario.requiredTimeGranularity.includes("month"),
@@ -251,6 +251,7 @@ function verifyCase3OctoberStoreOpening(): ChangeSignalVerificationCase {
       `scenario=${scenario.type}`,
       `requiredSignals=${scenario.requiredSignals.join(",")}`,
       `extractedTypes=${extractedTypes.join(",")}`,
+      `requiredTimeGranularity=${scenario.requiredTimeGranularity.join(",")}`,
       `aggregatedUnique=${aggregated.size}`,
     ],
   };

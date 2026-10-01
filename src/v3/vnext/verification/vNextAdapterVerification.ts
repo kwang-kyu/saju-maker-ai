@@ -5,6 +5,9 @@ import {
   readQuestion,
 } from "../../consulting/question/questionReader.js";
 import {
+  resolveLifeFlowTarget,
+} from "../../consulting/question/lifeFlowTargetResolver.js";
+import {
   runDecisionEngine,
 } from "../../consulting/decision/decisionEngine.js";
 import {
@@ -33,6 +36,8 @@ import type {
 import type {
   AnalysisRequest,
 } from "../types/analysisRequest.js";
+
+const ADAPTER_VERIFICATION_REFERENCE_DATE = "2026-09-30";
 
 export type VNextAdapterVerificationCase = {
   id: string;
@@ -174,14 +179,26 @@ function verifyCase3OctoberStoreOpening(): VNextAdapterVerificationCase {
       questionText: "10월에 가게를 오픈하려고 하는데 어떨까요?",
     });
 
-  const questionMeaning = adaptQuestionMeaning(
-    regressionInput.question,
-  );
+  let lifeFlowTarget = null;
+  try {
+    lifeFlowTarget = resolveLifeFlowTarget(
+      regressionInput.question.normalizedQuestion,
+      ADAPTER_VERIFICATION_REFERENCE_DATE,
+    );
+  } catch {
+    lifeFlowTarget = null;
+  }
+
+  const questionMeaning = adaptQuestionMeaning({
+    ...regressionInput.question,
+    ...(lifeFlowTarget ? { lifeFlowTarget } : {}),
+  });
   const scenario = routeScenario(questionMeaning);
 
   const checks = [
     questionMeaning.domain === "business",
-    scenario.type === "generalFlow",
+    questionMeaning.actionNature === "start",
+    scenario.type === "actionDecision",
     includesAll(scenario.requiredDomains, [
       "career",
       "money",
@@ -189,6 +206,8 @@ function verifyCase3OctoberStoreOpening(): VNextAdapterVerificationCase {
       "risk",
     ]),
     scenario.requiredTimeGranularity.includes("month"),
+    questionMeaning.time.period?.granularity === "month",
+    questionMeaning.time.period?.month === 10,
     includesAll(scenario.requiredSignals, [
       "opportunity",
       "pressure",
@@ -203,7 +222,9 @@ function verifyCase3OctoberStoreOpening(): VNextAdapterVerificationCase {
     passed: checks.every(Boolean),
     details: [
       `domain=${questionMeaning.domain}`,
+      `actionNature=${questionMeaning.actionNature}`,
       `scenario=${scenario.type}`,
+      `period=${questionMeaning.time.period?.granularity ?? "none"}:${questionMeaning.time.period?.month ?? "none"}`,
       `requiredDomains=${scenario.requiredDomains.join(",")}`,
       `requiredTimeGranularity=${scenario.requiredTimeGranularity.join(",")}`,
       `requiredSignals=${scenario.requiredSignals.join(",")}`,

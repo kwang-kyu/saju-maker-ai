@@ -7068,10 +7068,15 @@ const BUSINESS_START_SIGNAL_KEYWORDS: readonly string[] = [
 ];
 
 /**
- * business noun × start paraphrase compound용 활용형.
- * decisionRules / BUSINESS_START_SIGNAL_KEYWORDS에 전역 추가하지 않는다.
- * bare "차리"/"열" 단독 substring 금지.
- * business noun과 결합될 때만 start evidence가 된다.
+ * business noun x start paraphrase compound conjugations.
+ * Do not add these to decisionRules or BUSINESS_START_SIGNAL_KEYWORDS.
+ * Bare open/launch/open-stem alone is not a global keyword.
+ * Only becomes start evidence when combined with a business noun.
+ *
+ * Conjugation contract:
+ * - charyeo short stem covers charyeo-ryeogo.
+ * - yeoreo does not cover yeollyeogo, so yeollyeogo is listed separately.
+ * - open/launch loanword paraphrases stay noun-gated like operate/closure.
  */
 const BUSINESS_START_COMPOUND_VERBS: readonly string[] = [
   "차려도",
@@ -7088,14 +7093,32 @@ const BUSINESS_START_COMPOUND_VERBS: readonly string[] = [
   "열면",
   "열고",
   "열어",
+  "열려고",
+  "오픈해도",
+  "오픈해야",
+  "오픈하는",
+  "오픈할",
+  "오픈할까",
+  "오픈할지",
+  "오픈하려고",
+  "오픈하",
+  "런칭해도",
+  "런칭해야",
+  "런칭하는",
+  "런칭할",
+  "런칭할까",
+  "런칭할지",
+  "런칭하려고",
+  "런칭하",
 ];
 
 /**
- * P10 G4: business noun × 운영 paraphrase compound용 활용형.
- * decisionRules / continue keyword에 전역 추가하지 않는다.
- * bare "운영"/"운영하다" 단독 substring 금지.
- * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 continue evidence가 된다.
- * 회사/직장은 BUSINESS noun 밖이므로 job 경계를 보존한다.
+ * P10 G4: business noun x operate paraphrase conjugations.
+ * Do not add these to decisionRules or continue keywords globally.
+ * Bare operate alone is forbidden; requires BUSINESS_TOPIC_COMPOUND_NOUNS.
+ * Company/workplace stay outside BUSINESS nouns, preserving job boundary.
+ * operate-hal does not cover operate-ryeogo, so that form is listed separately.
+ * Must not promote operate paraphrases to start.
  */
 const BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS: readonly string[] = [
   "운영해도",
@@ -7104,6 +7127,7 @@ const BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS: readonly string[] = [
   "운영할",
   "운영할까",
   "운영할지",
+  "운영하려고",
 ];
 
 /**
@@ -8112,7 +8136,7 @@ function collectRealEstateSellSignalEvidence(
 /**
  * business × start compound용 action evidence.
  * 1) inherent start signal (시작/창업/개업/새로)
- * 2) business paraphrase 활용형 (차려·열어 계열)
+ * 2) business paraphrase 활용형 (차려·열어·오픈·런칭 계열)
  * decisionRules 전역 keyword로 승격하지 않는다.
  * 설립은 entity compound 전용이므로 여기 포함하지 않는다.
  */
@@ -8129,8 +8153,8 @@ function collectBusinessStartActionEvidence(
 }
 
 /**
- * business noun × 차려/열어 paraphrase용 verb evidence.
- * bare "차리"/"열" 단독 substring은 쓰지 않는다.
+ * business noun × 차려/열어/오픈/런칭 paraphrase용 verb evidence.
+ * bare "차리"/"열"/"오픈"/"런칭" 단독 global substring은 쓰지 않는다.
  */
 function collectBusinessStartCompoundVerbEvidence(
   question: string,

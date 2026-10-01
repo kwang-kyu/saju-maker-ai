@@ -148,7 +148,7 @@ export async function verifyVNextStep4CGptE2E(): Promise<VNextStep4CGptE2EVerifi
       const prompt = buildResponsePromptFromAction(action);
       const gateway = createMockResponseGateway({
         responsesByScenario: {
-          generalFlow:
+          actionDecision:
             "현재 확인된 방향을 기준으로, 조건과 위험 요소를 함께 고려해 보시는 것이 좋습니다.",
         },
       });
@@ -165,14 +165,13 @@ export async function verifyVNextStep4CGptE2E(): Promise<VNextStep4CGptE2EVerifi
         passed: action.type === "consulting"
           && response.apiCallCount === 1
           && includesAll(blockIds, [
-            "periodOverview",
-            "earlyPeriod",
-            "middlePeriod",
-            "latePeriod",
-            "opportunity",
-            "pressure",
-            "moneyOrDomainEffect",
-            "caution",
+            "directAnswer",
+            "currentDirection",
+            "conditions",
+            "risk",
+            "scale",
+            "timing",
+            "nextAction",
           ])
           && response.text.length > 0,
         details: [

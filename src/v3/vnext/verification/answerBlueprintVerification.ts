@@ -386,7 +386,7 @@ function verifyActionDecisionBlueprint(): AnswerBlueprintVerificationCase {
 
 function verifyBusinessGeneralFlowMonthBlueprint(): AnswerBlueprintVerificationCase {
   const regressionInput = buildDecisionEngineRegressionInput({
-    questionText: "10월에 가게를 오픈하려고 하는데 어떨까요?",
+    questionText: "10월에 사업운이 어떨까요?",
   });
 
   const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
@@ -409,6 +409,8 @@ function verifyBusinessGeneralFlowMonthBlueprint(): AnswerBlueprintVerificationC
 
   const checks = [
     blueprint.scenarioType === "generalFlow",
+    questionMeaning.actionNature === "none",
+    questionMeaning.time.period?.granularity === "month",
     blueprint.flowTimeStructure === "month",
     includesAll(blueprint.blocks, [
       "periodOverview",
@@ -423,7 +425,66 @@ function verifyBusinessGeneralFlowMonthBlueprint(): AnswerBlueprintVerificationC
     passed: checks.every(Boolean),
     details: [
       `scenarioType=${blueprint.scenarioType}`,
+      `actionNature=${questionMeaning.actionNature}`,
       `flowTimeStructure=${blueprint.flowTimeStructure ?? "none"}`,
+      `period=${questionMeaning.time.period?.granularity ?? "none"}`,
+      `blocks=${blueprint.blocks.join(",")}`,
+    ],
+  };
+}
+
+function verifyBusinessStoreOpeningActionDecisionBlueprint(): AnswerBlueprintVerificationCase {
+  const regressionInput = buildDecisionEngineRegressionInput({
+    questionText: "10월에 가게를 오픈하려고 하는데 어떨까요?",
+  });
+
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
+    regressionInput.question,
+  );
+  const scenario = routeScenario(questionMeaning);
+  const blueprint = buildAnswerBlueprint({
+    answerMode: "question",
+    scenario,
+    questionMeaning,
+  });
+
+  if (!isScenarioAnswerBlueprint(blueprint)) {
+    return {
+      id: "business-store-opening-action-decision-blueprint",
+      passed: false,
+      details: ["blueprint is not a scenario answer blueprint"],
+    };
+  }
+
+  const expectedBlocks = [
+    "directAnswer",
+    "currentDirection",
+    "conditions",
+    "risk",
+    "scale",
+    "timing",
+    "nextAction",
+  ];
+
+  const checks = [
+    blueprint.scenarioType === "actionDecision",
+    questionMeaning.actionNature === "start",
+    questionMeaning.domain === "business",
+    questionMeaning.time.period?.granularity === "month",
+    questionMeaning.time.period?.month === 10,
+    scenario.requiredTimeGranularity.includes("month"),
+    blueprint.flowTimeStructure === undefined,
+    includesAll(blueprint.blocks, expectedBlocks),
+  ];
+
+  return {
+    id: "business-store-opening-action-decision-blueprint",
+    passed: checks.every(Boolean),
+    details: [
+      `scenarioType=${blueprint.scenarioType}`,
+      `actionNature=${questionMeaning.actionNature}`,
+      `period=${questionMeaning.time.period?.granularity ?? "none"}:${questionMeaning.time.period?.month ?? "none"}`,
+      `requiredTimeGranularity=${scenario.requiredTimeGranularity.join(",")}`,
       `blocks=${blueprint.blocks.join(",")}`,
     ],
   };
@@ -523,6 +584,7 @@ export function verifyAnswerBlueprints(): AnswerBlueprintVerificationResult {
     verifyGeneralFlowOverviewBlueprint(),
     verifyActionDecisionBlueprint(),
     verifyBusinessGeneralFlowMonthBlueprint(),
+    verifyBusinessStoreOpeningActionDecisionBlueprint(),
     verifyReportModeBlueprint(),
     verifyRelationshipMissingContext(),
   ];

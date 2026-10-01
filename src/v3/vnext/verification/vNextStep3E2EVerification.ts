@@ -264,12 +264,12 @@ export function verifyVNextStep3E2E(): VNextStep3E2EVerificationResult {
         const extractedTypes = signals.map((signal) => signal.type);
 
         const checks = [
-          scenario?.type === "generalFlow",
+          scenario?.type === "actionDecision",
           result.changeSignals?.status === "ready",
           includesAll(extractedTypes, expectedSignals),
           result.assessment?.status === "ready",
           result.answerBlueprint?.status === "ready",
-          getBlueprintScenarioType(result) === "generalFlow",
+          getBlueprintScenarioType(result) === "actionDecision",
         ];
 
         return {

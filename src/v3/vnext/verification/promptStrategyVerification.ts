@@ -132,18 +132,18 @@ function verifyCase3StoreOpening(): PromptStrategyVerificationCase {
   const strategy = resolvePromptStrategy(context);
 
   const checks = [
-    strategy.conversationStyle === "conversational",
-    strategy.scenario === "generalFlow",
-    strategy.answerGoal.includes("초순/중순/말"),
+    strategy.conversationStyle === "decisionSupport",
+    strategy.scenario === "actionDecision",
+    context.questionMeaningAxes?.actionNature === "start",
+    /10월/.test(context.originalQuestion),
     includesAll(strategy.requiredBlocks, [
-      "periodOverview",
-      "earlyPeriod",
-      "middlePeriod",
-      "latePeriod",
-      "opportunity",
-      "pressure",
-      "moneyOrDomainEffect",
-      "caution",
+      "directAnswer",
+      "currentDirection",
+      "conditions",
+      "risk",
+      "scale",
+      "timing",
+      "nextAction",
     ]),
   ];
 
@@ -152,6 +152,8 @@ function verifyCase3StoreOpening(): PromptStrategyVerificationCase {
     passed: checks.every(Boolean),
     details: [
       `conversationStyle=${strategy.conversationStyle}`,
+      `scenario=${strategy.scenario}`,
+      `actionNature=${context.questionMeaningAxes?.actionNature ?? "none"}`,
       `answerGoal=${strategy.answerGoal}`,
       `requiredBlocks=${strategy.requiredBlocks.join(",")}`,
     ],
