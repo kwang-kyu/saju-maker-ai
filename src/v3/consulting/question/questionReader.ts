@@ -7605,6 +7605,8 @@ const LEAVE_JOB_SIGNAL_KEYWORDS: readonly string[] = [
  * job noun × leave-verb compound용 활용형.
  * LEAVE_JOB_SIGNAL_KEYWORDS / decisionRules에 단독 추가하지 않는다.
  * bare "떠나"/"떠나다"/"관두"/"관두다"/"나오"/"나와" 단독 substring 금지.
+ * bare "나와"는 leave-case particle(을/를/에서/(으)로) bound일 때만 인정한다
+ * (이/가 + "나와"=나+와 오탐 방지). 나와도/나와야/나오는 등 longer form은 includes 유지.
  * 연결형(떠나면서/떠나고/관두면서/관두고/…)은 아래 CONNECTIVE 목록으로만 취급한다.
  */
 const JOB_LEAVE_COMPOUND_VERBS: readonly string[] = [
@@ -7712,6 +7714,7 @@ const JOB_LEAVE_PUTDOWN_COMPOUND_VERBS: readonly string[] = [
 /**
  * P11-7-2I-3 / B5: employment noun × exit surfaces.
  * bare "엑시트"/"exit" 단독·사업 엑시트는 전역 leaveJob이 아니다.
+ * bare "나와"는 leave-case particle(을/를/에서/(으)로) bound일 때만 인정한다.
  */
 const JOB_LEAVE_EXIT_COMPOUND_VERBS: readonly string[] = [
   "엑시트",
@@ -7900,6 +7903,46 @@ function collectMatchedDecisionKeywords(
 ): string[] {
   return keywords.filter((keyword) =>
     matchesDecisionKeyword(question, keyword)
+  );
+}
+
+/**
+ * bare "나와" leaveJob compound는 leave-case particle
+ * (을/를/에서/(으)로)에 묶일 때만 인정한다.
+ * "이/가 나와"(=나+와) 호환성 오탐을 막고,
+ * 나와도/나와야/나오는 등 longer form은 기존 includes를 유지한다.
+ */
+function hasLeaveCaseParticleBoundBareNawa(
+  question: string,
+): boolean {
+  return /(?:을|를|에서|으로|로)\s*나와/.test(question);
+}
+
+/**
+ * JOB_LEAVE_COMPOUND_VERBS / JOB_LEAVE_EXIT_COMPOUND_VERBS 공통 매칭.
+ * bare "나와"에만 leave-case particle boundary를 적용한다.
+ */
+function matchesLeaveJobCompoundVerbKeyword(
+  question: string,
+  keyword: string,
+): boolean {
+  if (!matchesDecisionKeyword(question, keyword)) {
+    return false;
+  }
+
+  if (keyword !== "나와") {
+    return true;
+  }
+
+  return hasLeaveCaseParticleBoundBareNawa(question);
+}
+
+function collectMatchedLeaveJobCompoundVerbs(
+  question: string,
+  keywords: readonly string[],
+): string[] {
+  return keywords.filter((keyword) =>
+    matchesLeaveJobCompoundVerbKeyword(question, keyword)
   );
 }
 
@@ -8844,13 +8887,14 @@ function hasRealEstateBuySignal(
  * job noun + leave-verb compound용 verb evidence.
  * leaveJob 단독 keyword / 전역 "떠나다"로 topic·decision을 만들지 않는다.
  * 연결형은 job noun compound 경로에서만 합류한다.
+ * bare "나와"는 leave-case particle bound일 때만 합류한다.
  */
 function collectLeaveJobCompoundVerbEvidence(
   question: string,
 ): string[] {
   return [
     ...new Set([
-      ...collectMatchedDecisionKeywords(
+      ...collectMatchedLeaveJobCompoundVerbs(
         question,
         JOB_LEAVE_COMPOUND_VERBS,
       ),
@@ -8887,7 +8931,7 @@ function collectLeaveJobEmploymentTerminationEvidence(
       question,
       JOB_LEAVE_END_COMPOUND_VERBS,
     ),
-    ...collectMatchedDecisionKeywords(
+    ...collectMatchedLeaveJobCompoundVerbs(
       question,
       JOB_LEAVE_EXIT_COMPOUND_VERBS,
     ),
