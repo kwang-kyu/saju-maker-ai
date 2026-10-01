@@ -2426,6 +2426,13 @@ function appendCompoundDecisionTargetCandidates(
   pushCompound("buy", collectBusinessAcquisitionBuySignalEvidence(question), 2);
   pushCompound("sell", collectRealEstateSellSignalEvidence(question), 3);
   pushCompound("start", collectBusinessStartSignalEvidence(question), 4);
+  // CC6: destination particle (로|으로) + 전향* → start.
+  // bare "전향" / changeJob synonym 금지. business noun gate 없이도 DT만 승격.
+  pushCompound(
+    "start",
+    collectDestinationParticleJeonhyangStartSignalEvidence(question),
+    4,
+  );
   pushCompound("move", collectRealEstateMoveSignalEvidence(question), 5);
   pushCompound(
     "manageMoney",
@@ -7919,6 +7926,16 @@ function hasLeaveCaseParticleBoundBareNawa(
 }
 
 /**
+ * CC6: destination particle (로|으로) + 전향* compound만 start로 인정한다.
+ * bare "전향"을 start keyword / changeJob synonym으로 넣지 않는다.
+ */
+function hasDestinationParticleBoundJeonhyang(
+  question: string,
+): boolean {
+  return /(?:으로|로)\s*전향/.test(question);
+}
+
+/**
  * JOB_LEAVE_COMPOUND_VERBS / JOB_LEAVE_EXIT_COMPOUND_VERBS 공통 매칭.
  * bare "나와"에만 leave-case particle boundary를 적용한다.
  */
@@ -8177,9 +8194,30 @@ function collectRealEstateSellSignalEvidence(
 }
 
 /**
+ * CC6: destination particle (로|으로) + 전향* start evidence.
+ * bare "전향" 단독 substring은 쓰지 않는다.
+ * decisionRules / changeJob vocabulary에 전역 추가하지 않는다.
+ */
+function collectDestinationParticleJeonhyangStartSignalEvidence(
+  question: string,
+): string[] {
+  if (!hasDestinationParticleBoundJeonhyang(question)) {
+    return [];
+  }
+
+  const match = /((?:으로|로)\s*전향)/.exec(question);
+  if (!match || !match[1]) {
+    return [];
+  }
+
+  return [match[1].replace(/\s+/g, " ").trim()];
+}
+
+/**
  * business × start compound용 action evidence.
  * 1) inherent start signal (시작/창업/개업/새로)
  * 2) business paraphrase 활용형 (차려·열어·오픈·런칭 계열)
+ * 3) CC6: destination particle (로|으로) + 전향*
  * decisionRules 전역 keyword로 승격하지 않는다.
  * 설립은 entity compound 전용이므로 여기 포함하지 않는다.
  */
@@ -8192,6 +8230,7 @@ function collectBusinessStartActionEvidence(
       BUSINESS_START_SIGNAL_KEYWORDS,
     ),
     ...collectBusinessStartCompoundVerbEvidence(question),
+    ...collectDestinationParticleJeonhyangStartSignalEvidence(question),
   ];
 }
 
