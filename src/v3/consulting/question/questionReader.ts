@@ -10398,10 +10398,20 @@ function extractQuestionCounterpartFacts(
       /(?:오전|오후)?\s*(\d{1,2})\s*(?::|시)\s*(\d{1,2})?\s*분?/,
     );
 
-  const zodiacMatch =
-    question.match(
-      /(쥐|소|호랑이|토끼|용|뱀|말|양|원숭이|닭|개|돼지)띠/,
+  const zodiacSurfaces =
+    Array.from(
+      question.matchAll(
+        /(쥐|소|호랑이|토끼|용|뱀|말|양|원숭이|닭|개|돼지)띠/g,
+      ),
+      (
+        match,
+      ) =>
+        match[0],
     );
+
+  const zodiacMatch =
+    zodiacSurfaces[0]
+    ?? null;
 
   const genderMatch =
     question.match(
@@ -10441,7 +10451,7 @@ function extractQuestionCounterpartFacts(
   const evidence = [
     dateMatch?.[0],
     timeMatch?.[0],
-    zodiacMatch?.[0],
+    ...zodiacSurfaces,
     genderMatch?.[0],
     calendarMatch?.[0],
     relationshipMatch?.[0],
@@ -10520,8 +10530,7 @@ function extractQuestionCounterpartFacts(
           : null,
 
     zodiac:
-      zodiacMatch?.[0]
-      ?? null,
+      zodiacMatch,
 
     relationship:
       relationshipMatch?.[0]
@@ -10564,7 +10573,7 @@ function detectQuestionAnalysisScope(
 ): QuestionAnalysisScope {
   if (
     counterpartFacts.zodiac
-    && /띠\s*궁합|궁합.*띠|띠만/.test(
+    && /띠\s*궁합|궁합.*띠|띠만|띠.*궁합/.test(
       question,
     )
   ) {

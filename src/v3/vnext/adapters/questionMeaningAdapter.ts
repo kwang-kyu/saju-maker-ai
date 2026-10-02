@@ -274,39 +274,43 @@ function buildMissingContext(
   ) {
     const counterpart = input.counterpartFacts;
 
-    if (!counterpart.birthDate) {
-      items.push({
-        key: "counterpartBirthDate",
-        description: "상대방 생년월일",
-        required: true,
-      });
-    }
+    // Zodiac-only gate: skip birthDate/calendar/gender required items.
+    // Non-zodiac compatibility / marry birth contract stays unchanged below.
+    if (input.analysisScope !== "zodiac") {
+      if (!counterpart.birthDate) {
+        items.push({
+          key: "counterpartBirthDate",
+          description: "상대방 생년월일",
+          required: true,
+        });
+      }
 
-    if (!counterpart.calendarType) {
-      items.push({
-        key: "counterpartCalendarType",
-        description: "상대방 양력/음력",
-        required: true,
-      });
-    }
+      if (!counterpart.calendarType) {
+        items.push({
+          key: "counterpartCalendarType",
+          description: "상대방 양력/음력",
+          required: true,
+        });
+      }
 
-    if (
-      input.analysisScope === "fullSaju"
-      && !counterpart.birthTime
-    ) {
-      items.push({
-        key: "counterpartBirthTime",
-        description: "상대방 출생 시간",
-        required: false,
-      });
-    }
+      if (
+        input.analysisScope === "fullSaju"
+        && !counterpart.birthTime
+      ) {
+        items.push({
+          key: "counterpartBirthTime",
+          description: "상대방 출생 시간",
+          required: false,
+        });
+      }
 
-    if (!counterpart.gender) {
-      items.push({
-        key: "counterpartGender",
-        description: "상대방 성별",
-        required: true,
-      });
+      if (!counterpart.gender) {
+        items.push({
+          key: "counterpartGender",
+          description: "상대방 성별",
+          required: true,
+        });
+      }
     }
 
     if (
