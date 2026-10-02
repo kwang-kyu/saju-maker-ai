@@ -1005,7 +1005,9 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   },
   {
     result: "manageMoney",
-    keywords: ["빚", "대출", "재물", "돈 관리", "자금", "현금흐름"],
+    // "재물"은 topicRules / MONEY_CASHFLOW_COMPOUND_NOUNS에만 둔다.
+    // prediction "재물운"이 manageMoney로 누출되지 않게 한다.
+    keywords: ["빚", "대출", "돈 관리", "자금", "현금흐름"],
   },
   {
     result: "protectHealth",
@@ -2439,6 +2441,15 @@ function appendCompoundDecisionTargetCandidates(
     collectMoneyManageSignalEvidence(question),
     6,
   );
+  // money cashflow noun + accumulate/focus paraphrase → continue compound.
+  // bare "모으"/"집중"/"저축"을 전역 continue keyword로 넣지 않는다.
+  // 기존 money-manage(관리/저축) compound보다 낮은 우선순위(13)로 두어
+  // "월급을 관리"/"저축" 경로를 깨지 않는다.
+  pushCompound(
+    "continue",
+    collectMoneyAccumulateFocusContinueSignalEvidence(question),
+    13,
+  );
   // P10 G1: financial asset noun + colloquial buy → invest compound.
   // 사다 계열을 전역 invest keyword로 넣지 않는다.
   // cash-holding exclusive rival 검사보다 먼저 등록해야
@@ -2794,6 +2805,46 @@ function collectMoneyManageSignalEvidence(
 }
 
 /**
+ * money cashflow noun × accumulate/focus paraphrase용 verb evidence.
+ * bare "모으"/"집중"/"저축" 단독 substring은 쓰지 않는다.
+ */
+function collectMoneyAccumulateFocusContinueCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    MONEY_ACCUMULATE_FOCUS_CONTINUE_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * money cashflow noun + accumulate/focus paraphrase → continue compound evidence.
+ * 모으/집중/저축 단독 keyword만으로는 빈 배열을 반환한다.
+ * 기존 manageMoney compound(관리/저축)와 분리한다.
+ */
+function collectMoneyAccumulateFocusContinueSignalEvidence(
+  question: string,
+): string[] {
+  const cashflowEvidence = collectMatchedDecisionKeywords(
+    question,
+    MONEY_CASHFLOW_COMPOUND_NOUNS,
+  );
+
+  if (cashflowEvidence.length === 0) {
+    return [];
+  }
+
+  const accumulateFocusEvidence =
+    collectMoneyAccumulateFocusContinueCompoundVerbEvidence(question);
+
+  if (accumulateFocusEvidence.length === 0) {
+    return [];
+  }
+
+  return [...cashflowEvidence, ...accumulateFocusEvidence];
+}
+
+/**
  * P10 G1: money × invest compound용 colloquial buy verb evidence.
  * decisionRules invest keyword에 사다 계열을 전역 추가하지 않는다.
  * (부동산/일반물건/조직 buy와 충돌 방지)
@@ -2858,6 +2909,8 @@ function collectMoneyInvestSignalEvidence(
  * - employment noun × disconnect|exit|end(끝내*) / job noun × put-down → leaveJob
  *   (P11-7-2I-3 B5 / P11-7-2I-7 B6; bare 끊다/끝내다/내려놓다/엑시트/공백기 금지)
  * - money cashflow noun + manage verb (J-4-13)
+ * - money cashflow noun + accumulate/focus paraphrase → continue
+ *   (모으는 데 집중*; bare 저축/모으/집중·전역 continue keyword 금지)
  * - financial asset noun + colloquial buy surface → invest (P10 G1)
  *
  * invest/move/start/buy/sell/manageMoney/continue/stop 단독 keyword만으로는 만들지 않는다.
@@ -2867,6 +2920,7 @@ function collectMoneyInvestSignalEvidence(
  * bare "접다"/"폐업"/"손을 떼다"/"끝내다"/"종료"/"마무리"/"닫아버리다"/
  * "이어가"/"계속"/"더 이상"/"않"은 전역 stop evidence가 아니다.
  * bare "보유"/"가지고 있"은 전역 continue evidence가 아니다.
+ * bare "모으"/"집중"/"저축"은 전역 continue evidence가 아니다.
  */
 function collectTopicDecisionCompoundCandidates(
   question: string,
@@ -3126,6 +3180,21 @@ function collectTopicDecisionCompoundCandidates(
     moneyFlowEvidence,
     manageVerbEvidence,
     6,
+  );
+
+  // money cashflow noun + accumulate/focus paraphrase → money × continue
+  // 기존 DecisionTarget `continue`를 재사용한다(save/hold/increase DT 없음).
+  // bare 모으/집중/저축·전역 continue keyword 확장은 하지 않는다.
+  // manageMoney compound(관리/저축 등)와 충돌하지 않도록 명시 문법만 허용한다.
+  const moneyAccumulateFocusSignals =
+    collectMoneyAccumulateFocusContinueCompoundVerbEvidence(question);
+
+  pushPair(
+    "money",
+    "continue",
+    moneyFlowEvidence,
+    moneyAccumulateFocusSignals,
+    13,
   );
 
   // P10 G1: financial asset noun + colloquial buy → money × invest
@@ -7003,6 +7072,21 @@ const MONEY_MANAGE_COMPOUND_VERBS: readonly string[] = [
   "저축",
 ];
 
+/**
+ * money cashflow noun × accumulate/focus paraphrase → continue compound용 surface.
+ * 기존 DecisionTarget `continue`를 재사용한다(save/hold/increase DT 없음).
+ * decisionRules / continue keyword에 전역 추가하지 않는다.
+ * bare "모으"/"집중"/"저축" 단독 substring 금지.
+ * MONEY_CASHFLOW_COMPOUND_NOUNS와 결합될 때만 continue evidence가 된다.
+ * 기존 money-manage(관리/저축) 경로와 충돌하지 않도록 명시 문법만 둔다.
+ */
+const MONEY_ACCUMULATE_FOCUS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
+  "모으는 데 집중",
+  "모으는데 집중",
+  "모으기에 집중",
+  "모으는 쪽에 집중",
+];
+
 const REAL_ESTATE_BUY_VERBS: readonly string[] = [
   "매수",
   "매입",
@@ -9593,7 +9677,15 @@ function resolveDecisionTargetByTopic(
     return keywordDecisionTarget;
   }
 
-  if (topic === "money") {
+  // money topic bare default는 prediction에 적용하지 않는다.
+  // "재물운" 등 흐름 질문이 manageMoney로 누출되는 것을 막는다.
+  // prediction을 전역 none으로 강제하지 않으며,
+  // 명시적 invest/manageMoney/continue compound·keyword는 위에서 이미 보존된다.
+  // method/possibility 등 기존 money bare 호환은 유지한다.
+  if (
+    topic === "money"
+    && intent !== "prediction"
+  ) {
     return "manageMoney";
   }
 
