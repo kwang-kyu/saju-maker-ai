@@ -4,6 +4,9 @@ import type {
 import {
   VNextAnalysisProgressBar,
 } from "./VNextAnalysisProgressBar.js";
+import {
+  isConsultingAccessAuthErrorCode,
+} from "../gpt/responseGateway.js";
 
 export type VNextConsultingStatusTone =
   | "idle"
@@ -60,7 +63,12 @@ export function resolveVNextConsultingStatusView(
     };
   }
 
-  if (state.phase === "error") {
+  // Entitlement/auth errors: keep conversation-area messaging; do not
+  // surface Header/status "처리 오류" badge (real system errors still do).
+  if (
+    state.phase === "error"
+    && !isConsultingAccessAuthErrorCode(state.errorCode)
+  ) {
     return {
       label: "처리 오류",
       description: state.errorMessage,
