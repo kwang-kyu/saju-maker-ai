@@ -538,6 +538,55 @@
   line-height: 1.5;
 }
 
+.vnext-uat-invite-redeem {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.vnext-uat-invite-redeem-prompt {
+  margin: 0;
+  color: #6f6558;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.vnext-uat-invite-redeem-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 320px);
+}
+
+.vnext-uat-invite-redeem-label-text {
+  color: #3d3830;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vnext-uat-invite-redeem-input {
+  width: 100%;
+  border: 1px solid rgba(84, 69, 48, 0.22);
+  border-radius: 12px;
+  background: #fffdf8;
+  color: #3d3830;
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.vnext-uat-invite-redeem-input:disabled {
+  opacity: 0.62;
+}
+
+.vnext-uat-invite-redeem-success {
+  margin: 0;
+  color: #3d6b4f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 @media (max-width: 560px) {
   .vnext-consulting-header-top {
     flex-direction: column;

@@ -67,6 +67,7 @@ export type VNextConsultingShellProps = {
   authenticated: boolean;
   authLoading: boolean;
   authError: unknown;
+  accessToken?: string | null;
   onSignIn: () => void;
   onSignOut: () => void;
   state: VNextConsultingSessionState;
@@ -88,6 +89,7 @@ export function VNextConsultingShell({
   authenticated,
   authLoading,
   authError,
+  accessToken = null,
   onSignIn,
   onSignOut,
   state,
@@ -260,6 +262,8 @@ export function VNextConsultingShell({
             state={state}
             isBusy={isBusy}
             isStreaming={isStreaming}
+            authenticated={authenticated}
+            accessToken={accessToken}
             onRetry={() => {
               void handleRetry();
             }}

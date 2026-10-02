@@ -49,6 +49,7 @@ export function VNextConsultingPhaseRoot({
       authenticated={authenticated}
       authLoading={authLoading}
       authError={authError}
+      accessToken={accessToken}
       onSignIn={onSignIn}
       onSignOut={onSignOut}
       state={state}
