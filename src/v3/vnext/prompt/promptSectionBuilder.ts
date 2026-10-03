@@ -129,6 +129,73 @@ function sliceRelevantEvidence(
 }
 
 /**
+ * P6-D: prioritySurface=true 이고 nextAction block이 없을 때,
+ * 기존 DecisionResult material 중 하나로 첫 실행 포인트 표현 앵커를 고른다.
+ * 새 판단을 만들지 않으며, source가 없으면 null.
+ */
+type FirstActionAnchor =
+  | { kind: "recommendedDirection" }
+  | { kind: "lockedDecision" }
+  | { kind: "condition"; blockId: string };
+
+const FIRST_ACTION_EXPRESSION_BY_KIND: Record<
+  FirstActionAnchor["kind"],
+  string
+> = {
+  recommendedDirection:
+    "표현 지시: 사용자가 가장 먼저를 물었으므로, 기존 DecisionResult의 권장 방향을 변경하지 말고 가장 먼저 할 한 가지로 명확히 표현한다.",
+  lockedDecision:
+    "표현 지시: 사용자가 가장 먼저를 물었으므로, 기존 DecisionResult의 확정 판단을 변경하지 말고 그 결과에서 첫 번째 실행 포인트를 하나의 우선 행동으로 명확히 표현한다.",
+  condition:
+    "표현 지시: 사용자가 가장 먼저를 물었으므로, 기존 DecisionResult의 조건 material을 변경·추가하지 말고 첫 번째 조건을 가장 먼저 할 한 가지로 명확히 표현한다.",
+};
+
+function hasNextActionBlock(context: ResponseContext): boolean {
+  return context.blocks.some((block) => block.id === "nextAction");
+}
+
+function resolveFirstActionAnchor(
+  context: ResponseContext,
+): FirstActionAnchor | null {
+  if (
+    typeof context.recommendedDirection === "string"
+    && context.recommendedDirection.length > 0
+  ) {
+    return { kind: "recommendedDirection" };
+  }
+
+  if (
+    typeof context.lockedDecisionStatement === "string"
+    && context.lockedDecisionStatement.length > 0
+  ) {
+    return { kind: "lockedDecision" };
+  }
+
+  const conditionBlock = context.blocks.find(
+    (block) =>
+      block.id === "conditions"
+      && block.relevantFacts.length > 0,
+  ) ?? context.blocks.find(
+    (block) =>
+      block.id === "condition"
+      && block.relevantFacts.length > 0,
+  );
+
+  if (conditionBlock) {
+    return { kind: "condition", blockId: conditionBlock.id };
+  }
+
+  return null;
+}
+
+function appendFirstActionExpression(
+  content: string,
+  kind: FirstActionAnchor["kind"],
+): string {
+  return `${content}\n\n${FIRST_ACTION_EXPRESSION_BY_KIND[kind]}`;
+}
+
+/**
  * B4 person-diff priority within a block:
  * evidence (already question-tier ordered) → signals → facts → emphasis.
  *
@@ -141,6 +208,7 @@ function formatBlockContent(
   evidenceLimit: number,
   options?: {
     prioritySurface?: boolean;
+    firstActionAnchor?: FirstActionAnchor | null;
   },
 ): string {
   const lines: string[] = [];
@@ -180,6 +248,14 @@ function formatBlockContent(
     && block.id === "nextAction"
   ) {
     lines.push("표현 지시: 가장 먼저 할 한 가지를 명확히 표현한다.");
+  }
+
+  // P6-D: no nextAction — reuse first existing condition material as expression anchor.
+  if (
+    options?.firstActionAnchor?.kind === "condition"
+    && block.id === options.firstActionAnchor.blockId
+  ) {
+    lines.push(FIRST_ACTION_EXPRESSION_BY_KIND.condition);
   }
 
   return lines.filter(Boolean).join("\n\n");
@@ -328,6 +404,7 @@ function buildBlockSection(
   priority: number,
   options?: {
     prioritySurface?: boolean;
+    firstActionAnchor?: FirstActionAnchor | null;
   },
 ): PromptSection {
   return {
@@ -375,17 +452,46 @@ export function buildPromptSections(
 
   sections.push(buildAnswerGoalSection(strategy));
 
+  const prioritySurface =
+    context.questionMeaningAxes?.prioritySurface === true;
+
+  // P6-D: only when prioritySurface and no nextAction (STEP 6-C path otherwise).
+  const firstActionAnchor =
+    prioritySurface && !hasNextActionBlock(context)
+      ? resolveFirstActionAnchor(context)
+      : null;
+
   const lockedDecisionSection = buildLockedDecisionSection(context);
 
   if (lockedDecisionSection) {
-    sections.push(lockedDecisionSection);
+    sections.push(
+      firstActionAnchor?.kind === "lockedDecision"
+        ? {
+            ...lockedDecisionSection,
+            content: appendFirstActionExpression(
+              lockedDecisionSection.content,
+              "lockedDecision",
+            ),
+          }
+        : lockedDecisionSection,
+    );
   }
 
   const lockedRecommendedDirectionSection =
     buildLockedRecommendedDirectionSection(context);
 
   if (lockedRecommendedDirectionSection) {
-    sections.push(lockedRecommendedDirectionSection);
+    sections.push(
+      firstActionAnchor?.kind === "recommendedDirection"
+        ? {
+            ...lockedRecommendedDirectionSection,
+            content: appendFirstActionExpression(
+              lockedRecommendedDirectionSection.content,
+              "recommendedDirection",
+            ),
+          }
+        : lockedRecommendedDirectionSection,
+    );
   }
 
   const lockedProhibitedDirectionSection =
@@ -395,13 +501,11 @@ export function buildPromptSections(
     sections.push(lockedProhibitedDirectionSection);
   }
 
-  const prioritySurface =
-    context.questionMeaningAxes?.prioritySurface === true;
-
   context.blocks.forEach((block, index) => {
     const evidenceLimit = resolveBlockEvidenceLimit(block.id, options);
     const content = formatBlockContent(block, evidenceLimit, {
       prioritySurface,
+      firstActionAnchor,
     });
 
     if (!content.trim()) {
@@ -411,6 +515,7 @@ export function buildPromptSections(
     sections.push(
       buildBlockSection(block, evidenceLimit, 10 + index, {
         prioritySurface,
+        firstActionAnchor,
       }),
     );
   });
