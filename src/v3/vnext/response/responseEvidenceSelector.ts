@@ -951,18 +951,28 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
   {
     blockId: "supportingEvidence",
     priority: 71,
-    select: (context) => withEmphasis({
-      relevantFacts: [],
-      relevantSignals: signalsByType(
-        context.changeSignals,
-        ["opportunity", "stability", "recovery"],
-      ),
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.evidence,
-        context.humanState?.evidence,
-      ),
-      emphasis: [],
-    }, context.emphasis),
+    select: (context) => {
+      const hasDirectAnswerOwner = resolveBlueprintBlockIds(
+        context.blueprint,
+      ).includes("directAnswer");
+
+      return withEmphasis({
+        relevantFacts: [],
+        relevantSignals: signalsByType(
+          context.changeSignals,
+          ["opportunity", "stability", "recovery"],
+        ),
+        // directAnswer가 assessment.evidence owner일 때는 재주입하지 않는다.
+        // supportingEvidence는 humanState.evidence를 우선 유지한다.
+        relevantEvidence: hasDirectAnswerOwner
+          ? collectEvidenceItems(context.humanState?.evidence)
+          : collectEvidenceItems(
+            context.assessment?.evidence,
+            context.humanState?.evidence,
+          ),
+        emphasis: [],
+      }, context.emphasis);
+    },
   },
   {
     blockId: "limitingFactors",
