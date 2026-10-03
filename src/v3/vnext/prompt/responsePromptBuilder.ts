@@ -68,6 +68,7 @@ export function buildResponsePrompt(
   const userPrompt = renderPromptSections(selectedSections);
   const promptTemplateOptions = promptTemplateOptionsFromContext(
     input.responseContext.engineDecisionLocked,
+    input.responseContext.questionMeaningAxes?.prioritySurface === true,
   );
   const systemInstruction = buildSystemInstruction(
     {

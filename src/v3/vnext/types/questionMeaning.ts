@@ -4,8 +4,9 @@
  * 사용자가 실제 무엇을 묻는지만 표현한다. 사주 판단을 포함하지 않는다.
  * Question Reader 결과는 Adapter가 이 타입으로 변환한다.
  *
- * Reader production taxonomy를 보존한다.
- * Adapter는 새 판단을 만들지 않는다.
+ * QuestionMeaningIntent = vNext scenario-routing taxonomy.
+ * Model B QuestionIntent(speech-act)와는 별개이며 병합하지 않는다.
+ * Adapter는 speech-act → routing projection 경계이며 새 판단을 만들지 않는다.
  */
 
 import type {
@@ -34,8 +35,9 @@ export type QuestionDomain =
   | "other";
 
 /**
- * vNext 질문 의도.
- * Reader QuestionIntent taxonomy를 기준으로 보존한다.
+ * vNext scenario-routing taxonomy.
+ * Model B QuestionIntent(speech-act)와 별개 축 — 병합하지 않는다.
+ * Adapter가 QuestionIntent → 이 타입으로 routing projection한다.
  * prediction ≠ possibility.
  */
 export type QuestionMeaningIntent =
@@ -173,4 +175,9 @@ export type QuestionMeaning = {
   counterpart: QuestionMeaningCounterpart;
   /** 질문 identity */
   questionRef: QuestionMeaningRef;
+  /**
+   * P6-C: Reader prioritySurface passthrough.
+   * 표현 지시용 flag이며 Adapter가 판단하지 않는다.
+   */
+  prioritySurface?: boolean;
 };

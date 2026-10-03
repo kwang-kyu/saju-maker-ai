@@ -260,6 +260,13 @@ export type QuestionReaderResult = {
   humanContextReceived: true;
 
   /**
+   * P6-C: 질문 문장에 순서/우선순위 surface가 있는지 표현 지시용 flag.
+   * semantic axis가 아니며 intent/decisionTarget/timingType/evidence에 넣지 않는다.
+   * true = 사용자가 우선/순서를 묻고 있다. 기본값 false/undefined.
+   */
+  prioritySurface?: boolean;
+
+  /**
    * Semantic Interpreter 선택 게이트용 Reader 진단 정보.
    * 선택 결과·confidence·evidence 값은 변경하지 않고 관찰만 한다.
    */
@@ -9421,6 +9428,57 @@ function hasChangeJobSignal(
   return collectChangeJobSignalEvidence(question).length > 0;
 }
 
+/**
+ * P6-C: priority/ordering surface 탐지.
+ * 표현 지시용 flag만 반환하며 evidence·intent·decisionTarget에 영향을 주지 않는다.
+ *
+ * 강한 surface(가장 먼저/뭐부터/첫 번째로 등)는 바로 true.
+ * bare "먼저"/"우선"은 질문형·행동 순서 맥락이 있을 때만 true.
+ * 서술·담화 마커("먼저 생각해보니", "먼저 말씀드리면")는 제외한다.
+ */
+function detectPrioritySurface(
+  question: string,
+): boolean {
+  if (!question) {
+    return false;
+  }
+
+  // Strong priority/ordering surfaces — almost always ask for order.
+  if (
+    /가장\s*먼저/.test(question)
+    || /뭐부터|무엇부터/.test(question)
+    || /첫\s*번째로/.test(question)
+    || /첫\s*단계/.test(question)
+  ) {
+    return true;
+  }
+
+  const hasPriorityMarker =
+    question.includes("우선")
+    || question.includes("먼저");
+
+  if (!hasPriorityMarker) {
+    return false;
+  }
+
+  // Discourse / narrative openers — not priority questions.
+  if (
+    /(?:먼저|우선)\s*(?:생각(?:해|하)|말씀(?:드리면|드렸|하면|하면)|말하(?:면|자면)|얘기(?:하|하면)|이야기(?:하|하면)|설명(?:하|하면)|고백(?:하|하면)|인정(?:하|하면)|솔직히)/
+      .test(question)
+  ) {
+    return false;
+  }
+
+  // Require interrogative or action-ordering ask context around the marker.
+  const hasOrderingAskContext =
+    /(?:무엇|뭐|어느|어떤|부터)/.test(question)
+    || /(?:해야|할\s*것|확인|결정|바꾸|시작|준비)/.test(question)
+    || /(?:먼저|우선)\s*(?:무엇|뭐|어느|어떤)/.test(question)
+    || /(?:무엇|뭐|어느|어떤).*(?:먼저|우선)/.test(question);
+
+  return hasOrderingAskContext;
+}
+
 function detectUrgency(question: string): {
   urgency: QuestionUrgency;
   evidence: string[];
@@ -10667,6 +10725,12 @@ export function readQuestion(
       normalizedQuestion,
     );
 
+  // P6-C: expression-only flag. Never added to evidence / axes.
+  const prioritySurface =
+    detectPrioritySurface(
+      normalizedQuestion,
+    );
+
     const counterpartFacts =
     extractQuestionCounterpartFacts(
       normalizedQuestion,
@@ -10763,6 +10827,7 @@ export function readQuestion(
           confidence: calculateConfidence(evidence.length),
 
           humanContextReceived: true,
+          ...(prioritySurface ? { prioritySurface: true } : {}),
           readerMatchDiagnostics,
             }),
           ),

@@ -61,6 +61,11 @@ export type ResponseQuestionMeaningAxes = {
   conclusionNature: QuestionMeaningConclusionNature;
   analysisMode: QuestionMeaningAnalysisMode;
   timingType: QuestionTimeFocus["timingType"];
+  /**
+   * P6-C: QuestionMeaning.prioritySurface passthrough.
+   * 표현 지시용이며 Response가 재판단하지 않는다.
+   */
+  prioritySurface?: boolean;
 };
 
 /**

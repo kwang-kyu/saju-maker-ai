@@ -167,6 +167,10 @@ function readQuestionMeaningAxes(
     conclusionNature: meaning.conclusionNature,
     analysisMode: meaning.analysisMode,
     timingType: meaning.time.timingType,
+    // P6-C: expression-only passthrough. Do not reinterpret.
+    ...(meaning.prioritySurface === true
+      ? { prioritySurface: true as const }
+      : {}),
   };
 }
 

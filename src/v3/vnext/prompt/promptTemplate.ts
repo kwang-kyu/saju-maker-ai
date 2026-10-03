@@ -12,6 +12,11 @@ import type {
  */
 export type PromptTemplateOptions = {
   engineDecisionLocked?: boolean;
+  /**
+   * P6-C: 사용자가 우선순위/순서를 물은 경우 표현 지시만 켠다.
+   * GPT가 priority를 새로 계산하거나 verdict를 바꾸지 않는다.
+   */
+  prioritySurface?: boolean;
 };
 
 /**
@@ -20,12 +25,23 @@ export type PromptTemplateOptions = {
  */
 export function promptTemplateOptionsFromContext(
   engineDecisionLocked: boolean | undefined,
+  prioritySurface?: boolean | undefined,
 ): PromptTemplateOptions | undefined {
-  if (engineDecisionLocked === undefined) {
+  if (
+    engineDecisionLocked === undefined
+    && prioritySurface !== true
+  ) {
     return undefined;
   }
 
-  return { engineDecisionLocked };
+  return {
+    ...(engineDecisionLocked !== undefined
+      ? { engineDecisionLocked }
+      : {}),
+    ...(prioritySurface === true
+      ? { prioritySurface: true }
+      : {}),
+  };
 }
 
 /**
@@ -48,6 +64,16 @@ const CONSULTING_FLOW_LOCKED_OPENING =
 
 const CONSULTING_FLOW_REJUDGE_OPENING =
   "먼저 질문에 대한 직접적인 판단을 제시한다.";
+
+/**
+ * P6-C: prioritySurface=true일 때만 추가되는 표현 지시.
+ * DecisionResult를 재판단하지 않으며, 이미 도출된 행동의 첫 실행 포인트만 명확히 한다.
+ */
+const PRIORITY_SURFACE_EXPRESSION_GUIDANCE = [
+  "사용자가 우선순위를 묻고 있으므로 기존 DecisionResult에서 도출된 행동 중 첫 번째 실행 포인트를 명확히 표현한다.",
+  "여러 행동을 병렬로 나열하지 않고, 가장 먼저 할 한 가지를 분명하게 말한다.",
+  "우선순위를 새로 계산하거나 verdict·recommendedDirection·DecisionResult를 재판단하지 않는다.",
+].join("\n");
 
 export const GLOBAL_FORBIDDEN_PATTERNS = [
   "새로운 사주 판단",
@@ -270,6 +296,10 @@ export function buildExplanationRulesSection(
 
   if (engineDecisionLocked) {
     lines.push(ENGINE_DECISION_LOCKED_GUIDANCE);
+  }
+
+  if (options?.prioritySurface === true) {
+    lines.push(PRIORITY_SURFACE_EXPRESSION_GUIDANCE);
   }
 
   return lines.join("\n");

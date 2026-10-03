@@ -139,6 +139,9 @@ function sliceRelevantEvidence(
 function formatBlockContent(
   block: ResponseBlockContext,
   evidenceLimit: number,
+  options?: {
+    prioritySurface?: boolean;
+  },
 ): string {
   const lines: string[] = [];
 
@@ -171,6 +174,14 @@ function formatBlockContent(
     lines.push(`강조: ${block.emphasis.join(", ")}`);
   }
 
+  // P6-C: reuse existing nextAction — express the first action clearly.
+  if (
+    options?.prioritySurface === true
+    && block.id === "nextAction"
+  ) {
+    lines.push("표현 지시: 가장 먼저 할 한 가지를 명확히 표현한다.");
+  }
+
   return lines.filter(Boolean).join("\n\n");
 }
 
@@ -198,14 +209,21 @@ function buildQuestionSection(
 function formatQuestionMeaningAxesContent(
   axes: ResponseQuestionMeaningAxes,
 ): string {
-  return [
+  const lines = [
     `- 대상: ${axes.askedObject}`,
     `- 의도: ${axes.intent}`,
     `- 행동: ${axes.actionNature}`,
     `- 결론 성격: ${axes.conclusionNature}`,
     `- 분석 방식: ${axes.analysisMode}`,
     `- 시기 유형: ${axes.timingType}`,
-  ].join("\n");
+  ];
+
+  // P6-C: expression flag only — not a new semantic axis.
+  if (axes.prioritySurface === true) {
+    lines.push("- 우선순위 표현: true");
+  }
+
+  return lines.join("\n");
 }
 
 function buildQuestionMeaningSection(
@@ -308,11 +326,14 @@ function buildBlockSection(
   block: ResponseBlockContext,
   evidenceLimit: number,
   priority: number,
+  options?: {
+    prioritySurface?: boolean;
+  },
 ): PromptSection {
   return {
     id: block.id,
     title: resolveSectionTitle(block.id),
-    content: formatBlockContent(block, evidenceLimit),
+    content: formatBlockContent(block, evidenceLimit, options),
     blockIds: [block.id],
     priority,
   };
@@ -374,23 +395,33 @@ export function buildPromptSections(
     sections.push(lockedProhibitedDirectionSection);
   }
 
+  const prioritySurface =
+    context.questionMeaningAxes?.prioritySurface === true;
+
   context.blocks.forEach((block, index) => {
     const evidenceLimit = resolveBlockEvidenceLimit(block.id, options);
-    const content = formatBlockContent(block, evidenceLimit);
+    const content = formatBlockContent(block, evidenceLimit, {
+      prioritySurface,
+    });
 
     if (!content.trim()) {
       return;
     }
 
     sections.push(
-      buildBlockSection(block, evidenceLimit, 10 + index),
+      buildBlockSection(block, evidenceLimit, 10 + index, {
+        prioritySurface,
+      }),
     );
   });
 
   sections.push(
     buildExplanationRulesPromptSection(
       strategy,
-      promptTemplateOptionsFromContext(context.engineDecisionLocked),
+      promptTemplateOptionsFromContext(
+        context.engineDecisionLocked,
+        prioritySurface,
+      ),
     ),
   );
 

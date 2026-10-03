@@ -49,6 +49,7 @@ export type QuestionMeaningAdapterInput = Pick<
   | "asksWhat"
   | "decisionQuestion"
   | "conclusionNature"
+  | "prioritySurface"
 > & {
   /**
    * Optional LifeFlowTarget already resolved upstream.
@@ -581,5 +582,9 @@ export function adaptQuestionMeaning(
     conclusionNature: input.conclusionNature,
     counterpart: buildCounterpart(input),
     questionRef: buildQuestionRef(input),
+    // P6-C: expression-only passthrough. Adapter does not judge priority.
+    ...(input.prioritySurface === true
+      ? { prioritySurface: true as const }
+      : {}),
   };
 }
