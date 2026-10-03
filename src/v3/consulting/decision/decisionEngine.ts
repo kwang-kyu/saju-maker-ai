@@ -321,15 +321,24 @@ export function runDecisionEngine(
       )
       : undefined;
 
+  // analysisScope === "zodiac"이면 relationship-summary 기반
+  // prediction 조립이 zodiac verdict를 덮지 않도록 한다.
+  // applyCompatibilityVerdictEffect는 유지하고, GPT 재판단 계약도 변경하지 않는다.
   const predictionConclusion =
     input
       .question
-      .conclusionNature
-    === "prediction"
-    || input
-      .question
-      .intent
-    === "prediction"
+      .analysisScope
+    !== "zodiac"
+    && (
+      input
+        .question
+        .conclusionNature
+      === "prediction"
+      || input
+        .question
+        .intent
+      === "prediction"
+    )
       ? buildPredictionConclusionSource(
         input,
         readerDecisionAssessment,

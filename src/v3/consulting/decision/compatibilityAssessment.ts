@@ -22,6 +22,75 @@ import type {
   FullCompatibilityAssessment,
 } from "./fullCompatibilityAssessment.js";
 
+const ZODIAC_SURFACE_PATTERN =
+  /^(쥐|소|호랑이|토끼|용|뱀|말|양|원숭이|닭|개|돼지)띠$/;
+
+const SELF_ZODIAC_CLAIM_PATTERN =
+  /(?:나는|제가|난)\s*((?:쥐|소|호랑이|토끼|용|뱀|말|양|원숭이|닭|개|돼지)띠)/;
+
+function collectZodiacSurfaces(
+  evidence:
+    readonly string[],
+): string[] {
+  return evidence.filter(
+    (item) =>
+      ZODIAC_SURFACE_PATTERN.test(
+        item,
+      ),
+  );
+}
+
+/**
+ * "나는 호랑이띠인데 닭띠와..."처럼 1인칭 자기 띠 언급은
+ * pair operand(surface count)에서 제외한다.
+ * 상담자 띠는 계속 selfYearGanZhi로만 계산한다.
+ */
+function collectPairZodiacSurfaces(
+  questionText:
+    string,
+  evidence:
+    readonly string[],
+): string[] {
+  const surfaces =
+    collectZodiacSurfaces(
+      evidence,
+    );
+
+  const selfClaimMatch =
+    questionText.match(
+      SELF_ZODIAC_CLAIM_PATTERN,
+    );
+
+  if (
+    !selfClaimMatch
+  ) {
+    return surfaces;
+  }
+
+  const claimedZodiac =
+    selfClaimMatch[1];
+
+  let removedClaimedSurface =
+    false;
+
+  return surfaces.filter(
+    (surface) => {
+      if (
+        !removedClaimedSurface
+        && surface
+        === claimedZodiac
+      ) {
+        removedClaimedSurface =
+          true;
+
+        return false;
+      }
+
+      return true;
+    },
+  );
+}
+
 export type CompatibilityEvidenceLevel =
   | "notRequired"
   | "insufficient"
@@ -253,25 +322,65 @@ export function assessCompatibility(
       && counterpartSaju
         !== undefined;
 
-        const counterpartZodiac =
-        questionContext
-          .question
-          .counterpartFacts
-          .zodiac
-        ?? getClarificationFieldValue(
-          questionContext,
-          "counterpartBirthData",
-          "zodiacSign",
-        );
+  const pairZodiacSurfaces =
+    collectPairZodiacSurfaces(
+      questionContext
+        .question
+        .originalQuestion,
+      questionContext
+        .question
+        .counterpartFacts
+        .evidence,
+    );
+
+  const clarificationZodiac =
+    getClarificationFieldValue(
+      questionContext,
+      "counterpartBirthData",
+      "zodiacSign",
+    );
+
+  const counterpartZodiac =
+    (
+      questionContext
+        .question
+        .analysisScope
+      === "zodiac"
+      && pairZodiacSurfaces.length
+        === 1
+        ? pairZodiacSurfaces[0]
+        : null
+    )
+    ?? questionContext
+      .question
+      .counterpartFacts
+      .zodiac
+    ?? clarificationZodiac;
+
+  const useQuestionZodiacPair =
+    questionContext
+      .question
+      .analysisScope
+    === "zodiac"
+    && pairZodiacSurfaces.length
+      >= 2;
 
   const zodiacAssessment =
-    counterpartZodiac
+    useQuestionZodiacPair
       ? assessZodiacCompatibility({
-          selfYearGanZhi,
+          selfZodiac:
+            pairZodiacSurfaces[0],
 
-          counterpartZodiac,
+          counterpartZodiac:
+            pairZodiacSurfaces[1],
         })
-      : null;
+      : counterpartZodiac
+        ? assessZodiacCompatibility({
+            selfYearGanZhi,
+
+            counterpartZodiac,
+          })
+        : null;
 
   const zodiacProvided =
     zodiacAssessment

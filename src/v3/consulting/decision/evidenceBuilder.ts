@@ -50,6 +50,7 @@ export function buildDecisionEvidence(
 const compatibilityEvidence =
   buildCompatibilityEvidence(
     compatibilityAssessment,
+    input.question.analysisScope,
   );
 
 return [

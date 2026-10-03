@@ -441,12 +441,23 @@ export function assessZodiacCompatibility(
     selfYearGanZhi?:
       string;
 
+    /**
+     * 질문 자체에 두 띠 surface가 있을 때만 사용한다.
+     * 제공되면 selfYearGanZhi보다 우선하며,
+     * 기존 resolveBranchFromAlias / resolveRelation 경로를 재사용한다.
+     */
+    selfZodiac?:
+      string;
+
     counterpartZodiac?:
       string;
   },
 ): ZodiacCompatibilityAssessment {
   const selfBranch =
-    resolveBranchFromYearGanZhi(
+    resolveBranchFromAlias(
+      input.selfZodiac,
+    )
+    ?? resolveBranchFromYearGanZhi(
       input.selfYearGanZhi,
     );
 

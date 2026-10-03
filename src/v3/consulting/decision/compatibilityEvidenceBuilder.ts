@@ -24,6 +24,12 @@ import type {
 
 } from "./zodiacCompatibilityAssessment.js";
 
+import type {
+
+  QuestionAnalysisScope,
+
+} from "../question/questionReader.js";
+
 
 
 function resolveZodiacEvidenceWeight(
@@ -116,6 +122,10 @@ function buildZodiacCompatibilityEvidence(
 
     CompatibilityAssessment,
 
+  requestedAnalysisScope?:
+
+    QuestionAnalysisScope,
+
 ): DecisionEvidence[] {
 
   const zodiacAssessment =
@@ -145,6 +155,33 @@ function buildZodiacCompatibilityEvidence(
     return [];
 
   }
+
+
+
+  const baseWeight =
+
+    resolveZodiacEvidenceWeight(
+
+      zodiacAssessment
+
+        .level,
+
+    );
+
+  // analysisScope === "zodiac"일 때만 compatibility zodiac evidence가
+  // Explanation importance 필터(weight >= 4)에서 탈락하지 않도록 한다.
+  // 전역 weight 임계값은 변경하지 않는다.
+  const weight =
+
+    requestedAnalysisScope
+    === "zodiac"
+    && zodiacAssessment.level
+    !== "unknown"
+      ? Math.max(
+          4,
+          baseWeight,
+        )
+      : baseWeight;
 
 
 
@@ -234,15 +271,7 @@ function buildZodiacCompatibilityEvidence(
 
 
 
-      weight:
-
-        resolveZodiacEvidenceWeight(
-
-          zodiacAssessment
-
-            .level,
-
-        ),
+      weight,
 
     },
 
@@ -544,6 +573,10 @@ export function buildCompatibilityEvidence(
 
     CompatibilityAssessment,
 
+  requestedAnalysisScope?:
+
+    QuestionAnalysisScope,
+
 ): DecisionEvidence[] {
 
   return [
@@ -551,6 +584,8 @@ export function buildCompatibilityEvidence(
     ...buildZodiacCompatibilityEvidence(
 
       assessment,
+
+      requestedAnalysisScope,
 
     ),
 
