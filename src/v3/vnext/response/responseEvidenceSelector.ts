@@ -706,9 +706,10 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
           context.assessment?.risks ?? [],
         ),
         relevantSignals: signals,
+        // risk 본업은 risks facts + risk signal evidence.
+        // assessment.evidence 전체 재주입은 directAnswer/supportingEvidence owner에 맡긴다.
         relevantEvidence: collectEvidenceItems(
           ...signals.map((signal) => signal.evidence),
-          context.assessment?.evidence,
         ),
         emphasis: context.emphasis.filter((item) =>
           item === "risk" || item === "highRisk",
@@ -803,9 +804,9 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
         context.changeSignals,
         ["stability", "relationshipChange"],
       ),
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.evidence,
-      ),
+      // 궁합 판정 evidence owner는 directAnswer.
+      // 동일 assessment.evidence를 조건 블록에 재주입하지 않는다.
+      relevantEvidence: [],
       emphasis: [],
     }, context.emphasis),
   },
@@ -845,9 +846,8 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
         context.assessment?.conditions ?? [],
       ),
       relevantSignals: [],
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.evidence,
-      ),
+      // conditions 본업은 condition facts. assessment.evidence 재설명 방지.
+      relevantEvidence: [],
       emphasis: context.emphasis.filter((item) =>
         item === "unsatisfiedConditions",
       ),
@@ -928,17 +928,25 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
   {
     blockId: "possibility",
     priority: 70,
-    select: (context) => withEmphasis({
-      relevantFacts: assessmentSummaryFacts(context.assessment),
-      relevantSignals: signalsByType(
-        context.changeSignals,
-        ["opportunity", "risk"],
-      ),
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.evidence,
-      ),
-      emphasis: [],
-    }, context.emphasis),
+    select: (context) => {
+      const hasSupportingEvidenceOwner = resolveBlueprintBlockIds(
+        context.blueprint,
+      ).includes("supportingEvidence");
+
+      return withEmphasis({
+        relevantFacts: assessmentSummaryFacts(context.assessment),
+        relevantSignals: signalsByType(
+          context.changeSignals,
+          ["opportunity", "risk"],
+        ),
+        // supportingEvidence가 있는 scenario에서는 evidence owner를 양보한다.
+        // 독립 scenario에서는 기존처럼 assessment.evidence를 유지한다.
+        relevantEvidence: hasSupportingEvidenceOwner
+          ? []
+          : collectEvidenceItems(context.assessment?.evidence),
+        emphasis: [],
+      }, context.emphasis);
+    },
   },
   {
     blockId: "supportingEvidence",
@@ -967,9 +975,8 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
         context.changeSignals,
         ["pressure", "risk"],
       ),
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.evidence,
-      ),
+      // limitation 설명은 risks facts가 담당. assessment.evidence 재주입 제거.
+      relevantEvidence: [],
       emphasis: [],
     }, context.emphasis),
   },
@@ -1059,9 +1066,9 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
         ),
       ],
       relevantSignals: signalsByType(context.changeSignals, ["risk"]),
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.evidence,
-      ),
+      // caution은 risks / unmet conditions facts가 핵심.
+      // 동일 assessment.evidence 재주입은 제거한다.
+      relevantEvidence: [],
       emphasis: context.emphasis.filter((item) =>
         item === "risk"
           || item === "highRisk"
@@ -1103,9 +1110,8 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
         context.assessment?.conditions ?? [],
       ),
       relevantSignals: [],
-      relevantEvidence: collectEvidenceItems(
-        context.assessment?.evidence,
-      ),
+      // condition 본업은 condition facts. assessment.evidence 재설명 방지.
+      relevantEvidence: [],
       emphasis: [],
     }, context.emphasis),
   },
