@@ -113,14 +113,77 @@ function hasExecutionActionNature(
 }
 
 /**
+ * Open lifeDirection direction-selection.
+ * confirmDirection is execution-listed, but this shape is open direction
+ * exploration — not execution coaching actionDecision.
+ * topic/askedObject + intent + analysisMode + actionNature only.
+ */
+function isOpenLifeDirectionConfirmSelection(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  return (
+    questionMeaning.askedObject === "lifeDirection"
+    && questionMeaning.intent === "selection"
+    && questionMeaning.analysisMode === "selection"
+    && questionMeaning.actionNature === "confirmDirection"
+  );
+}
+
+/**
+ * Adapter may project Reader evaluation + conclusionNature=decision
+ * → intent=possibility. Open/general with no action is not a real
+ * possibility/existence ask.
+ *
+ * Recover evaluation speech-act via asksWhat residual in event
+ * (Reader intentText template), not question-literal matching.
+ */
+function isProjectedOpenGeneralEvaluation(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  if (questionMeaning.intent !== "possibility") {
+    return false;
+  }
+
+  if (questionMeaning.actionNature !== "none") {
+    return false;
+  }
+
+  if (
+    questionMeaning.askedObject !== "general"
+    || questionMeaning.domain !== "general"
+  ) {
+    return false;
+  }
+
+  if (questionMeaning.analysisMode !== "decision") {
+    return false;
+  }
+
+  if (questionMeaning.conclusionNature !== "decision") {
+    return false;
+  }
+
+  // Reader buildAsksWhat(general, evaluation) residual.
+  return (
+    questionMeaning.event
+    === "현재 고민에 대한 종합 판단이 전체적으로 어떻게 판단해야 하는지를 묻고 있다."
+  );
+}
+
+/**
  * action-bearing routing 여부.
  * prediction + actionNature=none → false.
  * prediction + 강한 실행행동 → true 가능.
  * possibility/timing/direction 등 + 실행행동 → true.
+ * open lifeDirection confirmDirection selection → false.
  */
 function isActionBearingQuestion(
   questionMeaning: QuestionMeaning,
 ): boolean {
+  if (isOpenLifeDirectionConfirmSelection(questionMeaning)) {
+    return false;
+  }
+
   if (!hasExecutionActionNature(questionMeaning)) {
     return false;
   }
@@ -259,6 +322,11 @@ function isAptitudeRecommendation(
   questionMeaning: QuestionMeaning,
 ): boolean {
   if (questionMeaning.domain !== "career") {
+    return false;
+  }
+
+  // Open lifeDirection confirmDirection is not role/aptitude recommendation.
+  if (isOpenLifeDirectionConfirmSelection(questionMeaning)) {
     return false;
   }
 
@@ -448,7 +516,8 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
         questionMeaning.intent === "possibility"
         || questionMeaning.intent === "existence"
       )
-      && !isActionBearingQuestion(questionMeaning),
+      && !isActionBearingQuestion(questionMeaning)
+      && !isProjectedOpenGeneralEvaluation(questionMeaning),
     scenarioType: "possibilityCheck",
     requiredDomains: ["capacity", "risk"],
     requiredTimeGranularity: [],
