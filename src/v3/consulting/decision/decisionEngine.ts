@@ -62,6 +62,12 @@ import {
 import {
   applyDecisionMaterialRelevanceGate,
 } from "./decisionMaterialRelevanceGate.js";
+import {
+  annotateDirectionWithWinnerArm,
+  buildActionCandidateWinnerCoreDecision,
+  buildWinnerAwareQuestion,
+  resolveActionCandidateComparison,
+} from "./actionCandidateComparison.js";
 
 /**
  * Decision Engine
@@ -157,42 +163,95 @@ export function runDecisionEngine(
     input,
   );
 
+  // ACTION exclusive_alt 후보 비교 (있을 때만).
+  // 없거나 비교 불가면 null → 아래 기존 single path 그대로.
+  const actionCandidateComparison =
+    resolveActionCandidateComparison({
+      input,
+      lifeAssessment,
+      timingAssessment,
+    });
+
+  const effectiveAlignmentResult =
+    actionCandidateComparison
+      ? {
+        alignment:
+          actionCandidateComparison.winner.alignment,
+        reason:
+          actionCandidateComparison.winner.alignmentReason,
+      }
+      : alignmentResult;
+
+  const effectiveConfidence =
+    actionCandidateComparison
+      ? actionCandidateComparison.winner.confidence
+      : confidence;
+
+  const effectiveActionReadiness =
+    actionCandidateComparison
+      ? actionCandidateComparison.winner.actionReadiness
+      : actionReadiness;
+
+  const effectiveQuestion =
+    actionCandidateComparison
+      ? buildWinnerAwareQuestion(
+        input.question,
+        actionCandidateComparison.winner,
+      )
+      : input.question;
+
+  const effectiveInput: DecisionEngineInput =
+    actionCandidateComparison
+      ? {
+        ...input,
+        question: effectiveQuestion,
+      }
+      : input;
+
   const verdictContext = buildVerdictContext({
-    decisionInput: input,
-    alignment: alignmentResult.alignment,
-    readiness: actionReadiness,
-    confidence,
+    decisionInput: effectiveInput,
+    alignment: effectiveAlignmentResult.alignment,
+    readiness: effectiveActionReadiness,
+    confidence: effectiveConfidence,
     lifeAssessment,
     timingAssessment,
   });
 
   const baseVerdict =
-  buildVerdict(
-    verdictContext,
-  );
+    actionCandidateComparison
+      ? actionCandidateComparison.winner.verdict
+      : buildVerdict(
+        verdictContext,
+      );
 
+  // 비교 승자 verdict는 arm별 buildVerdict를 유지한다.
+  // choose 기반 reader/compatibility overlay가 우세 후보를 덮지 않는다.
   const readerAdjustedVerdict =
-    applyReaderDecisionVerdictEffect({
-      verdict:
-        baseVerdict,
+    actionCandidateComparison
+      ? baseVerdict
+      : applyReaderDecisionVerdictEffect({
+        verdict:
+          baseVerdict,
 
-      assessment:
-        readerDecisionAssessment,
+        assessment:
+          readerDecisionAssessment,
 
-      urgency:
-        input.question.urgency,
-    });
+        urgency:
+          input.question.urgency,
+      });
 
   const verdict =
-    applyCompatibilityVerdictEffect({
-      verdict:
-        readerAdjustedVerdict,
+    actionCandidateComparison
+      ? baseVerdict
+      : applyCompatibilityVerdictEffect({
+        verdict:
+          readerAdjustedVerdict,
 
-      assessment:
-        compatibilityAssessment,
-        requestedAnalysisScope:
-        input.question.analysisScope,
-    });
+        assessment:
+          compatibilityAssessment,
+          requestedAnalysisScope:
+          input.question.analysisScope,
+      });
 
     const directionJudgement = buildDirectionJudgement({
       verdict,
@@ -201,30 +260,39 @@ export function runDecisionEngine(
         verdictContext,
 
       intent:
-        input.question.intent,
+        effectiveQuestion.intent,
 
       decisionTarget:
-        input.question.decisionTarget,
+        effectiveQuestion.decisionTarget,
       analysisMode:
-        input.question.analysisMode,
+        effectiveQuestion.analysisMode,
     });
+
+  const effectiveDirection =
+    actionCandidateComparison
+      ? annotateDirectionWithWinnerArm(
+        actionCandidateComparison.winner,
+        directionJudgement.recommendedDirection,
+        directionJudgement.prohibitedDirection,
+      )
+      : directionJudgement;
 
   const evidence =
   buildDecisionEvidence(
-    input,
+    effectiveInput,
     brain,
     lifeAssessment,
     compatibilityAssessment,
   );
   const conditions =
   buildReaderAwareDecisionConditions({
-    decisionInput: input,
+    decisionInput: effectiveInput,
 
     readiness:
-      actionReadiness,
+      effectiveActionReadiness,
 
     alignmentReason:
-      alignmentResult.reason,
+      effectiveAlignmentResult.reason,
 
     lifeAssessment,
 
@@ -238,13 +306,13 @@ export function runDecisionEngine(
 
   const risks =
   buildReaderAwareDecisionRisks({
-    decisionInput: input,
+    decisionInput: effectiveInput,
 
     alignment:
-      alignmentResult.alignment,
+      effectiveAlignmentResult.alignment,
 
     urgency:
-      input.question.urgency,
+      effectiveQuestion.urgency,
 
     lifeAssessment,
 
@@ -265,22 +333,21 @@ export function runDecisionEngine(
     evidence,
     conditions,
     risks,
-    actionReadiness,
+    actionReadiness: effectiveActionReadiness,
     decisionTarget:
-      input.question.decisionTarget,
+      effectiveQuestion.decisionTarget,
     intent:
-      input.question.intent,
+      effectiveQuestion.intent,
     topic:
-      input.question.topic,
+      effectiveQuestion.topic,
     originalQuestion:
-      input.question.originalQuestion,
+      effectiveQuestion.originalQuestion,
     questionContext:
       input.questionContext,
   });
 
   const careerRecommendation =
-    input
-      .question
+    effectiveQuestion
       .conclusionNature
     === "recommendation"
       ? buildCareerRecommendationSource(
@@ -289,8 +356,7 @@ export function runDecisionEngine(
       : undefined;
 
   const warningConclusion =
-    input
-      .question
+    effectiveQuestion
       .conclusionNature
     === "warning"
       ? buildWarningConclusionSource(
@@ -301,20 +367,18 @@ export function runDecisionEngine(
 
   const readerDecisionEvidence =
     buildReaderDecisionEvidence(
-      input,
+      effectiveInput,
     );
 
   const existenceConclusion =
-    input
-      .question
+    effectiveQuestion
       .conclusionNature
     === "existence"
-    || input
-      .question
+    || effectiveQuestion
       .intent
     === "existence"
       ? buildExistenceConclusionSource(
-        input,
+        effectiveInput,
         readerDecisionAssessment,
         readerDecisionEvidence,
         relevanceGatedConditions,
@@ -325,66 +389,67 @@ export function runDecisionEngine(
   // prediction 조립이 zodiac verdict를 덮지 않도록 한다.
   // applyCompatibilityVerdictEffect는 유지하고, GPT 재판단 계약도 변경하지 않는다.
   const predictionConclusion =
-    input
-      .question
+    effectiveQuestion
       .analysisScope
     !== "zodiac"
     && (
-      input
-        .question
+      effectiveQuestion
         .conclusionNature
       === "prediction"
-      || input
-        .question
+      || effectiveQuestion
         .intent
       === "prediction"
     )
       ? buildPredictionConclusionSource(
-        input,
+        effectiveInput,
         readerDecisionAssessment,
         readerDecisionEvidence,
         relevanceGatedConditions,
       )
       : undefined;
 
-  const coreDecision = buildCoreDecision(
-    verdict,
-    input.question.decisionQuestion,
-    {
-      originalQuestion:
-        input.question.originalQuestion,
+  const coreDecision = actionCandidateComparison
+    ? buildActionCandidateWinnerCoreDecision(
+      actionCandidateComparison.winner,
+    )
+    : buildCoreDecision(
+      verdict,
+      input.question.decisionQuestion,
+      {
+        originalQuestion:
+          input.question.originalQuestion,
 
-      intent:
-        input.question.intent,
+        intent:
+          input.question.intent,
 
-      decisionTarget:
-        input.question.decisionTarget,
+        decisionTarget:
+          input.question.decisionTarget,
 
-      analysisMode:
-        input.question.analysisMode,
+        analysisMode:
+          input.question.analysisMode,
 
-      conclusionNature:
-        input.question.conclusionNature,
+        conclusionNature:
+          input.question.conclusionNature,
 
-      careerRecommendation,
+        careerRecommendation,
 
-      warningConclusion,
+        warningConclusion,
 
-      existenceConclusion,
+        existenceConclusion,
 
-      predictionConclusion,
-    },
-  );
+        predictionConclusion,
+      },
+    );
   return buildDecisionResult({
-    decisionInput: input,
+    decisionInput: effectiveInput,
 
     verdict,
-    confidence,
-    contextAlignment: alignmentResult.alignment,
-    actionReadiness,
+    confidence: effectiveConfidence,
+    contextAlignment: effectiveAlignmentResult.alignment,
+    actionReadiness: effectiveActionReadiness,
 
     coreDecision,
-    decisionReason: alignmentResult.reason,
+    decisionReason: effectiveAlignmentResult.reason,
 
     evidence:
       relevanceGatedEvidence,
@@ -399,8 +464,8 @@ export function runDecisionEngine(
       brain.snapshot.currentPhase,
 
     recommendedDirection:
-      directionJudgement.recommendedDirection,
+      effectiveDirection.recommendedDirection,
     prohibitedDirection:
-      directionJudgement.prohibitedDirection,
+      effectiveDirection.prohibitedDirection,
   });
 }

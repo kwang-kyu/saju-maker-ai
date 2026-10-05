@@ -999,7 +999,7 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   },
   {
     result: "wait",
-    keywords: ["기다려", "기다릴", "미뤄", "보류", "아직 하지"],
+    keywords: ["기다려", "기다릴", "기다리", "미뤄", "보류", "아직 하지"],
   },
   {
     result: "start",
@@ -2197,6 +2197,12 @@ function collectExclusiveAltConnectorEvidence(
 
   if (exclusiveAltMatch) {
     evidence.push(exclusiveAltMatch[1], exclusiveAltMatch[2]);
+  }
+
+  // A까요/지, 아니면 B — 배타 선택 connector.
+  // DT 후보는 만들지 않으며, 이미 2개 이상일 때만 exclusive_alt surface로 쓴다.
+  if (question.includes("아니면")) {
+    evidence.push("exclusiveOrAlternative");
   }
 
   if (question.includes("고민")) {
