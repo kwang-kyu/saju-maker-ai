@@ -53,7 +53,23 @@ const compatibilityEvidence =
     input.question.analysisScope,
   );
 
+  // analysisScope === "zodiac"이면 zodiacCompatibility-* evidence를
+  // reader relationship-summary보다 앞에 둔다.
+  // standard directAnswer budget(limit=1)에서 GPT 전달이 소실되지 않게 한다.
+  // pair evidence 내용/내부 순서는 유지하고, ownership 재주입은 하지 않는다.
+  const leadingCompatibilityEvidence =
+    input.question.analysisScope === "zodiac"
+      ? compatibilityEvidence
+      : [];
+
+  const trailingCompatibilityEvidence =
+    input.question.analysisScope === "zodiac"
+      ? []
+      : compatibilityEvidence;
+
 return [
+    ...leadingCompatibilityEvidence,
+
     {
       source: "humanIdentity",
 
@@ -154,7 +170,7 @@ return [
 
     ...realityEvidence,
 
-    ...compatibilityEvidence,
+    ...trailingCompatibilityEvidence,
 
 {
       source: "questionIntent",
