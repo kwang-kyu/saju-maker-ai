@@ -787,7 +787,9 @@ const motiveRules: readonly KeywordRule<QuestionMotive>[] = [
     keywords: [
       "확장",
       "늘리",
+      "늘려",
       "키우",
+      "키워",
       "추가",
       "2호점",
       "지점",
@@ -2441,6 +2443,9 @@ function appendCompoundDecisionTargetCandidates(
   pushCompound("buy", collectBusinessAcquisitionBuySignalEvidence(question), 2);
   pushCompound("sell", collectRealEstateSellSignalEvidence(question), 3);
   pushCompound("start", collectBusinessStartSignalEvidence(question), 4);
+  // H3-b: education noun × 진학|입학|들어가 entry paraphrase → start.
+  // bare 진학/입학/들어가·공부 계속 표현을 전역 start keyword로 넣지 않는다.
+  pushCompound("start", collectEducationEntryStartSignalEvidence(question), 4);
   // CC6: destination particle (로|으로) + 전향* → start.
   // bare "전향" / changeJob synonym 금지. business noun gate 없이도 DT만 승격.
   pushCompound(
@@ -2903,7 +2908,9 @@ function collectMoneyInvestSignalEvidence(
  * - job noun/inherent signal + changeJob/leaveJob
  * - property noun + buy / sell / move
  * - business noun + start
+ * - education-entry noun × 진학|입학|들어가 → start (H3-b; bare 공부 계속 금지)
  * - business noun + 운영 paraphrase → continue (P10 G4)
+ * - business noun + 키워*|늘려*|확장* paraphrase → continue (H6; no expansion DT)
  * - business noun + 끊지 않고/굴려가 paraphrase → continue (P11-6-2 A1)
  * - business noun + keep-alive(살려두/붙잡아두/접지 않고/스톨시키지 않)
  *   paraphrase → continue (P11-7-2I-1 B1)
@@ -2928,6 +2935,8 @@ function collectMoneyInvestSignalEvidence(
  *
  * invest/move/start/buy/sell/manageMoney/continue/stop 단독 keyword만으로는 만들지 않는다.
  * bare "운영"은 전역 continue evidence가 아니다.
+ * bare "키워"/"늘려"/"확장"은 전역 continue evidence가 아니다.
+ * bare "진학"/"입학"/"들어가"는 전역 start evidence가 아니다.
  * bare "끊다"/"굴리다"는 전역 continue evidence가 아니다.
  * bare "살리다"/"붙잡다"/"가져가다"/"스톨"은 전역 continue evidence가 아니다.
  * bare "접다"/"폐업"/"손을 떼다"/"끝내다"/"종료"/"마무리"/"닫아버리다"/
@@ -3056,6 +3065,25 @@ function collectTopicDecisionCompoundCandidates(
     "start",
     businessNouns,
     startSignals,
+    4,
+  );
+
+  // H3-b: education-entry noun × 진학|입학|들어가 → job × start
+  // bare 진학/입학/들어가·공부/학업 계속만으로는 만들지 않는다.
+  // 기존 DecisionTarget `start`를 재사용한다.
+  const educationEntryNouns = collectMatchedDecisionKeywords(
+    question,
+    EDUCATION_ENTRY_COMPOUND_NOUNS,
+  );
+  const educationEntryStartSignals = collectEducationEntryStartCompoundVerbEvidence(
+    question,
+  );
+
+  pushPair(
+    "job",
+    "start",
+    educationEntryNouns,
+    educationEntryStartSignals,
     4,
   );
 
@@ -3554,6 +3582,21 @@ function resolveStrongTopicDecisionCompound(
       && compound.decisionTarget === "changeJob"
       && compound.decisionEvidence.some((token) =>
         isJobChangeGeneralizationEvidenceToken(token)
+      )
+    ) {
+      return true;
+    }
+
+    // H3-b: education-entry start compound는
+    // choose|confirmDirection surface("…하는 선택")를 덮을 수 있다.
+    // bare 진학/입학/들어가·공부 계속 단독은 compound 자체가 만들어지지 않는다.
+    if (
+      (phase1DecisionTarget === "choose"
+        || phase1DecisionTarget === "confirmDirection")
+      && compound.topic === "job"
+      && compound.decisionTarget === "start"
+      && compound.decisionEvidence.some((token) =>
+        isEducationEntryStartEvidenceToken(token)
       )
     ) {
       return true;
@@ -7217,6 +7260,53 @@ const BUSINESS_START_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
+ * H3-b: education-entry noun gate.
+ * topicRules/decisionRules에 전역 추가하지 않는다.
+ * entry/start action과 결합될 때만 job × start evidence가 된다.
+ * bare "공부"/"학업" 계속 표현은 entry verb가 없으므로 start로 승격되지 않는다.
+ */
+const EDUCATION_ENTRY_COMPOUND_NOUNS: readonly string[] = [
+  "대학원",
+  "대학",
+  "학교",
+  "교육과정",
+  "학과",
+];
+
+/**
+ * H3-b: education noun × entry/start paraphrase conjugations.
+ * decisionRules / start keyword에 전역 추가하지 않는다.
+ * bare "진학"/"입학"/"들어가" 단독 substring 금지.
+ * EDUCATION_ENTRY_COMPOUND_NOUNS와 결합될 때만 start evidence가 된다.
+ * 기존 DecisionTarget `start`를 재사용한다 (새 DT 금지).
+ */
+const EDUCATION_ENTRY_START_COMPOUND_VERBS: readonly string[] = [
+  "진학해도",
+  "진학해야",
+  "진학하는",
+  "진학할",
+  "진학할까",
+  "진학할지",
+  "진학하려고",
+  "진학하",
+  "입학해도",
+  "입학해야",
+  "입학하는",
+  "입학할",
+  "입학할까",
+  "입학할지",
+  "입학하려고",
+  "입학하",
+  "들어가도",
+  "들어가야",
+  "들어가는",
+  "들어갈",
+  "들어갈까",
+  "들어갈지",
+  "들어가",
+];
+
+/**
  * P10 G4: business noun x operate paraphrase conjugations.
  * Do not add these to decisionRules or continue keywords globally.
  * Bare operate alone is forbidden; requires BUSINESS_TOPIC_COMPOUND_NOUNS.
@@ -7232,6 +7322,46 @@ const BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS: readonly string[] = [
   "운영할까",
   "운영할지",
   "운영하려고",
+];
+
+/**
+ * H6: business noun × expand/grow paraphrase conjugations.
+ * decisionRules / continue keyword / expansion motive에 전역 추가하지 않는다.
+ * bare "키워"/"늘려"/"확장" 단독 substring 금지.
+ * BUSINESS_TOPIC_COMPOUND_NOUNS와 결합될 때만 continue evidence가 된다.
+ * 새 DecisionTarget(expansion)을 만들지 않는다 — 기존 continue를 재사용한다.
+ * expansion motiveRules(확장/키우/늘리…)는 별도 축으로 유지한다.
+ * 관계/공부 등 non-business noun은 BUSINESS gate 밖이므로 경계를 보존한다.
+ */
+const BUSINESS_CONTINUE_EXPAND_GROW_COMPOUND_VERBS: readonly string[] = [
+  "키워도",
+  "키워야",
+  "키우는",
+  "키울",
+  "키울까",
+  "키울지",
+  "키워",
+  "키워가도",
+  "키워가야",
+  "키워가는",
+  "키워갈",
+  "키워갈까",
+  "키워갈지",
+  "키워가",
+  "늘려도",
+  "늘려야",
+  "늘리는",
+  "늘릴",
+  "늘릴까",
+  "늘릴지",
+  "늘려",
+  "확장해도",
+  "확장해야",
+  "확장하는",
+  "확장할",
+  "확장할까",
+  "확장할지",
+  "확장하려고",
 ];
 
 /**
@@ -7270,11 +7400,13 @@ const BUSINESS_CONTINUE_KEEP_ALIVE_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
- * P10 G4 + P11-6-2 + P11-7-2I-1: business continue compound verb 전체.
- * operate(운영*) / keep-going(끊지 않고/굴려가*) / keep-alive(살려두* 등)를 합친다.
+ * P10 G4 + P11-6-2 + P11-7-2I-1 + H6: business continue compound verb 전체.
+ * operate(운영*) / expand-grow(키워*|늘려*|확장*) /
+ * keep-going(끊지 않고/굴려가*) / keep-alive(살려두* 등)를 합친다.
  */
 const BUSINESS_CONTINUE_COMPOUND_VERBS: readonly string[] = [
   ...BUSINESS_CONTINUE_OPERATE_COMPOUND_VERBS,
+  ...BUSINESS_CONTINUE_EXPAND_GROW_COMPOUND_VERBS,
   ...BUSINESS_CONTINUE_KEEP_GOING_COMPOUND_VERBS,
   ...BUSINESS_CONTINUE_KEEP_ALIVE_COMPOUND_VERBS,
 ];
@@ -7860,6 +7992,12 @@ const JOB_CHANGE_EMPLOYMENT_CONTEXT_NOUNS: readonly string[] = [
   // changeJob employment context 전용 (전역 topic/decision keyword 아님).
   "알바",
   "정규직",
+  // 고용형태(employment form) noun family — bare form alone does not force topic/DT.
+  "프리랜서",
+  "계약직",
+  "비정규직",
+  "임시직",
+  "파트타임",
   "간호조무사",
   "영업직",
   "야간직",
@@ -9010,6 +9148,57 @@ function collectBusinessStartSignalEvidence(
   }
 
   return [...businessNounEvidence, ...startSignalEvidence];
+}
+
+/**
+ * H3-b: education noun × 진학|입학|들어가 entry paraphrase용 verb evidence.
+ * bare "진학"/"입학"/"들어가" 단독 substring은 쓰지 않는다.
+ */
+function collectEducationEntryStartCompoundVerbEvidence(
+  question: string,
+): string[] {
+  return collectMatchedDecisionKeywords(
+    question,
+    EDUCATION_ENTRY_START_COMPOUND_VERBS,
+  );
+}
+
+/**
+ * H3-b: education-entry noun + entry/start compound evidence.
+ * entry verb 단독·공부/학업 계속만으로는 빈 배열을 반환한다.
+ */
+function collectEducationEntryStartSignalEvidence(
+  question: string,
+): string[] {
+  const educationNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    EDUCATION_ENTRY_COMPOUND_NOUNS,
+  );
+
+  if (educationNounEvidence.length === 0) {
+    return [];
+  }
+
+  const entryVerbEvidence = collectEducationEntryStartCompoundVerbEvidence(
+    question,
+  );
+
+  if (entryVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...educationNounEvidence, ...entryVerbEvidence];
+}
+
+/**
+ * H3-b: education-entry start evidence token.
+ * EDUCATION_ENTRY_* 소속만 true. bare 진학/입학/들어가 전역 승격에는 쓰지 않는다.
+ */
+function isEducationEntryStartEvidenceToken(
+  token: string,
+): boolean {
+  return EDUCATION_ENTRY_COMPOUND_NOUNS.includes(token)
+    || EDUCATION_ENTRY_START_COMPOUND_VERBS.includes(token);
 }
 
 function hasRealEstateBuySignal(
