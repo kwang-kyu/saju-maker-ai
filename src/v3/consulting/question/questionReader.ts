@@ -5512,8 +5512,10 @@ function normalizeTopicSemanticEvidenceCoverage(
  * 3. strong permission + termination-specific action → termination (J-4-8 정렬)
  * 4. business fit/recommendation soft frame → possibility
  * 5. compatibility quality assessment soft frame → possibility
- * 6. lifeDirection confirmDirection + method/selection surface → generalJudgement
+ * 6. lifeDirection confirmDirection + method/comparison surface → generalJudgement
+ *    (selection은 open-life-direction contract를 위해 보존)
  * 7. evaluation-noun "맞는/좋은 선택" selection → generalJudgement
+ *    (lifeDirection confirmDirection selection은 open-life-direction 보존)
  * 8. option-interrogative(어떤/어느+N) possibility/generalJudgement → selection
  *
  * 보호:
@@ -5523,6 +5525,8 @@ function normalizeTopicSemanticEvidenceCoverage(
  * - permission 없는 질문을 possibility로 만들지 않음
  * - bare 궁합 / 열린 해석(어떤가요) / 궁합 없는 interpersonal fit은 유지
  * - option-fit / binary / cash-holding exclusive selection은 유지
+ * - open lifeDirection confirmDirection selection
+ *   (action-decision-open-life-direction route contract)
  * - method manner(어떤 방법/방식) / evaluation-noun "좋은 선택"
  */
 function normalizeIntentSemanticMeaning(
@@ -5699,15 +5703,16 @@ function normalizeIntentSemanticMeaning(
   }
 
   // 6) lifeDirection confirmDirection:
-  //    "어떻게/선택" surface가 method/selection으로 갈라지지 않게
+  //    "어떻게" method / comparison surface가 갈라지지 않게
   //    열린 방향 판단(generalJudgement)으로 수렴한다.
+  //    selection은 이미 open-life-direction canonical state
+  //    (lifeDirection + confirmDirection + selection)이므로 보존한다.
   if (
     (lifeDirectionTopic || lifePathSignal)
     && decisionTarget === "confirmDirection"
     && !optionFitStrong
     && (
       intent === "method"
-      || intent === "selection"
       || intent === "comparison"
     )
   ) {
@@ -5724,12 +5729,18 @@ function normalizeIntentSemanticMeaning(
   //    noun "선택"이 selection speech-act로 고정되지 않게
   //    generalJudgement로 좁게 demote한다.
   //    강한 option-fit / binary / cash-holding exclusive는 selection을 유지한다.
+  //    open lifeDirection confirmDirection selection도 유지한다
+  //    (rule6와 같은 open-life-direction contract).
   if (
     intent === "selection"
     && !optionFitStrong
     && !binaryLifePath
     && !generalBinary
     && !cashHoldingExclusive
+    && !(
+      (lifeDirectionTopic || lifePathSignal)
+      && decisionTarget === "confirmDirection"
+    )
     && hasCorrectChoiceJudgementSoftSignal(question)
   ) {
     return {
