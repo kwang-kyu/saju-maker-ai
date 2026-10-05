@@ -1390,6 +1390,36 @@ const FUTURE_OUTCOME_PREDICTION_CASES:
       expectedConclusionNature:
         "prediction",
     },
+    {
+      question:
+        "앞으로 제 인생이 어떻게 전개될까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "앞으로 제 인생이 어떤 흐름으로 흘러갈까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
+    {
+      question:
+        "앞으로 제 삶이 어떻게 전개될까요?",
+
+      expectedIntent:
+        "prediction",
+
+      expectedConclusionNature:
+        "prediction",
+    },
   ];
 
 const TIMING_METHOD_PROTECTION_CASES:

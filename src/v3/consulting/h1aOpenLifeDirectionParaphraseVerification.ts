@@ -161,8 +161,9 @@ const LIFEFLOW_PROTECTION: readonly CaseRow[] = [
     id: "flow-2",
     question: "앞으로 제 인생이 어떻게 전개될까요?",
     expect: {
-      topic: "lifeDirection",
-      intent: "method",
+      topic: "lifeFlow",
+      intent: "prediction",
+      analysisMode: "interpretation",
       decisionTarget: "none",
       domain: "life",
     },

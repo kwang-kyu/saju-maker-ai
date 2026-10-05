@@ -1351,7 +1351,17 @@ function matchesKoreanKeywordWithNegatedContinueGuard(
   return true;
 }
 
-const FUTURE_OUTCOME_PREDICTION_PATTERNS:
+/**
+ * Future outcome / trajectory prediction surfaces.
+ *
+ * Semantic family: 미래에 어떤 결과·흐름·전개·궤적이 이루어질지 묻는 질문.
+ * Phase-1 method("어떻게") / option-interrogative selection보다
+ * futureOutcomePrediction frame override가 우선한다.
+ *
+ * 결과(outcome) paraphrase와 전개/흐름(trajectory) paraphrase를
+ * 같은 family로 취급한다. 단일 단어 keyword 확장이 아니다.
+ */
+const FUTURE_OUTCOME_RESULT_PATTERNS:
   readonly RegExp[] = [
     /어떻게\s*될\s*까/,
     /어떨(?:까|까요|지|지요)/,
@@ -1362,6 +1372,24 @@ const FUTURE_OUTCOME_PREDICTION_PATTERNS:
     /잘될까/,
   ];
 
+const FUTURE_TRAJECTORY_OUTCOME_PATTERNS:
+  readonly RegExp[] = [
+    // manner + trajectory verb: 어떻게 전개/흘러/진행
+    /어떻게\s*(?:전개|흘러|진행)/,
+    // trajectory verb + interrogative ending
+    /(?:전개|진행)\s*될\s*까/,
+    /흘러갈\s*까/,
+    // flow/trajectory noun + unfolding
+    /어떤\s*(?:흐름|궤적)(?:으로|이|가|은|는).*(?:흘러|전개|진행|될)/,
+    /(?:흐름|궤적)(?:으로|이|가|은|는).*(?:흘러|전개|진행)/,
+  ];
+
+const FUTURE_OUTCOME_PREDICTION_PATTERNS:
+  readonly RegExp[] = [
+    ...FUTURE_OUTCOME_RESULT_PATTERNS,
+    ...FUTURE_TRAJECTORY_OUTCOME_PATTERNS,
+  ];
+
 const PREDICTION_INTENT_EXCLUSION_PATTERNS:
   readonly RegExp[] = [
     /언제/,
@@ -1370,6 +1398,11 @@ const PREDICTION_INTENT_EXCLUSION_PATTERNS:
     /(?:해야|해야\s*하|해야\s*되|해야\s*할)/,
     /(?:해도\s*될|해도될|시작해도)/,
     /계속/,
+    // action-direction choice (가야/살아야)는 outcome/trajectory가 아님
+    /(?:가야|살아야)/,
+    // path-interrogative("어떤/어느 방향")는 lifeDirection 축.
+    // trajectory verb가 있어도 이번 prediction family로 끌어오지 않는다.
+    /(?:어떤|어느)\s*방향/,
   ];
 
 function isFutureOutcomePredictionQuestion(
@@ -4920,6 +4953,48 @@ const LIFE_FLOW_FORTUNE_MARKERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * bare life noun만 lifeDirection evidence로 잡힌 경우.
+ * "인생"/"삶" 단독은 lifeDirection topic detection 자체는 유지하되,
+ * temporal lifeFlow → lifeDirection demotion(J-4-9)의 근거로는 부족하다.
+ */
+const BARE_LIFE_NOUN_MARKERS: ReadonlySet<string> = new Set([
+  "인생",
+  "삶",
+]);
+
+/**
+ * lifeDirection demotion을 정당화하는 path/choice/transition evidence.
+ * topicRules lifeDirection keyword 중 bare life noun을 제외한 축.
+ */
+const LIFE_DIRECTION_PATH_CHOICE_TRANSITION_EVIDENCE_MARKERS:
+  ReadonlySet<string> = new Set([
+    "방향",
+    "선택",
+    "결정",
+    "전환",
+    "살아야",
+    "어떻게 해야",
+    "무엇을 해야",
+  ]);
+
+function isBareLifeNounOnlyLifeDirectionEvidence(
+  evidence: readonly string[],
+): boolean {
+  return (
+    evidence.length > 0
+    && evidence.every((item) => BARE_LIFE_NOUN_MARKERS.has(item))
+  );
+}
+
+function hasLifeDirectionPathChoiceOrTransitionEvidence(
+  evidence: readonly string[],
+): boolean {
+  return evidence.some((item) =>
+    LIFE_DIRECTION_PATH_CHOICE_TRANSITION_EVIDENCE_MARKERS.has(item)
+  );
+}
+
+/**
  * 삶의 방향/선택/전환 의미 surface.
  * lifeDirection keyword hit가 없어도, temporal-only lifeFlow를
  * 방향 축으로 읽을 수 있는 공통 신호다.
@@ -5432,6 +5507,8 @@ function normalizeDecisionTargetSemanticMeaning(
  * - lifeFlow 증거가 시간 surface only 이고
  * - lifeDirection 후보가 있거나 방향/선택/전환 신호가 있으면
  *   canonical topic을 lifeDirection으로 수렴한다.
+ * - bare life noun("인생"/"삶")만 있는 lifeDirection 후보는
+ *   실제 path/choice/transition 신호가 없으면 demotion하지 않는다.
  * - 대운/세운/운세/흐름 등 fortune 증거가 있으면 lifeFlow를 유지한다.
  *
  * intent / decisionTarget은 변경하지 않는다.
@@ -5471,15 +5548,31 @@ function normalizeLifeFlowVersusLifeDirectionTopic(
   const lifeDirectionCandidate = candidates.topics.find(
     (candidate) => candidate.value === "lifeDirection",
   );
+  const lifePathSignal = hasLifeDirectionChoiceOrTransitionSignal(question);
 
   if (lifeDirectionCandidate) {
+    const bareLifeNounOnly = isBareLifeNounOnlyLifeDirectionEvidence(
+      lifeDirectionCandidate.evidence,
+    );
+    const hasPathChoiceOrTransition =
+      hasLifeDirectionPathChoiceOrTransitionEvidence(
+        lifeDirectionCandidate.evidence,
+      )
+      || lifePathSignal;
+
+    // temporal-only lifeFlow + bare "인생"/"삶" only + no actual
+    // path/choice/transition → keep lifeFlow (J-4-9 overfire guard)
+    if (bareLifeNounOnly && !hasPathChoiceOrTransition) {
+      return null;
+    }
+
     return {
       topic: "lifeDirection",
       topicEvidence: lifeDirectionCandidate.evidence,
     };
   }
 
-  if (!hasLifeDirectionChoiceOrTransitionSignal(question)) {
+  if (!lifePathSignal) {
     return null;
   }
 
