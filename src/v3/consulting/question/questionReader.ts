@@ -5083,6 +5083,51 @@ function hasBinaryLifePathAlternativeStructure(
  * - "중 어느/둘 중" only (lifePathBinaryAlternative만 있고 ~지/~까요 arm 없음)
  *   → J-4-7 specific 보호 경로를 건드리지 않음
  */
+function isBareDirectionalChooseWithoutBinaryAlternatives(
+  question: string,
+  candidates: MeaningCandidateSet,
+): boolean {
+  if (
+    !matchesKoreanKeyword(question, "어느 쪽")
+    && !matchesKoreanKeyword(question, "어느쪽")
+  ) {
+    return false;
+  }
+
+  if (hasBinaryLifePathAlternativeStructure(question)) {
+    return false;
+  }
+
+  if (hasGeneralBinaryAlternativeStructure(candidates)) {
+    return false;
+  }
+
+  const exclusive = candidates.actionRelations.find(
+    (relation) =>
+      relation.kind === "exclusive_alt"
+      && relation.participants.length >= 2,
+  );
+
+  if (exclusive) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * P8-6: 일반 도메인 exclusive binary (A지 … B지/B까요).
+ *
+ * 이미 수집된 exclusive_alt relation만 재사용한다.
+ * - participant DT가 2개 이상이고
+ * - connectorEvidence에 숙고형 ~지/~까요 arm이 2개 이상일 때만 true
+ *
+ * 보호:
+ * - "할지" 단독 / WH+할지 / 단일 고민 → exclusive_alt 자체가 없음
+ * - 단독 "~까요" → 첫 arm "~지" 미충족으로 exclusive_alt 자체가 없음
+ * - "중 어느/둘 중" only (lifePathBinaryAlternative만 있고 ~지/~까요 arm 없음)
+ *   → J-4-7 specific 보호 경로를 건드리지 않음
+ */
 function hasGeneralBinaryAlternativeStructure(
   candidates: MeaningCandidateSet,
 ): boolean {
@@ -5212,8 +5257,21 @@ function normalizeDecisionTargetSemanticMeaning(
       || GENERIC_ACTION_DECISION_TARGETS.has(decisionTarget)
     )
   ) {
-    // 명시적 binary option-fit(중 어느/둘 중)이 강하면 selection/choose 유지
-    if (!(optionFitStrong && decisionTarget === "choose")) {
+    // 명시적 binary option-fit(중 어느/둘 중)이 강하면 selection/choose 유지.
+    // open life-direction + bare "어느 쪽"(실 binary 없음)은
+    // optionFitStrong만으로 confirmDirection을 막지 않는다.
+    const openBareDirectionalChoose =
+      intent === "selection"
+      && isBareDirectionalChooseWithoutBinaryAlternatives(
+        question,
+        candidates,
+      );
+    const blockConfirmForOptionFitChoose =
+      optionFitStrong
+      && decisionTarget === "choose"
+      && !openBareDirectionalChoose;
+
+    if (!blockConfirmForOptionFitChoose) {
       return {
         decisionTarget: "confirmDirection",
         decisionEvidence: mergeUniqueEvidence(
@@ -5336,10 +5394,21 @@ function normalizeDecisionTargetSemanticMeaning(
 
   // E) lifeDirection/path에서 bare choose(옵션 비교 frame 없음)
   //    → confirmDirection (열린 방향 확정)
+  //    open life-direction + bare "어느 쪽"(실 binary 없음)은
+  //    optionFitStrong만으로 이 경로를 막지 않는다.
   if (
     (lifeDirectionTopic || lifePathSignal)
     && decisionTarget === "choose"
-    && !optionFitStrong
+    && (
+      !optionFitStrong
+      || (
+        intent === "selection"
+        && isBareDirectionalChooseWithoutBinaryAlternatives(
+          question,
+          candidates,
+        )
+      )
+    )
   ) {
     return {
       decisionTarget: "confirmDirection",
