@@ -384,6 +384,69 @@ function verifyActionDecisionBlueprint(): AnswerBlueprintVerificationCase {
   };
 }
 
+/**
+ * Open lifeDirection confirmDirection selection keeps actionDecision,
+ * but omits scale/timing only for this semantic shape.
+ */
+function verifyOpenLifeDirectionActionDecisionBlueprint(
+): AnswerBlueprintVerificationCase {
+  const regressionInput = buildDecisionEngineRegressionInput({
+    questionText: "어떤 방향으로 가야 할까요?",
+  });
+
+  const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
+    regressionInput.question,
+  );
+  const scenario = routeScenario(questionMeaning);
+  const blueprint = buildAnswerBlueprint({
+    answerMode: "question",
+    scenario,
+    questionMeaning,
+  });
+
+  if (!isScenarioAnswerBlueprint(blueprint)) {
+    return {
+      id: "open-life-direction-action-decision-blueprint",
+      passed: false,
+      details: ["blueprint is not a scenario answer blueprint"],
+    };
+  }
+
+  const expectedBlocks = [
+    "directAnswer",
+    "currentDirection",
+    "conditions",
+    "risk",
+    "nextAction",
+  ];
+
+  const checks = [
+    questionMeaning.askedObject === "lifeDirection",
+    questionMeaning.intent === "selection",
+    questionMeaning.analysisMode === "selection",
+    questionMeaning.actionNature === "confirmDirection",
+    blueprint.scenarioType === "actionDecision",
+    blueprint.flowTimeStructure === undefined,
+    includesAll(blueprint.blocks, expectedBlocks),
+    !blueprint.blocks.includes("scale"),
+    !blueprint.blocks.includes("timing"),
+    blueprint.blocks.length === expectedBlocks.length,
+  ];
+
+  return {
+    id: "open-life-direction-action-decision-blueprint",
+    passed: checks.every(Boolean),
+    details: [
+      `scenarioType=${blueprint.scenarioType}`,
+      `askedObject=${questionMeaning.askedObject}`,
+      `intent=${questionMeaning.intent}`,
+      `analysisMode=${questionMeaning.analysisMode}`,
+      `actionNature=${questionMeaning.actionNature}`,
+      `blocks=${blueprint.blocks.join(",")}`,
+    ],
+  };
+}
+
 function verifyBusinessGeneralFlowMonthBlueprint(): AnswerBlueprintVerificationCase {
   const regressionInput = buildDecisionEngineRegressionInput({
     questionText: "10월에 사업운이 어떨까요?",
@@ -583,6 +646,7 @@ export function verifyAnswerBlueprints(): AnswerBlueprintVerificationResult {
     verifyGeneralFlowYearBlueprint(),
     verifyGeneralFlowOverviewBlueprint(),
     verifyActionDecisionBlueprint(),
+    verifyOpenLifeDirectionActionDecisionBlueprint(),
     verifyBusinessGeneralFlowMonthBlueprint(),
     verifyBusinessStoreOpeningActionDecisionBlueprint(),
     verifyReportModeBlueprint(),

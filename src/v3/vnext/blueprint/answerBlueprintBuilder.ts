@@ -202,6 +202,39 @@ function filterBlocksForMissingContext(
   );
 }
 
+/**
+ * Open lifeDirection direction-selection.
+ * Mirrors scenarioRouter isOpenLifeDirectionConfirmSelection
+ * semantic contract (askedObject/intent/analysisMode/actionNature).
+ * Used only to omit scale/timing blocks for this shape.
+ */
+function isOpenLifeDirectionConfirmSelection(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  return (
+    questionMeaning.askedObject === "lifeDirection"
+    && questionMeaning.intent === "selection"
+    && questionMeaning.analysisMode === "selection"
+    && questionMeaning.actionNature === "confirmDirection"
+  );
+}
+
+function omitScaleTimingForOpenLifeDirection(
+  blocks: ScenarioAnswerBlock[],
+  scenario: ConsultingScenario,
+  questionMeaning: QuestionMeaning,
+): ScenarioAnswerBlock[] {
+  if (
+    scenario.type !== "actionDecision"
+    || !isOpenLifeDirectionConfirmSelection(questionMeaning)
+  ) {
+    return blocks;
+  }
+
+  return blocks.filter(
+    (block) => block !== "scale" && block !== "timing",
+  );
+}
 function shouldIncludePossibilityTiming(
   scenario: ConsultingScenario,
   questionMeaning: QuestionMeaning,
@@ -250,7 +283,13 @@ function resolveQuestionBlocks(
     return { blocks: [...baseBlocks, "timing"] };
   }
 
-  return { blocks: baseBlocks };
+  return {
+    blocks: omitScaleTimingForOpenLifeDirection(
+      baseBlocks,
+      scenario,
+      questionMeaning,
+    ),
+  };
 }
 
 function buildQuestionBlueprint(
