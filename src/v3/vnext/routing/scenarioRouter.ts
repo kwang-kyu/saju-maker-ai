@@ -114,9 +114,10 @@ function hasExecutionActionNature(
 
 /**
  * Open lifeDirection direction-selection.
- * confirmDirection is execution-listed, but this shape is open direction
- * exploration — not execution coaching actionDecision.
- * topic/askedObject + intent + analysisMode + actionNature only.
+ * confirmDirection is execution-listed, but this shape must not enter
+ * career/business isActionBearing action-decision rules.
+ * Dedicated positive route: action-decision-open-life-direction.
+ * askedObject + intent + analysisMode + actionNature only.
  */
 function isOpenLifeDirectionConfirmSelection(
   questionMeaning: QuestionMeaning,
@@ -425,6 +426,18 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
     requiredDomains: ["career", "money", "capacity", "risk"],
     requiredTimeGranularity: ["month"],
     requiredSignals: BUSINESS_ACTION_SIGNALS,
+  },
+  {
+    // Open lifeDirection is excluded from isActionBearing career/business
+    // rules; this positive route reuses actionDecision answer-shape.
+    id: "action-decision-open-life-direction",
+    priority: 35,
+    matches: (questionMeaning) =>
+      isOpenLifeDirectionConfirmSelection(questionMeaning),
+    scenarioType: "actionDecision",
+    requiredDomains: ["personality", "capacity", "risk"],
+    requiredTimeGranularity: [],
+    requiredSignals: LIFE_FLOW_SIGNALS,
   },
   {
     id: "general-money-flow",
