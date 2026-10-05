@@ -201,7 +201,7 @@ function isNewQuestionByDomain(
     health: "health",
     legal: "legal",
     lifeFlow: "life",
-    lifeDirection: "career",
+    lifeDirection: "life",
     general: "general",
   };
 

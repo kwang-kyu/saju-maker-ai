@@ -84,7 +84,7 @@ const TOPIC_TO_DOMAIN: Record<
   health: "health",
   legal: "legal",
   lifeFlow: "life",
-  lifeDirection: "career",
+  lifeDirection: "life",
   general: "general",
 };
 
