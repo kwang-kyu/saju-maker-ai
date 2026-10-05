@@ -678,8 +678,25 @@ const zodiacProvided =
             === "compatibility"
           || question.decisionTarget
             === "partner"
-          || question.decisionTarget
-            === "marry"
+          || (
+            question.decisionTarget
+              === "marry"
+            && (
+              Boolean(
+                question
+                  .counterpartFacts
+                  .relationship,
+              )
+              || question
+                .counterpartFacts
+                .counterpartReferent
+                === "same"
+              || question
+                .counterpartFacts
+                .counterpartReferent
+                === "different"
+            )
+          )
           || isCompatibilityAnalysisQuestion(
             question.originalQuestion,
             question.decisionTarget,

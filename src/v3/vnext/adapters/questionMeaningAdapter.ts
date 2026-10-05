@@ -262,17 +262,70 @@ function resolveObject(
   };
 }
 
+/**
+ * UQ-3: open zodiac recommendation ask.
+ * Reader local helpers와 같은 Fit+Class 조합만 본다. export/새 축 없음.
+ */
+function isOpenZodiacRecommendationAsk(
+  question: string,
+): boolean {
+  const asksZodiacClass =
+    /(?:무슨|어떤)\s*띠/.test(question)
+    || /(?:맞는|좋은)\s*띠/.test(question)
+    || /띠를\s*(?:알려|추천)/.test(question)
+    || /띠\s*(?:알려|추천)/.test(question)
+    || /(?:여자|여성|남자|남성)?\s*띠는\b/.test(question)
+    || /(?:의\s*)?띠는\?/.test(question)
+    || /띠는\s*\?/.test(question);
+
+  if (!asksZodiacClass) {
+    return false;
+  }
+
+  if (/(?:나에게|내게)\s*(?:어울|맞)/.test(question)) {
+    return false;
+  }
+
+  return (
+    /궁합|합이\s*맞/.test(question)
+    || /잘\s*맞|어울/.test(question)
+    || /맞/.test(question)
+  );
+}
+
+/**
+ * Pair-compatibility signal from existing Reader fields only.
+ * marry DecisionTarget alone is not pair; relationship / referent is.
+ */
+function hasPairCounterpartSignal(
+  input: QuestionMeaningAdapterInput,
+): boolean {
+  const facts = input.counterpartFacts;
+
+  if (facts.relationship) {
+    return true;
+  }
+
+  const referent = facts.counterpartReferent;
+  return referent === "same" || referent === "different";
+}
+
 function buildMissingContext(
   input: QuestionMeaningAdapterInput,
 ): MissingContextItem[] {
   const items: MissingContextItem[] = [];
 
-  // Existing compatibility missingContext gate — keep intact.
-  // Also collect counterpart birth-data when Decision requires it for marry.
-  if (
+  // Compatibility analysis keeps the counterpart birth contract.
+  // marry requires counterpart birth only when pair semantic is present.
+  // Self-permission marry (no pair signal) must not short-circuit to clarification.
+  const requiresCounterpartBirthContract =
     input.analysisMode === "compatibility"
-    || input.decisionTarget === "marry"
-  ) {
+    || (
+      input.decisionTarget === "marry"
+      && hasPairCounterpartSignal(input)
+    );
+
+  if (requiresCounterpartBirthContract) {
     const counterpart = input.counterpartFacts;
 
     // Zodiac-only gate: skip birthDate/calendar/gender required items.
@@ -314,10 +367,18 @@ function buildMissingContext(
       }
     }
 
+    // UQ-3: open (+ self-anchored) zodiac recommendation은
+    // counterpartZodiac을 요구하지 않는다.
+    // 특정 상대 pair에서 concrete counterpart zodiac이 없으면 기존 요구 유지.
+    const openZodiacRecommendation = isOpenZodiacRecommendationAsk(
+      input.normalizedQuestion || input.originalQuestion,
+    );
+
     if (
       input.analysisScope === "zodiac"
       && !counterpart.zodiac
       && !counterpart.birthDate
+      && !openZodiacRecommendation
     ) {
       items.push({
         key: "counterpartZodiac",
@@ -579,6 +640,8 @@ export function adaptQuestionMeaning(
     actionNature: input.decisionTarget,
     askedObject: input.topic,
     analysisMode: input.analysisMode,
+    // Reader analysisScope passthrough — 새 축이 아니다.
+    analysisScope: input.analysisScope,
     conclusionNature: input.conclusionNature,
     counterpart: buildCounterpart(input),
     questionRef: buildQuestionRef(input),
