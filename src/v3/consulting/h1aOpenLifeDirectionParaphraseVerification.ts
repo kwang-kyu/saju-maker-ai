@@ -83,9 +83,11 @@ const OPEN_LIFE_DIRECTION_REGRESSION: readonly CaseRow[] = [
     question: "인생의 중심을 어디에 두는 게 좋을까요?",
     expect: {
       topic: "lifeDirection",
-      intent: "evaluation",
-      decisionTarget: "none",
+      intent: "selection",
+      analysisMode: "selection",
+      decisionTarget: "confirmDirection",
       domain: "life",
+      openLifeDirectionRoute: true,
     },
   },
   {

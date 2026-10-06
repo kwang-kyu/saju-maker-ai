@@ -8,19 +8,32 @@ import type {
   QuestionTopic,
 } from "./questionReader.js";
 
+/**
+ * path-commitment: 삶/인생 + 방향성/중심/무게/집중/맞춤/정함.
+ * bare "삶"/"무게"/"중심"/"집중"/"방향" 단독은 포함하지 않는다.
+ */
+const LIFE_DIRECTION_PATH_COMMITMENT_PATTERNS:
+  readonly RegExp[] = [
+    /(?:인생|삶)(?:의)?\s*(?:중심|무게|무게\s*중심|무게중심)/,
+    /(?:인생\s*중심|삶의\s*중심|인생\s*무게|삶의\s*무게|인생\s*무게중심|삶의\s*무게중심)/,
+    /(?:인생|삶).*(?:무게|중심|힘을\s*싣|무게중심).*(?:두|싣|놓|잡)/,
+    /(?:인생|삶).*(?:에|을|를|에서|쪽에?).*(?:집중)/,
+    /(?:무게|중심|무게중심).*(?:두|싣|놓).*(?:인생|삶)/,
+    // 방향 맞춤·정함·무게 두기 (삶/인생 축과 결합)
+    /(?:인생|삶).*(?:방향).*(?:맞추|정하|정할|잡는|두)/,
+    /(?:방향).*(?:에|으로|로)?\s*(?:무게|중심).*(?:두|싣|놓)/,
+    /(?:삶의\s*방향|인생\s*방향).*(?:맞추|정하|두|잡)/,
+    // 중심을 두고 가다
+    /(?:인생|삶).*(?:중심|무게).*(?:두고\s*가|두고가|두며)/,
+  ];
+
 const LIFE_DIRECTION_COMPOUND_PATTERNS:
   readonly RegExp[] = [
     /(?:인생|삶)(?:의)?\s*(?:방향|전환)/,
     /(?:인생\s*방향|삶의\s*방향|인생\s*전환|삶의\s*전환)/,
     /(?:인생|삶).*(?:방향|전환).*(?:바꾸|잡|정|선택|미루)/,
     /(?:방향|전환).*(?:인생|삶)/,
-    // path commitment: 삶/인생에 무게·중심·집중·힘을 싣다
-    // bare "삶"/"무게"/"중심"/"집중" 단독은 포함하지 않는다.
-    /(?:인생|삶)(?:의)?\s*(?:중심|무게)/,
-    /(?:인생\s*중심|삶의\s*중심|인생\s*무게|삶의\s*무게)/,
-    /(?:인생|삶).*(?:무게|중심|힘을\s*싣).*(?:두|싣|놓|잡)/,
-    /(?:인생|삶).*(?:에|을|를|에서|쪽에?).*(?:집중)/,
-    /(?:무게|중심).*(?:두|싣|놓).*(?:인생|삶)/,
+    ...LIFE_DIRECTION_PATH_COMMITMENT_PATTERNS,
   ];
 
 const DOMAIN_TOPICS:
@@ -59,6 +72,18 @@ export function hasLifeDirectionCompoundSignal(
     string,
 ): boolean {
   return LIFE_DIRECTION_COMPOUND_PATTERNS.some(
+    (pattern) =>
+      pattern.test(
+        normalizedQuestion,
+      ),
+  );
+}
+
+export function hasLifeDirectionPathCommitmentSignal(
+  normalizedQuestion:
+    string,
+): boolean {
+  return LIFE_DIRECTION_PATH_COMMITMENT_PATTERNS.some(
     (pattern) =>
       pattern.test(
         normalizedQuestion,

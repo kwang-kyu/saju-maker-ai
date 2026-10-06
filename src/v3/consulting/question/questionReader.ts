@@ -11,6 +11,7 @@ import {
 import {
   applyLifeDirectionTopicNormalization,
   hasLifeDirectionCompoundSignal,
+  hasLifeDirectionPathCommitmentSignal,
 } from "./lifeDirectionTopicDisambiguation.js";
 import {
   applyRelationshipReconcileNormalization,
@@ -1246,6 +1247,76 @@ function buildDecisionKeywordForms(
   );
 }
 
+/**
+ * Short nouns that also appear inside verb connective forms.
+ * e.g. "가게" ⊂ "흘러가게"(흘러가 + 게), "나아가게".
+ */
+const KOREAN_NOUN_BOUNDARY_SENSITIVE_KEYWORDS: ReadonlySet<string> = new Set([
+  "가게",
+]);
+
+/**
+ * Verb-connective …가 + 게 morphological context.
+ * Preceding coda (러/아/어/와/여/혀/겨) marks 가다-compound adverbial -게,
+ * not the business noun "가게".
+ */
+function isHangulVerbConnectiveGageContext(
+  question: string,
+  keywordIndex: number,
+): boolean {
+  if (keywordIndex <= 0) {
+    return false;
+  }
+
+  const prev = question[keywordIndex - 1] ?? "";
+  return /[러아어와여혀겨]/.test(prev);
+}
+
+/**
+ * Bounded noun keyword match for Korean morphology.
+ * Accepts standalone / particle-bound / noun-compound "가게".
+ * Rejects verb-connective *가게 (*가 + 게) without nominal particle.
+ */
+function matchesKoreanBoundedNounKeyword(
+  question: string,
+  keyword: string,
+): boolean {
+  let from = 0;
+
+  while (from <= question.length) {
+    const index = question.indexOf(keyword, from);
+    if (index < 0) {
+      return false;
+    }
+
+    const precededByHangul = index > 0
+      && /[가-힣]/.test(question[index - 1] ?? "");
+    const after = question.slice(index + keyword.length);
+    const followedByNounParticle =
+      /^(?:\s*)(?:을|를|이|가|은|는|에|도|만|와|과|의|로|으로|랑)/.test(
+        after,
+      );
+
+    if (!precededByHangul || followedByNounParticle) {
+      return true;
+    }
+
+    // …흘러가게 / …나아가게: verb connective, not store noun.
+    if (
+      keyword === "가게"
+      && isHangulVerbConnectiveGageContext(question, index)
+    ) {
+      from = index + keyword.length;
+      continue;
+    }
+
+    // Noun compounds like 옷가게 / 반찬가게.
+    return true;
+  }
+
+  return false;
+}
+
 function matchesKoreanKeyword(
   question:
     string,
@@ -1255,10 +1326,22 @@ function matchesKoreanKeyword(
   return buildKoreanKeywordForms(
     keyword,
   ).some(
-    (keywordForm) =>
-      question.includes(
+    (keywordForm) => {
+      if (
+        KOREAN_NOUN_BOUNDARY_SENSITIVE_KEYWORDS.has(
+          keywordForm,
+        )
+      ) {
+        return matchesKoreanBoundedNounKeyword(
+          question,
+          keywordForm,
+        );
+      }
+
+      return question.includes(
         keywordForm,
-      ),
+      );
+    },
   );
 }
 
@@ -1374,14 +1457,19 @@ const FUTURE_OUTCOME_RESULT_PATTERNS:
 
 const FUTURE_TRAJECTORY_OUTCOME_PATTERNS:
   readonly RegExp[] = [
-    // manner + trajectory verb: 어떻게 전개/흘러/진행
-    /어떻게\s*(?:전개|흘러|진행)/,
+    // manner + trajectory verb: 어떻게 전개/흘러/진행/이어/펼쳐
+    /어떻게\s*(?:전개|흘러|진행|이어|펼쳐)/,
     // trajectory verb + interrogative ending
-    /(?:전개|진행)\s*될\s*까/,
+    /(?:전개|진행|이어|펼쳐)\s*될\s*까/,
     /흘러갈\s*까/,
-    // flow/trajectory noun + unfolding
-    /어떤\s*(?:흐름|궤적)(?:으로|이|가|은|는).*(?:흘러|전개|진행|될)/,
-    /(?:흐름|궤적)(?:으로|이|가|은|는).*(?:흘러|전개|진행)/,
+    /흘러가게\s*될/,
+    // flow/trajectory noun + unfolding / continuation
+    /어떤\s*(?:흐름|궤적|식|모습)(?:으로|이|가|은|는).*(?:흘러|전개|진행|이어|펼쳐|될)/,
+    /(?:흐름|궤적|전개)(?:으로|이|가|은|는).*(?:흘러|전개|진행|이어|펼쳐|모습)/,
+    /(?:흐름|전개).*(?:어떻게|어떤).*(?:펼쳐|이어|전개|모습)/,
+    /어떤\s*식으로\s*(?:이어|전개|흘러|펼쳐)/,
+    // 방향 + flow trajectory (흘러/펼쳐/이어). 방향+전개(LF4)는 exclusion.
+    /(?:어떤|어느)\s*방향\s*(?:으로|로)?\s*(?:흘러|펼쳐|이어)/,
   ];
 
 const FUTURE_OUTCOME_PREDICTION_PATTERNS:
@@ -1400,9 +1488,9 @@ const PREDICTION_INTENT_EXCLUSION_PATTERNS:
     /계속/,
     // action-direction choice (가야/살아야)는 outcome/trajectory가 아님
     /(?:가야|살아야)/,
-    // path-interrogative("어떤/어느 방향")는 lifeDirection 축.
-    // trajectory verb가 있어도 이번 prediction family로 끌어오지 않는다.
-    /(?:어떤|어느)\s*방향/,
+    // path-interrogative 방향+전개/진행 → lifeDirection (LF4).
+    // 방향+흘러/펼쳐/이어 flow trajectory는 family에 남긴다 (H2-10).
+    /(?:어떤|어느)\s*방향\s*(?:으로|로)?\s*(?:전개|진행)/,
   ];
 
 function isFutureOutcomePredictionQuestion(
@@ -5114,8 +5202,45 @@ function hasOptionInterrogativeSelectionStructure(
     return false;
   }
 
-  return /(?:어떤|어느)\s*[가-힣]{1,12}(?:으로|로|을|를|이|가|와|과|은|는|의)/
+  // 격조사에 "에" 포함: "어느 방향에 무게…" 등 open option surface.
+  return /(?:어떤|어느)\s*[가-힣]{1,12}(?:으로|로|을|를|이|가|와|과|은|는|의|에)/
     .test(question);
+}
+
+/**
+ * Open life-direction path-commitment selection locus.
+ * 삶/인생 무게·중심·방향 초점을 어디/어느 쪽/무엇에 둘지 묻는 구조.
+ */
+function hasOpenLifeDirectionPathCommitmentSelectionStructure(
+  question: string,
+): boolean {
+  if (
+    !hasLifeDirectionPathCommitmentSignal(question)
+    && !hasLifeDirectionCompoundSignal(question)
+  ) {
+    return false;
+  }
+
+  return (
+    /(?:어느|어떤)\s*(?:쪽|방향)/.test(question)
+    || /어디에/.test(question)
+    || /(?:무엇|뭐)(?:이|은|는|일|을|를)?(?:까요|까|지)/.test(question)
+  );
+}
+
+/**
+ * Future flow-trajectory structure that keeps lifeFlow topic.
+ * 방향 + 흘러/펼쳐/이어짐은 path-choice demotion(J-4-9)에서 제외한다.
+ * bare 방향+전개(LF4)는 여기에 넣지 않는다.
+ */
+function hasFutureFlowTrajectoryStructure(
+  question: string,
+): boolean {
+  return (
+    /(?:흘러|펼쳐|이어질|이어지)/.test(question)
+    || /(?:흐름).*(?:펼쳐|이어|전개|모습)/.test(question)
+    || /(?:전개).*(?:모습|식)/.test(question)
+  );
 }
 
 /**
@@ -5358,13 +5483,20 @@ function normalizeDecisionTargetSemanticMeaning(
     }
   }
 
-  // C2) lifeDirection compound+전환 + generic/action/none → confirmDirection
-  //     confirmDirection 후보(방향/…)가 없어도 인생·삶 전환 축을 유지한다.
+  // C2) lifeDirection compound+전환/path-commitment + generic/action/none
+  //     → confirmDirection
+  //     confirmDirection 후보(방향/…)가 없어도 인생·삶 전환·초점 축을 유지한다.
   //     strong option-fit choose는 승격하지 않는다.
   if (
     (lifeDirectionTopic || lifePathSignal)
     && hasLifeDirectionCompoundSignal(question)
-    && matchesKoreanKeyword(question, "전환")
+    && (
+      matchesKoreanKeyword(question, "전환")
+      || (
+        hasLifeDirectionPathCommitmentSignal(question)
+        && hasOpenLifeDirectionPathCommitmentSelectionStructure(question)
+      )
+    )
     && (
       decisionTarget === "choose"
       || decisionTarget === "none"
@@ -5375,7 +5507,11 @@ function normalizeDecisionTargetSemanticMeaning(
     return {
       decisionTarget: "confirmDirection",
       decisionEvidence: mergeUniqueEvidence(
-        ["lifeDirectionCompoundTransitionOverGeneric"],
+        [
+          matchesKoreanKeyword(question, "전환")
+            ? "lifeDirectionCompoundTransitionOverGeneric"
+            : "lifeDirectionPathCommitmentOverGeneric",
+        ],
         decisionEvidence,
       ),
     };
@@ -5523,6 +5659,12 @@ function normalizeLifeFlowVersusLifeDirectionTopic(
   topicEvidence: string[];
 } | null {
   if (topic !== "lifeFlow") {
+    return null;
+  }
+
+  // flow trajectory (흘러/펼쳐/이어…)는 temporal demotion으로
+  // lifeDirection path-choice에 흡수되지 않는다. (H2-10 / LF family)
+  if (hasFutureFlowTrajectoryStructure(question)) {
     return null;
   }
 
@@ -5934,6 +6076,33 @@ function normalizeIntentSemanticMeaning(
         selectionCandidate?.evidence ?? [],
         intentEvidence,
         ["optionInterrogativeSelection"],
+      ),
+    };
+  }
+
+  // 8b) open lifeDirection path-commitment locus → selection
+  //     confirmDirection 위에서 어디/어느 쪽·방향/무엇 초점 배치만 승격.
+  //     business "어느 쪽" / career permission은 topic·DT 가드로 제외.
+  if (
+    (intent === "possibility" || intent === "generalJudgement")
+    && (lifeDirectionTopic || lifePathSignal)
+    && decisionTarget === "confirmDirection"
+    && hasOpenLifeDirectionPathCommitmentSelectionStructure(question)
+    && !hasCorrectChoiceJudgementSoftSignal(question)
+    && !binaryLifePath
+    && !generalBinary
+  ) {
+    const selectionCandidate = findIntentCandidate(
+      candidates.intents,
+      "selection",
+    );
+
+    return {
+      intent: "selection",
+      intentEvidence: mergeUniqueEvidence(
+        selectionCandidate?.evidence ?? [],
+        intentEvidence,
+        ["lifeDirectionPathCommitmentSelection"],
       ),
     };
   }
