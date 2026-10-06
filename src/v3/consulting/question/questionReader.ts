@@ -7211,10 +7211,17 @@ function normalizeAxes(
 
   // Priority/ordering surface is expression-only. Do not promote
   // "무엇을 해야" into lifeDirection/confirmDirection.
+  // Sibling: bare next-action lexical evidence alone also must not
+  // promote lifeDirection (E / E4 / bare "무엇을 해야").
   if (
     shouldKeepPrioritySurfaceFromLifeDirection(
       question,
       topic,
+    )
+    || shouldDemoteBareNextActionLifeDirection(
+      question,
+      topic,
+      topicEvidence,
     )
   ) {
     topic = "general";
@@ -10109,6 +10116,65 @@ function shouldKeepPrioritySurfaceFromLifeDirection(
   }
 
   return !/(?:인생|삶)/.test(question);
+}
+
+/**
+ * Bare next-action lexical signals that alone must not create
+ * lifeDirection. Distinct from "무엇을 선택해야" (선택 evidence).
+ */
+const BARE_NEXT_ACTION_LIFE_DIRECTION_MARKERS: ReadonlySet<string> = new Set([
+  "무엇을 해야",
+  "어떻게 해야",
+]);
+
+function isBareNextActionOnlyLifeDirectionEvidence(
+  evidence: readonly string[],
+): boolean {
+  return (
+    evidence.length > 0
+    && evidence.every((item) =>
+      BARE_NEXT_ACTION_LIFE_DIRECTION_MARKERS.has(item)
+    )
+  );
+}
+
+/**
+ * Protect real life-direction manner / path / compound asks
+ * (A / C / H1-a) from bare next-action demotion.
+ */
+function hasLifeDirectionProtectiveSignal(
+  question: string,
+): boolean {
+  if (
+    hasLifeDirectionCompoundSignal(question)
+    || hasLifeDirectionPathCommitmentSignal(question)
+  ) {
+    return true;
+  }
+
+  return /(?:인생|삶|방향|살아야)/.test(question);
+}
+
+/**
+ * Sibling to shouldKeepPrioritySurfaceFromLifeDirection:
+ * demote when lifeDirection evidence is only bare "무엇을 해야" /
+ * "어떻게 해야", without life/path protective signals.
+ * Does not depend on prioritySurface (F keeps its own path).
+ */
+function shouldDemoteBareNextActionLifeDirection(
+  question: string,
+  topic: QuestionTopic,
+  topicEvidence: readonly string[],
+): boolean {
+  if (topic !== "lifeDirection") {
+    return false;
+  }
+
+  if (!isBareNextActionOnlyLifeDirectionEvidence(topicEvidence)) {
+    return false;
+  }
+
+  return !hasLifeDirectionProtectiveSignal(question);
 }
 
 function detectUrgency(question: string): {

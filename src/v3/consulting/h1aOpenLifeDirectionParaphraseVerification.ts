@@ -32,6 +32,7 @@ type ExpectedAxes = {
   decisionTarget: DecisionTarget;
   domain?: string;
   openLifeDirectionRoute?: boolean;
+  prioritySurface?: boolean;
 };
 
 type CaseRow = {
@@ -140,6 +141,18 @@ const OPEN_LIFE_DIRECTION_REGRESSION: readonly CaseRow[] = [
       openLifeDirectionRoute: true,
     },
   },
+  {
+    id: "open-D",
+    question: "무엇을 선택해야 할까요?",
+    expect: {
+      topic: "lifeDirection",
+      intent: "selection",
+      analysisMode: "selection",
+      decisionTarget: "confirmDirection",
+      domain: "life",
+      openLifeDirectionRoute: true,
+    },
+  },
 ];
 
 const BINARY_PROTECTION: readonly CaseRow[] = [
@@ -236,6 +249,51 @@ const GENERAL_PROTECTION: readonly CaseRow[] = [
       domain: "general",
     },
   },
+  {
+    id: "gen-E",
+    question: "앞으로 무엇을 해야 할까요?",
+    expect: {
+      topic: "general",
+      intent: "evaluation",
+      decisionTarget: "none",
+      domain: "general",
+      openLifeDirectionRoute: false,
+    },
+  },
+  {
+    id: "gen-E4",
+    question: "지금 무엇을 해야 할까요?",
+    expect: {
+      topic: "general",
+      intent: "evaluation",
+      decisionTarget: "none",
+      domain: "general",
+      openLifeDirectionRoute: false,
+    },
+  },
+  {
+    id: "gen-bare-next-action",
+    question: "무엇을 해야 할까요?",
+    expect: {
+      topic: "general",
+      intent: "evaluation",
+      decisionTarget: "none",
+      domain: "general",
+      openLifeDirectionRoute: false,
+    },
+  },
+  {
+    id: "gen-F-priority",
+    question: "가장 먼저 무엇을 해야 하나요?",
+    expect: {
+      topic: "general",
+      intent: "evaluation",
+      decisionTarget: "none",
+      domain: "general",
+      openLifeDirectionRoute: false,
+      prioritySurface: true,
+    },
+  },
 ];
 
 function isOpenLifeDirectionRoute(
@@ -269,6 +327,7 @@ function checkCase(
     decisionTarget: string;
     domain: string;
     openLifeDirectionRoute: boolean;
+    prioritySurface: boolean;
     scenarioType: string;
   };
   expect: ExpectedAxes;
@@ -295,6 +354,9 @@ function checkCase(
   const routeOk = row.expect.openLifeDirectionRoute === undefined
     ? true
     : openLifeDirectionRoute === row.expect.openLifeDirectionRoute;
+  const prioritySurfaceOk = row.expect.prioritySurface === undefined
+    ? true
+    : result.prioritySurface === row.expect.prioritySurface;
   // business "어느 쪽" must not become lifeDirection
   const noLifeDirectionBleed =
     row.expect.topic === "business"
@@ -311,6 +373,7 @@ function checkCase(
       && dtOk
       && domainOk
       && routeOk
+      && prioritySurfaceOk
       && noLifeDirectionBleed,
     actual: {
       topic: result.topic,
@@ -319,6 +382,7 @@ function checkCase(
       decisionTarget: result.decisionTarget,
       domain: meaning.domain,
       openLifeDirectionRoute,
+      prioritySurface: result.prioritySurface === true,
       scenarioType: scenario.type,
     },
     expect: row.expect,
