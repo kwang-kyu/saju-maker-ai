@@ -359,6 +359,9 @@ export function runDecisionEngine(
     effectiveQuestion
       .conclusionNature
     === "warning"
+    || effectiveQuestion
+      .intent
+    === "risk"
       ? buildWarningConclusionSource(
         relevanceGatedRisks,
         relevanceGatedConditions,

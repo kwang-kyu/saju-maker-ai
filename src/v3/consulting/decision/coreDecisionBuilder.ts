@@ -981,9 +981,14 @@ function buildContextualCoreDecision(
 
     case "reason":
     case "method":
-    case "risk":
     case "evaluation":
       return buildActionAnswer(verdict);
+
+    case "risk":
+      return buildWarningAnswer(
+        context.warningConclusion,
+        verdict,
+      );
   }
 }
 

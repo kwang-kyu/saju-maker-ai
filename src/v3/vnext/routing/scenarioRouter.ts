@@ -399,8 +399,13 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
     id: "action-decision-money",
     priority: 31,
     matches: (questionMeaning) =>
-      isActionBearingQuestion(questionMeaning)
-      && questionMeaning.domain === "money",
+      questionMeaning.domain === "money"
+      && (
+        isActionBearingQuestion(questionMeaning)
+        // manageMoney는 전역 실행 행동으로 등록하지 않고
+        // money + method만 기존 actionDecision으로 보낸다.
+        || questionMeaning.intent === "method"
+      ),
     scenarioType: "actionDecision",
     requiredDomains: ["money", "capacity", "risk"],
     requiredTimeGranularity: ["month"],
@@ -463,7 +468,6 @@ export const SCENARIO_ROUTE_RULES: readonly ScenarioRouteRule[] = [
       questionMeaning.domain === "money"
       && (
         questionMeaning.intent === "prediction"
-        || questionMeaning.intent === "possibility"
         || questionMeaning.intent === "timing"
         || questionMeaning.intent === "existence"
         || questionMeaning.intent === "general"
