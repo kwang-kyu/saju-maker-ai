@@ -433,6 +433,7 @@ const topicRules: readonly KeywordRule<QuestionTopic>[] = [
       "사업",
       "창업",
       "장사",
+      "업종",
       "가게",
       "개업",
       "매장",
@@ -1964,6 +1965,31 @@ function isComparisonOrOptionFitDecisionFrame(
 }
 
 /**
+ * Open job-selection paraphrase of existing "어떤 직업" structure.
+ * Bare "일" and current-work "지금 하는 일" are not job topics.
+ */
+function hasOpenJobWorkSelectionAsk(
+  question: string,
+): boolean {
+  if (
+    /(?:지금|현재)\s*(?:하는|하고\s*있는)\s*일/.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  return (
+    /(?:어떤|무슨|어느)\s*일을\s*(?:하는|하면|할지|할)/.test(
+      question,
+    )
+    || /(?:어떤|무슨|어느)\s*일이\s*(?:맞|좋)/.test(
+      question,
+    )
+  );
+}
+
+/**
  * J-1: 의미 축 후보를 수집한다.
  * J-2: 최종 선택은 normalizeAxes에서 수행한다.
  */
@@ -1976,6 +2002,23 @@ function collectMeaningCandidates(
     "topic",
     "topicRules",
   );
+
+  // Open occupation-selection paraphrase of existing job topic
+  // ("어떤 직업"). Bare "일" / "지금 하는 일"은 job으로 만들지 않는다.
+  if (hasOpenJobWorkSelectionAsk(normalizedQuestion)) {
+    const jobRulePriority = topicRules.findIndex(
+      (rule) => rule.result === "job",
+    );
+    topics.push({
+      axis: "topic",
+      value: "job",
+      evidence: ["어떤 일"],
+      source: "compoundSignal",
+      priority: jobRulePriority >= 0 ? jobRulePriority : topicRules.length,
+      strength: 1,
+      specificity: "어떤 일".length,
+    });
+  }
 
   const intents = collectRuleCandidates(
     normalizedQuestion,
@@ -5149,7 +5192,7 @@ function hasBusinessFitRecommendationSoftSignal(
   question: string,
 ): boolean {
   return (
-    /(?:어떤|무엇|어느).*(?:사업|창업|아이템|장사|가게).*(?:맞|어울|추천|적합)/.test(
+    /(?:어떤|무엇|어느).*(?:사업|창업|아이템|장사|가게|업종).*(?:맞|어울|추천|적합)/.test(
       question,
     )
     || /(?:성향|적성).*(?:맞|어울).*(?:사업|창업|아이템)/.test(question)
@@ -7161,6 +7204,29 @@ function normalizeAxes(
     intent = additiveReasonTimingSpeechActPreserved.intent;
     intentEvidence =
       additiveReasonTimingSpeechActPreserved.intentEvidence;
+  }
+
+  // Priority/ordering surface is expression-only. Do not promote
+  // "무엇을 해야" into lifeDirection/confirmDirection.
+  if (
+    shouldKeepPrioritySurfaceFromLifeDirection(
+      question,
+      topic,
+    )
+  ) {
+    topic = "general";
+    topicEvidence = topicEvidence.filter(
+      (item) => item !== "무엇을 해야" && item !== "어떻게 해야",
+    );
+    if (decisionTarget === "confirmDirection") {
+      decisionTarget = "none";
+      decisionEvidence = decisionEvidence.filter(
+        (item) => item !== "무엇을 해야" && item !== "어떻게 해야",
+      );
+    }
+    intentEvidence = intentEvidence.filter(
+      (item) => item !== "intentSemanticLifeDirectionConfirm",
+    );
   }
 
   const objectLabel = selectObjectLabelFromTopicEvidence(
@@ -10016,6 +10082,32 @@ function detectPrioritySurface(
   return hasOrderingAskContext;
 }
 
+/**
+ * Priority/ordering ask must not be promoted to lifeDirection.
+ * prioritySurface stays an expression flag, not a new semantic axis.
+ */
+function shouldKeepPrioritySurfaceFromLifeDirection(
+  question: string,
+  topic: QuestionTopic,
+): boolean {
+  if (topic !== "lifeDirection") {
+    return false;
+  }
+
+  if (!detectPrioritySurface(question)) {
+    return false;
+  }
+
+  if (
+    hasLifeDirectionCompoundSignal(question)
+    || hasLifeDirectionPathCommitmentSignal(question)
+  ) {
+    return false;
+  }
+
+  return !/(?:인생|삶)/.test(question);
+}
+
 function detectUrgency(question: string): {
   urgency: QuestionUrgency;
   evidence: string[];
@@ -10537,7 +10629,7 @@ function hasRivalCandidateValues<T extends string>(
 }
 
 const RELATIONSHIP_COUNTERPART_PATTERN =
-  /(?:이|그)\s*(?:사람|남자|여자)|상대(?:방)?|우리\s*둘|둘이|서로|(?:현재|지금|내|제|그|이)\s*(?:연인|애인|배우자|남편|아내|동업자|파트너)|(?:연인|애인|배우자|남편|아내|동업자|파트너)\s*(?:와|과|랑|하고|와는|과는)/;
+  /(?:이|그)\s*(?:사람|남자|여자)|만나는\s*사람|상대(?:방)?|우리\s*둘|둘이|서로|(?:현재|지금|내|제|그|이)\s*(?:연인|애인|배우자|남편|아내|동업자|파트너)|(?:연인|애인|배우자|남편|아내|동업자|파트너)\s*(?:와|과|랑|하고|와는|과는)/;
 
 const COUNTERPART_CONTEXT_EXCLUSION_PATTERN =
   /(?:어떤\s*(?:남자|여자)|(?:배우자|연인)\s*유형|이상형|(?:나에게|내게)\s*어울리는\s*배우자|(?:남자|여자)에게\s*(?:어울|맞))/;
@@ -10901,11 +10993,13 @@ function asksZodiacClass(
     || /(?:맞는|좋은)\s*띠/.test(question)
     || /맞지\s*않는\s*띠/.test(question)
     || /피해야\s*할\s*띠/.test(question)
+    || /띠를\s*피해야/.test(question)
+    || /안\s*맞는\s*띠/.test(question)
     || /띠를\s*(?:알려|추천)/.test(question)
     || /띠\s*(?:알려|추천)/.test(question)
     || /띠가\s*무엇/.test(question)
     || /띠는\s*무엇/.test(question)
-    || /띠로\s*보면[\s\S]{0,24}(?:어떤|무슨|어느)\s*(?:띠|사람)/.test(question)
+    || /띠로(?:만)?\s*보면[\s\S]{0,24}(?:어떤|무슨|어느)\s*(?:띠|사람|쪽)/.test(question)
     || /(?:여자|여성|남자|남성)?\s*띠는\b/.test(question)
     || /(?:의\s*)?띠는\?/.test(question)
     || /띠는\s*\?/.test(question)
@@ -10946,7 +11040,7 @@ function hasCompatibilityFitFrame(
 
   return (
     asksZodiacClass(question)
-    && /맞|피해야/.test(question)
+    && /맞|피해야|안\s*맞/.test(question)
   );
 }
 
@@ -10963,6 +11057,18 @@ function isOpenZodiacRecommendationQuestion(
   );
 }
 
+function hasNamedZodiacPairFitFrame(
+  question: string,
+  counterpartFacts: QuestionCounterpartFacts,
+): boolean {
+  return (
+    Boolean(counterpartFacts.zodiac)
+    && hasCompatibilityFitFrame(question)
+    && /띠/.test(question)
+    && !asksZodiacClass(question)
+  );
+}
+
 function detectQuestionAnalysisMode(
   question:
     string,
@@ -10970,6 +11076,8 @@ function detectQuestionAnalysisMode(
     ReaderIntentLiteral,
   decisionTarget:
     DecisionTarget,
+  counterpartFacts:
+    QuestionCounterpartFacts,
 ): QuestionAnalysisMode {
   if (
     isRoleRecommendationQuestion(
@@ -11022,6 +11130,10 @@ function detectQuestionAnalysisMode(
       )
       || isOpenZodiacRecommendationQuestion(
         question,
+      )
+      || hasNamedZodiacPairFitFrame(
+        question,
+        counterpartFacts,
       )
     )
   ) {
@@ -11099,7 +11211,7 @@ function extractQuestionCounterpartFacts(
 
   const relationshipMatch =
     question.match(
-      /친구|배우자|남편|아내|연인|애인|가족|직원|동업자|파트너|이\s*사람|그\s*사람/,
+      /친구|배우자|남편|아내|연인|애인|가족|직원|동업자|파트너|이\s*사람|그\s*사람|만나는\s*사람/,
     );
 
   // 기존 same-person deixis(그/이 사람·분)와 대칭되는 referent 구조.
@@ -11248,7 +11360,7 @@ function detectQuestionAnalysisScope(
   // 기존 Step 3-B pair/gate: 띠궁합 cue.
   // 구체 동물 surface가 없어도 띠궁합-only 질문은 zodiac scope.
   if (
-    /띠\s*궁합|궁합.*띠|띠만|띠.*궁합|띠로\s*보면/.test(
+    /띠\s*궁합|궁합.*띠|띠만|띠.*궁합|띠로(?:만)?\s*보면/.test(
       question,
     )
   ) {
@@ -11387,6 +11499,7 @@ export function readQuestion(
       normalizedQuestion,
       normalizedAxes.intent,
       resolvedDecisionTarget,
+      counterpartFacts,
     );
 
   const analysisScope =
