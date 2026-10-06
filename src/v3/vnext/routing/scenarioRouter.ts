@@ -319,10 +319,27 @@ function isCompatibilityAssessment(
   );
 }
 
+function isBusinessSelectionAptitude(
+  questionMeaning: QuestionMeaning,
+): boolean {
+  return (
+    questionMeaning.domain === "business"
+    && (
+      questionMeaning.intent === "selection"
+      || questionMeaning.analysisMode === "selection"
+    )
+  );
+}
+
 function isAptitudeRecommendation(
   questionMeaning: QuestionMeaning,
 ): boolean {
-  if (questionMeaning.domain !== "career") {
+  // Career aptitude plus business selection without execution action.
+  // Business start/stop stay on action-decision via isActionBearingQuestion.
+  if (
+    questionMeaning.domain !== "career"
+    && !isBusinessSelectionAptitude(questionMeaning)
+  ) {
     return false;
   }
 

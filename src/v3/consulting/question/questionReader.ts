@@ -5858,6 +5858,7 @@ function normalizeTopicSemanticEvidenceCoverage(
  * 2. strong option-fit / binary life-path choose → selection
  * 3. strong permission + termination-specific action → termination (J-4-8 정렬)
  * 4. business fit/recommendation soft frame → possibility
+ *    (option-interrogative 어떤/어느+N 은 selection 유지)
  * 5. compatibility quality assessment soft frame → possibility
  * 6. lifeDirection confirmDirection + method/comparison surface → generalJudgement
  *    (selection은 open-life-direction contract를 위해 보존)
@@ -5998,9 +5999,11 @@ function normalizeIntentSemanticMeaning(
   // 4) business fit/recommendation soft frame
   //    "무엇이 맞는가" 적합 판단이 generalJudgement/selection/comparison으로
   //    갈라지지 않게 possibility로 수렴한다.
-  //    강한 option-fit(중 어느/둘 중)은 J-4-7 selection을 유지한다.
+  //    강한 option-fit(중 어느/둘 중)과 option-interrogative(어떤/어느+N)
+  //    는 selection 경로를 유지한다. 실행 DT는 이 분기에 오지 않는다.
   if (
     !optionFitStrong
+    && !hasOptionInterrogativeSelectionStructure(question)
     && hasBusinessFitRecommendationSoftSignal(question)
     && (
       intent === "generalJudgement"
@@ -10403,7 +10406,38 @@ export type ConclusionNatureResolutionInput = {
 
   decisionTarget:
     DecisionTarget;
+
+  topic:
+    QuestionTopic;
 };
+
+function isOccupationalSelectionRecommendation(
+  input:
+    ConclusionNatureResolutionInput,
+): boolean {
+  if (
+    input.decisionTarget
+      !== "none"
+  ) {
+    return false;
+  }
+
+  if (
+    input.topic
+      !== "job"
+    && input.topic
+      !== "business"
+  ) {
+    return false;
+  }
+
+  return (
+    input.intent
+      === "selection"
+    || input.analysisMode
+      === "selection"
+  );
+}
 
 export function isJobFitRecommendationQuestion(
   normalizedQuestion:
@@ -10531,6 +10565,9 @@ export function resolveConclusionNature(
     || isJobFitRecommendationQuestion(
       normalizedQuestion,
     )
+    || isOccupationalSelectionRecommendation(
+      input,
+    )
   ) {
     return "recommendation";
   }
@@ -10590,6 +10627,9 @@ export function attachConclusionNature<
 
         decisionTarget:
           result.decisionTarget,
+
+        topic:
+          result.topic,
       }),
   };
 }
