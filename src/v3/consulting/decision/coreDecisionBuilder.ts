@@ -887,6 +887,14 @@ function buildContextualCoreDecision(
     && context.analysisScope === "zodiac"
     && context.zodiacRecommendationLabel
   ) {
+    if (/피해야/.test(originalQuestion)) {
+      return `피하는 쪽으로 보는 띠는 ${context.zodiacRecommendationLabel} 쪽으로 볼 수 있습니다.`;
+    }
+
+    if (/안\s*맞|맞지\s*않/.test(originalQuestion)) {
+      return `당신과 잘 맞지 않는 띠는 ${context.zodiacRecommendationLabel} 쪽으로 볼 수 있습니다.`;
+    }
+
     return `당신과 궁합이 잘 맞는 띠는 ${context.zodiacRecommendationLabel} 쪽으로 볼 수 있습니다.`;
   }
 

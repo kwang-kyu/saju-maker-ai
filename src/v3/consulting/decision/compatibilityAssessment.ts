@@ -59,15 +59,23 @@ function asksZodiacClass(
     || /(?:맞는|좋은)\s*띠/.test(question)
     || /맞지\s*않는\s*띠/.test(question)
     || /피해야\s*할\s*띠/.test(question)
+    || /띠를\s*피해야/.test(question)
+    || /안\s*맞는\s*띠/.test(question)
     || /띠를\s*(?:알려|추천)/.test(question)
     || /띠\s*(?:알려|추천)/.test(question)
     || /띠가\s*무엇/.test(question)
     || /띠는\s*무엇/.test(question)
-    || /띠로\s*보면[\s\S]{0,24}(?:어떤|무슨|어느)\s*(?:띠|사람)/.test(question)
+    || /띠로(?:만)?\s*보면[\s\S]{0,24}(?:어떤|무슨|어느)\s*(?:띠|사람|쪽)/.test(question)
     || /(?:여자|여성|남자|남성)?\s*띠는\b/.test(question)
     || /(?:의\s*)?띠는\?/.test(question)
     || /띠는\s*\?/.test(question)
   );
+}
+
+function asksNegativeOpenZodiacFit(
+  question: string,
+): boolean {
+  return /안\s*맞|맞지\s*않|피해야/.test(question);
 }
 
 function hasCompatibilityFitFrame(
@@ -90,7 +98,7 @@ function hasCompatibilityFitFrame(
     return true;
   }
 
-  return asksZodiacClass(question) && /맞|피해야/.test(question);
+  return asksZodiacClass(question) && /맞|피해야|안\s*맞/.test(question);
 }
 
 function isOpenZodiacRecommendationQuestion(
@@ -106,7 +114,35 @@ function isOpenZodiacRecommendationQuestion(
 
 function pickBestZodiacAssessment(
   assessments: readonly ZodiacCompatibilityAssessment[],
+  preferNegativeSide = false,
 ): ZodiacCompatibilityAssessment | null {
+  if (preferNegativeSide) {
+    let conflicted: ZodiacCompatibilityAssessment | null = null;
+    let caution: ZodiacCompatibilityAssessment | null = null;
+
+    for (const assessment of assessments) {
+      if (!assessment.available) {
+        continue;
+      }
+
+      if (assessment.level === "conflicted" && !conflicted) {
+        conflicted = assessment;
+      }
+
+      if (assessment.level === "caution" && !caution) {
+        caution = assessment;
+      }
+    }
+
+    if (conflicted) {
+      return conflicted;
+    }
+
+    if (caution) {
+      return caution;
+    }
+  }
+
   let best: ZodiacCompatibilityAssessment | null = null;
 
   for (const assessment of assessments) {
@@ -185,7 +221,10 @@ function assessOpenZodiacRecommendation(
     });
   }
 
-  const best = pickBestZodiacAssessment(assessments);
+  const best = pickBestZodiacAssessment(
+    assessments,
+    asksNegativeOpenZodiacFit(input.questionText),
+  );
 
   if (!best) {
     return null;
