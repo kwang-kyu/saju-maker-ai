@@ -113,20 +113,37 @@ function hasExecutionActionNature(
 }
 
 /**
- * Open lifeDirection direction-selection.
+ * Open lifeDirection direction-confirm.
  * confirmDirection is execution-listed, but this shape must not enter
  * career/business isActionBearing action-decision rules.
  * Dedicated positive route: action-decision-open-life-direction.
- * askedObject + intent + analysisMode + actionNature only.
+ *
+ * Covers both:
+ * - selection + selection (path commitment / directional choose)
+ * - decision analysisMode + non-prediction intent
+ *   (evaluation manner → Adapter possibility projection)
+ *
+ * Prediction (LF4 lifeDirection confirmDirection) stays excluded.
  */
 function isOpenLifeDirectionConfirmSelection(
   questionMeaning: QuestionMeaning,
 ): boolean {
+  if (questionMeaning.askedObject !== "lifeDirection") {
+    return false;
+  }
+
+  if (questionMeaning.actionNature !== "confirmDirection") {
+    return false;
+  }
+
+  // Keep general-life-prediction-flow for lifeDirection + prediction.
+  if (questionMeaning.intent === "prediction") {
+    return false;
+  }
+
   return (
-    questionMeaning.askedObject === "lifeDirection"
-    && questionMeaning.intent === "selection"
-    && questionMeaning.analysisMode === "selection"
-    && questionMeaning.actionNature === "confirmDirection"
+    questionMeaning.analysisMode === "selection"
+    || questionMeaning.analysisMode === "decision"
   );
 }
 
@@ -176,7 +193,8 @@ function isProjectedOpenGeneralEvaluation(
  * prediction + actionNature=none → false.
  * prediction + 강한 실행행동 → true 가능.
  * possibility/timing/direction 등 + 실행행동 → true.
- * open lifeDirection confirmDirection selection → false.
+ * open lifeDirection confirmDirection (selection|decision, non-prediction)
+ * → false.
  */
 function isActionBearingQuestion(
   questionMeaning: QuestionMeaning,

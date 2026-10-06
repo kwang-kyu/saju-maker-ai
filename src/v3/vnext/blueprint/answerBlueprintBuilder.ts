@@ -203,19 +203,27 @@ function filterBlocksForMissingContext(
 }
 
 /**
- * Open lifeDirection direction-selection.
+ * Open lifeDirection direction-confirm.
  * Mirrors scenarioRouter isOpenLifeDirectionConfirmSelection
- * semantic contract (askedObject/intent/analysisMode/actionNature).
+ * semantic contract (lifeDirection + confirmDirection + non-prediction
+ * + selection|decision analysisMode).
  * Used only to omit scale/timing blocks for this shape.
  */
 function isOpenLifeDirectionConfirmSelection(
   questionMeaning: QuestionMeaning,
 ): boolean {
+  if (questionMeaning.askedObject !== "lifeDirection") {
+    return false;
+  }
+  if (questionMeaning.actionNature !== "confirmDirection") {
+    return false;
+  }
+  if (questionMeaning.intent === "prediction") {
+    return false;
+  }
   return (
-    questionMeaning.askedObject === "lifeDirection"
-    && questionMeaning.intent === "selection"
-    && questionMeaning.analysisMode === "selection"
-    && questionMeaning.actionNature === "confirmDirection"
+    questionMeaning.analysisMode === "selection"
+    || questionMeaning.analysisMode === "decision"
   );
 }
 

@@ -385,13 +385,17 @@ function verifyActionDecisionBlueprint(): AnswerBlueprintVerificationCase {
 }
 
 /**
- * Open lifeDirection confirmDirection selection keeps actionDecision,
+ * Open lifeDirection confirmDirection keeps actionDecision,
  * but omits scale/timing only for this semantic shape.
  */
-function verifyOpenLifeDirectionActionDecisionBlueprint(
+function verifyOpenLifeDirectionBlueprintCase(
+  id: string,
+  questionText: string,
+  expectedIntent: string,
+  expectedAnalysisMode: string,
 ): AnswerBlueprintVerificationCase {
   const regressionInput = buildDecisionEngineRegressionInput({
-    questionText: "어떤 방향으로 가야 할까요?",
+    questionText,
   });
 
   const questionMeaning = adaptQuestionMeaningForBlueprintVerification(
@@ -406,7 +410,7 @@ function verifyOpenLifeDirectionActionDecisionBlueprint(
 
   if (!isScenarioAnswerBlueprint(blueprint)) {
     return {
-      id: "open-life-direction-action-decision-blueprint",
+      id,
       passed: false,
       details: ["blueprint is not a scenario answer blueprint"],
     };
@@ -422,8 +426,8 @@ function verifyOpenLifeDirectionActionDecisionBlueprint(
 
   const checks = [
     questionMeaning.askedObject === "lifeDirection",
-    questionMeaning.intent === "selection",
-    questionMeaning.analysisMode === "selection",
+    questionMeaning.intent === expectedIntent,
+    questionMeaning.analysisMode === expectedAnalysisMode,
     questionMeaning.actionNature === "confirmDirection",
     blueprint.scenarioType === "actionDecision",
     blueprint.flowTimeStructure === undefined,
@@ -434,7 +438,7 @@ function verifyOpenLifeDirectionActionDecisionBlueprint(
   ];
 
   return {
-    id: "open-life-direction-action-decision-blueprint",
+    id,
     passed: checks.every(Boolean),
     details: [
       `scenarioType=${blueprint.scenarioType}`,
@@ -445,6 +449,26 @@ function verifyOpenLifeDirectionActionDecisionBlueprint(
       `blocks=${blueprint.blocks.join(",")}`,
     ],
   };
+}
+
+function verifyOpenLifeDirectionActionDecisionBlueprint(
+): AnswerBlueprintVerificationCase {
+  return verifyOpenLifeDirectionBlueprintCase(
+    "open-life-direction-action-decision-blueprint",
+    "어떤 방향으로 가야 할까요?",
+    "selection",
+    "selection",
+  );
+}
+
+function verifyOpenLifeDirectionEvaluationMannerBlueprint(
+): AnswerBlueprintVerificationCase {
+  return verifyOpenLifeDirectionBlueprintCase(
+    "open-life-direction-evaluation-manner-blueprint",
+    "앞으로 어떻게 살아야 할까요?",
+    "possibility",
+    "decision",
+  );
 }
 
 function verifyBusinessGeneralFlowMonthBlueprint(): AnswerBlueprintVerificationCase {
@@ -647,6 +671,7 @@ export function verifyAnswerBlueprints(): AnswerBlueprintVerificationResult {
     verifyGeneralFlowOverviewBlueprint(),
     verifyActionDecisionBlueprint(),
     verifyOpenLifeDirectionActionDecisionBlueprint(),
+    verifyOpenLifeDirectionEvaluationMannerBlueprint(),
     verifyBusinessGeneralFlowMonthBlueprint(),
     verifyBusinessStoreOpeningActionDecisionBlueprint(),
     verifyReportModeBlueprint(),

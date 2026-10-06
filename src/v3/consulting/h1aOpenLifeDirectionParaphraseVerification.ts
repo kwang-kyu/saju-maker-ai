@@ -74,8 +74,46 @@ const OPEN_LIFE_DIRECTION_REGRESSION: readonly CaseRow[] = [
     expect: {
       topic: "lifeDirection",
       intent: "evaluation",
+      analysisMode: "decision",
       decisionTarget: "confirmDirection",
       domain: "life",
+      openLifeDirectionRoute: true,
+    },
+  },
+  {
+    id: "open-A",
+    question: "앞으로 어떻게 살아야 할까요?",
+    expect: {
+      topic: "lifeDirection",
+      intent: "evaluation",
+      analysisMode: "decision",
+      decisionTarget: "confirmDirection",
+      domain: "life",
+      openLifeDirectionRoute: true,
+    },
+  },
+  {
+    id: "open-C",
+    question: "제 인생의 방향은 어떻게 잡아야 하나요?",
+    expect: {
+      topic: "lifeDirection",
+      intent: "evaluation",
+      analysisMode: "decision",
+      decisionTarget: "confirmDirection",
+      domain: "life",
+      openLifeDirectionRoute: true,
+    },
+  },
+  {
+    id: "open-C2",
+    question: "제 인생의 방향을 어떻게 잡아야 할까요?",
+    expect: {
+      topic: "lifeDirection",
+      intent: "evaluation",
+      analysisMode: "decision",
+      decisionTarget: "confirmDirection",
+      domain: "life",
+      openLifeDirectionRoute: true,
     },
   },
   {
@@ -206,11 +244,15 @@ function isOpenLifeDirectionRoute(
   analysisMode: string,
   actionNature: string,
 ): boolean {
+  // Mirrors scenarioRouter isOpenLifeDirectionConfirmSelection.
   return (
     askedObject === "lifeDirection"
-    && intent === "selection"
-    && analysisMode === "selection"
     && actionNature === "confirmDirection"
+    && intent !== "prediction"
+    && (
+      analysisMode === "selection"
+      || analysisMode === "decision"
+    )
   );
 }
 
