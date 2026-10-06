@@ -6,6 +6,7 @@ import type {
   ConclusionNature,
   DecisionTarget,
   QuestionAnalysisMode,
+  QuestionAnalysisScope,
   QuestionIntent,
 } from "../question/questionReader.js";
 import type {
@@ -29,6 +30,8 @@ export type CoreDecisionContext = {
   intent: QuestionIntent;
   decisionTarget: DecisionTarget;
   analysisMode?: QuestionAnalysisMode;
+  analysisScope?: QuestionAnalysisScope;
+  zodiacRecommendationLabel?: string;
   conclusionNature?: ConclusionNature;
   careerRecommendation?:
     CareerRecommendationSource;
@@ -877,6 +880,14 @@ function buildContextualCoreDecision(
     throw new Error(
       "Core decision context requires a non-empty original question.",
     );
+  }
+
+  if (
+    context.analysisMode === "compatibility"
+    && context.analysisScope === "zodiac"
+    && context.zodiacRecommendationLabel
+  ) {
+    return `당신과 궁합이 잘 맞는 띠는 ${context.zodiacRecommendationLabel} 쪽으로 볼 수 있습니다.`;
   }
 
   if (

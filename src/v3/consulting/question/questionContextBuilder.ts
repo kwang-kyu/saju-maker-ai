@@ -359,8 +359,11 @@ import {
 
     if (
       question.includes("상대") ||
-      question.includes("사람") ||
-      question.includes("파트너")
+      question.includes("파트너") ||
+      (
+        question.includes("사람")
+        && !/(?:어떤|무슨|어느)\s*사람/.test(question)
+      )
     ) {
       return "other";
     }

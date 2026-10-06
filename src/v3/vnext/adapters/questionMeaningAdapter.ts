@@ -270,10 +270,15 @@ function isOpenZodiacRecommendationAsk(
   question: string,
 ): boolean {
   const asksZodiacClass =
-    /(?:무슨|어떤)\s*띠/.test(question)
+    /(?:무슨|어떤|어느)\s*띠/.test(question)
     || /(?:맞는|좋은)\s*띠/.test(question)
+    || /맞지\s*않는\s*띠/.test(question)
+    || /피해야\s*할\s*띠/.test(question)
     || /띠를\s*(?:알려|추천)/.test(question)
     || /띠\s*(?:알려|추천)/.test(question)
+    || /띠가\s*무엇/.test(question)
+    || /띠는\s*무엇/.test(question)
+    || /띠로\s*보면[\s\S]{0,24}(?:어떤|무슨|어느)\s*(?:띠|사람)/.test(question)
     || /(?:여자|여성|남자|남성)?\s*띠는\b/.test(question)
     || /(?:의\s*)?띠는\?/.test(question)
     || /띠는\s*\?/.test(question);
@@ -290,6 +295,7 @@ function isOpenZodiacRecommendationAsk(
     /궁합|합이\s*맞/.test(question)
     || /잘\s*맞|어울/.test(question)
     || /맞/.test(question)
+    || /피해야/.test(question)
   );
 }
 

@@ -428,6 +428,17 @@ export function runDecisionEngine(
         analysisMode:
           input.question.analysisMode,
 
+        analysisScope:
+          input.question.analysisScope,
+
+        zodiacRecommendationLabel:
+          input.question.analysisMode === "compatibility"
+          && input.question.analysisScope === "zodiac"
+          && (compatibilityAssessment.zodiacAssessment?.candidates?.length ?? 0) > 0
+            ? compatibilityAssessment.zodiacAssessment?.counterpartZodiac
+              ?? undefined
+            : undefined,
+
         conclusionNature:
           input.question.conclusionNature,
 

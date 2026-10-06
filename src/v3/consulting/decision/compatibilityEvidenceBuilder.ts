@@ -267,6 +267,16 @@ function buildZodiacCompatibilityEvidence(
 
               .level,
 
+          ...(
+            zodiacAssessment.candidates
+            && zodiacAssessment.candidates.length > 0
+              ? {
+                  candidates:
+                    zodiacAssessment.candidates,
+                }
+              : {}
+          ),
+
         }),
 
 

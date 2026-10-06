@@ -10889,6 +10889,80 @@ function resolveCompatibilityOverMarryDecisionTarget(
   };
 }
 
+/**
+ * UQ-3: zodiac class를 묻는 표현.
+ * 특정 질문 문장/동물명 if가 아니라 class-ask surface만 본다.
+ */
+function asksZodiacClass(
+  question: string,
+): boolean {
+  return (
+    /(?:무슨|어떤|어느)\s*띠/.test(question)
+    || /(?:맞는|좋은)\s*띠/.test(question)
+    || /맞지\s*않는\s*띠/.test(question)
+    || /피해야\s*할\s*띠/.test(question)
+    || /띠를\s*(?:알려|추천)/.test(question)
+    || /띠\s*(?:알려|추천)/.test(question)
+    || /띠가\s*무엇/.test(question)
+    || /띠는\s*무엇/.test(question)
+    || /띠로\s*보면[\s\S]{0,24}(?:어떤|무슨|어느)\s*(?:띠|사람)/.test(question)
+    || /(?:여자|여성|남자|남성)?\s*띠는\b/.test(question)
+    || /(?:의\s*)?띠는\?/.test(question)
+    || /띠는\s*\?/.test(question)
+  );
+}
+
+/**
+ * UQ-3: fit frame.
+ * explicit 궁합 / interpersonal fit / (bare 맞는 + zodiac class ask).
+ * self-fit 배제 패턴은 기존 계약을 유지한다.
+ */
+function hasCompatibilityFitFrame(
+  question: string,
+): boolean {
+  if (
+    SELF_FIT_EXCLUSION_PATTERN.test(
+      question,
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    COMPATIBILITY_EXPLICIT_PATTERN.test(
+      question,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    INTERPERSONAL_FIT_PATTERN.test(
+      question,
+    )
+  ) {
+    return true;
+  }
+
+  return (
+    asksZodiacClass(question)
+    && /맞|피해야/.test(question)
+  );
+}
+
+/**
+ * UQ-3: open zodiac recommendation.
+ * Fit frame + Asked zodiac class 조합으로만 판정한다.
+ */
+function isOpenZodiacRecommendationQuestion(
+  question: string,
+): boolean {
+  return (
+    hasCompatibilityFitFrame(question)
+    && asksZodiacClass(question)
+  );
+}
+
 function detectQuestionAnalysisMode(
   question:
     string,
@@ -10930,6 +11004,8 @@ function detectQuestionAnalysisMode(
     return "interpretation";
   }
 
+  // UQ-3: open zodiac recommendation / fit frame은
+  // selection보다 compatibility를 우선한다.
   if (
     !isExplicitExecutionDecision(
       question,
@@ -10942,6 +11018,9 @@ function detectQuestionAnalysisMode(
         decisionTarget,
       )
       || hasSpouseCandidateBareFitCompatibilitySignal(
+        question,
+      )
+      || isOpenZodiacRecommendationQuestion(
         question,
       )
     )
@@ -11166,9 +11245,34 @@ function detectQuestionAnalysisScope(
   counterpartFacts:
     QuestionCounterpartFacts,
 ): QuestionAnalysisScope {
+  // 기존 Step 3-B pair/gate: 띠궁합 cue.
+  // 구체 동물 surface가 없어도 띠궁합-only 질문은 zodiac scope.
+  if (
+    /띠\s*궁합|궁합.*띠|띠만|띠.*궁합|띠로\s*보면/.test(
+      question,
+    )
+  ) {
+    return "zodiac";
+  }
+
+  // UQ-3: open zodiac recommendation (fit frame + asked class)
+  // 구체 동물명 없이도 zodiac scope로 수렴한다.
+  if (
+    isOpenZodiacRecommendationQuestion(
+      question,
+    )
+  ) {
+    return "zodiac";
+  }
+
+  // UQ-3: fit frame + zodiac cue (named surface) — pair assessment
+  // asksZodiacClass가 아닌 concrete counterpart operand 경로.
   if (
     counterpartFacts.zodiac
-    && /띠\s*궁합|궁합.*띠|띠만|띠.*궁합/.test(
+    && hasCompatibilityFitFrame(
+      question,
+    )
+    && /띠/.test(
       question,
     )
   ) {
