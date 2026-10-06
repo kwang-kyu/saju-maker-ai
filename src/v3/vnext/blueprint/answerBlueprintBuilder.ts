@@ -356,6 +356,9 @@ function buildReportBlueprint(
  * Scenario와 분석 결과를 바탕으로
  * "무엇을 어떤 순서로 설명할지"만 결정한다.
  * 사주 판단이나 고정 답변 문장을 생성하지 않는다.
+ *
+ * Production packaging SoT의 block matrix이다.
+ * ExplanationPlan step과 병합하지 않는다.
  */
 export function buildAnswerBlueprint(
   input: AnswerBlueprintBuilderInput,

@@ -3,6 +3,13 @@
  *
  * 기존 v3 엔진을 수정하지 않고 read-only로 호출한 뒤
  * vNext Orchestrator → Response Action → NaturalConsultingResponse까지 연결한다.
+ *
+ * Production packaging SoT (vNext GPT Input):
+ *   ScenarioRouter → AnswerBlueprint → ResponseEvidenceSelector
+ *   → ResponseContext → promptSectionBuilder/promptTemplate → GPT
+ *
+ * DecisionExplanationPlan / consultingPromptBuilder 경로는
+ * runConsultingTurn이 생성하더라도 vNext production GPT Input SoT가 아니다.
  */
 
 import {

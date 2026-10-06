@@ -57,15 +57,27 @@ export type ConsultingTurnRunResult = {
   explanation:
     ReturnType<typeof readDecisionResult>;
 
+  /**
+   * Legacy consulting explanation packaging.
+   * vNext production GPT Input SoT가 아니다.
+   */
   explanationPlan:
     ReturnType<typeof buildDecisionExplanationPlan>;
 
-    explanationPayload:
+  /**
+   * Legacy consulting explanation packaging.
+   * vNext production GPT Input SoT가 아니다.
+   */
+  explanationPayload:
     ReturnType<typeof buildDecisionExplanationPayload>;
 
   groundingContext:
     ReturnType<typeof buildConsultingGroundingContext>;
 
+  /**
+   * Legacy consultingPromptBuilder output.
+   * vNext production uses ResponseContext → buildResponsePromptFromAction.
+   */
   prompt:
     ReturnType<typeof buildConsultingPrompt>;
 };

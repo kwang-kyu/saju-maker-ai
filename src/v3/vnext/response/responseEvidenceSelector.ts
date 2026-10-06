@@ -1,3 +1,16 @@
+/**
+ * ResponseEvidenceSelector — production packaging evidence owners.
+ *
+ * Part of production packaging SoT:
+ *   ScenarioRouter → AnswerBlueprint → ResponseEvidenceSelector
+ *   → ResponseContext → GPT prompt.
+ *
+ * Contracts:
+ * - duplicate evidence key must not cross block owners
+ * - directAnswer / supportingEvidence / possibility owners stay separated
+ * - do not re-inject assessment.evidence into risk/conditions/caution
+ */
+
 import type {
   AnswerBlueprint,
   ReportAnswerSection,
@@ -94,6 +107,28 @@ function collectEvidenceItems(
     }
 
     items.push(...source.items);
+  }
+
+  return items;
+}
+
+/**
+ * ChangeSignal evidence keys are origin-scoped (human-1, …) per signal.
+ * Namespace by signal type so opportunity/pressure blocks do not collide
+ * on the same key string across different signal owners.
+ */
+function collectSignalEvidenceItems(
+  signals: readonly ChangeSignal[],
+): VNextEvidenceItem[] {
+  const items: VNextEvidenceItem[] = [];
+
+  for (const signal of signals) {
+    for (const item of signal.evidence.items) {
+      items.push({
+        ...item,
+        key: `${signal.type}:${item.key}`,
+      });
+    }
   }
 
   return items;
@@ -672,9 +707,7 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
       return withEmphasis({
         relevantFacts: [],
         relevantSignals: signals,
-        relevantEvidence: collectEvidenceItems(
-          ...signals.map((signal) => signal.evidence),
-        ),
+        relevantEvidence: collectSignalEvidenceItems(signals),
         emphasis: context.emphasis.filter((item) => item === "opportunity"),
       }, context.emphasis);
     },
@@ -688,9 +721,7 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
       return withEmphasis({
         relevantFacts: [],
         relevantSignals: signals,
-        relevantEvidence: collectEvidenceItems(
-          ...signals.map((signal) => signal.evidence),
-        ),
+        relevantEvidence: collectSignalEvidenceItems(signals),
         emphasis: context.emphasis.filter((item) => item === "pressure"),
       }, context.emphasis);
     },
@@ -708,9 +739,7 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
         relevantSignals: signals,
         // risk 본업은 risks facts + risk signal evidence.
         // assessment.evidence 전체 재주입은 directAnswer/supportingEvidence owner에 맡긴다.
-        relevantEvidence: collectEvidenceItems(
-          ...signals.map((signal) => signal.evidence),
-        ),
+        relevantEvidence: collectSignalEvidenceItems(signals),
         emphasis: context.emphasis.filter((item) =>
           item === "risk" || item === "highRisk",
         ),
@@ -735,6 +764,9 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
     select: (context) => {
       const career = findDomain(context.humanState, "career");
       const capacity = findDomain(context.humanState, "capacity");
+      const hasSuitableRoleOwner = resolveBlueprintBlockIds(
+        context.blueprint,
+      ).includes("suitableRole");
 
       return withEmphasis({
         relevantFacts: [
@@ -742,10 +774,13 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
           ...domainFacts(capacity),
         ],
         relevantSignals: [],
-        relevantEvidence: collectEvidenceItems(
-          career?.evidence,
-          capacity?.evidence,
-        ),
+        // suitableRole owns career evidence. Keep capacity evidence here.
+        relevantEvidence: hasSuitableRoleOwner
+          ? collectEvidenceItems(capacity?.evidence)
+          : collectEvidenceItems(
+            career?.evidence,
+            capacity?.evidence,
+          ),
         emphasis: [],
       }, context.emphasis);
     },
@@ -783,10 +818,10 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
       return withEmphasis({
         relevantFacts: domainFacts(relationship),
         relevantSignals: signals,
-        relevantEvidence: collectEvidenceItems(
-          relationship?.evidence,
-          ...signals.map((signal) => signal.evidence),
-        ),
+        relevantEvidence: [
+          ...collectEvidenceItems(relationship?.evidence),
+          ...collectSignalEvidenceItems(signals),
+        ],
         emphasis: context.emphasis.filter((item) =>
           item === "conflict" || item === "relationshipChange",
         ),
@@ -1043,8 +1078,10 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
       relevantSignals: context.changeSignals.filter((signal) =>
         context.scenario.requiredSignals.includes(signal.type),
       ),
-      relevantEvidence: collectEvidenceItems(
-        ...context.changeSignals.map((signal) => signal.evidence),
+      relevantEvidence: collectSignalEvidenceItems(
+        context.changeSignals.filter((signal) =>
+          context.scenario.requiredSignals.includes(signal.type),
+        ),
       ),
       emphasis: context.emphasis,
     }, context.emphasis),
@@ -1218,9 +1255,7 @@ export const RESPONSE_SECTION_SELECTOR_RULES: readonly ResponseBlockSelectorRule
       return withEmphasis({
         relevantFacts: [],
         relevantSignals: signals,
-        relevantEvidence: collectEvidenceItems(
-          ...signals.map((signal) => signal.evidence),
-        ),
+        relevantEvidence: collectSignalEvidenceItems(signals),
         emphasis: context.emphasis,
       }, context.emphasis);
     },

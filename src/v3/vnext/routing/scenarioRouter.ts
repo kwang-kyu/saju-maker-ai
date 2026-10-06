@@ -631,6 +631,10 @@ function selectScenarioRule(
 /**
  * QuestionMeaning을 기반으로 필요한 분석 범위만 선언한다.
  * 사주 판단을 수행하지 않는다.
+ *
+ * Production packaging SoT의 시작점이다.
+ * routeScenario → AnswerBlueprint → ResponseContext → GPT prompt.
+ * ExplanationPlan과 병합하지 않는다.
  */
 export function routeScenario(
   questionMeaning: QuestionMeaning,

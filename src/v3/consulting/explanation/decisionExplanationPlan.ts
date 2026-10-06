@@ -59,6 +59,14 @@ export type ExplanationBlock = {
     string;
 };
 
+/**
+ * Legacy / consulting explanation packaging plan.
+ *
+ * Still built by runConsultingTurn → consultingPromptBuilder.
+ * Not the production vNext GPT Input SoT.
+ * Production packaging SoT:
+ *   ScenarioRouter → AnswerBlueprint → ResponseContext → prompt.
+ */
 export type DecisionExplanationPlan = {
   originalQuestion:
     string;
