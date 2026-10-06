@@ -29,6 +29,20 @@ export type ZodiacCompatibilityLevel =
   | "conflicted"
   | "unknown";
 
+export type ZodiacCompatibilityCandidate = {
+  counterpartBranch:
+    ZodiacEarthlyBranch;
+
+  counterpartZodiac:
+    string;
+
+  relation:
+    ZodiacCompatibilityRelation;
+
+  level:
+    ZodiacCompatibilityLevel;
+};
+
 export type ZodiacCompatibilityAssessment = {
   available:
     boolean;
@@ -56,6 +70,13 @@ export type ZodiacCompatibilityAssessment = {
 
   analysisScope:
     "zodiacOnly" | null;
+
+  /**
+   * Open zodiac recommendation only.
+   * Existing pair assessments omit this field.
+   */
+  candidates?:
+    readonly ZodiacCompatibilityCandidate[];
 };
 
 const BRANCHES:
@@ -115,6 +136,15 @@ const ZODIAC_LABELS:
     亥:
       "돼지띠",
   };
+
+/**
+ * Closed-class zodiac candidate labels for open recommendation.
+ * Not a new semantic axis — reuse of existing year-branch labels.
+ */
+export const ZODIAC_COMPATIBILITY_CANDIDATE_LABELS:
+  readonly string[] = BRANCHES.map(
+    (branch) => ZODIAC_LABELS[branch],
+  );
 
 const ZODIAC_ALIASES:
   Readonly<

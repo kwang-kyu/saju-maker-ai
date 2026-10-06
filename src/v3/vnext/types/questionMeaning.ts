@@ -13,6 +13,7 @@ import type {
   ConclusionNature,
   DecisionTarget,
   QuestionAnalysisMode,
+  QuestionAnalysisScope,
   QuestionObjectReferent,
   QuestionTopic,
 } from "../../consulting/question/questionReader.js";
@@ -68,6 +69,9 @@ export type QuestionAskedObject = QuestionTopic;
 
 /** Reader analysisMode 재사용 — intent와 독립 축 */
 export type QuestionMeaningAnalysisMode = QuestionAnalysisMode;
+
+/** Reader analysisScope 재사용 — 새 축이 아닌 passthrough */
+export type QuestionMeaningAnalysisScope = QuestionAnalysisScope;
 
 /** Reader conclusionNature 재사용 */
 export type QuestionMeaningConclusionNature = ConclusionNature;
@@ -169,6 +173,11 @@ export type QuestionMeaning = {
   askedObject: QuestionAskedObject;
   /** Reader analysisMode — intent와 독립 */
   analysisMode: QuestionMeaningAnalysisMode;
+  /**
+   * Reader analysisScope passthrough.
+   * Response/Prompt가 재해석하지 않는다.
+   */
+  analysisScope?: QuestionMeaningAnalysisScope;
   /** Reader conclusionNature */
   conclusionNature: QuestionMeaningConclusionNature;
   /** 상대방 존재/identity */
