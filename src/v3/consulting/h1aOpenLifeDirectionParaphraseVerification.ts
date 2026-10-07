@@ -142,6 +142,30 @@ const OPEN_LIFE_DIRECTION_REGRESSION: readonly CaseRow[] = [
     },
   },
   {
+    id: "path-A1",
+    question: "지금부터 제 삶의 축을 어디에 세우는 게 맞을까요?",
+    expect: {
+      topic: "lifeDirection",
+      intent: "selection",
+      analysisMode: "selection",
+      decisionTarget: "confirmDirection",
+      domain: "life",
+      openLifeDirectionRoute: true,
+    },
+  },
+  {
+    id: "path-A3",
+    question: "제 인생을 어떤 기조로 이끌어가는 게 나을지 정리하고 싶어요",
+    expect: {
+      topic: "lifeDirection",
+      intent: "evaluation",
+      analysisMode: "decision",
+      decisionTarget: "confirmDirection",
+      domain: "life",
+      openLifeDirectionRoute: true,
+    },
+  },
+  {
     id: "open-D",
     question: "무엇을 선택해야 할까요?",
     expect: {

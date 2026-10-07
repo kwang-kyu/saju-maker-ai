@@ -5252,7 +5252,8 @@ function hasOptionInterrogativeSelectionStructure(
 
 /**
  * Open life-direction path-commitment selection locus.
- * 삶/인생 무게·중심·방향 초점을 어디/어느 쪽/무엇에 둘지 묻는 구조.
+ * 삶/인생 무게·중심·축·기조·방향 초점을 어디/어느 쪽/무엇에 둘지 묻는 구조.
+ * path-commitment/compound gate 위에서만 평가한다.
  */
 function hasOpenLifeDirectionPathCommitmentSelectionStructure(
   question: string,
@@ -5265,7 +5266,7 @@ function hasOpenLifeDirectionPathCommitmentSelectionStructure(
   }
 
   return (
-    /(?:어느|어떤)\s*(?:쪽|방향)/.test(question)
+    /(?:어느|어떤)\s*(?:쪽|방향|기조)/.test(question)
     || /어디에/.test(question)
     || /(?:무엇|뭐)(?:이|은|는|일|을|를)?(?:까요|까|지)/.test(question)
   );
