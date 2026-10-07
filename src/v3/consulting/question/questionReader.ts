@@ -1574,6 +1574,33 @@ function isMoneyPossibilityRoomQuestion(
 }
 
 /**
+ * Blind Holdout Group D: money leveraged-roll risk.
+ * 대출 + 더 받아서 + 굴리* + 위험* 결합일 때만
+ * 기존 money risk / invest 계약(F1)으로 수렴한다.
+ * bare "선택"/"대출"/"위험" 단독 forcing 금지.
+ * manage "굴려 모*" / keep-going "굴려가*" 와 표면을 분리한다.
+ */
+function isMoneyLoanRollRiskQuestion(
+  question: string,
+): boolean {
+  if (!matchesKoreanKeyword(question, "대출")) {
+    return false;
+  }
+
+  if (!/더\s*받아서/.test(question)) {
+    return false;
+  }
+
+  // roll/deploy capital — not manage "굴려 모" alone, not bare 굴리 forcing
+  if (!/굴리/.test(question)) {
+    return false;
+  }
+
+  // strong risk speech-act (intentRules risk / STRONG_RISK 계열)
+  return /위험/.test(question);
+}
+
+/**
  * 허가/가능 여부 질문의 공통 표현.
  * possibility intentRules 키워드와 같은 계열을 재사용하되,
  * 허가·실현가능성 frame만 선게이트한다.
@@ -1681,6 +1708,13 @@ function resolveQuestionIntent(
     return {
       result: "possibility",
       evidence: ["moneyPossibilityRoom"],
+    };
+  }
+
+  if (isMoneyLoanRollRiskQuestion(question)) {
+    return {
+      result: "risk",
+      evidence: ["moneyLoanRollRisk"],
     };
   }
 
@@ -6958,6 +6992,11 @@ function normalizeAxes(
       // permission frame과 같은 intent-only override 계층.
       intent = "possibility";
       intentEvidence = ["moneyPossibilityRoom"];
+    } else if (isMoneyLoanRollRiskQuestion(question)) {
+      // Blind Holdout Group D: 대출×더 받아서×굴리×위험 → risk.
+      // selection("선택") first-match보다 기존 money risk 계약을 우선한다.
+      intent = "risk";
+      intentEvidence = ["moneyLoanRollRisk"];
     } else {
       // timing surface(올해/내년) first-match여도
       // 강한 existence speech-act면 intent만 existence로 보존한다.
@@ -10515,6 +10554,16 @@ function resolveDecisionTargetByTopic(
     && isMoneyFutureAspectTrajectoryQuestion(question)
   ) {
     return "none";
+  }
+
+  // Blind Holdout Group D: 대출×더 받아서×굴리×위험 → invest.
+  // manageMoney("대출") keyword가 F1 money risk 계약(invest)을
+  // 막지 않게 한다. bare 대출/굴리 단독 forcing 금지.
+  if (
+    topic === "money"
+    && isMoneyLoanRollRiskQuestion(question)
+  ) {
+    return "invest";
   }
 
   if (
