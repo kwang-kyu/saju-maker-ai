@@ -49,7 +49,7 @@ export type ActionCandidateComparisonVerificationResult = {
   passed: boolean;
 };
 
-const QUESTIONS = {
+export const QUESTIONS = {
   A1: "지금 직장을 계속 다닐까요, 아니면 이직하는 게 나을까요?",
   A2: "회사를 계속 다닐지 그만둘지 고민입니다.",
   A3: "사업에 투자할까요, 아니면 기다리는 게 나을까요?",
