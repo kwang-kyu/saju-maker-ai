@@ -206,7 +206,7 @@ function filterBlocksForMissingContext(
  * Open lifeDirection direction-confirm.
  * Mirrors scenarioRouter isOpenLifeDirectionConfirmSelection
  * semantic contract (lifeDirection + confirmDirection + non-prediction
- * + selection|decision analysisMode).
+ * + non-timing + selection|decision analysisMode).
  * Used only to omit scale/timing blocks for this shape.
  */
 function isOpenLifeDirectionConfirmSelection(
@@ -219,6 +219,9 @@ function isOpenLifeDirectionConfirmSelection(
     return false;
   }
   if (questionMeaning.intent === "prediction") {
+    return false;
+  }
+  if (questionMeaning.intent === "timing") {
     return false;
   }
   return (

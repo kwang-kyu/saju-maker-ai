@@ -307,6 +307,7 @@ function isOpenLifeDirectionRoute(
     askedObject === "lifeDirection"
     && actionNature === "confirmDirection"
     && intent !== "prediction"
+    && intent !== "timing"
     && (
       analysisMode === "selection"
       || analysisMode === "decision"

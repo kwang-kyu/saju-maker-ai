@@ -120,10 +120,11 @@ function hasExecutionActionNature(
  *
  * Covers both:
  * - selection + selection (path commitment / directional choose)
- * - decision analysisMode + non-prediction intent
+ * - decision analysisMode + non-prediction / non-timing intent
  *   (evaluation manner → Adapter possibility projection)
  *
  * Prediction (LF4 lifeDirection confirmDirection) stays excluded.
+ * Timing (bestTiming / timing-assessment primary) stays excluded.
  */
 function isOpenLifeDirectionConfirmSelection(
   questionMeaning: QuestionMeaning,
@@ -138,6 +139,13 @@ function isOpenLifeDirectionConfirmSelection(
 
   // Keep general-life-prediction-flow for lifeDirection + prediction.
   if (questionMeaning.intent === "prediction") {
+    return false;
+  }
+
+  // Keep timing-assessment for lifeDirection + timing (e.g. bestTiming).
+  // Selection/decision lifeDirection asks that are not timing-primary
+  // still match (A2 boundary).
+  if (questionMeaning.intent === "timing") {
     return false;
   }
 
@@ -195,11 +203,25 @@ function isProjectedOpenGeneralEvaluation(
  * possibility/timing/direction 등 + 실행행동 → true.
  * open lifeDirection confirmDirection (selection|decision, non-prediction)
  * → false.
+ * lifeDirection + confirmDirection + timing → false
+ * (timing-assessment owns; same protect-without-promote as prediction).
  */
 function isActionBearingQuestion(
   questionMeaning: QuestionMeaning,
 ): boolean {
   if (isOpenLifeDirectionConfirmSelection(questionMeaning)) {
+    return false;
+  }
+
+  // Timing exclude from isOpenLifeDirectionConfirmSelection must not
+  // reclaim career/business action-decision (confirmDirection is
+  // execution-listed and timing is actionable). Mirror prediction:
+  // protect the shape without promoting to open-life-direction.
+  if (
+    questionMeaning.askedObject === "lifeDirection"
+    && questionMeaning.actionNature === "confirmDirection"
+    && questionMeaning.intent === "timing"
+  ) {
     return false;
   }
 
