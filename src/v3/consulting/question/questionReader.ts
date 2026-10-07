@@ -1494,6 +1494,35 @@ const PREDICTION_INTENT_EXCLUSION_PATTERNS:
     /(?:어떤|어느)\s*방향\s*(?:으로|로)?\s*(?:전개|진행)/,
   ];
 
+/**
+ * Blind Holdout Group C: money future-state aspect trajectory.
+ * 미래 시점 + cashflow/자금 상태 + "어떤 양상"이 결합될 때만
+ * 기존 prediction trajectory(흐름/모습) 계약으로 연결한다.
+ * bare "양상" 단독 forcing 금지.
+ */
+function isMoneyFutureAspectTrajectoryQuestion(
+  question: string,
+): boolean {
+  const hasFutureScope =
+    /(?:내년|올해|올\s*해|앞으로|향후|하반기|상반기|다음\s*(?:달|해)|이번\s*(?:달|해))/
+      .test(question);
+
+  if (!hasFutureScope) {
+    return false;
+  }
+
+  const hasMoneyState = MONEY_CASHFLOW_COMPOUND_NOUNS.some((noun) =>
+    matchesKoreanKeyword(question, noun)
+  );
+
+  if (!hasMoneyState) {
+    return false;
+  }
+
+  // trajectory noun interrogative — parallel to 어떤 흐름/모습
+  return /어떤\s*양상/.test(question);
+}
+
 function isFutureOutcomePredictionQuestion(
   question:
     string,
@@ -1509,12 +1538,39 @@ function isFutureOutcomePredictionQuestion(
     return false;
   }
 
+  if (isMoneyFutureAspectTrajectoryQuestion(question)) {
+    return true;
+  }
+
   return FUTURE_OUTCOME_PREDICTION_PATTERNS.some(
     (pattern) =>
       pattern.test(
         question,
       ),
   );
+}
+
+/**
+ * Blind Holdout Group C: money × possibility room surface.
+ * cashflow noun과 "여지" + 있을* interrogative가 결합될 때만
+ * 기존 possibility("가능성") 계약으로 수렴한다.
+ * bare "여지" 단독 forcing 금지.
+ */
+function isMoneyPossibilityRoomQuestion(
+  question: string,
+): boolean {
+  const hasMoneyNoun =
+    MONEY_CASHFLOW_COMPOUND_NOUNS.some((noun) =>
+      matchesKoreanKeyword(question, noun)
+    )
+    || matchesKoreanKeyword(question, "목돈");
+
+  if (!hasMoneyNoun) {
+    return false;
+  }
+
+  // "여지가 있을*" / "여지는 있을*" — 가능성 paraphrase
+  return /여지(?:가|는)?\s*있을/.test(question);
 }
 
 /**
@@ -1618,6 +1674,13 @@ function resolveQuestionIntent(
         [
           "permissionOrFeasibility",
         ],
+    };
+  }
+
+  if (isMoneyPossibilityRoomQuestion(question)) {
+    return {
+      result: "possibility",
+      evidence: ["moneyPossibilityRoom"],
     };
   }
 
@@ -6890,6 +6953,11 @@ function normalizeAxes(
     if (permissionIntent) {
       intent = permissionIntent.intent;
       intentEvidence = permissionIntent.evidence;
+    } else if (isMoneyPossibilityRoomQuestion(question)) {
+      // Blind Holdout Group C: money × 여지 room → possibility.
+      // permission frame과 같은 intent-only override 계층.
+      intent = "possibility";
+      intentEvidence = ["moneyPossibilityRoom"];
     } else {
       // timing surface(올해/내년) first-match여도
       // 강한 existence speech-act면 intent만 existence로 보존한다.
@@ -10435,6 +10503,18 @@ function resolveDecisionTargetByTopic(
     )
   ) {
     return "changeJob";
+  }
+
+  // Blind Holdout Group C: money future aspect trajectory prediction.
+  // cashflow noun(자금) manageMoney keyword가 양상/흐름 prediction을
+  // 오염하지 않게 한다. 재물운 prediction 보호와 같은 계층.
+  if (
+    topic === "money"
+    && intent === "prediction"
+    && keywordDecisionTarget === "manageMoney"
+    && isMoneyFutureAspectTrajectoryQuestion(question)
+  ) {
+    return "none";
   }
 
   if (
