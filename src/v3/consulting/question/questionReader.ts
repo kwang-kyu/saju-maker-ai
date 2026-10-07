@@ -1601,6 +1601,75 @@ function isMoneyLoanRollRiskQuestion(
 }
 
 /**
+ * Blind Holdout Group E: career duty/role fit recommendation.
+ * fit("잘 맞는") + (직무|역할|직업군|직종) + (어떤/어느 쪽|어떤+역할명사)
+ * 결합일 때만 기존 job selection / aptitudeRecommendation으로 연결한다.
+ * bare "잘 맞는" / bare "어떤" 단독 forcing 금지.
+ */
+function isCareerDutyRoleFitSelectionAsk(
+  question: string,
+): boolean {
+  if (!/(?:직무|역할|직업군|직종)/.test(question)) {
+    return false;
+  }
+
+  const hasFitOnRole =
+    /(?:잘\s*)?맞는\s*(?:직무|역할|직업군|직종|직업|일|업무)/.test(
+      question,
+    )
+    || /(?:직무|역할|직업군|직종).*(?:맞|어울)/.test(question)
+    || /(?:적성|성향).*(?:맞|어울)/.test(question);
+
+  if (!hasFitOnRole) {
+    return false;
+  }
+
+  // selection locus — directional side or which-role option
+  return (
+    /(?:어떤|어느)\s*쪽/.test(question)
+    || /(?:어떤|무슨|어느)\s*(?:직무|역할|직업군|직종|직업)/.test(
+      question,
+    )
+  );
+}
+
+/**
+ * Blind Holdout Group E: business field fit recommendation selection.
+ * fit + (사업 분야|업종) + (어디|무엇|어떤+분야) 결합일 때만
+ * 기존 business selection / aptitudeRecommendation으로 연결한다.
+ * bare "잘 맞는" / bare "어디" 단독 forcing 금지.
+ * business fit soft frame의 possibility demotion 대상에서 제외한다.
+ */
+function isBusinessFieldFitSelectionAsk(
+  question: string,
+): boolean {
+  if (
+    !/사업\s*분야/.test(question)
+    && !/업종/.test(question)
+  ) {
+    return false;
+  }
+
+  const hasPrefitOnField =
+    /(?:잘\s*)?맞는\s*(?:사업\s*분야|업종|사업)/.test(question);
+  const hasOptionFieldFit =
+    /(?:어떤|무슨|어느)\s*(?:사업\s*분야|업종|사업).*(?:맞|어울|적합|추천)/
+      .test(question);
+
+  if (!hasPrefitOnField && !hasOptionFieldFit) {
+    return false;
+  }
+
+  return (
+    /어디/.test(question)
+    || /(?:뭘|무엇|뭐)(?:이|가|은|는|일)?(?:까요|까|지)/.test(
+      question,
+    )
+    || /(?:어떤|무슨|어느)\s*(?:사업\s*분야|업종|사업)/.test(question)
+  );
+}
+
+/**
  * 허가/가능 여부 질문의 공통 표현.
  * possibility intentRules 키워드와 같은 계열을 재사용하되,
  * 허가·실현가능성 frame만 선게이트한다.
@@ -1715,6 +1784,20 @@ function resolveQuestionIntent(
     return {
       result: "risk",
       evidence: ["moneyLoanRollRisk"],
+    };
+  }
+
+  if (isCareerDutyRoleFitSelectionAsk(question)) {
+    return {
+      result: "selection",
+      evidence: ["careerDutyRoleFitSelection"],
+    };
+  }
+
+  if (isBusinessFieldFitSelectionAsk(question)) {
+    return {
+      result: "selection",
+      evidence: ["businessFieldFitSelection"],
     };
   }
 
@@ -2114,6 +2197,31 @@ function collectMeaningCandidates(
       priority: jobRulePriority >= 0 ? jobRulePriority : topicRules.length,
       strength: 1,
       specificity: "어떤 일".length,
+    });
+  }
+
+  // Blind Holdout Group E: duty/role fit recommendation → job topic.
+  // "직무/역할"은 topicRules에 없어 general로 떨어지므로
+  // 기존 job selection 계약으로만 연결한다.
+  if (isCareerDutyRoleFitSelectionAsk(normalizedQuestion)) {
+    const jobRulePriority = topicRules.findIndex(
+      (rule) => rule.result === "job",
+    );
+    const roleSurface = /직무/.test(normalizedQuestion)
+      ? "직무"
+      : /역할/.test(normalizedQuestion)
+      ? "역할"
+      : /직업군/.test(normalizedQuestion)
+      ? "직업군"
+      : "직종";
+    topics.push({
+      axis: "topic",
+      value: "job",
+      evidence: [roleSurface],
+      source: "compoundSignal",
+      priority: jobRulePriority >= 0 ? jobRulePriority : topicRules.length,
+      strength: 1,
+      specificity: roleSurface.length,
     });
   }
 
@@ -6097,11 +6205,13 @@ function normalizeIntentSemanticMeaning(
   // 4) business fit/recommendation soft frame
   //    "무엇이 맞는가" 적합 판단이 generalJudgement/selection/comparison으로
   //    갈라지지 않게 possibility로 수렴한다.
-  //    강한 option-fit(중 어느/둘 중)과 option-interrogative(어떤/어느+N)
-  //    는 selection 경로를 유지한다. 실행 DT는 이 분기에 오지 않는다.
+  //    강한 option-fit(중 어느/둘 중)과 option-interrogative(어떤/어느+N),
+  //    Group E business field fit selection(사업 분야×어디/어떤)은
+  //    selection 경로를 유지한다. 실행 DT는 이 분기에 오지 않는다.
   if (
     !optionFitStrong
     && !hasOptionInterrogativeSelectionStructure(question)
+    && !isBusinessFieldFitSelectionAsk(question)
     && hasBusinessFitRecommendationSoftSignal(question)
     && (
       intent === "generalJudgement"
@@ -6204,22 +6314,33 @@ function normalizeIntentSemanticMeaning(
   //    permission surface("맞을까")가 선택 대상 질문을 가리지 않게
   //    selection으로 수렴한다. topic / decisionTarget은 변경하지 않는다.
   //    method manner·evaluation-noun은 위에서 보호한다.
+  //    Group E: career duty/role fit · business field fit selection locus도
+  //    같은 selection 경로로 복원한다.
   if (
     (intent === "possibility" || intent === "generalJudgement")
-    && hasOptionInterrogativeSelectionStructure(question)
+    && (
+      hasOptionInterrogativeSelectionStructure(question)
+      || isCareerDutyRoleFitSelectionAsk(question)
+      || isBusinessFieldFitSelectionAsk(question)
+    )
     && !hasCorrectChoiceJudgementSoftSignal(question)
   ) {
     const selectionCandidate = findIntentCandidate(
       candidates.intents,
       "selection",
     );
+    const groupEEvidence = isCareerDutyRoleFitSelectionAsk(question)
+      ? ["careerDutyRoleFitSelection"]
+      : isBusinessFieldFitSelectionAsk(question)
+      ? ["businessFieldFitSelection"]
+      : ["optionInterrogativeSelection"];
 
     return {
       intent: "selection",
       intentEvidence: mergeUniqueEvidence(
         selectionCandidate?.evidence ?? [],
         intentEvidence,
-        ["optionInterrogativeSelection"],
+        groupEEvidence,
       ),
     };
   }
@@ -6997,6 +7118,17 @@ function normalizeAxes(
       // selection("선택") first-match보다 기존 money risk 계약을 우선한다.
       intent = "risk";
       intentEvidence = ["moneyLoanRollRisk"];
+    } else if (isCareerDutyRoleFitSelectionAsk(question)) {
+      // Blind Holdout Group E: 직무/역할 fit × 어떤 쪽 → selection.
+      // evaluation fallback보다 기존 career aptitude 계약을 우선한다.
+      intent = "selection";
+      intentEvidence = ["careerDutyRoleFitSelection"];
+    } else if (isBusinessFieldFitSelectionAsk(question)) {
+      // Blind Holdout Group E: 사업 분야 fit × 어디/어떤 → selection.
+      // business fit soft frame possibility demotion보다
+      // 기존 business aptitude 계약을 우선한다.
+      intent = "selection";
+      intentEvidence = ["businessFieldFitSelection"];
     } else {
       // timing surface(올해/내년) first-match여도
       // 강한 existence speech-act면 intent만 existence로 보존한다.
