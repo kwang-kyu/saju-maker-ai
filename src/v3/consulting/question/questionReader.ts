@@ -11433,6 +11433,22 @@ function resolveCompatibilityOverMarryDecisionTarget(
 }
 
 /**
+ * Zodiac pair/scope cue — analysisScope / analysisMode가 공유한다.
+ * bare "띠" 단독이 아니라 띠가 compatibility 대상인 표현만 본다.
+ * relationship generic(K1/K2)은 이 cue가 없어 general scope를 유지한다.
+ */
+const ZODIAC_COMPATIBILITY_SCOPE_CUE_PATTERN =
+  /띠\s*궁합|궁합.*띠|띠만|띠.*궁합|띠로(?:만)?\s*보면/;
+
+function hasZodiacCompatibilityScopeCue(
+  question: string,
+): boolean {
+  return ZODIAC_COMPATIBILITY_SCOPE_CUE_PATTERN.test(
+    question,
+  );
+}
+
+/**
  * UQ-3: zodiac class를 묻는 표현.
  * 특정 질문 문장/동물명 if가 아니라 class-ask surface만 본다.
  */
@@ -11565,6 +11581,8 @@ function detectQuestionAnalysisMode(
 
   // UQ-3: open zodiac recommendation / fit frame은
   // selection보다 compatibility를 우선한다.
+  // zodiac-scope cue + fit frame: 띠가 compatibility 대상인 경우만
+  // (예: 띠만 보면 잘 맞는 편). bare 띠/relationship generic은 승격하지 않는다.
   if (
     !isExplicitExecutionDecision(
       question,
@@ -11585,6 +11603,14 @@ function detectQuestionAnalysisMode(
       || hasNamedZodiacPairFitFrame(
         question,
         counterpartFacts,
+      )
+      || (
+        hasZodiacCompatibilityScopeCue(
+          question,
+        )
+        && hasCompatibilityFitFrame(
+          question,
+        )
       )
     )
   ) {
@@ -11811,7 +11837,7 @@ function detectQuestionAnalysisScope(
   // 기존 Step 3-B pair/gate: 띠궁합 cue.
   // 구체 동물 surface가 없어도 띠궁합-only 질문은 zodiac scope.
   if (
-    /띠\s*궁합|궁합.*띠|띠만|띠.*궁합|띠로(?:만)?\s*보면/.test(
+    hasZodiacCompatibilityScopeCue(
       question,
     )
   ) {

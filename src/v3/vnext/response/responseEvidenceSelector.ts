@@ -798,12 +798,31 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
   {
     blockId: "connection",
     priority: 50,
-    select: (context) =>
-      selectDomainBlock(
-        context,
-        "relationship",
+    select: (context) => {
+      const relationship = findDomain(context.humanState, "relationship");
+      const signals = signalsByType(
+        context.changeSignals,
         ["relationshipChange", "stability"],
-      ),
+      );
+      // zodiac compatibility evidence owner는 directAnswer.
+      // relationship generic evidence / shared signal evidence를
+      // connection·conflict에 이중 소유하지 않는다.
+      const isZodiacCompatibilityScope =
+        context.questionMeaning.analysisScope === "zodiac";
+
+      return withEmphasis({
+        relevantFacts: domainFacts(relationship),
+        relevantSignals: signals,
+        relevantEvidence: isZodiacCompatibilityScope
+          ? []
+          : collectEvidenceItems(relationship?.evidence),
+        emphasis: context.emphasis.filter((item) =>
+          item === "relationship"
+          || item === "relationshipChange"
+          || item === "stability",
+        ),
+      }, context.emphasis);
+    },
   },
   {
     blockId: "conflict",
@@ -814,12 +833,23 @@ export const RESPONSE_BLOCK_SELECTOR_RULES: readonly ResponseBlockSelectorRule[]
         context.changeSignals,
         ["conflict", "relationshipChange"],
       );
+      const hasConnectionOwner = resolveBlueprintBlockIds(
+        context.blueprint,
+      ).includes("connection");
+      // zodiac: directAnswer owns compatibility evidence.
+      // non-zodiac: connection owns relationship domain evidence when both present.
+      const isZodiacCompatibilityScope =
+        context.questionMeaning.analysisScope === "zodiac";
+      const yieldRelationshipDomainEvidence =
+        isZodiacCompatibilityScope || hasConnectionOwner;
 
       return withEmphasis({
         relevantFacts: domainFacts(relationship),
         relevantSignals: signals,
         relevantEvidence: [
-          ...collectEvidenceItems(relationship?.evidence),
+          ...(yieldRelationshipDomainEvidence
+            ? []
+            : collectEvidenceItems(relationship?.evidence)),
           ...collectSignalEvidenceItems(signals),
         ],
         emphasis: context.emphasis.filter((item) =>
