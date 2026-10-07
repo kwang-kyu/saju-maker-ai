@@ -7536,6 +7536,11 @@ const MONEY_CASH_HOLDING_VERBS: readonly string[] = [
 /**
  * J-4-13: money × manageMoney compound용 manage/regulate verb 의미군.
  * manageMoney decision evidence의 관리 계열을 재사용한다.
+ *
+ * Blind Holdout Group B: cashflow noun과 결합될 때만 쓰는 운용 paraphrase.
+ * - 굴려 모* : 월급/자금을 굴려 모으는 관리 (bare 굴려/모으 단독 금지)
+ * - 나눠 쓰* : 생활비 등 현금흐름을 나눠 쓰는 관리 (bare 나눠/쓰다 단독 금지)
+ * business keep-going "굴려가*" / invest "굴려 넣*" 와 표면을 분리한다.
  */
 const MONEY_MANAGE_COMPOUND_VERBS: readonly string[] = [
   "관리",
@@ -7545,6 +7550,11 @@ const MONEY_MANAGE_COMPOUND_VERBS: readonly string[] = [
   "현금흐름",
   "쪼개",
   "저축",
+  // cashflow noun gate 하에서만 manageMoney (단독 forcing 금지)
+  "굴려 모",
+  "굴려모",
+  "나눠 쓰",
+  "나눠쓰",
 ];
 
 /**
