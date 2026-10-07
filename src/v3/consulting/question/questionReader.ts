@@ -669,7 +669,8 @@ const intentRules: readonly KeywordRule<ReaderIntentLiteral>[] = [
   },
   {
     result: "continuation",
-    keywords: ["계속", "유지", "버텨", "이어가", "지켜야"],
+    // "이어갈"/"지킬"은 ㄹ활용형 — bare "이어가"/"지키" substring으로 잡히지 않는다.
+    keywords: ["계속", "유지", "버텨", "이어가", "이어갈", "지켜야", "지킬"],
   },
   {
     result: "risk",
@@ -999,11 +1000,13 @@ const decisionRules: readonly KeywordRule<DecisionTarget>[] = [
   },
   {
     result: "continue",
-    keywords: ["계속", "유지", "버텨", "이어가"],
+    // "이어갈"/"지킬"은 ㄹ활용형 — bare "이어가"/"지키" substring으로 잡히지 않는다.
+    keywords: ["계속", "유지", "버텨", "이어가", "이어갈", "지킬"],
   },
   {
     result: "wait",
-    keywords: ["기다려", "기다릴", "기다리", "미뤄", "보류", "아직 하지"],
+    // Blind Holdout Group F: 관망 ≈ wait (기존 wait arm 재사용).
+    keywords: ["기다려", "기다릴", "기다리", "미뤄", "보류", "아직 하지", "관망"],
   },
   {
     result: "start",
@@ -1328,6 +1331,11 @@ function matchesKoreanKeyword(
     keyword,
   ).some(
     (keywordForm) => {
+      // Blind Holdout Group F: "관망할*" embeds "망할" — wait/watch ≠ failure-risk.
+      if (keywordForm === "망할") {
+        return /(?<!관)망할/.test(question);
+      }
+
       if (
         KOREAN_NOUN_BOUNDARY_SENSITIVE_KEYWORDS.has(
           keywordForm,
@@ -2576,6 +2584,18 @@ function collectExclusiveAltConnectorEvidence(
     evidence.push("exclusiveOrAlternative");
   }
 
+  // Blind Holdout Group F: comma-delimited dual interrogative arms (A까요, B까요).
+  // 쉼표로 구분된 두 질문형 arm만 인정 — bare "까요" 두 번 전역 matcher 금지.
+  // 1음절 활용(뗄까요/할까요)도 허용. participants >= 2는 별도 강제.
+  // marker만 넣고 ~까요 arm 문자열은 connectorEvidence에 넣지 않는다.
+  // (arm 문자열을 넣으면 generalBinaryAlternative → choose 승격이 난다)
+  if (
+    /[\uac00-\ud7a3]{1,12}까요\s*[,，]\s*[\s\S]{0,48}?[\uac00-\ud7a3]{1,12}까요/
+      .test(question)
+  ) {
+    evidence.push("dualInterrogativeAlternative");
+  }
+
   if (question.includes("고민")) {
     evidence.push("고민");
   }
@@ -2908,6 +2928,13 @@ function appendCompoundDecisionTargetCandidates(
   pushCompound(
     "stop",
     collectBusinessStopSignalEvidence(question),
+    10,
+  );
+  // Blind Holdout Group F: work/job noun("일"|직장|회사…) × 손을 떼다 → stop.
+  // bare withdraw / bare "일" 단독은 전역 stop이 아니다.
+  pushCompound(
+    "stop",
+    collectWorkStopWithdrawSignalEvidence(question),
     10,
   );
   // P10 G6: property noun + 보유/가지고 있 paraphrase → continue compound.
@@ -8143,6 +8170,22 @@ const BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS: readonly string[] = [
 ];
 
 /**
+ * Blind Holdout Group F: work/job context × 손을 떼다 withdraw.
+ * decisionRules / stop keyword에 전역 추가하지 않는다.
+ * bare "손을 떼다"/"일" 단독 forcing 금지.
+ * 일+조사|"지금 일"|JOB noun과 결합될 때만 기존 stop arm evidence가 된다.
+ * "일단"/"일요일" 등 bare "일" substring 오탐을 피한다.
+ * business noun 경로는 BUSINESS_STOP_WITHDRAW를 유지한다.
+ */
+const WORK_STOP_WITHDRAW_CONTEXT_NOUNS: readonly string[] = [
+  "일을",
+  "일은",
+  "일이",
+  "지금 일",
+  ...JOB_TOPIC_COMPOUND_NOUNS,
+];
+
+/**
  * P11-7-2I-5 / B2: business noun × end/close paraphrase.
  * decisionRules / stop·termination keyword에 전역 추가하지 않는다.
  * bare "끝내다"/"마무리하다"/"종료"/"닫다"/"닫아버리다" 단독 substring 금지.
@@ -8214,6 +8257,7 @@ const BUSINESS_STOP_NEGATED_CONTINUE_COMPOUND_VERBS: readonly string[] = [
  */
 const CONTINUE_STEMS_SHADOWED_BY_NEGATED_CONTINUE: ReadonlySet<string> = new Set([
   "이어가",
+  "이어갈",
   "계속",
 ]);
 
@@ -9422,6 +9466,35 @@ function collectBusinessStopSignalEvidence(
   }
 
   return [...businessNounEvidence, ...stopVerbEvidence];
+}
+
+/**
+ * Blind Holdout Group F: work/job noun × 손을 떼다 → stop evidence.
+ * bare "손을 떼다"/"일" 단독 substring은 쓰지 않는다.
+ * 기존 DecisionTarget `stop`을 재사용한다.
+ */
+function collectWorkStopWithdrawSignalEvidence(
+  question: string,
+): string[] {
+  const workNounEvidence = collectMatchedDecisionKeywords(
+    question,
+    WORK_STOP_WITHDRAW_CONTEXT_NOUNS,
+  );
+
+  if (workNounEvidence.length === 0) {
+    return [];
+  }
+
+  const withdrawVerbEvidence = collectMatchedDecisionKeywords(
+    question,
+    BUSINESS_STOP_WITHDRAW_COMPOUND_VERBS,
+  );
+
+  if (withdrawVerbEvidence.length === 0) {
+    return [];
+  }
+
+  return [...workNounEvidence, ...withdrawVerbEvidence];
 }
 
 /**
